@@ -244,7 +244,7 @@ ${APKSIGNER} sign --ks "$KEYSTORE_FILE" --ks-pass pass:$KEYSTORE_PASSWORD --key-
 ${APKSIGNER} verify -v ${VAPK_OUT}/vapk.apk
 
 # Install
-#TARGET_DEVICE_ID=emulator-5554
+TARGET_DEVICE_ID=emulator-5554
 
 echo "Install to device:"
 echo "adb -s \"$TARGET_DEVICE_ID\" install -r ${VAPK_OUT}/vapk.apk"
