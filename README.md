@@ -1,5 +1,5 @@
 # Usage
-Dependencies: Java 8, Android SDK + NDK
+Dependencies: Linux, Java 8, Android SDK + NDK
 ```
 git clone git@github.com:Larpon/v.git
 cd v
