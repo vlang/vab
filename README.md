@@ -4,13 +4,13 @@ Dependencies: Java 8, Android SDK + NDK
 git clone git@github.com:Larpon/v.git
 cd v
 git checkout feature/android-apk
-v self
+make
 
 cd ..
 git clone git@github.com:Larpon/v-android-bootstrap.git
 cd v-android-bootstrap
 
-# Here you need edit build.sh and set correct paths for V, Java, Android SDK/NDK
+# From here you need edit build.sh and set correct paths for V, Java, Android SDK/NDK
 # Or provide them via env variables:
 #   ANDROID_SDK_ROOT=/path/to/android_sdk_linux
 #   ANDROID_NDK_ROOT=/path/to/android_ndk_linux
