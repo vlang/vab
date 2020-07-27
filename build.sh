@@ -245,17 +245,19 @@ ${APKSIGNER} sign --ks "$KEYSTORE_FILE" --ks-pass pass:$KEYSTORE_PASSWORD --key-
 ${APKSIGNER} verify -v ${VAPK_OUT}/vapk.apk
 
 # Install
-#TARGET_DEVICE_ID=emulator-5554
-#TARGET_DEVICE_ID=4df144551637af2d # S3
-TARGET_DEVICE_ID=a4599aaf # S5
-#TARGET_DEVICE_ID=R58M61681DP # A40
+if [ -z ${TARGET_DEVICE_ID+x} ]; then
+	#TARGET_DEVICE_ID=emulator-5554
+	#TARGET_DEVICE_ID=4df144551637af2d # S3
+	TARGET_DEVICE_ID=a4599aaf # S5
+	#TARGET_DEVICE_ID=R58M61681DP # A40
+fi
 
-echo "Install to device:"
+echo "Deploying to device $TARGET_DEVICE_ID"
 echo "adb -s \"$TARGET_DEVICE_ID\" install -r ${VAPK_OUT}/vapk.apk"
 ${ADB} -s "$TARGET_DEVICE_ID" install -r ${VAPK_OUT}/vapk.apk
 
 
-# Handy adb (linux) commands:
+# Other handy adb (linux) commands (if you have platform-tools in your PATH):
 
 # List devices:
 # adb devices -l
@@ -268,9 +270,8 @@ ${ADB} -s "$TARGET_DEVICE_ID" install -r ${VAPK_OUT}/vapk.apk
 
 # ANDROID_SERIAL=<device id> adb logcat -d > logcat.txt
 
-
 # ADB shell:
 # ANDROID_SERIAL=<device id> adb shell
 
-# Kill ADB
+# Kill ADB - as it can mess with your USB on some Linux distros, if kept running for too long *sigh*
 killall adb
