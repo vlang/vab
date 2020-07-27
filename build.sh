@@ -4,21 +4,25 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 if [ -z ${ANDROID_SDK_ROOT+x} ]; then
 	# ANDROID_HOME=${HOME}/Environments/Android/android-sdk-linux
 	ANDROID_SDK_ROOT=${HOME}/Environments/Android/android-sdk-linux
-	echo "Using default SDK $ANDROID_SDK_ROOT"
 fi
+echo "Using default SDK $ANDROID_SDK_ROOT"
 
 if [ -z ${ANDROID_NDK_ROOT+x} ]; then
 	ANDROID_NDK_ROOT=${HOME}/Environments/Android/android-ndk-current
-	echo "Using default NDK $ANDROID_NDK_ROOT"
 fi
+echo "Using default NDK $ANDROID_NDK_ROOT"
 
 if [ -z ${JAVA_HOME+x} ]; then
 	# JAVA_HOME=/usr/lib/jvm/default-java # <- default location
 	JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
 	#JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
-	echo "Using default Java $JAVA_HOME"
 fi
+echo "Using default Java $JAVA_HOME"
 
+if [ -z ${V_HOME+x} ]; then
+	V_HOME=${HOME}/Projects/v
+fi
+echo "Using V in ${V_HOME}"
 
 #BUILD_TOOLS_VERSION="27.0.3"
 BUILD_TOOLS_VERSION="29.0.3"
@@ -76,7 +80,7 @@ echo ""
 
 # Compile V -> C
 echo "Compiling V to C (sokol_main)"
-v --enable-globals -os android -apk -o "$VOUT" "$VSRC"
+${V_HOME}/v --enable-globals -os android -apk -o "$VOUT" "$VSRC"
 
 #CFLAGS="${CFLAGS} -I./src"
 
@@ -112,12 +116,12 @@ DX="${BUILD_TOOLS}/${BUILD_TOOLS_VERSION}/dx"
 CFLAGS="${CFLAGS} -DSOKOL_DEBUG -DSOKOL_GLES2"
 LDFLAGS="${LDFLAGS} -uANativeActivity_onCreate -usokol_main"
 
-CFLAGS="${CFLAGS} -I "${HOME}/Projects/v/thirdparty/sokol" -I "${HOME}/Projects/v/thirdparty/sokol/util" " # -lpthread -ldl"
+CFLAGS="${CFLAGS} -I "${V_HOME}/thirdparty/sokol" -I "${V_HOME}/thirdparty/sokol/util" " # -lpthread -ldl"
 
-CFLAGS="${CFLAGS} -I ${HOME}/Projects/v/thirdparty/fontstash"
-CFLAGS="${CFLAGS} -I ./freetype2-android/include" # -lfreetype"
+CFLAGS="${CFLAGS} -I ${V_HOME}/thirdparty/fontstash"
+CFLAGS="${CFLAGS} -I $SCRIPT_DIR/freetype2-android/include" # -lfreetype"
 
-#CFLAGS=${CFLAGS} -I "/usr/include/freetype2" -lfreetype -I "${HOME}/Projects/v/thirdparty/fontstash" -I "${HOME}/Projects/v/examples/sokol/particles"
+#CFLAGS=${CFLAGS} -I "/usr/include/freetype2" -lfreetype -I "${V_HOME}/thirdparty/fontstash" -I "${V_HOME}/examples/sokol/particles"
 
 CFLAGS_ARM64="-m64"
 CFLAGS_ARM32="-mfloat-abi=softfp -m32"
