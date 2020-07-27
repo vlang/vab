@@ -28,6 +28,8 @@ echo "Using V in ${V_HOME}"
 BUILD_TOOLS_VERSION="29.0.3"
 BUILD_TOOLS=${ANDROID_SDK_ROOT}/build-tools
 
+PLATFORM_TOOLS=${ANDROID_SDK_ROOT}/platform-tools
+
 
 APPNAME=vtest
 APKFILE=${APPNAME}.apk
@@ -43,7 +45,6 @@ ANDROIDTARGET=${ANDROIDVERSION}
 CFLAGS="-ffunction-sections -Os -fdata-sections -Wall -fvisibility=hidden"
 LDFLAGS="-Wl,--hash-style=both,--gc-sections -s"
 ANDROID_FULLSCREEN=y
-ADB=adb
 UNAME=$(uname)
 
 if [ $UNAME == Linux ]; then
@@ -105,6 +106,7 @@ CC_ARM32="${ANDROID_NDK_ROOT}/toolchains/llvm/prebuilt/${OS_NAME}/bin/armv7a-lin
 CC_x86="${ANDROID_NDK_ROOT}/toolchains/llvm/prebuilt/${OS_NAME}/bin/x86_64-linux-android${ANDROIDVERSION}-clang"
 CC_x86_64="${ANDROID_NDK_ROOT}/toolchains/llvm/prebuilt/${OS_NAME}/bin/x86_64-linux-android${ANDROIDVERSION}-clang"
 
+ADB="${PLATFORM_TOOLS}/adb"
 AAPT="${BUILD_TOOLS}/${BUILD_TOOLS_VERSION}/aapt"
 ZIPALIGN="${BUILD_TOOLS}/${BUILD_TOOLS_VERSION}/zipalign"
 APKSIGNER="${BUILD_TOOLS}/${BUILD_TOOLS_VERSION}/apksigner"
@@ -243,13 +245,10 @@ ${APKSIGNER} verify -v ${VAPK_OUT}/vapk.apk
 
 # Install
 #TARGET_DEVICE_ID=emulator-5554
-#TARGET_DEVICE_ID=4df144551637af2d # S3
-TARGET_DEVICE_ID=a4599aaf # S5
-#TARGET_DEVICE_ID=R58M61681DP # A40
 
 echo "Install to device:"
 echo "adb -s \"$TARGET_DEVICE_ID\" install -r ${VAPK_OUT}/vapk.apk"
-adb -s "$TARGET_DEVICE_ID" install -r ${VAPK_OUT}/vapk.apk
+${ADB} -s "$TARGET_DEVICE_ID" install -r ${VAPK_OUT}/vapk.apk
 
 
 # Handy adb (linux) commands:
