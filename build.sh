@@ -245,16 +245,16 @@ ${APKSIGNER} sign --ks "$KEYSTORE_FILE" --ks-pass pass:$KEYSTORE_PASSWORD --key-
 ${APKSIGNER} verify -v ${VAPK_OUT}/vapk.apk
 
 # Install
-if [ -z ${TARGET_DEVICE_ID+x} ]; then
-	#TARGET_DEVICE_ID=emulator-5554
-	#TARGET_DEVICE_ID=4df144551637af2d # S3
-	TARGET_DEVICE_ID=a4599aaf # S5
-	#TARGET_DEVICE_ID=R58M61681DP # A40
+if [ -z ${ANDROID_SERIAL+x} ]; then
+	#ANDROID_SERIAL=emulator-5554
+	#ANDROID_SERIAL=4df144551637af2d # S3
+	ANDROID_SERIAL=a4599aaf # S5
+	#ANDROID_SERIAL=R58M61681DP # A40
 fi
 
-echo "Deploying to device $TARGET_DEVICE_ID"
-echo "adb -s \"$TARGET_DEVICE_ID\" install -r ${VAPK_OUT}/vapk.apk"
-${ADB} -s "$TARGET_DEVICE_ID" install -r ${VAPK_OUT}/vapk.apk
+echo "Deploying to device $ANDROID_SERIAL"
+echo "adb -s \"$ANDROID_SERIAL\" install -r ${VAPK_OUT}/vapk.apk"
+${ADB} -s "$ANDROID_SERIAL" install -r ${VAPK_OUT}/vapk.apk
 
 
 # Other handy adb (linux) commands (if you have platform-tools in your PATH):

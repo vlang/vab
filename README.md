@@ -13,6 +13,7 @@ cd v-android-bootstrap
 # Or provide them via env variables:
 #   ANDROID_SDK_ROOT=/path/to/android_sdk_linux
 #   ANDROID_NDK_ROOT=/path/to/android_ndk_linux
+#   ANDROID_SERIAL=<device id> # <- device to deploy to
 #   JAVA_HOME=/path/to/java
 #   V_HOME=/path/to/v/root
 
