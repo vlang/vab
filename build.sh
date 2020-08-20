@@ -82,7 +82,7 @@ echo ""
 
 # Compile V -> C
 echo "Compiling V to C (sokol_main)"
-${V_HOME}/v --enable-globals -os android -apk -o "$VOUT" "$VSRC"
+${V_HOME}/v -os android -apk -o "$VOUT" "$VSRC"
 
 #CFLAGS="${CFLAGS} -I./src"
 
@@ -107,13 +107,7 @@ CC_ARM32="${ANDROID_NDK_ROOT}/toolchains/llvm/prebuilt/${OS_NAME}/bin/armv7a-lin
 CC_x86="${ANDROID_NDK_ROOT}/toolchains/llvm/prebuilt/${OS_NAME}/bin/x86_64-linux-android${ANDROIDVERSION}-clang"
 CC_x86_64="${ANDROID_NDK_ROOT}/toolchains/llvm/prebuilt/${OS_NAME}/bin/x86_64-linux-android${ANDROIDVERSION}-clang"
 
-ADB="${PLATFORM_TOOLS}/adb"
-AAPT="${BUILD_TOOLS}/${BUILD_TOOLS_VERSION}/aapt"
-ZIPALIGN="${BUILD_TOOLS}/${BUILD_TOOLS_VERSION}/zipalign"
-APKSIGNER="${BUILD_TOOLS}/${BUILD_TOOLS_VERSION}/apksigner"
-KEYTOOL="${BUILD_TOOLS}/${BUILD_TOOLS_VERSION}/keytool"
-DX="${BUILD_TOOLS}/${BUILD_TOOLS_VERSION}/dx"
-
+CFLAGS="${CFLAGS} -I "${V_HOME}/thirdparty/stb_image" "
 
 # Sokol
 CFLAGS="${CFLAGS} -DSOKOL_DEBUG -DSOKOL_GLES2"
@@ -121,8 +115,10 @@ LDFLAGS="${LDFLAGS} -uANativeActivity_onCreate -usokol_main"
 
 CFLAGS="${CFLAGS} -I "${V_HOME}/thirdparty/sokol" -I "${V_HOME}/thirdparty/sokol/util" " # -lpthread -ldl"
 
+CFLAGS="${CFLAGS} "${V_HOME}/thirdparty/stb_image/stbi.c" "
+
 CFLAGS="${CFLAGS} -I ${V_HOME}/thirdparty/fontstash"
-CFLAGS="${CFLAGS} -I $SCRIPT_DIR/freetype2-android/include" # -lfreetype"
+#CFLAGS="${CFLAGS} -I $SCRIPT_DIR/freetype2-android/include" # -lfreetype"
 
 #CFLAGS=${CFLAGS} -I "/usr/include/freetype2" -lfreetype -I "${V_HOME}/thirdparty/fontstash" -I "${V_HOME}/examples/sokol/particles"
 
@@ -164,14 +160,27 @@ ${CC_x86} ${CFLAGS} ${CFLAGS_x86} -o ${VAPK}/lib/x86/lib${APPNAME}.so ${ANDROIDS
 echo "Building x86_64"
 ${CC_x86_64} ${CFLAGS} ${CFLAGS_x86_64} -o ${VAPK}/lib/x86_64/lib${APPNAME}.so  ${ANDROIDSRCS} -L${ANDROID_NDK_ROOT}/toolchains/llvm/prebuilt/${OS_NAME}/sysroot/usr/lib/x86_64-linux-android/${ANDROIDVERSION} ${LDFLAGS}
 
-
 # Build APK
+
+ADB="${PLATFORM_TOOLS}/adb"
+AAPT="${BUILD_TOOLS}/${BUILD_TOOLS_VERSION}/aapt"
+ZIPALIGN="${BUILD_TOOLS}/${BUILD_TOOLS_VERSION}/zipalign"
+APKSIGNER="${BUILD_TOOLS}/${BUILD_TOOLS_VERSION}/apksigner"
+KEYTOOL="${BUILD_TOOLS}/${BUILD_TOOLS_VERSION}/keytool"
+DX="${BUILD_TOOLS}/${BUILD_TOOLS_VERSION}/dx"
+
+
+
 VAPK_OUT=${VAPK}/..
 
 cp -r $SCRIPT_DIR/android/* ${VAPK}/
 
 mkdir -p ${VAPK}/assets
 echo "V test asset file" > ${VAPK}/assets/asset.txt
+
+[ -d "${SCRIPT_DIR}/assets" ] && echo "  - Copying assets" && cp -a "${SCRIPT_DIR}/assets" ${VAPK}/assets/ && ls ${VAPK}/assets/
+
+[ -d "${VSRC}/assets" ] && echo "  - Copying assets" && cp -a "${VSRC}assets/" ${VAPK} && ls ${VAPK}/assets/
 
 rm -rf ${VAPK_OUT}/temp.apk
 rm -rf ${VAPK_OUT}/vapk.unsigned.apk
