@@ -1,27 +1,26 @@
 # Usage
-Dependencies: Linux, Java 8, Android SDK + NDK
+Dependencies: V, Linux, Java 8, Android SDK + NDK
 ```
-git clone git@github.com:Larpon/v.git
-cd v
-git checkout feature/android-apk
-make
-cd ..
 git clone git@github.com:Larpon/v-android-bootstrap.git
 cd v-android-bootstrap
 
-# From here you need to edit build.sh and set correct paths for the patched V, Java 8, Android SDK/NDK
-# Or provide them via env variables:
-#   ANDROID_SDK_ROOT=/path/to/android_sdk_linux
-#   ANDROID_NDK_ROOT=/path/to/android_ndk_linux
-#   ANDROID_SERIAL=<device id> # <- device to deploy to
-#   JAVA_HOME=/path/to/java
-#   V_HOME=/path/to/v/root
-
-#   then:
-./build.sh /path/to/v/examples/sokol/particles/main.v
+# Build vab
+v vab.v
+./vab /path/to/v/examples/sokol/particles/main.v
 ```
 
-## Android
+If vab fails to detect your environment you can set ENV variables:
+```
+JAVA_HOME=/path/to/java8
+ANDROID_SDK_ROOT=/path/to/android_sdk_linux
+ANDROID_NDK_ROOT=/path/to/android_ndk_linux
+
+ANDROID_SERIAL=<device id> # <- id of device to deploy to
+
+VEXE=/path/to/v/v
+```
+
+## Android Setup
 
 If you want to avoid Android Studio you can use the commandline tools.
 
