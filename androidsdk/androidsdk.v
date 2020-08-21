@@ -48,12 +48,7 @@ pub fn root() string {
 		mut adb_path := ''
 
 		if os.exists_in_system_path('adb') {
-			mut which_exe := 'which'
-			if uos == 'windows' {
-				which_exe = 'where'
-			}
-			adb_path_res := os.exec(which_exe+' adb') or { os.Result{1,''} }
-			adb_path = adb_path_res.output
+			adb_path = os.find_abs_path_of_executable('adb') or { return '' }
 			if adb_path != '' {
 				// adb normally reside in 'path/to/sdk_root/platform-tools/'
 				sdk_root = os.real_path(os.join_path(os.dir(adb_path),'..'))
@@ -61,6 +56,10 @@ pub fn root() string {
 		}
 	}
 	return sdk_root
+}
+
+pub fn found() bool {
+	return root() != ''
 }
 
 pub fn build_tools_root() string {
@@ -147,3 +146,14 @@ fn ls_sorted(path string) []string {
 	dirs.reverse_in_place()
 	return dirs
 }
+/*
+fn which(exe string) string {
+	mut which_exe := 'which'
+		if uos == 'windows' {
+			which_exe = 'where'
+		}
+		res := os.exec(which_exe+' '+exe) or { os.Result{1,''} }
+		if res.exit_code > 0 { return '' }
+		return res.output
+}
+*/

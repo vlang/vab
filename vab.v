@@ -1,12 +1,12 @@
 import os
 import flag
 
+import vxt
 import semver
 
 import java
 import androidsdk as asdk
 import androidndk as andk
-import vxt
 
 const (
 	exe = 'vab'
@@ -18,7 +18,7 @@ const (
 )
 
 const (
-	preferred_api_level = '21'
+	min_supported_api_level = '21'
 )
 
 // exe_dir return the absolute path of the directory, the executable resides in
@@ -30,28 +30,39 @@ fn appendenv(name, value string) {
 	os.setenv(name, os.getenv(name)+os.path_delimiter+value, true)
 }
 
+struct Options {
+	app_name		string
+	package_name	string
+	output_file		string
+
+	build_tools		string
+	api_level		string
+	ndk_version		string
+}
+
 fn main() {
 
 	mut fp := flag.new_flag_parser(os.args)
 	fp.application(exe)
 	fp.version('0.1.0')
-	fp.description('V Android Builder')
+	fp.description('V Android Bootstrapper')
 	//fp.arguments_description('[ARGS] <input>')
 
 	fp.skip_executable()
 
-	opt_app_name := fp.string('name', 0, default_app_name, 'Application name')
-	opt_package_name := fp.string('package', 0, default_package_name, 'Application package name')
-	opt_output_file := fp.string('output', `o`, '', 'Output file')
+	opt := Options {
+		app_name: fp.string('name', 0, default_app_name, 'Application name')
+		package_name: fp.string('package', 0, default_package_name, 'Application package name')
+		output_file: fp.string('output', `o`, '', 'Output file')
 
-	default_file_name := opt_app_name.replace(' ','_').to_lower()
+		build_tools: fp.string('build-tools', 0, '', 'build-tools version')
+		api_level: fp.string('api', 0, '', 'Android API level')
 
-	opt_build_tools_version := fp.string('build-tools', 0, '', 'build-tools version')
-	opt_api_level := fp.string('api', 0, '', 'Android API level')
+		ndk_version: fp.string('ndk-version', 0, '', 'NDK version')
+	}
 
-	opt_ndk_version := fp.string('ndk-version', 0, '', 'NDK version')
+	default_file_name := opt.app_name.replace(' ','_').to_lower()
 
-	//additional_args :=
 	fp.finalize() or {
 		eprintln(err)
 		println(fp.usage())
@@ -61,81 +72,81 @@ fn main() {
 	/*
 	 * Validate environment
 	 */
-	os.setenv('JAVA_HOME','/usr/lib/jvm/java-8-openjdk-amd64/',true) // For testing
+	os.setenv('JAVA_HOME','/usr/lib/jvm/java-8-openjdk-amd64',true) // For testing
 
-	validate_env()
-
+	check_dependencies()
 
 	vexe := vxt.vexe()
+
 	/*
 	 * Validate input
 	 */
 
 	// Validate API level
 	mut api_level := asdk.default_api_version()
-	if opt_api_level != '' {
-		if asdk.has_api(opt_api_level) {
-			api_level = opt_api_level
+	if opt.api_level != '' {
+		if asdk.has_api(opt.api_level) {
+			api_level = opt.api_level
 		} else {
 			// TODO Warnings
-			println('Android API level ${opt_api_level} is not available in SDK.')
-			println('(It can be installed with `$exe install android-api-${opt_api_level}`)')
+			println('Android API level ${opt.api_level} is not available in SDK.')
+			println('(It can be installed with `$exe install android-api-${opt.api_level}`)')
 			println('Falling back to default ${api_level}')
 		}
 	}
 	if api_level == '' {
-		eprintln('Android API level ${opt_api_level} is not available in SDK.')
-		//eprintln('It can be installed with `$exe install android-api-${opt_api_level}`')
+		eprintln('Android API level ${opt.api_level} is not available in SDK.')
+		//eprintln('It can be installed with `$exe install android-api-${opt.api_level}`')
 		exit(1)
 	}
 	if api_level.i16() < 20 {
-		eprintln('Android API level ${api_level} is less than the recomended level (${preferred_api_level}).')
+		eprintln('Android API level ${api_level} is less than the recomended level (${min_supported_api_level}).')
 		exit(1)
 	}
 
 	// Validate build-tools version
 	mut build_tools_version := asdk.default_build_tools_version()
-	if opt_build_tools_version != '' {
-		if asdk.has_build_tools(opt_build_tools_version) {
-			build_tools_version = opt_build_tools_version
+	if opt.build_tools != '' {
+		if asdk.has_build_tools(opt.build_tools) {
+			build_tools_version = opt.build_tools
 		} else {
 			// TODO FIX Warnings and make
-			println('Android build-tools version ${opt_build_tools_version} is not available in SDK.')
-			//println('(It can be installed with `$exe install android-build-tools-${opt_build_tools_version}`)')
+			println('Android build-tools version ${opt.build_tools} is not available in SDK.')
+			//println('(It can be installed with `$exe install android-build-tools-${opt.build_tools}`)')
 			println('Falling back to default ${build_tools_version}')
 		}
 	}
 	if build_tools_version == '' {
-		eprintln('Android build-tools version ${opt_build_tools_version} is not available in SDK.')
-		//eprintln('It can be installed with `$exe install android-api-${opt_api_level}`')
+		eprintln('Android build-tools version ${opt.build_tools} is not available in SDK.')
+		//eprintln('It can be installed with `$exe install android-api-${opt.api_level}`')
 		exit(1)
 	}
 
 	// Validate ndk version
 	mut ndk_version := andk.default_version()
-	if opt_ndk_version != '' {
-		if andk.has_version(opt_ndk_version) {
-			ndk_version = opt_ndk_version
+	if opt.ndk_version != '' {
+		if andk.has_version(opt.ndk_version) {
+			ndk_version = opt.ndk_version
 		} else {
 			// TODO FIX Warnings and make
-			println('Android NDK version ${opt_ndk_version} is not available.')
-			//println('(It can be installed with `$exe install android-build-tools-${opt_build_tools_version}`)')
+			println('Android NDK version ${opt.ndk_version} is not available.')
+			//println('(It can be installed with `$exe install android-build-tools-${opt.build_tools_version}`)')
 			println('Falling back to default ${ndk_version}')
 		}
 	}
 	if ndk_version == '' {
-		eprintln('Android NDK version ${opt_ndk_version} is not available.')
-		//eprintln('It can be installed with `$exe install android-api-${opt_api_level}`')
+		eprintln('Android NDK version ${opt.ndk_version} is not available.')
+		//eprintln('It can be installed with `$exe install android-api-${opt.api_level}`')
 		exit(1)
 	}
 
 	// Output specific
-	mut app_name := opt_app_name
-	mut package_name := opt_package_name
+	mut app_name := opt.app_name
+	mut package_name := opt.package_name
 
 	mut output_file := ''
-	if opt_output_file != '' {
-		output_file = opt_output_file.all_before(os.file_ext(opt_output_file))
+	if opt.output_file != '' {
+		output_file = opt.output_file.all_before(os.file_ext(opt.output_file))
 	} else {
 		output_file = default_file_name
 	}
@@ -150,7 +161,9 @@ fn main() {
 		println('\tVersion ${vxt.version()}')
 		println('\tPath ${vxt.home()}')
 		println('Java')
-		println('\tVersion ${java.version()}')
+		println('\tJDK')
+		println('\t\tVersion ${java.jdk_version()}')
+		println('\t\tPath ${java.jdk_root()}')
 		println('Android')
 		println('\tSDK')
 		println('\t\tPath ${asdk.root()}')
@@ -439,46 +452,54 @@ fn main() {
 */
 }
 
-fn validate_env() {
+fn check_dependencies() {
+
 	// Validate V install
 	vexe := vxt.vexe()
 	if vexe == '' {
 		eprintln('No V install could be detected')
-		eprintln('Please provide a valid path to V via VEXE or install v from https://github.com/vlang/v')
+		eprintln('Please provide a valid path to V via VEXE env variable')
+		eprintln('or install V from https://github.com/vlang/v')
 		exit(1)
 	}
 
 	// Validate Java requirements
-	java_version := java.version()
-	if java_version == '' {
-		eprintln('No Java 8 install could be detected')
-		eprintln('Please provide a valid path to Java 8 via JAVA_HOME')
+	if ! java.jdk_found() {
+		eprintln('No Java install(s) could be detected')
+		eprintln('Please install Java 8 JDK')
 		exit(1)
 	}
 
-	java_semantic_version := semver.from(java_version) or { panic(err) }
+	jdk_version := java.jdk_version()
+	if jdk_version == '' {
+		eprintln('No Java 8 JDK install could be detected')
+		eprintln('Please install Java 8 JDK or provide a valid path via JAVA_HOME')
+		exit(1)
+	}
 
-	if ! java_semantic_version.satisfies('1.8.*') {
-		// Some Android tools like `sdkmanager` currently only run with Java 8.
+	jdk_semantic_version := semver.from(jdk_version) or { panic(err) }
+
+	if ! jdk_semantic_version.satisfies('1.8.*') {
+		// Some Android tools like `sdkmanager` currently only run with Java 8 JDK (1.8.x).
 		// (Absolute mess, yes)
-		eprintln('Java version ${java_version} is not supported')
-		eprintln('Currently Java 8 (JDK 1.8.x) is requried')
+		eprintln('Java version ${jdk_version} is not supported')
+		eprintln('Currently Java 8 JDK (1.8.x) is requried')
 		exit(1)
 	}
 
 	// Validate Android SDK requirements
-	android_sdk_root := asdk.root()
-	if android_sdk_root == '' {
+	if ! asdk.found() {
 		eprintln('No Android SDK could be detected.')
-		eprintln('Please provide a valid path via ANDROID_SDK_ROOT or run `$exe install android-sdk`')
+		eprintln('Please provide a valid path via ANDROID_SDK_ROOT')
+		eprintln('or run `$exe install android-sdk`')
 		exit(1)
 	}
 
 	// Validate Android NDK requirements
-	android_ndk_root := andk.root()
-	if android_ndk_root == '' {
+	if ! andk.found() {
 		eprintln('No Android NDK could be detected.')
-		eprintln('Please provide a valid path via ANDROID_NDK_ROOT or run `$exe install android-ndk`')
+		eprintln('Please provide a valid path via ANDROID_NDK_ROOT')
+		eprintln('or run `$exe install android-ndk`')
 		exit(1)
 	}
 }

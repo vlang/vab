@@ -10,8 +10,9 @@ const (
 
 // ANDROID_SDK_ROOT and ANDROID_HOME are official ENV variables to get the SDK
 // but no such conventions exists for getting the NDK.
-// However ANDROID_NDK_ROOT is often used and now the `sdkmanager` has support
+// However ANDROID_NDK_ROOT is widely used and the `sdkmanager` has support
 // for installing the NDK - and it will do so in a sub-folder (/ndk) of the SDK root.
+// This is also referred to as a "Side by side" install
 const (
 	possible_ndk_paths_windows = [
 		os.join_path(sdk.root(),'ndk')
@@ -41,6 +42,10 @@ pub fn root() string {
 		}
 	}
 	return ndk_root
+}
+
+pub fn found() bool {
+	return root() != ''
 }
 
 pub fn versions_available() []string {
