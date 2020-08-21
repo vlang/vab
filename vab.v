@@ -40,11 +40,16 @@ struct Options {
 	app_name		string
 	package_name	string
 
-	verbosity int
+	verbosity		int
 
 	work_dir		string
 
 	device_id		string
+
+	dump_env		bool
+
+	list_apis		bool
+	list_build_tools bool
 mut:
 	input			string
 	output_file		string
@@ -85,6 +90,11 @@ fn main() {
 		work_dir: os.join_path(os.temp_dir(), 'vab')
 
 		assets_extra: fp.string_multi('assets', `a`, 'Asset dir(s) to include')
+
+		dump_env: fp.bool('env-dump', `e`, false, 'Print a dump of the detected environment and exit')
+
+		list_apis:  fp.bool('list-api', 0, false, 'List available API levels')
+		list_build_tools:  fp.bool('list-build-tools', 0, false, 'List available Build-tools versions')
 	}
 
 	fp.finalize() or {
@@ -102,29 +112,23 @@ fn main() {
 
 	resolve_options(mut opt)
 
-	if opt.verbosity > 1 {
-		// Summary
-		println('V')
-		println('\tVersion ${vxt.version()}')
-		println('\tPath ${vxt.home()}')
-		println('Java')
-		println('\tJDK')
-		println('\t\tVersion ${java.jdk_version()}')
-		println('\t\tPath ${java.jdk_root()}')
-		println('Android')
-		println('\tSDK')
-		println('\t\tPath ${asdk.root()}')
-		println('\tNDK')
-		println('\t\tVersion ${opt.ndk_version}')
-		println('\t\tPath ${andk.root()}')
-		println('\tBuild')
-		println('\t\tAPI ${opt.api_level}')
-		println('\t\tBuild-tools ${opt.build_tools}')
-		println('Product')
-		println('\tName "${opt.app_name}"')
-		println('\tPackage ${opt.package_name}')
-		println('\tOutput ${opt.output_file}')
-		println('')
+	if opt.dump_env {
+		dump_env(opt)
+		exit(0)
+	}
+
+	if opt.list_apis {
+		for api in asdk.apis_available() {
+			println(api.all_after('android-'))
+		}
+		exit(0)
+	}
+
+	if opt.list_build_tools {
+		for btv in asdk.build_tools_available() {
+			println(btv)
+		}
+		exit(0)
 	}
 
 	if fp.args.len <= 0 {
@@ -162,8 +166,6 @@ fn main() {
 			}
 		}
 	}
-
-	exit(0)
 }
 
 fn check_dependencies() {
@@ -753,4 +755,28 @@ fn run_else_exit(opt Options, args []string) string {
 		exit(1)
 	}
 	return res.output
+}
+
+fn dump_env(opt Options) {
+	println('V')
+	println('\tVersion ${vxt.version()}')
+	println('\tPath ${vxt.home()}')
+	println('Java')
+	println('\tJDK')
+	println('\t\tVersion ${java.jdk_version()}')
+	println('\t\tPath ${java.jdk_root()}')
+	println('Android')
+	println('\tSDK')
+	println('\t\tPath ${asdk.root()}')
+	println('\tNDK')
+	println('\t\tVersion ${opt.ndk_version}')
+	println('\t\tPath ${andk.root()}')
+	println('\tBuild')
+	println('\t\tAPI ${opt.api_level}')
+	println('\t\tBuild-tools ${opt.build_tools}')
+	println('Product')
+	println('\tName "${opt.app_name}"')
+	println('\tPackage ${opt.package_name}')
+	println('\tOutput ${opt.output_file}')
+	println('')
 }
