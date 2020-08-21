@@ -16,7 +16,7 @@ const (
 
 const (
 	default_app_name = 'V Default App'
-	default_package_name = 'org.v.android.default.app'
+	default_package_id = 'org.v.android.default.app'
 )
 
 const (
@@ -38,7 +38,7 @@ fn is_file(path string) bool {
 
 struct Options {
 	app_name		string
-	package_name	string
+	package_id	string
 
 	verbosity		int
 
@@ -75,23 +75,24 @@ fn main() {
 	verbosity := fp.int_opt('verbosity', `v`, 'Verbosity level') or { 0 }
 
 	mut opt := Options {
-		app_name: fp.string('name', 0, default_app_name, 'Application name')
-		package_name: fp.string('package', 0, default_package_name, 'Application package name')
-		output_file: fp.string('output', `o`, '', 'Output file')
 
-		device_id: fp.string('device-id', `d`, '', 'Deploy to device ID')
+		assets_extra: fp.string_multi('assets', `a`, 'Asset dir(s) to include in build')
+
+		device_id: fp.string('device-id', `i`, '', 'Deploy to this device ID after build')
+		dump_env: fp.bool('dump', `d`, false, 'Dump the detected environment and exit')
+
+		app_name: fp.string('name', 0, default_app_name, 'Pretty app name')
+		package_id: fp.string('package-id', 0, default_package_id, 'App package ID (e.g. "org.v.app")')
+		output_file: fp.string('output', `o`, '', 'Path to output file (dir or file)')
+
 		verbosity: verbosity
 
-		build_tools: fp.string('build-tools', 0, '', 'build-tools version')
-		api_level: fp.string('api', 0, '', 'Android API level')
+		build_tools: fp.string('build-tools', 0, '', 'Version of build-tools to use')
+		api_level: fp.string('api', 0, '', 'Android API level to use')
 
-		ndk_version: fp.string('ndk-version', 0, '', 'NDK version')
+		ndk_version: fp.string('ndk-version', 0, '', 'Android NDK version to use')
 
 		work_dir: os.join_path(os.temp_dir(), 'vab')
-
-		assets_extra: fp.string_multi('assets', `a`, 'Asset dir(s) to include')
-
-		dump_env: fp.bool('env-dump', `e`, false, 'Print a dump of the detected environment and exit')
 
 		list_apis:  fp.bool('list-api', 0, false, 'List available API levels')
 		list_build_tools:  fp.bool('list-build-tools', 0, false, 'List available Build-tools versions')
@@ -545,14 +546,16 @@ fn package(opt Options) bool {
 	}
 
 	// Look in user provided dir
-	for assets_user_dir in opt.assets_extra {
-		if os.is_dir(assets_user_dir) {
+	for user_asset in opt.assets_extra {
+		if os.is_dir(user_asset) {
 			if opt.verbosity > 0 {
-				println('Including assets from ${assets_user_dir}')
+				println('Including assets from ${user_asset}')
 			}
-			cp_all(assets_user_dir, assets_path, false)
+			os.cp_all(user_asset, assets_path, false)
 		} else {
-			eprintln('Skipping invalid assets directory ${assets_user_dir}')
+			os.cp(user_asset, assets_path) or {
+				eprintln('Skipping invalid asset file ${user_asset}')
+			}
 		}
 	}
 
@@ -776,7 +779,7 @@ fn dump_env(opt Options) {
 	println('\t\tBuild-tools ${opt.build_tools}')
 	println('Product')
 	println('\tName "${opt.app_name}"')
-	println('\tPackage ${opt.package_name}')
+	println('\tPackage ${opt.package_id}')
 	println('\tOutput ${opt.output_file}')
 	println('')
 }
