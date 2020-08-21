@@ -92,7 +92,7 @@ fn main() {
 
 		ndk_version: fp.string('ndk-version', 0, '', 'Android NDK version to use')
 
-		work_dir: os.join_path(os.temp_dir(), 'vab')
+		work_dir: os.join_path(os.temp_dir(), exe)
 
 		list_apis:  fp.bool('list-api', 0, false, 'List available API levels')
 		list_build_tools:  fp.bool('list-build-tools', 0, false, 'List available Build-tools versions')
