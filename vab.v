@@ -1,6 +1,8 @@
 import os
 import flag
 
+import crypto.md5
+
 import vxt
 import semver
 
@@ -30,14 +32,29 @@ fn appendenv(name, value string) {
 	os.setenv(name, os.getenv(name)+os.path_delimiter+value, true)
 }
 
+fn is_file(path string) bool {
+	return !os.is_dir(path)
+}
+
 struct Options {
 	app_name		string
 	package_name	string
+
+	verbosity int
+
+	work_dir		string
+
+	device_id		string
+mut:
+	input			string
 	output_file		string
+	machine_friendly_app_name string
 
 	build_tools		string
 	api_level		string
 	ndk_version		string
+
+	assets_extra	[]string
 }
 
 fn main() {
@@ -50,18 +67,25 @@ fn main() {
 
 	fp.skip_executable()
 
-	opt := Options {
+	verbosity := fp.int_opt('verbosity', `v`, 'Verbosity level') or { 0 }
+
+	mut opt := Options {
 		app_name: fp.string('name', 0, default_app_name, 'Application name')
 		package_name: fp.string('package', 0, default_package_name, 'Application package name')
 		output_file: fp.string('output', `o`, '', 'Output file')
+
+		device_id: fp.string('device-id', `d`, '', 'Deploy to device ID')
+		verbosity: verbosity
 
 		build_tools: fp.string('build-tools', 0, '', 'build-tools version')
 		api_level: fp.string('api', 0, '', 'Android API level')
 
 		ndk_version: fp.string('ndk-version', 0, '', 'NDK version')
-	}
 
-	default_file_name := opt.app_name.replace(' ','_').to_lower()
+		work_dir: os.join_path(os.temp_dir(), 'vab')
+
+		assets_extra: fp.string_multi('assets', `a`, 'Asset dir(s) to include')
+	}
 
 	fp.finalize() or {
 		eprintln(err)
@@ -76,11 +100,124 @@ fn main() {
 
 	check_dependencies()
 
-	vexe := vxt.vexe()
+	resolve_options(mut opt)
 
-	/*
-	 * Validate input
-	 */
+	if opt.verbosity > 1 {
+		// Summary
+		println('V')
+		println('\tVersion ${vxt.version()}')
+		println('\tPath ${vxt.home()}')
+		println('Java')
+		println('\tJDK')
+		println('\t\tVersion ${java.jdk_version()}')
+		println('\t\tPath ${java.jdk_root()}')
+		println('Android')
+		println('\tSDK')
+		println('\t\tPath ${asdk.root()}')
+		println('\tNDK')
+		println('\t\tVersion ${opt.ndk_version}')
+		println('\t\tPath ${andk.root()}')
+		println('\tBuild')
+		println('\t\tAPI ${opt.api_level}')
+		println('\t\tBuild-tools ${opt.build_tools}')
+		println('Product')
+		println('\tName "${opt.app_name}"')
+		println('\tPackage ${opt.package_name}')
+		println('\tOutput ${opt.output_file}')
+		println('')
+	}
+
+	if fp.args.len <= 0 {
+		println(fp.usage())
+		eprintln('$exe requires a valid input file or directory')
+		exit(1)
+	}
+
+	mut input := fp.args[fp.args.len-1]
+	if ! (os.is_dir(input) || os.file_ext(input) == '.v') {
+		println(fp.usage())
+		eprintln('$exe requires a valid V input file or directory')
+		exit(1)
+	}
+	opt.input = input
+
+
+	if ! compile(opt) {
+		eprintln('Compiling didn\'t succeed')
+		exit(1)
+	}
+
+	if ! package(opt) {
+		eprintln('Packaging didn\'t succeed')
+		exit(1)
+	}
+
+	if opt.device_id != '' {
+		if ! deploy(opt) {
+			eprintln('Deployment didn\'t succeed')
+			exit(1)
+		} else {
+			if opt.verbosity > 0 {
+				println('Deployed to ${opt.device_id} successfully')
+			}
+		}
+	}
+
+	exit(0)
+}
+
+fn check_dependencies() {
+
+	// Validate V install
+	if vxt.vexe() == '' {
+		eprintln('No V install could be detected')
+		eprintln('Please provide a valid path to V via VEXE env variable')
+		eprintln('or install V from https://github.com/vlang/v')
+		exit(1)
+	}
+
+	// Validate Java requirements
+	if ! java.jdk_found() {
+		eprintln('No Java install(s) could be detected')
+		eprintln('Please install Java 8 JDK')
+		exit(1)
+	}
+
+	jdk_version := java.jdk_version()
+	if jdk_version == '' {
+		eprintln('No Java 8 JDK install could be detected')
+		eprintln('Please install Java 8 JDK or provide a valid path via JAVA_HOME')
+		exit(1)
+	}
+
+	jdk_semantic_version := semver.from(jdk_version) or { panic(err) }
+
+	if ! jdk_semantic_version.satisfies('1.8.*') {
+		// Some Android tools like `sdkmanager` currently only run with Java 8 JDK (1.8.x).
+		// (Absolute mess, yes)
+		eprintln('Java version ${jdk_version} is not supported')
+		eprintln('Currently Java 8 JDK (1.8.x) is requried')
+		exit(1)
+	}
+
+	// Validate Android SDK requirements
+	if ! asdk.found() {
+		eprintln('No Android SDK could be detected.')
+		eprintln('Please provide a valid path via ANDROID_SDK_ROOT')
+		eprintln('or run `$exe install android-sdk`')
+		exit(1)
+	}
+
+	// Validate Android NDK requirements
+	if ! andk.found() {
+		eprintln('No Android NDK could be detected.')
+		eprintln('Please provide a valid path via ANDROID_NDK_ROOT')
+		eprintln('or run `$exe install android-ndk`')
+		exit(1)
+	}
+}
+
+fn resolve_options(mut opt Options) {
 
 	// Validate API level
 	mut api_level := asdk.default_api_version()
@@ -90,7 +227,7 @@ fn main() {
 		} else {
 			// TODO Warnings
 			println('Android API level ${opt.api_level} is not available in SDK.')
-			println('(It can be installed with `$exe install android-api-${opt.api_level}`)')
+			//println('(It can be installed with `$exe install android-api-${opt.api_level}`)')
 			println('Falling back to default ${api_level}')
 		}
 	}
@@ -104,13 +241,15 @@ fn main() {
 		exit(1)
 	}
 
+	opt.api_level = api_level
+
 	// Validate build-tools version
 	mut build_tools_version := asdk.default_build_tools_version()
 	if opt.build_tools != '' {
 		if asdk.has_build_tools(opt.build_tools) {
 			build_tools_version = opt.build_tools
 		} else {
-			// TODO FIX Warnings and make
+			// TODO FIX Warnings and add install function
 			println('Android build-tools version ${opt.build_tools} is not available in SDK.')
 			//println('(It can be installed with `$exe install android-build-tools-${opt.build_tools}`)')
 			println('Falling back to default ${build_tools_version}')
@@ -122,15 +261,17 @@ fn main() {
 		exit(1)
 	}
 
+	opt.build_tools = build_tools_version
+
 	// Validate ndk version
 	mut ndk_version := andk.default_version()
 	if opt.ndk_version != '' {
 		if andk.has_version(opt.ndk_version) {
 			ndk_version = opt.ndk_version
 		} else {
-			// TODO FIX Warnings and make
+			// TODO FIX Warnings and add install function
 			println('Android NDK version ${opt.ndk_version} is not available.')
-			//println('(It can be installed with `$exe install android-build-tools-${opt.build_tools_version}`)')
+			//println('(It can be installed with `$exe install android-build-tools-${opt.build_tools}`)')
 			println('Falling back to default ${ndk_version}')
 		}
 	}
@@ -140,9 +281,10 @@ fn main() {
 		exit(1)
 	}
 
+	opt.ndk_version = ndk_version
+
 	// Output specific
-	mut app_name := opt.app_name
-	mut package_name := opt.package_name
+	default_file_name := opt.app_name.replace(' ','_').to_lower()
 
 	mut output_file := ''
 	if opt.output_file != '' {
@@ -151,74 +293,66 @@ fn main() {
 		output_file = default_file_name
 	}
 	output_file += '.apk'
+	opt.output_file = output_file
 
-	machine_friendly_app_name := app_name.replace(' ','_').to_lower()
+	opt.machine_friendly_app_name = 'v' // TODO //opt.app_name.replace(' ','_').to_lower()
+}
 
+fn compile(opt Options) bool {
 
-	$if debug {
-		// Summary
-		println('V')
-		println('\tVersion ${vxt.version()}')
-		println('\tPath ${vxt.home()}')
-		println('Java')
-		println('\tJDK')
-		println('\t\tVersion ${java.jdk_version()}')
-		println('\t\tPath ${java.jdk_root()}')
-		println('Android')
-		println('\tSDK')
-		println('\t\tPath ${asdk.root()}')
-		println('\tNDK')
-		println('\t\tVersion ${ndk_version}')
-		println('\t\tPath ${andk.root()}')
-		println('\tBuild')
-		println('\t\tAPI ${api_level}')
-		println('\t\tBuild-tools ${build_tools_version}')
-		println('Product')
-		println('\tName "${app_name}"')
-		println('\tPackage ${package_name}')
-		println('\tOutput ${output_file}')
-		println('')
+	os.mkdir_all(opt.work_dir)
+	build_dir := os.join_path(opt.work_dir, 'build')
+
+	vexe := vxt.vexe()
+	v_output_file := os.join_path(opt.work_dir, 'v_android.c')
+	v_cmd := [
+		vexe,
+		'-os android',
+		'-apk',
+		'-o "${v_output_file}"',
+		opt.input
+	]
+	run_else_exit(opt,v_cmd)
+
+	// Poor man's cache check
+	mut hash := ''
+	hash_file := os.join_path(opt.work_dir, 'v_android.hash')
+	if os.exists(build_dir) && os.exists(v_output_file) {
+		mut bytes := os.read_bytes(v_output_file) or { panic(err) }
+		bytes << opt.str().bytes()
+		hash = md5.sum(bytes).hex()
+
+		if os.exists(hash_file) {
+			prev_hash := read_file(hash_file) or { '' }
+			if hash == prev_hash {
+				if opt.verbosity > 2 {
+					println('Skipping compile. Hashes match ${hash}')
+				}
+				return true
+			}
+		}
+
 	}
 
-	mut input := ''
-	if fp.args.len > 0 {
-		input = fp.args[fp.args.len-1]
+	if hash != '' && os.exists(v_output_file) {
+		if opt.verbosity > 2 {
+			println('Writing new hash ${hash}')
+		}
+		os.rm(hash_file)
+		mut hash_fh := open_file(hash_file, 'w+', 0o700) or { panic(err) }
+		hash_fh.write(hash)
+		hash_fh.close()
 	}
 
-	if fp.args.len <= 0 {
-		println(fp.usage())
-		eprintln('$exe requires a valid input file or directory')
-		exit(1)
-	}
-
-	if ! (os.is_dir(input) || os.file_ext(input) == '.v') {
-		println(fp.usage())
-		eprintln('$exe requires a valid input file or directory')
-		exit(1)
-	}
-
-	work_dir := os.join_path(os.temp_dir(), 'vab')
 	// Remove any previous builds
-	if os.is_dir(work_dir) {
-		os.rmdir_all(work_dir)
+	if os.is_dir(build_dir) {
+		os.rmdir_all(build_dir)
 	}
-
-	v_comp_out_file := os.join_path(work_dir, 'v_android.c')
-	os.mkdir_all(work_dir)
-
-	build_dir := os.join_path(work_dir, 'apk')
 	os.mkdir(build_dir)
-
-	v_comp_res := os.exec('$vexe -os android -apk -o "$v_comp_out_file" "$input"') or { os.Result{1,''} }
-	if v_comp_res.exit_code > 0 {
-		eprintln('v compile failed with exit code ${v_comp_res.exit_code}')
-		eprintln(v_comp_res.output)
-		exit(1)
-	}
 
 	v_home := vxt.home()
 	//android_sdk_root := asdk.root()
-	android_ndk_root := os.join_path(andk.root(),ndk_version)
+	android_ndk_root := os.join_path(andk.root(),opt.ndk_version)
 
 	/*
 	* Compile sources for all Android archs
@@ -242,8 +376,8 @@ fn main() {
 	// TODO Here to make the compilers shut up :/
 	cflags << ['-Wno-braced-scalar-init','-Wno-incompatible-pointer-types','-Wno-implicitly-unsigned-literal','-Wno-pointer-sign','-Wno-enum-conversion','-Wno-int-conversion','-Wno-int-to-pointer-cast','-Wno-sign-compare','-Wno-return-type']
 
-	defines << ['-DAPPNAME="${machine_friendly_app_name}"']
-	defines << ['-DANDROID','-D__ANDROID__','-DANDROIDVERSION=${api_level}']
+	defines << ['-DAPPNAME="${opt.machine_friendly_app_name}"']
+	defines << ['-DANDROID','-D__ANDROID__','-DANDROIDVERSION=${opt.api_level}']
 
 	// TODO if full_screen
 	defines << ['-DANDROID_FULLSCREEN']
@@ -297,8 +431,8 @@ fn main() {
 		mut eabi := ''
 		if arch == 'armeabi-v7a' { eabi = 'eabi' }
 
-		arch_cc[arch] = os.join_path(android_ndk_root,'toolchains','llvm','prebuilt',host_arch,'bin',arch_alt[arch]+'-linux-android${eabi}${api_level}-clang')
-		arch_libs[arch] = os.join_path(android_ndk_root,'toolchains','llvm','prebuilt',host_arch,'sysroot','usr','lib',arch_alt[arch]+'-linux-android'+eabi,api_level)
+		arch_cc[arch] = os.join_path(android_ndk_root,'toolchains','llvm','prebuilt',host_arch,'bin',arch_alt[arch]+'-linux-android${eabi}${opt.api_level}-clang')
+		arch_libs[arch] = os.join_path(android_ndk_root,'toolchains','llvm','prebuilt',host_arch,'sysroot','usr','lib',arch_alt[arch]+'-linux-android'+eabi,opt.api_level)
 	}
 
 	mut arch_cflags := map[string][]string
@@ -309,7 +443,6 @@ fn main() {
 
 	// Cross compile .so lib files
 	for arch in archs {
-		println('Building $arch')
 
 		arch_lib_dir := os.join_path(build_dir, 'lib', arch)
 		os.mkdir_all(arch_lib_dir)
@@ -320,18 +453,15 @@ fn main() {
 			defines.join(' '),
 			sources.join(' '),
 			arch_cflags[arch].join(' '),
-			'-o "${arch_lib_dir}/lib${machine_friendly_app_name}.so"',
-			v_comp_out_file,
+			'-o "${arch_lib_dir}/lib${opt.machine_friendly_app_name}.so"',
+			v_output_file,
 			'-L"'+arch_libs[arch]+'"',
 			ldflags.join(' ')
-		].join(' ')
+		]
+		comp_res := run_else_exit(opt,build_cmd)
 
-		//println(build_cmd)
-		arch_comp_res := os.exec(build_cmd) or { panic(err) }
-		if arch_comp_res.exit_code > 0 {
-			eprintln('$arch compile failed with exit code ${arch_comp_res.exit_code}')
-			eprintln(arch_comp_res.output)
-			exit(1)
+		if opt.verbosity > 1 {
+			println(comp_res)
 		}
 	}
 
@@ -339,167 +469,288 @@ fn main() {
 	armeabi_lib_dir := os.join_path(build_dir, 'lib', 'armeabi')
 	os.mkdir_all(armeabi_lib_dir)
 
-	armeabi_lib_src := os.join_path(build_dir, 'lib', 'armeabi-v7a','lib${machine_friendly_app_name}.so')
-	armeabi_lib_dst := os.join_path(armeabi_lib_dir, 'lib${machine_friendly_app_name}.so')
+	armeabi_lib_src := os.join_path(build_dir, 'lib', 'armeabi-v7a','lib${opt.machine_friendly_app_name}.so')
+	armeabi_lib_dst := os.join_path(armeabi_lib_dir, 'lib${opt.machine_friendly_app_name}.so')
 	os.cp( armeabi_lib_src, armeabi_lib_dst) or { panic(err) }
 
-
-/*  TODO
-	// Build APK
-
-	ADB="${PLATFORM_TOOLS}/adb"
-	AAPT="${BUILD_TOOLS}/${BUILD_TOOLS_VERSION}/aapt"
-	ZIPALIGN="${BUILD_TOOLS}/${BUILD_TOOLS_VERSION}/zipalign"
-	APKSIGNER="${BUILD_TOOLS}/${BUILD_TOOLS_VERSION}/apksigner"
-	KEYTOOL="${BUILD_TOOLS}/${BUILD_TOOLS_VERSION}/keytool"
-	DX="${BUILD_TOOLS}/${BUILD_TOOLS_VERSION}/dx"
-
-	VAPK_OUT=${VAPK}/..
-
-	cp -r $SCRIPT_DIR/android/ * ${VAPK}/
-
-	mkdir -p ${VAPK}/assets
-	echo "V test asset file" > ${VAPK}/assets/asset.txt
-
-	[ -d "${SCRIPT_DIR}/assets" ] && echo "  - Copying assets" && cp -a "${SCRIPT_DIR}/assets" ${VAPK}/assets/ && ls ${VAPK}/assets/
-
-	[ -d "${VSRC}/assets" ] && echo "  - Copying assets" && cp -a "${VSRC}assets/" ${VAPK} && ls ${VAPK}/assets/
-
-	rm -rf ${VAPK_OUT}/temp.apk
-	rm -rf ${VAPK_OUT}/vapk.unsigned.apk
-	rm -rf ${VAPK_OUT}/vapk.apk
-
-	rm -rf ${VAPK_OUT}/vapkrp
-
-	${AAPT} package -v -f -m \
-		-S ${VAPK}/res \
-		-J ${VAPK}/src \
-		-M ${VAPK}/AndroidManifest.xml \
-		-I ${ANDROID_SDK_ROOT}/platforms/android-${ANDROIDVERSION}/android.jar \
-		-A ${VAPK}/assets
-
-	#--target-sdk-version ${ANDROIDTARGET}
-
-	_BACK="$(pwd)"
-	cd "${VAPK}"
-
-	#RT_JAR="$JAVA_HOME/jre/lib/rt.jar"
-	RT_JAR=${ANDROID_SDK_ROOT}/platforms/android-${ANDROIDVERSION}/android.jar
-
-	mkdir -p ${VAPK}/obj
-	mkdir -p ${VAPK}/bin
-
-	javac -d ./obj \
-		-source 1.7 \
-		-target 1.7 \
-		-sourcepath src \
-		-bootclasspath "$RT_JAR" \
-		${VAPK}/src/org/v/vtest/R.java \
-		${VAPK}/src/org/v/vtest/Native.java
-
-	${DX} --verbose --dex --output=bin/classes.dex ./obj
-
-	${AAPT} package -v -f \
-		-S res \
-		-M AndroidManifest.xml \
-		-A assets \
-		-I ${ANDROID_SDK_ROOT}/platforms/android-${ANDROIDVERSION}/android.jar \
-		-F ${VAPK_OUT}/temp.apk \
-		bin
-
-
-	cd "$_BACK"
-
-
-	_BACK="$(pwd)"
-	cd "${VAPK}"
-
-	test -e lib/arm64-v8a/lib${APPNAME}.so   && ${AAPT} add -v ${VAPK_OUT}/temp.apk lib/arm64-v8a/lib${APPNAME}.so
-	test -e lib/armeabi/lib${APPNAME}.so     && ${AAPT} add -v ${VAPK_OUT}/temp.apk lib/armeabi/lib${APPNAME}.so
-	test -e lib/armeabi-v7a/lib${APPNAME}.so && ${AAPT} add -v ${VAPK_OUT}/temp.apk lib/armeabi-v7a/lib${APPNAME}.so
-	test -e lib/x86/lib${APPNAME}.so         && ${AAPT} add -v ${VAPK_OUT}/temp.apk lib/x86/lib${APPNAME}.so
-	test -e lib/x86_64/lib${APPNAME}.so      && ${AAPT} add -v ${VAPK_OUT}/temp.apk lib/x86_64/lib${APPNAME}.so
-	cd "$_BACK"
-
-	# -p ?
-	${ZIPALIGN} -v -f 4 ${VAPK_OUT}/temp.apk ${VAPK_OUT}/vapk.unsigned.apk
-
-
-	// Sign the APK
-	KEYSTORE_FILE="$SCRIPT_DIR/debug.keystore"
-	KEYSTORE_PASSWORD="android"
-
-	test -e $KEYSTORE_FILE || keytool -genkeypair -keystore $KEYSTORE_FILE -storepass android -alias androiddebugkey -keypass $KEYSTORE_PASSWORD -keyalg RSA -validity 10000 -dname 'CN=,OU=,O=,L=,S=,C='
-
-	${APKSIGNER} sign --ks "$KEYSTORE_FILE" --ks-pass pass:$KEYSTORE_PASSWORD --key-pass pass:$KEYSTORE_PASSWORD --ks-key-alias "androiddebugkey" --out ${VAPK_OUT}/vapk.apk ${VAPK_OUT}/vapk.unsigned.apk
-
-	#${APKSIGNER} sign --ks "$KEYSTORE_FILE" --ks-pass stdin --key-pass stdin --out ${VAPK_OUT}/vapk.apk ${VAPK_OUT}/vapk.unsigned.apk
-
-	${APKSIGNER} verify -v ${VAPK_OUT}/vapk.apk
-
-
-	// Deploy
-	if [ -z ${ANDROID_SERIAL+x} ]; then
-		#ANDROID_SERIAL=emulator-5554
-		#ANDROID_SERIAL=4df144551637af2d # S3
-		ANDROID_SERIAL=a4599aaf # S5
-		#ANDROID_SERIAL=R58M61681DP # A40
-	fi
-
-	echo "Deploying to device $ANDROID_SERIAL"
-	echo "adb -s \"$ANDROID_SERIAL\" install -r ${VAPK_OUT}/vapk.apk"
-	${ADB} -s "$ANDROID_SERIAL" install -r ${VAPK_OUT}/vapk.apk
-*/
+	return true
 }
 
-fn check_dependencies() {
+fn package(opt Options) bool {
 
-	// Validate V install
-	vexe := vxt.vexe()
-	if vexe == '' {
-		eprintln('No V install could be detected')
-		eprintln('Please provide a valid path to V via VEXE env variable')
-		eprintln('or install V from https://github.com/vlang/v')
-		exit(1)
+	// Build APK
+	if opt.verbosity > 0 {
+		println('Preparing package')
 	}
 
-	// Validate Java requirements
-	if ! java.jdk_found() {
-		eprintln('No Java install(s) could be detected')
-		eprintln('Please install Java 8 JDK')
-		exit(1)
+	build_path := os.join_path(opt.work_dir, 'build')
+	build_tools_path := os.join_path(asdk.build_tools_root(),opt.build_tools)
+
+	javac := os.join_path(java.jdk_root(),'bin','javac')
+	keytool := os.join_path(java.jdk_root(),'bin','keytool')
+	aapt := os.join_path(build_tools_path,'aapt')
+	dx := os.join_path(build_tools_path,'dx')
+	zipalign := os.join_path(build_tools_path,'zipalign')
+	apksigner := os.join_path(build_tools_path,'apksigner')
+
+
+	//work_dir := opt.work_dir
+	//VAPK_OUT=${VAPK}/..
+
+	package_path := os.join_path(opt.work_dir, 'package')
+	os.mkdir_all(package_path)
+
+	android_extras_path := os.join_path(exe_dir(), 'platforms', 'android')
+
+	cp_all(android_extras_path, package_path, false)
+
+
+	if opt.verbosity > 0 {
+		println('Copying assets')
 	}
 
-	jdk_version := java.jdk_version()
-	if jdk_version == '' {
-		eprintln('No Java 8 JDK install could be detected')
-		eprintln('Please install Java 8 JDK or provide a valid path via JAVA_HOME')
-		exit(1)
+	assets_path := os.join_path(package_path, 'assets')
+	os.mkdir_all(assets_path)
+
+	/*
+	test_asset := os.join_path(assets_path, 'test.txt')
+	os.rm(test_asset)
+	mut fh := open_file(test_asset, 'w+', 0o755) or { panic(err) }
+	fh.write('test')
+	fh.close()*/
+
+	mut assets_by_side_path := opt.input
+	if is_file(opt.input) {
+		assets_by_side_path = os.dir(opt.input)
 	}
 
-	jdk_semantic_version := semver.from(jdk_version) or { panic(err) }
-
-	if ! jdk_semantic_version.satisfies('1.8.*') {
-		// Some Android tools like `sdkmanager` currently only run with Java 8 JDK (1.8.x).
-		// (Absolute mess, yes)
-		eprintln('Java version ${jdk_version} is not supported')
-		eprintln('Currently Java 8 JDK (1.8.x) is requried')
-		exit(1)
+	// Look for "assets" dir in same location as input
+	assets_by_side := os.join_path(assets_by_side_path,'assets')
+	if os.is_dir(assets_by_side) {
+		if opt.verbosity > 0 {
+			println('Including assets from ${assets_by_side}')
+		}
+		cp_all(assets_by_side, assets_path, false)
 	}
 
-	// Validate Android SDK requirements
-	if ! asdk.found() {
-		eprintln('No Android SDK could be detected.')
-		eprintln('Please provide a valid path via ANDROID_SDK_ROOT')
-		eprintln('or run `$exe install android-sdk`')
-		exit(1)
+	// Look for "assets" dir in current dir
+	assets_in_dir := 'assets'
+	if os.is_dir(assets_in_dir) {
+		if opt.verbosity > 0 {
+			println('Including assets from ${assets_in_dir}')
+		}
+		cp_all(assets_in_dir, assets_path, false)
 	}
 
-	// Validate Android NDK requirements
-	if ! andk.found() {
-		eprintln('No Android NDK could be detected.')
-		eprintln('Please provide a valid path via ANDROID_NDK_ROOT')
-		eprintln('or run `$exe install android-ndk`')
+	// Look in user provided dir
+	for assets_user_dir in opt.assets_extra {
+		if os.is_dir(assets_user_dir) {
+			if opt.verbosity > 0 {
+				println('Including assets from ${assets_user_dir}')
+			}
+			cp_all(assets_user_dir, assets_path, false)
+		} else {
+			eprintln('Skipping invalid assets directory ${assets_user_dir}')
+		}
+	}
+
+	output_fn := os.file_name(opt.output_file).replace(os.file_ext(opt.output_file),'')
+	tmp_product := os.join_path(opt.work_dir, '${output_fn}.apk')
+	tmp_unsigned_product := os.join_path(opt.work_dir, '${output_fn}.unsigned.apk')
+	tmp_unaligned_product := os.join_path(opt.work_dir, '${output_fn}.unaligned.apk')
+
+	os.rm(tmp_product)
+	os.rm(tmp_unsigned_product)
+	os.rm(tmp_unaligned_product)
+
+	android_runtime := os.join_path(asdk.platforms_root(),'android-'+opt.api_level,'android.jar')
+
+	src_path := os.join_path(package_path,'src')
+	res_path := os.join_path(package_path,'res')
+
+	obj_path := os.join_path(package_path, 'obj')
+	os.mkdir_all(obj_path)
+	bin_path := os.join_path(package_path, 'bin')
+	os.mkdir_all(bin_path)
+
+	mut aapt_cmd := [
+		aapt,
+		'package',
+		'-v',
+		'-f',
+		'-m',
+		'-M '+os.join_path(package_path,'AndroidManifest.xml'),
+		'-S '+res_path,
+		'-J '+src_path,
+		'-A '+assets_path,
+		'-I '+android_runtime
+		//'--target-sdk-version ${ANDROIDTARGET}'
+	]
+	run_else_exit(opt,aapt_cmd)
+
+	pwd := os.getwd()
+	os.chdir(package_path)
+
+	// Compile java sources
+	java_sources := walk_ext(os.join_path(package_path,'src'), '.java')
+
+	mut javac_cmd_part := [
+		javac,
+		'-d obj', //+obj_path,
+		'-source 1.7',
+		'-target 1.7',
+		'-sourcepath src',
+		'-bootclasspath '+android_runtime
+	]
+	javac_cmd_part << java_sources
+
+	run_else_exit(opt,javac_cmd_part)
+
+	// Dex
+	dx_cmd := [
+		dx,
+		'--verbose',
+		'--dex',
+		'--output='+os.join_path('bin','classes.dex'),
+		'obj', //obj_path
+	]
+	run_else_exit(opt,dx_cmd)
+
+	// Second run
+	aapt_cmd = [
+		aapt,
+		'package',
+		'-v',
+		'-f',
+		'-S '+res_path,
+		'-M '+os.join_path(package_path,'AndroidManifest.xml'),
+		'-A '+assets_path,
+		'-I '+android_runtime,
+		'-F '+tmp_unaligned_product,
+		'bin' //bin_path
+	]
+	run_else_exit(opt,aapt_cmd)
+
+
+	os.chdir(build_path)
+
+	collect_libs := walk_ext(os.join_path(build_path,'lib'), '.so')
+
+	for lib in collect_libs {
+		lib_s := lib.replace(build_path+os.path_separator, '')
+		aapt_cmd = [
+			aapt,
+			'add',
+			'-v',
+			tmp_unaligned_product,
+			lib_s
+		]
+		run_else_exit(opt,aapt_cmd)
+	}
+
+	os.chdir(pwd)
+
+
+	zipalign_cmd := [
+		zipalign,
+		'-v',
+		'-f 4',
+		tmp_unaligned_product,
+		tmp_unsigned_product
+	]
+	run_else_exit(opt,zipalign_cmd)
+
+	// Sign the APK
+	keystore_file := os.join_path(exe_dir(),'debug.keystore')
+	keystore_password := 'android'
+
+	if ! os.exists(keystore_file) {
+		if opt.verbosity > 0 {
+			println('Generating debug.keystore')
+		}
+		keytool_cmd := [
+			keytool,
+			'-genkeypair',
+			'-keystore '+keystore_file,
+			'-storepass android',
+			'-alias androiddebugkey',
+			'-keypass '+keystore_password,
+			'-keyalg RSA',
+			'-validity 10000',
+			'-dname \'CN=,OU=,O=,L=,S=,C=\''
+		]
+		run_else_exit(opt,keytool_cmd)
+	}
+
+	mut apksigner_cmd := [
+		apksigner,
+		'sign',
+		'--ks "'+keystore_file+'"',
+		'--ks-pass pass:'+keystore_password,
+		'--key-pass pass:'+keystore_password,
+		'--ks-key-alias "androiddebugkey"',
+		'--out '+tmp_product,
+		tmp_unsigned_product
+	]
+	run_else_exit(opt,apksigner_cmd)
+
+	apksigner_cmd = [
+		apksigner,
+		'verify',
+		'-v',
+		tmp_product,
+	]
+	run_else_exit(opt,apksigner_cmd)
+
+
+	os.mv_by_cp(tmp_product, opt.output_file) or { panic(err) }
+
+	if opt.verbosity > 0 {
+		println('Generated package ${os.real_path(opt.output_file)}')
+	}
+
+	return true
+}
+
+fn deploy(opt Options) bool {
+
+	// Deploy
+	if opt.device_id != '' {
+		if opt.verbosity > 0 {
+			println('Deploying to ${opt.device_id}')
+		}
+
+		adb := os.join_path(asdk.platform_tools_root(),'adb')
+
+		adb_cmd := [
+			adb,
+			'-s "${opt.device_id}"',
+			'install',
+			'-r',
+			opt.output_file
+		]
+		run_else_exit(opt,adb_cmd)
+
+		os.system('killall adb')
+		//os.system('Taskkill /IM adb.exe /F)
+		return true
+	}
+	return false
+}
+
+fn run_else_exit(opt Options, args []string) string {
+	cmd := args.join(' ')
+	if opt.verbosity > 1 {
+		println('Running ${args[0]}')
+		if opt.verbosity > 2 {
+			println(cmd)
+		}
+	}
+	res := os.exec(cmd) or { os.Result{1,''} }
+	if res.exit_code > 0 {
+		eprintln('${args[0]} failed with exit code ${res.exit_code}')
+		eprintln(res.output)
 		exit(1)
 	}
+	return res.output
 }

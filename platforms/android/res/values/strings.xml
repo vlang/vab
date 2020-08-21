@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">vtest</string>
-    <string name="lib_name">vtest</string>
-    <string name="package_name">org.v.vtest</string>
+    <string name="app_name">v</string>
+    <string name="lib_name">v</string>
+    <string name="package_name">org.v.v</string>
 </resources>
 

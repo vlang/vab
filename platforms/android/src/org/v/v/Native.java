@@ -1,7 +1,7 @@
-package org.v.vtest;
+package org.v.v;
 
 import android.app.NativeActivity;
 
 public class Native extends NativeActivity {
-	static { System.loadLibrary("vtest"); }
+	static { System.loadLibrary("v"); }
 }
