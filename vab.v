@@ -13,7 +13,8 @@ import androidndk as andk
 import va
 
 const (
-	exe = 'vab'
+	exe_name	= os.file_name(os.executable())
+	exe_dir		= os.base_dir(os.real_path(os.executable()))
 )
 
 const (
@@ -25,16 +26,13 @@ const (
 	min_supported_api_level = '21'
 )
 
-// exe_dir return the absolute path of the directory, the executable resides in
-fn exe_dir() string {
-	return os.base_dir(os.real_path(os.executable()))
-}
 
+/*
 fn appendenv(name, value string) {
 	os.setenv(name, os.getenv(name)+os.path_delimiter+value, true)
-}
+}*/
 
-fn dump_env(opt Options) {
+fn dump(opt Options) {
 	println('V')
 	println('\tVersion ${vxt.version()}')
 	println('\tPath ${vxt.home()}')
@@ -89,7 +87,7 @@ mut:
 fn main() {
 
 	mut fp := flag.new_flag_parser(os.args)
-	fp.application(exe)
+	fp.application(exe_name)
 	fp.version('0.1.0')
 	fp.description('V Android Bootstrapper')
 	//fp.arguments_description('[ARGS] <input>')
@@ -116,7 +114,7 @@ fn main() {
 
 		ndk_version: fp.string('ndk-version', 0, '', 'Android NDK version to use')
 
-		work_dir: os.join_path(os.temp_dir(), exe)
+		work_dir: os.join_path(os.temp_dir(), exe_name.replace(' ','_').to_lower())
 
 		list_apis:  fp.bool('list-api', 0, false, 'List available API levels')
 		list_build_tools:  fp.bool('list-build-tools', 0, false, 'List available Build-tools versions')
@@ -138,7 +136,7 @@ fn main() {
 	resolve_options(mut opt)
 
 	if opt.dump_env {
-		dump_env(opt)
+		dump(opt)
 		exit(0)
 	}
 
@@ -158,14 +156,14 @@ fn main() {
 
 	if fp.args.len <= 0 {
 		println(fp.usage())
-		eprintln('$exe requires a valid input file or directory')
+		eprintln('$exe_name requires a valid input file or directory')
 		exit(1)
 	}
 
 	mut input := fp.args[fp.args.len-1]
 	if ! (os.is_dir(input) || os.file_ext(input) == '.v') {
 		println(fp.usage())
-		eprintln('$exe requires a valid V input file or directory')
+		eprintln('$exe_name requires a valid V input file or directory')
 		exit(1)
 	}
 	opt.input = input
@@ -195,8 +193,8 @@ fn main() {
 		input:			opt.input
 		assets_extra:	opt.assets_extra
 		output_file:	opt.output_file
-		keystore: 		os.join_path(exe_dir(),'debug.keystore')
-		base_files:		os.join_path(exe_dir(), 'platforms', 'android')
+		keystore: 		os.join_path(exe_dir,'debug.keystore')
+		base_files:		os.join_path(exe_dir, 'platforms', 'android')
 	}
 	if ! va.package(pck_opt) {
 		eprintln('Packaging didn\'t succeed')
@@ -258,7 +256,7 @@ fn check_dependencies() {
 	if ! asdk.found() {
 		eprintln('No Android SDK could be detected.')
 		eprintln('Please provide a valid path via ANDROID_SDK_ROOT')
-		eprintln('or run `$exe install android-sdk`')
+		eprintln('or run `$exe_name install android-sdk`')
 		exit(1)
 	}
 
@@ -266,7 +264,7 @@ fn check_dependencies() {
 	if ! andk.found() {
 		eprintln('No Android NDK could be detected.')
 		eprintln('Please provide a valid path via ANDROID_NDK_ROOT')
-		eprintln('or run `$exe install android-ndk`')
+		eprintln('or run `$exe_name install android-ndk`')
 		exit(1)
 	}
 }
@@ -281,13 +279,13 @@ fn resolve_options(mut opt Options) {
 		} else {
 			// TODO Warnings
 			println('Android API level ${opt.api_level} is not available in SDK.')
-			//println('(It can be installed with `$exe install android-api-${opt.api_level}`)')
+			//println('(It can be installed with `$exe_name install android-api-${opt.api_level}`)')
 			println('Falling back to default ${api_level}')
 		}
 	}
 	if api_level == '' {
 		eprintln('Android API level ${opt.api_level} is not available in SDK.')
-		//eprintln('It can be installed with `$exe install android-api-${opt.api_level}`')
+		//eprintln('It can be installed with `$exe_name install android-api-${opt.api_level}`')
 		exit(1)
 	}
 	if api_level.i16() < 20 {
@@ -305,13 +303,13 @@ fn resolve_options(mut opt Options) {
 		} else {
 			// TODO FIX Warnings and add install function
 			println('Android build-tools version ${opt.build_tools} is not available in SDK.')
-			//println('(It can be installed with `$exe install android-build-tools-${opt.build_tools}`)')
+			//println('(It can be installed with `$exe_name install android-build-tools-${opt.build_tools}`)')
 			println('Falling back to default ${build_tools_version}')
 		}
 	}
 	if build_tools_version == '' {
 		eprintln('Android build-tools version ${opt.build_tools} is not available in SDK.')
-		//eprintln('It can be installed with `$exe install android-api-${opt.api_level}`')
+		//eprintln('It can be installed with `$exe_name install android-api-${opt.api_level}`')
 		exit(1)
 	}
 
@@ -325,13 +323,13 @@ fn resolve_options(mut opt Options) {
 		} else {
 			// TODO FIX Warnings and add install function
 			println('Android NDK version ${opt.ndk_version} is not available.')
-			//println('(It can be installed with `$exe install android-build-tools-${opt.build_tools}`)')
+			//println('(It can be installed with `$exe_name install android-build-tools-${opt.build_tools}`)')
 			println('Falling back to default ${ndk_version}')
 		}
 	}
 	if ndk_version == '' {
 		eprintln('Android NDK version ${opt.ndk_version} is not available.')
-		//eprintln('It can be installed with `$exe install android-api-${opt.api_level}`')
+		//eprintln('It can be installed with `$exe_name install android-api-${opt.api_level}`')
 		exit(1)
 	}
 
