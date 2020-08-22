@@ -346,5 +346,7 @@ fn resolve_options(mut opt Options) {
 	output_file += '.apk'
 	opt.output_file = output_file
 
-	opt.machine_friendly_app_name = 'v' // TODO //opt.app_name.replace(' ','_').to_lower()
+	// TODO can be supported when we can manipulate or generate AndroidManifest.xml + sources from code
+	// Java package ids/names are integrated hard into the eco-system
+	opt.machine_friendly_app_name = 'v'  //opt.app_name.replace(' ','_').to_lower()
 }
