@@ -228,13 +228,15 @@ fn check_dependencies() {
 	if ! java.jdk_found() {
 		eprintln('No Java install(s) could be detected')
 		eprintln('Please install Java 8 JDK')
+		eprintln('(Currently Java 8 (1.8.x) is the only Java version supported by the Android SDK)')
 		exit(1)
 	}
 
 	jdk_version := java.jdk_version()
 	if jdk_version == '' {
-		eprintln('No Java 8 JDK install could be detected')
+		eprintln('No Java JDK install(s) could be detected')
 		eprintln('Please install Java 8 JDK or provide a valid path via JAVA_HOME')
+		eprintln('(Currently Java 8 (1.8.x) is the only Java version supported by the Android SDK)')
 		exit(1)
 	}
 
@@ -244,8 +246,8 @@ fn check_dependencies() {
 		// Some Android tools like `sdkmanager` currently only run with Java 8 JDK (1.8.x).
 		// (Absolute mess, yes)
 		eprintln('Java version ${jdk_version} is not supported')
-		eprintln('Currently Java 8 JDK (1.8.x) is requried')
 		eprintln('Please install Java 8 JDK or provide a valid path via JAVA_HOME')
+		eprintln('(Currently Java 8 (1.8.x) is the only Java version supported by the Android SDK)')
 		exit(1)
 	}
 
