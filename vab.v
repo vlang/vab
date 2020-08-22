@@ -1,7 +1,7 @@
+module main
+
 import os
 import flag
-
-import crypto.md5
 
 import vxt
 import semver
@@ -9,6 +9,8 @@ import semver
 import java
 import androidsdk as asdk
 import androidndk as andk
+
+import va
 
 const (
 	exe = 'vab'
@@ -32,8 +34,28 @@ fn appendenv(name, value string) {
 	os.setenv(name, os.getenv(name)+os.path_delimiter+value, true)
 }
 
-fn is_file(path string) bool {
-	return !os.is_dir(path)
+fn dump_env(opt Options) {
+	println('V')
+	println('\tVersion ${vxt.version()}')
+	println('\tPath ${vxt.home()}')
+	println('Java')
+	println('\tJDK')
+	println('\t\tVersion ${java.jdk_version()}')
+	println('\t\tPath ${java.jdk_root()}')
+	println('Android')
+	println('\tSDK')
+	println('\t\tPath ${asdk.root()}')
+	println('\tNDK')
+	println('\t\tVersion ${opt.ndk_version}')
+	println('\t\tPath ${andk.root()}')
+	println('\tBuild')
+	println('\t\tAPI ${opt.api_level}')
+	println('\t\tBuild-tools ${opt.build_tools}')
+	println('Product')
+	println('\tName "${opt.app_name}"')
+	println('\tPackage ${opt.package_id}')
+	println('\tOutput ${opt.output_file}')
+	println('')
 }
 
 struct Options {
@@ -61,6 +83,8 @@ mut:
 
 	assets_extra	[]string
 }
+
+
 
 fn main() {
 
@@ -146,19 +170,46 @@ fn main() {
 	}
 	opt.input = input
 
+	comp_opt := va.CompileOptions {
+		work_dir:		opt.work_dir
+		input:			opt.input
 
-	if ! compile(opt) {
+		verbosity:		opt.verbosity
+
+		ndk_version:	opt.ndk_version
+		machine_friendly_app_name:	opt.machine_friendly_app_name
+		api_level:		opt.api_level
+	}
+	if ! va.compile(comp_opt) {
 		eprintln('Compiling didn\'t succeed')
 		exit(1)
 	}
 
-	if ! package(opt) {
+	pck_opt := va.PackageOptions {
+		verbosity:		opt.verbosity
+		work_dir:		opt.work_dir
+
+		api_level:		opt.api_level
+		build_tools:	opt.build_tools
+
+		input:			opt.input
+		assets_extra:	opt.assets_extra
+		output_file:	opt.output_file
+		keystore: 		os.join_path(exe_dir(),'debug.keystore')
+		base_files:		os.join_path(exe_dir(), 'platforms', 'android')
+	}
+	if ! va.package(pck_opt) {
 		eprintln('Packaging didn\'t succeed')
 		exit(1)
 	}
 
 	if opt.device_id != '' {
-		if ! deploy(opt) {
+		deploy_opt := va.DeployOptions {
+			verbosity: opt.verbosity
+			device_id: opt.device_id
+			deploy_file: opt.output_file
+		}
+		if ! va.deploy(deploy_opt) {
 			eprintln('Deployment didn\'t succeed')
 			exit(1)
 		} else {
@@ -299,487 +350,4 @@ fn resolve_options(mut opt Options) {
 	opt.output_file = output_file
 
 	opt.machine_friendly_app_name = 'v' // TODO //opt.app_name.replace(' ','_').to_lower()
-}
-
-fn compile(opt Options) bool {
-
-	os.mkdir_all(opt.work_dir)
-	build_dir := os.join_path(opt.work_dir, 'build')
-
-	vexe := vxt.vexe()
-	v_output_file := os.join_path(opt.work_dir, 'v_android.c')
-	v_cmd := [
-		vexe,
-		'-os android',
-		'-apk',
-		'-o "${v_output_file}"',
-		opt.input
-	]
-	run_else_exit(opt,v_cmd)
-
-	// Poor man's cache check
-	mut hash := ''
-	hash_file := os.join_path(opt.work_dir, 'v_android.hash')
-	if os.exists(build_dir) && os.exists(v_output_file) {
-		mut bytes := os.read_bytes(v_output_file) or { panic(err) }
-		bytes << opt.str().bytes()
-		hash = md5.sum(bytes).hex()
-
-		if os.exists(hash_file) {
-			prev_hash := read_file(hash_file) or { '' }
-			if hash == prev_hash {
-				if opt.verbosity > 2 {
-					println('Skipping compile. Hashes match ${hash}')
-				}
-				return true
-			}
-		}
-
-	}
-
-	if hash != '' && os.exists(v_output_file) {
-		if opt.verbosity > 2 {
-			println('Writing new hash ${hash}')
-		}
-		os.rm(hash_file)
-		mut hash_fh := open_file(hash_file, 'w+', 0o700) or { panic(err) }
-		hash_fh.write(hash)
-		hash_fh.close()
-	}
-
-	// Remove any previous builds
-	if os.is_dir(build_dir) {
-		os.rmdir_all(build_dir)
-	}
-	os.mkdir(build_dir)
-
-	v_home := vxt.home()
-	//android_sdk_root := asdk.root()
-	android_ndk_root := os.join_path(andk.root(),opt.ndk_version)
-
-	/*
-	* Compile sources for all Android archs
-	*/
-
-	archs := ['arm64-v8a','armeabi-v7a','x86','x86_64']
-
-	// For all compilers
-	mut cflags := []string{}
-	mut includes := []string{}
-	mut defines := []string{}
-	mut ldflags := []string{}
-	mut sources := []string{}
-
-
-	// ... still a bit of a mess
-	cflags << ['-Os','-fPIC','-fvisibility=hidden','-ffunction-sections','-fdata-sections','-ferror-limit=1']
-
-	cflags << ['-Wall','-Wextra','-Wno-unused-variable','-Wno-unused-parameter','-Wno-unused-result','-Wno-unused-function','-Wno-missing-braces','-Wno-unused-label','-Werror=implicit-function-declaration']
-
-	// TODO Here to make the compilers shut up :/
-	cflags << ['-Wno-braced-scalar-init','-Wno-incompatible-pointer-types','-Wno-implicitly-unsigned-literal','-Wno-pointer-sign','-Wno-enum-conversion','-Wno-int-conversion','-Wno-int-to-pointer-cast','-Wno-sign-compare','-Wno-return-type']
-
-	defines << ['-DAPPNAME="${opt.machine_friendly_app_name}"']
-	defines << ['-DANDROID','-D__ANDROID__','-DANDROIDVERSION=${opt.api_level}']
-
-	// TODO if full_screen
-	defines << ['-DANDROID_FULLSCREEN']
-
-	// NDK headers
-	includes << ['-I"${andk.root()}/sysroot/usr/include"','-I"${andk.root()}/sysroot/usr/include/android"']
-
-	// Sokol
-	// TODO support both GLES2 & GLES3 - GLES2 should be default - trust me
-	// TODO Toggle debug - probably follow v -prod flag somehow
-	defines << ['-DSOKOL_DEBUG','-DSOKOL_GLES2']
-	ldflags << ['-uANativeActivity_onCreate','-usokol_main']
-	includes << ['-I"${v_home}/thirdparty/sokol"','-I"${v_home}/thirdparty/sokol/util"']
-
-	// stb_image
-	includes << ['-I"${v_home}/thirdparty/stb_image"']
-	sources << ['"${v_home}/thirdparty/stb_image/stbi.c"']
-
-	// fontstash
-	includes << ['-I"${v_home}/thirdparty/fontstash"']
-
-	// misc
-	ldflags << ['-llog','-landroid','-lEGL','-lGLESv2','-lm']
-
-	ldflags << ['-shared'] // <- Android loads native code via a library in NativeActivity
-
-	mut cflags_arm64 := ['-m64']
-	mut cflags_arm32 := ['-mfloat-abi=softfp','-m32']
-	mut cflags_x86 := ['-march=i686','-mtune=intel','-mssse3','-mfpmath=sse','-m32']
-	mut cflags_x86_64 := ['-march=x86-64','-msse4.2','-mpopcnt','-m64','-mtune=intel']
-
-	mut host_arch := ''
-	uos := os.user_os()
-	if uos == 'windows' { host_arch = 'windows-x86_64' }
-	if uos == 'macos'   { host_arch = 'darwin-x86_64' }
-	if uos == 'linux'   { host_arch = 'linux-x86_64' }
-
-
-	mut arch_alt := map[string]string
-	arch_alt['arm64-v8a'] = 'aarch64'
-	arch_alt['armeabi-v7a'] = 'armv7a'
-	arch_alt['x86'] = 'x86_64'
-	arch_alt['x86_64'] = 'x86_64'
-
-	mut arch_cc := map[string]string
-	mut arch_libs := map[string]string
-
-
-	// TODO do Windows and macOS as well
-	for arch in archs {
-		mut eabi := ''
-		if arch == 'armeabi-v7a' { eabi = 'eabi' }
-
-		arch_cc[arch] = os.join_path(android_ndk_root,'toolchains','llvm','prebuilt',host_arch,'bin',arch_alt[arch]+'-linux-android${eabi}${opt.api_level}-clang')
-		arch_libs[arch] = os.join_path(android_ndk_root,'toolchains','llvm','prebuilt',host_arch,'sysroot','usr','lib',arch_alt[arch]+'-linux-android'+eabi,opt.api_level)
-	}
-
-	mut arch_cflags := map[string][]string
-	arch_cflags['arm64-v8a'] = cflags_arm64
-	arch_cflags['armeabi-v7a'] = cflags_arm32
-	arch_cflags['x86'] = cflags_x86
-	arch_cflags['x86_64'] = cflags_x86_64
-
-	// Cross compile .so lib files
-	for arch in archs {
-
-		arch_lib_dir := os.join_path(build_dir, 'lib', arch)
-		os.mkdir_all(arch_lib_dir)
-
-		build_cmd := [ arch_cc[arch],
-			cflags.join(' '),
-			includes.join(' '),
-			defines.join(' '),
-			sources.join(' '),
-			arch_cflags[arch].join(' '),
-			'-o "${arch_lib_dir}/lib${opt.machine_friendly_app_name}.so"',
-			v_output_file,
-			'-L"'+arch_libs[arch]+'"',
-			ldflags.join(' ')
-		]
-		comp_res := run_else_exit(opt,build_cmd)
-
-		if opt.verbosity > 1 {
-			println(comp_res)
-		}
-	}
-
-	// TODO fix DT_NAME crash instead of including a copy of the armeabi-v7a lib
-	armeabi_lib_dir := os.join_path(build_dir, 'lib', 'armeabi')
-	os.mkdir_all(armeabi_lib_dir)
-
-	armeabi_lib_src := os.join_path(build_dir, 'lib', 'armeabi-v7a','lib${opt.machine_friendly_app_name}.so')
-	armeabi_lib_dst := os.join_path(armeabi_lib_dir, 'lib${opt.machine_friendly_app_name}.so')
-	os.cp( armeabi_lib_src, armeabi_lib_dst) or { panic(err) }
-
-	return true
-}
-
-fn package(opt Options) bool {
-
-	// Build APK
-	if opt.verbosity > 0 {
-		println('Preparing package')
-	}
-
-	build_path := os.join_path(opt.work_dir, 'build')
-	build_tools_path := os.join_path(asdk.build_tools_root(),opt.build_tools)
-
-	javac := os.join_path(java.jdk_root(),'bin','javac')
-	keytool := os.join_path(java.jdk_root(),'bin','keytool')
-	aapt := os.join_path(build_tools_path,'aapt')
-	dx := os.join_path(build_tools_path,'dx')
-	zipalign := os.join_path(build_tools_path,'zipalign')
-	apksigner := os.join_path(build_tools_path,'apksigner')
-
-
-	//work_dir := opt.work_dir
-	//VAPK_OUT=${VAPK}/..
-
-	package_path := os.join_path(opt.work_dir, 'package')
-	os.mkdir_all(package_path)
-
-	android_extras_path := os.join_path(exe_dir(), 'platforms', 'android')
-
-	cp_all(android_extras_path, package_path, false)
-
-
-	if opt.verbosity > 0 {
-		println('Copying assets')
-	}
-
-	assets_path := os.join_path(package_path, 'assets')
-	os.mkdir_all(assets_path)
-
-	/*
-	test_asset := os.join_path(assets_path, 'test.txt')
-	os.rm(test_asset)
-	mut fh := open_file(test_asset, 'w+', 0o755) or { panic(err) }
-	fh.write('test')
-	fh.close()*/
-
-	mut assets_by_side_path := opt.input
-	if is_file(opt.input) {
-		assets_by_side_path = os.dir(opt.input)
-	}
-
-	// Look for "assets" dir in same location as input
-	assets_by_side := os.join_path(assets_by_side_path,'assets')
-	if os.is_dir(assets_by_side) {
-		if opt.verbosity > 0 {
-			println('Including assets from ${assets_by_side}')
-		}
-		cp_all(assets_by_side, assets_path, false)
-	}
-
-	// Look for "assets" dir in current dir
-	assets_in_dir := 'assets'
-	if os.is_dir(assets_in_dir) {
-		if opt.verbosity > 0 {
-			println('Including assets from ${assets_in_dir}')
-		}
-		cp_all(assets_in_dir, assets_path, false)
-	}
-
-	// Look in user provided dir
-	for user_asset in opt.assets_extra {
-		if os.is_dir(user_asset) {
-			if opt.verbosity > 0 {
-				println('Including assets from ${user_asset}')
-			}
-			os.cp_all(user_asset, assets_path, false)
-		} else {
-			os.cp(user_asset, assets_path) or {
-				eprintln('Skipping invalid asset file ${user_asset}')
-			}
-		}
-	}
-
-	output_fn := os.file_name(opt.output_file).replace(os.file_ext(opt.output_file),'')
-	tmp_product := os.join_path(opt.work_dir, '${output_fn}.apk')
-	tmp_unsigned_product := os.join_path(opt.work_dir, '${output_fn}.unsigned.apk')
-	tmp_unaligned_product := os.join_path(opt.work_dir, '${output_fn}.unaligned.apk')
-
-	os.rm(tmp_product)
-	os.rm(tmp_unsigned_product)
-	os.rm(tmp_unaligned_product)
-
-	android_runtime := os.join_path(asdk.platforms_root(),'android-'+opt.api_level,'android.jar')
-
-	src_path := os.join_path(package_path,'src')
-	res_path := os.join_path(package_path,'res')
-
-	obj_path := os.join_path(package_path, 'obj')
-	os.mkdir_all(obj_path)
-	bin_path := os.join_path(package_path, 'bin')
-	os.mkdir_all(bin_path)
-
-	mut aapt_cmd := [
-		aapt,
-		'package',
-		'-v',
-		'-f',
-		'-m',
-		'-M '+os.join_path(package_path,'AndroidManifest.xml'),
-		'-S '+res_path,
-		'-J '+src_path,
-		'-A '+assets_path,
-		'-I '+android_runtime
-		//'--target-sdk-version ${ANDROIDTARGET}'
-	]
-	run_else_exit(opt,aapt_cmd)
-
-	pwd := os.getwd()
-	os.chdir(package_path)
-
-	// Compile java sources
-	java_sources := walk_ext(os.join_path(package_path,'src'), '.java')
-
-	mut javac_cmd_part := [
-		javac,
-		'-d obj', //+obj_path,
-		'-source 1.7',
-		'-target 1.7',
-		'-sourcepath src',
-		'-bootclasspath '+android_runtime
-	]
-	javac_cmd_part << java_sources
-
-	run_else_exit(opt,javac_cmd_part)
-
-	// Dex
-	dx_cmd := [
-		dx,
-		'--verbose',
-		'--dex',
-		'--output='+os.join_path('bin','classes.dex'),
-		'obj', //obj_path
-	]
-	run_else_exit(opt,dx_cmd)
-
-	// Second run
-	aapt_cmd = [
-		aapt,
-		'package',
-		'-v',
-		'-f',
-		'-S '+res_path,
-		'-M '+os.join_path(package_path,'AndroidManifest.xml'),
-		'-A '+assets_path,
-		'-I '+android_runtime,
-		'-F '+tmp_unaligned_product,
-		'bin' //bin_path
-	]
-	run_else_exit(opt,aapt_cmd)
-
-
-	os.chdir(build_path)
-
-	collect_libs := walk_ext(os.join_path(build_path,'lib'), '.so')
-
-	for lib in collect_libs {
-		lib_s := lib.replace(build_path+os.path_separator, '')
-		aapt_cmd = [
-			aapt,
-			'add',
-			'-v',
-			tmp_unaligned_product,
-			lib_s
-		]
-		run_else_exit(opt,aapt_cmd)
-	}
-
-	os.chdir(pwd)
-
-
-	zipalign_cmd := [
-		zipalign,
-		'-v',
-		'-f 4',
-		tmp_unaligned_product,
-		tmp_unsigned_product
-	]
-	run_else_exit(opt,zipalign_cmd)
-
-	// Sign the APK
-	keystore_file := os.join_path(exe_dir(),'debug.keystore')
-	keystore_password := 'android'
-
-	if ! os.exists(keystore_file) {
-		if opt.verbosity > 0 {
-			println('Generating debug.keystore')
-		}
-		keytool_cmd := [
-			keytool,
-			'-genkeypair',
-			'-keystore '+keystore_file,
-			'-storepass android',
-			'-alias androiddebugkey',
-			'-keypass '+keystore_password,
-			'-keyalg RSA',
-			'-validity 10000',
-			'-dname \'CN=,OU=,O=,L=,S=,C=\''
-		]
-		run_else_exit(opt,keytool_cmd)
-	}
-
-	mut apksigner_cmd := [
-		apksigner,
-		'sign',
-		'--ks "'+keystore_file+'"',
-		'--ks-pass pass:'+keystore_password,
-		'--key-pass pass:'+keystore_password,
-		'--ks-key-alias "androiddebugkey"',
-		'--out '+tmp_product,
-		tmp_unsigned_product
-	]
-	run_else_exit(opt,apksigner_cmd)
-
-	apksigner_cmd = [
-		apksigner,
-		'verify',
-		'-v',
-		tmp_product,
-	]
-	run_else_exit(opt,apksigner_cmd)
-
-
-	os.mv_by_cp(tmp_product, opt.output_file) or { panic(err) }
-
-	if opt.verbosity > 0 {
-		println('Generated package ${os.real_path(opt.output_file)}')
-	}
-
-	return true
-}
-
-fn deploy(opt Options) bool {
-
-	// Deploy
-	if opt.device_id != '' {
-		if opt.verbosity > 0 {
-			println('Deploying to ${opt.device_id}')
-		}
-
-		adb := os.join_path(asdk.platform_tools_root(),'adb')
-
-		adb_cmd := [
-			adb,
-			'-s "${opt.device_id}"',
-			'install',
-			'-r',
-			opt.output_file
-		]
-		run_else_exit(opt,adb_cmd)
-
-		os.system('killall adb')
-		//os.system('Taskkill /IM adb.exe /F)
-		return true
-	}
-	return false
-}
-
-fn run_else_exit(opt Options, args []string) string {
-	cmd := args.join(' ')
-	if opt.verbosity > 1 {
-		println('Running ${args[0]}')
-		if opt.verbosity > 2 {
-			println(cmd)
-		}
-	}
-	res := os.exec(cmd) or { os.Result{1,''} }
-	if res.exit_code > 0 {
-		eprintln('${args[0]} failed with exit code ${res.exit_code}')
-		eprintln(res.output)
-		exit(1)
-	}
-	return res.output
-}
-
-fn dump_env(opt Options) {
-	println('V')
-	println('\tVersion ${vxt.version()}')
-	println('\tPath ${vxt.home()}')
-	println('Java')
-	println('\tJDK')
-	println('\t\tVersion ${java.jdk_version()}')
-	println('\t\tPath ${java.jdk_root()}')
-	println('Android')
-	println('\tSDK')
-	println('\t\tPath ${asdk.root()}')
-	println('\tNDK')
-	println('\t\tVersion ${opt.ndk_version}')
-	println('\t\tPath ${andk.root()}')
-	println('\tBuild')
-	println('\t\tAPI ${opt.api_level}')
-	println('\t\tBuild-tools ${opt.build_tools}')
-	println('Product')
-	println('\tName "${opt.app_name}"')
-	println('\tPackage ${opt.package_id}')
-	println('\tOutput ${opt.output_file}')
-	println('')
 }
