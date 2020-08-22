@@ -7,10 +7,10 @@ import vxt
 import semver
 
 import java
-import androidsdk as asdk
-import androidndk as andk
 
-import va
+import android
+import android.sdk as asdk
+import android.ndk as andk
 
 const (
 	exe_name	= os.file_name(os.executable())
@@ -26,9 +26,7 @@ const (
 	min_supported_api_level = '21'
 )
 
-
-/*
-fn appendenv(name, value string) {
+/* fn appendenv(name, value string) {
 	os.setenv(name, os.getenv(name)+os.path_delimiter+value, true)
 }*/
 
@@ -166,7 +164,7 @@ fn main() {
 	}
 	opt.input = input
 
-	comp_opt := va.CompileOptions {
+	comp_opt := android.CompileOptions {
 		work_dir:		opt.work_dir
 		input:			opt.input
 
@@ -176,12 +174,12 @@ fn main() {
 		machine_friendly_app_name:	opt.machine_friendly_app_name
 		api_level:		opt.api_level
 	}
-	if ! va.compile(comp_opt) {
+	if ! android.compile(comp_opt) {
 		eprintln('Compiling didn\'t succeed')
 		exit(1)
 	}
 
-	pck_opt := va.PackageOptions {
+	pck_opt := android.PackageOptions {
 		verbosity:		opt.verbosity
 		work_dir:		opt.work_dir
 
@@ -194,18 +192,18 @@ fn main() {
 		keystore: 		os.join_path(exe_dir,'debug.keystore')
 		base_files:		os.join_path(exe_dir, 'platforms', 'android')
 	}
-	if ! va.package(pck_opt) {
+	if ! android.package(pck_opt) {
 		eprintln('Packaging didn\'t succeed')
 		exit(1)
 	}
 
 	if opt.device_id != '' {
-		deploy_opt := va.DeployOptions {
+		deploy_opt := android.DeployOptions {
 			verbosity: opt.verbosity
 			device_id: opt.device_id
 			deploy_file: opt.output_file
 		}
-		if ! va.deploy(deploy_opt) {
+		if ! android.deploy(deploy_opt) {
 			eprintln('Deployment didn\'t succeed')
 			exit(1)
 		} else {
@@ -247,6 +245,7 @@ fn check_dependencies() {
 		// (Absolute mess, yes)
 		eprintln('Java version ${jdk_version} is not supported')
 		eprintln('Currently Java 8 JDK (1.8.x) is requried')
+		eprintln('Please install Java 8 JDK or provide a valid path via JAVA_HOME')
 		exit(1)
 	}
 
@@ -270,7 +269,7 @@ fn check_dependencies() {
 fn resolve_options(mut opt Options) {
 
 	// Validate API level
-	mut api_level := asdk.default_api_version()
+	mut api_level := asdk.default_api_level
 	if opt.api_level != '' {
 		if asdk.has_api(opt.api_level) {
 			api_level = opt.api_level
@@ -294,7 +293,7 @@ fn resolve_options(mut opt Options) {
 	opt.api_level = api_level
 
 	// Validate build-tools version
-	mut build_tools_version := asdk.default_build_tools_version()
+	mut build_tools_version := asdk.default_build_tools_version
 	if opt.build_tools != '' {
 		if asdk.has_build_tools(opt.build_tools) {
 			build_tools_version = opt.build_tools

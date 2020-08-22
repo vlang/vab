@@ -1,9 +1,14 @@
-module androidsdk
+module sdk
 
 import os
 
 const (
 	home = os.home_dir()
+)
+
+const (
+	default_api_level = os.file_name(default_platforms_dir()).all_after('android-')
+	default_build_tools_version = os.file_name(default_build_tools_dir())
 )
 
 // Possible default locations of the SDK
@@ -92,14 +97,6 @@ pub fn has_build_tools(version string) bool {
 
 pub fn build_tools_available() []string {
 	return ls_sorted(build_tools_root())
-}
-
-pub fn default_build_tools_version() string {
-	return os.file_name(default_build_tools_dir())
-}
-
-pub fn default_api_version() string {
-	return os.file_name(default_platforms_dir()).all_after('android-')
 }
 
 pub fn default_build_tools_dir() string {

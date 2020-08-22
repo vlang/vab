@@ -1,8 +1,8 @@
-module androidndk
+module ndk
 
 import os
 
-import androidsdk as sdk
+import android.sdk
 
 const (
 	home = os.home_dir()

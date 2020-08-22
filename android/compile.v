@@ -1,9 +1,10 @@
-module va
+module android
 
 import os
 
 import vxt
-import androidndk as andk
+
+import android.ndk as ndk
 
 import crypto.md5
 
@@ -73,7 +74,7 @@ pub fn compile(opt CompileOptions) bool {
 
 	v_home := vxt.home()
 
-	android_ndk_root := os.join_path(andk.root(),opt.ndk_version)
+	android_ndk_root := os.join_path(ndk.root(),opt.ndk_version)
 
 	/*
 	* Compile sources for all Android archs
@@ -104,7 +105,7 @@ pub fn compile(opt CompileOptions) bool {
 	defines << ['-DANDROID_FULLSCREEN']
 
 	// NDK headers
-	includes << ['-I"${andk.root()}/sysroot/usr/include"','-I"${andk.root()}/sysroot/usr/include/android"']
+	includes << ['-I"${ndk.root()}/sysroot/usr/include"','-I"${ndk.root()}/sysroot/usr/include/android"']
 
 	// Sokol
 	// TODO support both GLES2 & GLES3 - GLES2 should be default - trust me

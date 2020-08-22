@@ -1,8 +1,8 @@
-module va
+module android
 
 import os
 
-import androidsdk as asdk
+import android.sdk as sdk
 
 pub struct DeployOptions {
 	verbosity	int
@@ -18,7 +18,7 @@ pub fn deploy(opt DeployOptions) bool {
 			println('Deploying to ${opt.device_id}')
 		}
 
-		adb := os.join_path(asdk.platform_tools_root(),'adb')
+		adb := os.join_path(sdk.platform_tools_root(),'adb')
 
 		adb_cmd := [
 			adb,

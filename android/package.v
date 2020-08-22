@@ -1,9 +1,9 @@
-module va
+module android
 
 import os
 
 import java
-import androidsdk as asdk
+import android.sdk as sdk
 
 pub struct PackageOptions {
 	verbosity		int
@@ -28,7 +28,7 @@ pub fn package(opt PackageOptions) bool {
 	}
 
 	build_path := os.join_path(opt.work_dir, 'build')
-	build_tools_path := os.join_path(asdk.build_tools_root(),opt.build_tools)
+	build_tools_path := os.join_path(sdk.build_tools_root(),opt.build_tools)
 
 	javac := os.join_path(java.jdk_root(),'bin','javac')
 	keytool := os.join_path(java.jdk_root(),'bin','keytool')
@@ -109,7 +109,7 @@ pub fn package(opt PackageOptions) bool {
 	os.rm(tmp_unsigned_product)
 	os.rm(tmp_unaligned_product)
 
-	android_runtime := os.join_path(asdk.platforms_root(),'android-'+opt.api_level,'android.jar')
+	android_runtime := os.join_path(sdk.platforms_root(),'android-'+opt.api_level,'android.jar')
 
 	src_path := os.join_path(package_path,'src')
 	res_path := os.join_path(package_path,'res')
