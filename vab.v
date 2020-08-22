@@ -156,13 +156,38 @@ fn main() {
 		exit(1)
 	}
 
-	mut input := fp.args[fp.args.len-1]
-	if ! (os.is_dir(input) || os.file_ext(input) == '.v') {
+
+	input := fp.args[fp.args.len-1]
+	input_ext := os.file_ext(input)
+
+	accepted_input_files := ['.v','.apk','.aab']
+
+	if ! (os.is_dir(input) || input_ext in accepted_input_files) {
 		println(fp.usage())
-		eprintln('$exe_name requires a valid V input file or directory')
+		eprintln('$exe_name requires input to be a V file, an APK, AAB or or V sources a directory')
 		exit(1)
 	}
 	opt.input = input
+
+	deploy_opt := android.DeployOptions {
+		verbosity: opt.verbosity
+		device_id: opt.device_id
+		deploy_file: opt.output_file
+	}
+
+	if input_ext in accepted_input_files {
+		if opt.device_id != '' {
+			if ! android.deploy(deploy_opt) {
+				eprintln('Deployment didn\'t succeed')
+				exit(1)
+			} else {
+				if opt.verbosity > 0 {
+					println('Deployed to ${opt.device_id} successfully')
+				}
+				exit(1)
+			}
+		}
+	}
 
 	comp_opt := android.CompileOptions {
 		work_dir:		opt.work_dir
@@ -198,11 +223,7 @@ fn main() {
 	}
 
 	if opt.device_id != '' {
-		deploy_opt := android.DeployOptions {
-			verbosity: opt.verbosity
-			device_id: opt.device_id
-			deploy_file: opt.output_file
-		}
+
 		if ! android.deploy(deploy_opt) {
 			eprintln('Deployment didn\'t succeed')
 			exit(1)
@@ -210,6 +231,11 @@ fn main() {
 			if opt.verbosity > 0 {
 				println('Deployed to ${opt.device_id} successfully')
 			}
+		}
+	} else {
+		if opt.verbosity > 0 {
+			println('Generated ${os.real_path(opt.output_file)}')
+			println('Use `$exe_name --device-id ${os.real_path(opt.output_file)}` to deploy package')
 		}
 	}
 }

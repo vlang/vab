@@ -37,7 +37,6 @@ pub fn package(opt PackageOptions) bool {
 	zipalign := os.join_path(build_tools_path,'zipalign')
 	apksigner := os.join_path(build_tools_path,'apksigner')
 
-
 	//work_dir := opt.work_dir
 	//VAPK_OUT=${VAPK}/..
 
@@ -258,10 +257,6 @@ pub fn package(opt PackageOptions) bool {
 	run_else_exit(apksigner_cmd)
 
 	os.mv_by_cp(tmp_product, opt.output_file) or { panic(err) }
-
-	if opt.verbosity > 0 {
-		println('Generated package ${os.real_path(opt.output_file)}')
-	}
 
 	return true
 }
