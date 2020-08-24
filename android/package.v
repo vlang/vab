@@ -3,7 +3,8 @@ module android
 import os
 
 import java
-import android.sdk as sdk
+
+import android.sdk
 
 pub struct PackageOptions {
 	verbosity		int

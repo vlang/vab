@@ -50,7 +50,7 @@ fn dump(opt Options) {
 	println('Product')
 	println('\tName "${opt.app_name}"')
 	println('\tPackage ${opt.package_id}')
-	println('\tOutput ${opt.output_file}')
+	println('\tOutput ${opt.output}')
 	println('')
 }
 
@@ -65,12 +65,14 @@ struct Options {
 	device_id		string
 
 	dump_env		bool
+	dump_usage		bool
 
+	list_ndks		bool
 	list_apis		bool
 	list_build_tools bool
 mut:
 	input			string
-	output_file		string
+	output			string
 	machine_friendly_app_name string
 
 	build_tools		string
@@ -79,7 +81,6 @@ mut:
 
 	assets_extra	[]string
 }
-
 
 
 fn main() {
@@ -98,12 +99,14 @@ fn main() {
 
 		assets_extra: fp.string_multi('assets', `a`, 'Asset dir(s) to include in build')
 
-		device_id: fp.string('device-id', `i`, '', 'Deploy to this device ID after build')
-		dump_env: fp.bool('dump', `d`, false, 'Dump the detected environment and exit')
+		device_id: fp.string('device-id', `d`, '', 'Deploy to device ID')
+
+		dump_env: fp.bool('env', `e`, false, 'Dump the detected environment and exit')
+		dump_usage: fp.bool('help', `h`, false, 'Show this help message and exit')
 
 		app_name: fp.string('name', 0, default_app_name, 'Pretty app name')
 		package_id: fp.string('package-id', 0, default_package_id, 'App package ID (e.g. "org.v.app")')
-		output_file: fp.string('output', `o`, '', 'Path to output file (dir or file)')
+		output: fp.string('output', `o`, '', 'Path to output (dir or file)')
 
 		verbosity: verbosity
 
@@ -114,14 +117,15 @@ fn main() {
 
 		work_dir: os.join_path(os.temp_dir(), exe_name.replace(' ','_').to_lower())
 
-		list_apis:  fp.bool('list-api', 0, false, 'List available API levels')
+		list_ndks:  fp.bool('list-ndks', 0, false, 'List available NDK versions')
+		list_apis:  fp.bool('list-apis', 0, false, 'List available API levels')
 		list_build_tools:  fp.bool('list-build-tools', 0, false, 'List available Build-tools versions')
 	}
 
-	fp.finalize() or {
+	additional_args := fp.finalize() or {
 		eprintln(err)
 		println(fp.usage())
-		return
+		exit(1)
 	}
 
 	/*
@@ -136,9 +140,16 @@ fn main() {
 		exit(0)
 	}
 
+	if opt.list_ndks {
+		for ndk_v in andk.versions_available() {
+			println(ndk_v)
+		}
+		exit(0)
+	}
+
 	if opt.list_apis {
 		for api in asdk.apis_available() {
-			println(api.all_after('android-'))
+			println(api)
 		}
 		exit(0)
 	}
@@ -150,16 +161,29 @@ fn main() {
 		exit(0)
 	}
 
-	if fp.args.len <= 0 {
+	if fp.args.len == 0 || opt.dump_usage {
 		println(fp.usage())
-		eprintln('$exe_name requires a valid input file or directory')
 		exit(1)
 	}
 
-
 	input := fp.args[fp.args.len-1]
-	input_ext := os.file_ext(input)
 
+	if additional_args.len > 1 {
+		if additional_args[0] == 'install' {
+			install_arg := additional_args[1]
+			if install_arg == 'tools' {
+				android.setup(android.SetupOptions{.commandline_tools,opt.verbosity}) or {
+					eprintln(err)
+					exit(1)
+				}
+			} else {
+				eprintln('$exe_name unknown install ID $install_arg')
+				exit(1)
+			}
+		}
+	}
+
+	input_ext := os.file_ext(input)
 	accepted_input_files := ['.v','.apk','.aab']
 
 	if ! (os.is_dir(input) || input_ext in accepted_input_files) {
@@ -172,7 +196,7 @@ fn main() {
 	deploy_opt := android.DeployOptions {
 		verbosity: opt.verbosity
 		device_id: opt.device_id
-		deploy_file: opt.output_file
+		deploy_file: opt.output
 	}
 
 	if input_ext in accepted_input_files {
@@ -213,7 +237,7 @@ fn main() {
 
 		input:			opt.input
 		assets_extra:	opt.assets_extra
-		output_file:	opt.output_file
+		output_file:	opt.output
 		keystore: 		os.join_path(exe_dir,'debug.keystore')
 		base_files:		os.join_path(exe_dir, 'platforms', 'android')
 	}
@@ -234,8 +258,8 @@ fn main() {
 		}
 	} else {
 		if opt.verbosity > 0 {
-			println('Generated ${os.real_path(opt.output_file)}')
-			println('Use `$exe_name --device-id ${os.real_path(opt.output_file)}` to deploy package')
+			println('Generated ${os.real_path(opt.output)}')
+			println('Use `$exe_name --device-id ${os.real_path(opt.output)}` to deploy package')
 		}
 	}
 }
@@ -281,7 +305,7 @@ fn check_dependencies() {
 	if ! asdk.found() {
 		eprintln('No Android SDK could be detected.')
 		eprintln('Please provide a valid path via ANDROID_SDK_ROOT')
-		eprintln('or run `$exe_name install android-sdk`')
+		eprintln('or run `$exe_name install sdk`')
 		exit(1)
 	}
 
@@ -289,7 +313,7 @@ fn check_dependencies() {
 	if ! andk.found() {
 		eprintln('No Android NDK could be detected.')
 		eprintln('Please provide a valid path via ANDROID_NDK_ROOT')
-		eprintln('or run `$exe_name install android-ndk`')
+		eprintln('or run `$exe_name install ndk`')
 		exit(1)
 	}
 }
@@ -361,16 +385,21 @@ fn resolve_options(mut opt Options) {
 	opt.ndk_version = ndk_version
 
 	// Output specific
-	default_file_name := opt.app_name.replace(' ','_').to_lower()
+	default_file_name := opt.app_name.replace(os.path_separator.str(),'').replace(' ','_').to_lower()
 
 	mut output_file := ''
-	if opt.output_file != '' {
-		output_file = opt.output_file.all_before(os.file_ext(opt.output_file))
+	if opt.output != '' {
+		ext := os.file_ext(opt.output)
+		if ext != '' {
+			output_file = opt.output.all_before(ext)
+		} else {
+			output_file = os.join_path(opt.output.trim_right(os.path_separator),default_file_name)
+		}
 	} else {
 		output_file = default_file_name
 	}
 	output_file += '.apk'
-	opt.output_file = output_file
+	opt.output = output_file
 
 	// TODO can be supported when we can manipulate or generate AndroidManifest.xml + sources from code
 	// Java package ids/names are integrated hard into the eco-system

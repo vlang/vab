@@ -2,7 +2,7 @@ module android
 
 import os
 
-import android.sdk as sdk
+import android.sdk
 
 pub struct DeployOptions {
 	verbosity	int

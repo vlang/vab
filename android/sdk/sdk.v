@@ -26,7 +26,13 @@ const (
 	]
 )
 
-// root will try to detect where the Android SDK is installed. Otherwise return blank
+enum Component {
+	ndk
+	api_level
+	build_tools
+}
+
+// root will try to detect where the Android SDK is installed. Otherwise return an empty string
 pub fn root() string {
 	mut sdk_root := os.getenv('ANDROID_SDK_ROOT')
 
@@ -67,24 +73,42 @@ pub fn found() bool {
 	return root() != ''
 }
 
+pub fn tools_root() string {
+	if ! found() { return '' }
+	return os.join_path(root(),'tools')
+}
+
 pub fn build_tools_root() string {
+	if ! found() { return '' }
 	return os.join_path(root(),'build-tools')
 }
 
 pub fn platform_tools_root() string {
+	if ! found() { return '' }
 	return os.join_path(root(),'platform-tools')
 }
 
 pub fn platforms_root() string {
+	if ! found() { return '' }
 	return os.join_path(root(),'platforms')
 }
 
 pub fn platforms_dir() []string {
+	if ! found() { return []string{} }
 	return find_sorted(platforms_root())
 }
 
-pub fn apis_available() []string {
+pub fn api_dirs() []string {
+	if ! found() { return []string{} }
 	return ls_sorted(platforms_root())
+}
+
+pub fn apis_available() []string {
+	mut apis := []string{}
+	for api in api_dirs() {
+		apis << api.all_after('android-')
+	}
+	return apis
 }
 
 pub fn has_api(api string) bool {
@@ -96,10 +120,12 @@ pub fn has_build_tools(version string) bool {
 }
 
 pub fn build_tools_available() []string {
+	if ! found() { return []string{} }
 	return ls_sorted(build_tools_root())
 }
 
 pub fn default_build_tools_dir() string {
+	if ! found() { return '' }
 	dirs := find_sorted(build_tools_root())
 	if dirs.len > 0 {
 		return dirs.first()
@@ -108,11 +134,16 @@ pub fn default_build_tools_dir() string {
 }
 
 pub fn default_platforms_dir() string {
+	if ! found() { return '' }
 	dirs := find_sorted(platforms_root())
 	if dirs.len > 0 {
 		return dirs.first()
 	}
 	return ''
+}
+
+pub fn setup(component Component, version string) {
+	// TODO
 }
 
 /*

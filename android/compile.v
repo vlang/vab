@@ -4,7 +4,7 @@ import os
 
 import vxt
 
-import android.ndk as ndk
+import android.ndk
 
 import crypto.md5
 
