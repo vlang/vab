@@ -171,15 +171,11 @@ fn main() {
 	if additional_args.len > 1 {
 		if additional_args[0] == 'install' {
 			install_arg := additional_args[1]
-			if install_arg == 'tools' {
-				android.setup(android.SetupOptions{.commandline_tools,opt.verbosity}) or {
-					eprintln(err)
-					exit(1)
-				}
-			} else {
-				eprintln('$exe_name unknown install ID $install_arg')
-				exit(1)
+			install_res := install(opt,install_arg)
+			if install_res == 0 && opt.verbosity > 0 {
+				println('Installed ${install_arg} successfully')
 			}
+			exit( install_res )
 		}
 	}
 
@@ -404,4 +400,41 @@ fn resolve_options(mut opt Options) {
 	// TODO can be supported when we can manipulate or generate AndroidManifest.xml + sources from code
 	// Java package ids/names are integrated hard into the eco-system
 	opt.machine_friendly_app_name = 'v'  //opt.app_name.replace(' ','_').to_lower()
+}
+
+fn install(opt Options, component string) int {
+	if component == 'tools' {
+		android.setup(android.SetupOptions{.commandline_tools,opt.verbosity}) or {
+			eprintln(err)
+			exit(1)
+		}
+	}
+	if component == 'sdk' {
+		tools_root := android.root_of(.commandline_tools)
+
+		sdk_setup := android.SetupOptions{.sdk,opt.verbosity}
+		if tools_root != '' {
+			android.setup(sdk_setup) or {
+				eprintln(err)
+				exit(1)
+			}
+		} else {
+			vab_cmd := [exe_name,'install','tools','-v',opt.verbosity.str()]
+			res := os.exec(vab_cmd.join(' ')) or { os.Result{1,''} }
+			if res.exit_code > 0 {
+				eprintln('${vab_cmd[0]} failed with return code ${res.exit_code}')
+				eprintln(res.output)
+				exit(1)
+			}
+			android.setup(sdk_setup) or {
+				eprintln(err)
+				exit(1)
+			}
+		}
+	}
+	else {
+		eprintln('$exe_name unknown install "$component"')
+		exit(1)
+	}
+	return 0
 }
