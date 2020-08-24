@@ -410,7 +410,7 @@ fn install(opt Options, component string) int {
 		}
 	}
 	if component == 'sdk' {
-		tools_root := android.root_of(.commandline_tools)
+		tools_root := android.dependency_root(.commandline_tools)
 
 		sdk_setup := android.SetupOptions{.sdk,opt.verbosity}
 		if tools_root != '' {
@@ -434,7 +434,7 @@ fn install(opt Options, component string) int {
 	}
 	else {
 		eprintln('$exe_name unknown install "$component"')
-		exit(1)
+		return 1
 	}
 	return 0
 }
