@@ -265,15 +265,15 @@ fn check_dependencies() {
 	// Validate V install
 	if vxt.vexe() == '' {
 		eprintln('No V install could be detected')
-		eprintln('Please provide a valid path to V via VEXE env variable')
-		eprintln('or install V from https://github.com/vlang/v')
+		eprintln('Please install V from https://github.com/vlang/v')
+		eprintln('or provide a valid path to V via VEXE env variable')
 		exit(1)
 	}
 
 	// Validate Java requirements
 	if ! java.jdk_found() {
 		eprintln('No Java install(s) could be detected')
-		eprintln('Please install Java 8 JDK')
+		eprintln('Please install Java 8 JDK or provide a valid path via JAVA_HOME')
 		eprintln('(Currently Java 8 (1.8.x) is the only Java version supported by the Android SDK)')
 		exit(1)
 	}
@@ -403,37 +403,50 @@ fn resolve_options(mut opt Options) {
 }
 
 fn install(opt Options, component string) int {
+
+	install_tools := fn (opt Options) {
+		vab_cmd := [exe_name,'install','tools','-v',opt.verbosity.str()]
+		res := os.exec(vab_cmd.join(' ')) or { os.Result{1,''} }
+		if res.exit_code > 0 {
+			eprintln('${vab_cmd[0]} failed with return code ${res.exit_code}')
+			eprintln(res.output)
+			exit(1)
+		}
+	}
+
 	if component == 'tools' {
 		android.setup(android.SetupOptions{.commandline_tools,opt.verbosity}) or {
 			eprintln(err)
 			exit(1)
 		}
-	}
-	if component == 'sdk' {
+	} else if component == 'sdk' {
 		tools_root := android.dependency_root(.commandline_tools)
 
-		sdk_setup := android.SetupOptions{.sdk,opt.verbosity}
-		if tools_root != '' {
-			android.setup(sdk_setup) or {
-				eprintln(err)
-				exit(1)
-			}
-		} else {
-			vab_cmd := [exe_name,'install','tools','-v',opt.verbosity.str()]
-			res := os.exec(vab_cmd.join(' ')) or { os.Result{1,''} }
-			if res.exit_code > 0 {
-				eprintln('${vab_cmd[0]} failed with return code ${res.exit_code}')
-				eprintln(res.output)
-				exit(1)
-			}
-			android.setup(sdk_setup) or {
-				eprintln(err)
-				exit(1)
-			}
+		if tools_root == '' {
+			install_tools(opt)
 		}
-	}
-	else {
-		eprintln('$exe_name unknown install "$component"')
+
+		sdk_setup := android.SetupOptions{.sdk,opt.verbosity}
+		android.setup(sdk_setup) or {
+			eprintln(err)
+			exit(1)
+		}
+
+	} else if component == 'ndk' {
+		tools_root := android.dependency_root(.commandline_tools)
+
+		if tools_root == '' {
+			install_tools(opt)
+		}
+
+		ndk_setup := android.SetupOptions{.ndk,opt.verbosity}
+		android.setup(ndk_setup) or {
+			eprintln(err)
+			exit(1)
+		}
+
+	} else {
+		eprintln('$exe_name '+@FN+': Unknown component "$component"')
 		return 1
 	}
 	return 0
