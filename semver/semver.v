@@ -14,8 +14,8 @@ pub:
 	major int
 	minor int
 	patch int
-	prerelease string = ''
-	metadata string = ''
+	prerelease string
+	metadata string
 }
 
 // Enum representing type of version increment.
