@@ -64,6 +64,9 @@ struct Options {
 
 	device_id		string
 
+	keystore		string
+	keystore_alias	string
+
 	dump_env		bool
 	dump_usage		bool
 
@@ -100,6 +103,8 @@ fn main() {
 		assets_extra: fp.string_multi('assets', `a`, 'Asset dir(s) to include in build')
 
 		device_id: fp.string('device-id', `d`, '', 'Deploy to device ID')
+		keystore: fp.string('keystore', 0, '', 'Use this keystore file to sign the package')
+		keystore_alias: fp.string('keystore-alias', 0, '', 'Use this keystore alias from the keystore file to sign the package')
 
 		dump_env: fp.bool('env', `e`, false, 'Dump the detected environment and exit')
 		dump_usage: fp.bool('help', `h`, false, 'Show this help message and exit')
@@ -224,6 +229,16 @@ fn main() {
 		exit(1)
 	}
 
+	// Keystore file
+	mut keystore := opt.keystore
+	if !os.is_file(keystore) {
+		println('Can\'t locate "${opt.keystore}"')
+		println('Falling back to default debug.keystore')
+		keystore = ''
+	}
+	if keystore == '' {
+		keystore = os.join_path(exe_dir,'debug.keystore')
+	}
 	pck_opt := android.PackageOptions {
 		verbosity:		opt.verbosity
 		work_dir:		opt.work_dir
@@ -234,7 +249,8 @@ fn main() {
 		input:			opt.input
 		assets_extra:	opt.assets_extra
 		output_file:	opt.output
-		keystore: 		os.join_path(exe_dir,'debug.keystore')
+		keystore: 		keystore
+		keystore_alias: opt.keystore_alias
 		base_files:		os.join_path(exe_dir, 'platforms', 'android')
 	}
 	if ! android.package(pck_opt) {

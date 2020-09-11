@@ -18,6 +18,7 @@ pub struct PackageOptions {
 	output_file		string
 
 	keystore		string
+	keystore_alias	string
 	base_files		string
 }
 
@@ -214,9 +215,7 @@ pub fn package(opt PackageOptions) bool {
 
 	// Sign the APK
 	keystore_file := opt.keystore
-	keystore_password := 'android'
-
-	if ! os.exists(keystore_file) {
+	if !os.is_file(keystore_file) {
 		if opt.verbosity > 0 {
 			println('Generating debug.keystore')
 		}
@@ -226,7 +225,7 @@ pub fn package(opt PackageOptions) bool {
 			'-keystore '+keystore_file,
 			'-storepass android',
 			'-alias androiddebugkey',
-			'-keypass '+keystore_password,
+			'-keypass android',
 			'-keyalg RSA',
 			'-validity 10000',
 			'-dname \'CN=,OU=,O=,L=,S=,C=\''
@@ -235,13 +234,28 @@ pub fn package(opt PackageOptions) bool {
 		run_else_exit(keytool_cmd)
 	}
 
+	// Defaults from Android debug key
+	mut keystore_alias := 'androiddebugkey'
+	mut keystore_password := 'android'
+	mut keystore_alias_password := keystore_password
+
+	if opt.keystore_alias != '' {
+		keystore_alias = opt.keystore_alias
+	}
+	if os.getenv('KEYSTORE_PASSWORD') != '' {
+		keystore_password = os.getenv('KEYSTORE_PASSWORD')
+	}
+	if os.getenv('KEYSTORE_ALIAS_PASSWORD') != '' {
+		keystore_alias_password = os.getenv('KEYSTORE_ALIAS_PASSWORD')
+	}
+
 	mut apksigner_cmd := [
 		apksigner,
 		'sign',
 		'--ks "'+keystore_file+'"',
 		'--ks-pass pass:'+keystore_password,
-		'--key-pass pass:'+keystore_password,
-		'--ks-key-alias "androiddebugkey"',
+		'--key-pass pass:'+keystore_alias_password,
+		'--ks-key-alias "'+keystore_alias+'"',
 		'--out '+tmp_product,
 		tmp_unsigned_product
 	]
