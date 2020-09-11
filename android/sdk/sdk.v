@@ -112,7 +112,7 @@ pub fn apis_available() []string {
 }
 
 pub fn has_api(api string) bool {
-	return 'android-'+api in apis_available()
+	return api in apis_available()
 }
 
 pub fn has_build_tools(version string) bool {
