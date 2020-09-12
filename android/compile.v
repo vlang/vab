@@ -9,25 +9,32 @@ import android.ndk
 import crypto.md5
 
 pub struct CompileOptions {
+	verbosity		int
+
+	v_flags			[]string
+
 	work_dir		string
 	input			string
 
-	verbosity		int
-
 	ndk_version		string
-	machine_friendly_app_name	string
+	lib_name		string
 	api_level		string
 }
 
 pub fn compile(opt CompileOptions) bool {
-
 	os.mkdir_all(opt.work_dir)
 	build_dir := os.join_path(opt.work_dir, 'build')
 
+	if opt.verbosity > 0 {
+		println('Compiling V to C')
+	}
 	vexe := vxt.vexe()
 	v_output_file := os.join_path(opt.work_dir, 'v_android.c')
-	v_cmd := [
-		vexe,
+	mut v_cmd := [
+		vexe
+	]
+	v_cmd << opt.v_flags
+	v_cmd << [
 		'-os android',
 		'-apk',
 		'-o "${v_output_file}"',
@@ -79,8 +86,11 @@ pub fn compile(opt CompileOptions) bool {
 	/*
 	* Compile sources for all Android archs
 	*/
-
 	archs := ['arm64-v8a','armeabi-v7a','x86','x86_64']
+
+	if opt.verbosity > 0 {
+		println('Compiling C to $archs')
+	}
 
 	// For all compilers
 	mut cflags := []string{}
@@ -98,7 +108,7 @@ pub fn compile(opt CompileOptions) bool {
 	// TODO Here to make the compilers shut up :/
 	cflags << ['-Wno-braced-scalar-init','-Wno-incompatible-pointer-types','-Wno-implicitly-unsigned-literal','-Wno-pointer-sign','-Wno-enum-conversion','-Wno-int-conversion','-Wno-int-to-pointer-cast','-Wno-sign-compare','-Wno-return-type']
 
-	defines << ['-DAPPNAME="${opt.machine_friendly_app_name}"']
+	defines << ['-DAPPNAME="${opt.lib_name}"']
 	defines << ['-DANDROID','-D__ANDROID__','-DANDROIDVERSION=${opt.api_level}']
 
 	// TODO if full_screen
@@ -175,7 +185,7 @@ pub fn compile(opt CompileOptions) bool {
 			defines.join(' '),
 			sources.join(' '),
 			arch_cflags[arch].join(' '),
-			'-o "${arch_lib_dir}/lib${opt.machine_friendly_app_name}.so"',
+			'-o "${arch_lib_dir}/lib${opt.lib_name}.so"',
 			v_output_file,
 			'-L"'+arch_libs[arch]+'"',
 			ldflags.join(' ')
@@ -192,8 +202,8 @@ pub fn compile(opt CompileOptions) bool {
 	armeabi_lib_dir := os.join_path(build_dir, 'lib', 'armeabi')
 	os.mkdir_all(armeabi_lib_dir)
 
-	armeabi_lib_src := os.join_path(build_dir, 'lib', 'armeabi-v7a','lib${opt.machine_friendly_app_name}.so')
-	armeabi_lib_dst := os.join_path(armeabi_lib_dir, 'lib${opt.machine_friendly_app_name}.so')
+	armeabi_lib_src := os.join_path(build_dir, 'lib', 'armeabi-v7a','lib${opt.lib_name}.so')
+	armeabi_lib_dst := os.join_path(armeabi_lib_dir, 'lib${opt.lib_name}.so')
 	os.cp( armeabi_lib_src, armeabi_lib_dst) or { panic(err) }
 
 	return true

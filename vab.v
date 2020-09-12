@@ -47,6 +47,9 @@ fn dump(opt Options) {
 	println('\tBuild')
 	println('\t\tAPI ${opt.api_level}')
 	println('\t\tBuild-tools ${opt.build_tools}')
+	println('\tKeystore')
+	println('\t\tFile ${opt.keystore}')
+	println('\t\tAlias ${opt.keystore_alias}')
 	println('Product')
 	println('\tName "${opt.app_name}"')
 	println('\tPackage ${opt.package_id}')
@@ -56,7 +59,7 @@ fn dump(opt Options) {
 
 struct Options {
 	app_name		string
-	package_id	string
+	package_id		string
 
 	verbosity		int
 
@@ -70,13 +73,18 @@ struct Options {
 	dump_env		bool
 	dump_usage		bool
 
+	v_flags			[]string
+
 	list_ndks		bool
 	list_apis		bool
 	list_build_tools bool
 mut:
 	input			string
 	output			string
-	machine_friendly_app_name string
+
+	lib_name		string
+	keystore_password string
+	keystore_alias_password	string
 
 	build_tools		string
 	api_level		string
@@ -101,6 +109,7 @@ fn main() {
 	mut opt := Options {
 
 		assets_extra: fp.string_multi('assets', `a`, 'Asset dir(s) to include in build')
+		v_flags: fp.string_multi('flag', `f`, 'Additional flags for the V compiler')
 
 		device_id: fp.string('device-id', `d`, '', 'Deploy to device ID')
 		keystore: fp.string('keystore', 0, '', 'Use this keystore file to sign the package')
@@ -203,7 +212,7 @@ fn main() {
 	if input_ext in accepted_input_files {
 		if opt.device_id != '' {
 			if ! android.deploy(deploy_opt) {
-				eprintln('Deployment didn\'t succeed')
+				eprintln('$exe_name deployment didn\'t succeed')
 				exit(1)
 			} else {
 				if opt.verbosity > 0 {
@@ -215,43 +224,54 @@ fn main() {
 	}
 
 	comp_opt := android.CompileOptions {
+		verbosity:		opt.verbosity
+		v_flags:		opt.v_flags
+
 		work_dir:		opt.work_dir
 		input:			opt.input
 
-		verbosity:		opt.verbosity
-
 		ndk_version:	opt.ndk_version
-		machine_friendly_app_name:	opt.machine_friendly_app_name
+		lib_name:		opt.lib_name
 		api_level:		opt.api_level
 	}
 	if ! android.compile(comp_opt) {
-		eprintln('Compiling didn\'t succeed')
+		eprintln('$exe_name compiling didn\'t succeed')
 		exit(1)
 	}
 
 	// Keystore file
 	mut keystore := opt.keystore
 	if !os.is_file(keystore) {
-		println('Can\'t locate "${opt.keystore}"')
-		println('Falling back to default debug.keystore')
+		if keystore != '' {
+			println('Couldn\'t locate "$keystore"')
+		}
+		eprintln('Falling back to default debug.keystore')
 		keystore = ''
 	}
 	if keystore == '' {
 		keystore = os.join_path(exe_dir,'debug.keystore')
 	}
 	pck_opt := android.PackageOptions {
-		verbosity:		opt.verbosity
-		work_dir:		opt.work_dir
+		verbosity:					opt.verbosity
+		work_dir:					opt.work_dir
 
-		api_level:		opt.api_level
-		build_tools:	opt.build_tools
+		api_level:					opt.api_level
+		build_tools:				opt.build_tools
 
-		input:			opt.input
-		assets_extra:	opt.assets_extra
-		output_file:	opt.output
-		keystore: 		keystore
-		keystore_alias: opt.keystore_alias
-		base_files:		os.join_path(exe_dir, 'platforms', 'android')
+		app_name:					opt.app_name
+		lib_name:					opt.lib_name
+		package_id:					opt.package_id
+
+		v_flags:					opt.v_flags
+
+		input:						opt.input
+		assets_extra:				opt.assets_extra
+		output_file:				opt.output
+		keystore: 					keystore
+		keystore_alias: 			opt.keystore_alias
+		keystore_password:			opt.keystore_password
+		keystore_alias_password:	opt.keystore_alias_password
+		base_files:					os.join_path(exe_dir, 'platforms', 'android')
 	}
 	if ! android.package(pck_opt) {
 		eprintln('Packaging didn\'t succeed')
@@ -271,7 +291,7 @@ fn main() {
 	} else {
 		if opt.verbosity > 0 {
 			println('Generated ${os.real_path(opt.output)}')
-			println('Use `$exe_name --device-id ${os.real_path(opt.output)}` to deploy package')
+			println('Use `$exe_name --device-id <id> ${os.real_path(opt.output)}` to deploy package')
 		}
 	}
 }
@@ -339,9 +359,9 @@ fn resolve_options(mut opt Options) {
 			api_level = opt.api_level
 		} else {
 			// TODO Warnings
-			println('Android API level ${opt.api_level} is not available in SDK.')
-			//println('(It can be installed with `$exe_name install android-api-${opt.api_level}`)')
-			println('Falling back to default ${api_level}')
+			eprintln('Android API level ${opt.api_level} is not available in SDK.')
+			//eprintln('(It can be installed with `$exe_name install android-api-${opt.api_level}`)')
+			eprintln('Falling back to default ${api_level}')
 		}
 	}
 	if api_level == '' {
@@ -363,9 +383,9 @@ fn resolve_options(mut opt Options) {
 			build_tools_version = opt.build_tools
 		} else {
 			// TODO FIX Warnings and add install function
-			println('Android build-tools version ${opt.build_tools} is not available in SDK.')
-			//println('(It can be installed with `$exe_name install android-build-tools-${opt.build_tools}`)')
-			println('Falling back to default ${build_tools_version}')
+			eprintln('Android build-tools version ${opt.build_tools} is not available in SDK.')
+			//eprintln('(It can be installed with `$exe_name install android-build-tools-${opt.build_tools}`)')
+			eprintln('Falling back to default ${build_tools_version}')
 		}
 	}
 	if build_tools_version == '' {
@@ -383,9 +403,9 @@ fn resolve_options(mut opt Options) {
 			ndk_version = opt.ndk_version
 		} else {
 			// TODO FIX Warnings and add install function
-			println('Android NDK version ${opt.ndk_version} is not available.')
-			//println('(It can be installed with `$exe_name install android-build-tools-${opt.build_tools}`)')
-			println('Falling back to default ${ndk_version}')
+			eprintln('Android NDK version ${opt.ndk_version} is not available.')
+			//eprintln('(It can be installed with `$exe_name install android-build-tools-${opt.build_tools}`)')
+			eprintln('Falling back to default ${ndk_version}')
 		}
 	}
 	if ndk_version == '' {
@@ -415,7 +435,14 @@ fn resolve_options(mut opt Options) {
 
 	// TODO can be supported when we can manipulate or generate AndroidManifest.xml + sources from code
 	// Java package ids/names are integrated hard into the eco-system
-	opt.machine_friendly_app_name = 'v'  //opt.app_name.replace(' ','_').to_lower()
+	opt.lib_name = opt.app_name.replace(' ','_').to_lower()
+
+	if os.getenv('KEYSTORE_PASSWORD') != '' {
+		opt.keystore_password = os.getenv('KEYSTORE_PASSWORD')
+	}
+	if os.getenv('KEYSTORE_ALIAS_PASSWORD') != '' {
+		opt.keystore_alias_password = os.getenv('KEYSTORE_ALIAS_PASSWORD')
+	}
 }
 
 fn install(opt Options, component string) int {

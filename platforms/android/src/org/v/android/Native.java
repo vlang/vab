@@ -1,4 +1,4 @@
-package org.v.v;
+package org.v.android;
 
 import android.app.NativeActivity;
 

@@ -2,6 +2,6 @@
 <resources>
     <string name="app_name">V</string>
     <string name="lib_name">v</string>
-    <string name="package_name">org.v.v</string>
+    <string name="package_name">org.v.android</string>
 </resources>
 
