@@ -17,6 +17,7 @@ pub struct PackageOptions {
 	app_name		string
 	lib_name		string
 	package_id		string
+	icon			string
 	v_flags			[]string
 
 	input			string
@@ -333,6 +334,15 @@ fn prepare_base(opt PackageOptions) (string,string) {
 
 	if opt.verbosity > 0 {
 		println('Copying assets')
+	}
+
+	if os.is_file(opt.icon) && os.file_ext(opt.icon) == '.png' {
+		icon_path := os.join_path(package_path, 'res', 'mipmap', 'icon.png')
+		if opt.verbosity > 0 {
+			println('Copying icon')
+		}
+		os.rm(icon_path)
+		os.cp(opt.icon,icon_path)
 	}
 
 	assets_path := os.join_path(package_path, 'assets')

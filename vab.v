@@ -58,23 +58,21 @@ fn dump(opt Options) {
 }
 
 struct Options {
+	// App essentials
 	app_name		string
 	package_id		string
-
+	icon			string
+	// Internals
 	verbosity		int
-
 	work_dir		string
-
+	// Build and packaging
+	v_flags			[]string
 	device_id		string
-
 	keystore		string
 	keystore_alias	string
-
+	// Detected environment
 	dump_env		bool
 	dump_usage		bool
-
-	v_flags			[]string
-
 	list_ndks		bool
 	list_apis		bool
 	list_build_tools bool
@@ -83,14 +81,13 @@ mut:
 	output			string
 
 	lib_name		string
+	assets_extra	[]string
 	keystore_password string
 	keystore_alias_password	string
 
 	build_tools		string
 	api_level		string
 	ndk_version		string
-
-	assets_extra	[]string
 }
 
 
@@ -120,6 +117,8 @@ fn main() {
 
 		app_name: fp.string('name', 0, default_app_name, 'Pretty app name')
 		package_id: fp.string('package-id', 0, default_package_id, 'App package ID (e.g. "org.v.app")')
+		icon: fp.string('icon', 0, '', 'App icon')
+
 		output: fp.string('output', `o`, '', 'Path to output (dir or file)')
 
 		verbosity: verbosity
@@ -261,6 +260,7 @@ fn main() {
 		app_name:					opt.app_name
 		lib_name:					opt.lib_name
 		package_id:					opt.package_id
+		icon:						opt.icon
 
 		v_flags:					opt.v_flags
 
