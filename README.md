@@ -17,7 +17,7 @@ ANDROID_SERIAL=<device id> # <- id of device to deploy to
 VEXE=/path/to/v/v
 ```
 
-## Android Setup
+## Android SDK Setup
 
 If you want to avoid Android Studio you can use the commandline tools.
 
