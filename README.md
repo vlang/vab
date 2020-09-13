@@ -46,3 +46,8 @@ You can alos build debug builds and deploy directly to a device
 ```
 ./vab --name "V App" --package-id "com.example.app.id" --device-id deadbeef /path/to/v/source/file/or/dir
 ```
+
+See all options:
+```
+./vab -h
+```
