@@ -37,7 +37,7 @@ You can build an Android app ready for the Play Store with the following command
 ```
 export KEYSTORE_PASSWORD="pass"
 export KEYSTORE_ALIAS_PASSWORD="word"
-./vab -f -prod --name "V App" --package-id "com.example.app.id" --icon /path/to/file.png --keystore /path/to/sign.keystore --keystore-alias example /path/to/v/source/file/or/dir
+./vab -f -prod --name "V App" --package-id "com.example.app.id" --icon /path/to/file.png  --version-code <int> --keystore /path/to/sign.keystore --keystore-alias "example" /path/to/v/source/file/or/dir
 ```
 
 You can alos build debug builds and deploy directly to a device
