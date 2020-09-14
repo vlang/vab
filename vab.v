@@ -82,12 +82,12 @@ struct Options {
 mut:
 	input			string
 	output			string
-
+	// Build and packaging
 	lib_name		string
 	assets_extra	[]string
 	keystore_password string
 	keystore_alias_password	string
-
+	// Build specifics
 	build_tools		string
 	api_level		string
 	ndk_version		string
@@ -145,9 +145,7 @@ fn main() {
 		exit(1)
 	}
 
-	/*
-	 * Validate environment
-	 */
+	// Validate environment
 	check_dependencies()
 
 	resolve_options(mut opt)
