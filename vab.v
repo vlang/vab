@@ -47,9 +47,11 @@ fn dump(opt Options) {
 	println('\tBuild')
 	println('\t\tAPI ${opt.api_level}')
 	println('\t\tBuild-tools ${opt.build_tools}')
-	println('\tKeystore')
-	println('\t\tFile ${opt.keystore}')
-	println('\t\tAlias ${opt.keystore_alias}')
+	if opt.keystore != '' || opt.keystore_alias != '' {
+		println('\tKeystore')
+		println('\t\tFile ${opt.keystore}')
+		println('\t\tAlias ${opt.keystore_alias}')
+	}
 	println('Product')
 	println('\tName "${opt.app_name}"')
 	println('\tPackage ${opt.package_id}')
