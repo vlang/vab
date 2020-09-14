@@ -97,12 +97,12 @@ fn main() {
 	mut fp := flag.new_flag_parser(os.args)
 	fp.application(exe_name)
 	fp.version('0.1.0')
-	fp.description('V Android Bootstrapper')
-	//fp.arguments_description('[ARGS] <input>')
+	fp.description('V Android Bootstrapper.\nCompile, package and deploy graphical V apps for Android.')
+	fp.arguments_description('input')
 
 	fp.skip_executable()
 
-	verbosity := fp.int_opt('verbosity', `v`, 'Verbosity level') or { 0 }
+	verbosity := fp.int_opt('verbosity', `v`, 'Verbosity level 0-3') or { 0 }
 
 	mut opt := Options {
 
@@ -119,16 +119,16 @@ fn main() {
 		app_name: fp.string('name', 0, default_app_name, 'Pretty app name')
 		package_id: fp.string('package-id', 0, default_package_id, 'App package ID (e.g. "org.v.app")')
 		icon: fp.string('icon', 0, '', 'App icon')
-		version_code: fp.int('version-code', 0, 0, 'Manifest version code (android:versionCode)')
+		version_code: fp.int('version-code', 0, 0, 'Build version code (android:versionCode)')
 
-		output: fp.string('output', `o`, '', 'Path to output (dir or file)')
+		output: fp.string('output', `o`, '', 'Path to output (dir/file)')
 
 		verbosity: verbosity
 
-		build_tools: fp.string('build-tools', 0, '', 'Version of build-tools to use')
-		api_level: fp.string('api', 0, '', 'Android API level to use')
+		build_tools: fp.string('build-tools', 0, '', 'Version of build-tools to use (--list-build-tools)')
+		api_level: fp.string('api', 0, '', 'Android API level to use (--list-apis)')
 
-		ndk_version: fp.string('ndk-version', 0, '', 'Android NDK version to use')
+		ndk_version: fp.string('ndk-version', 0, '', 'Android NDK version to use (--list-ndks)')
 
 		work_dir: os.join_path(os.temp_dir(), exe_name.replace(' ','_').to_lower())
 
