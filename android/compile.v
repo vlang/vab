@@ -30,9 +30,7 @@ pub fn compile(opt CompileOptions) bool {
 	}
 	vexe := vxt.vexe()
 	v_output_file := os.join_path(opt.work_dir, 'v_android.c')
-	mut v_cmd := [
-		vexe
-	]
+	mut v_cmd := [ vexe ]
 	v_cmd << opt.v_flags
 	v_cmd << [
 		'-os android',

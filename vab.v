@@ -30,35 +30,6 @@ const (
 	os.setenv(name, os.getenv(name)+os.path_delimiter+value, true)
 }*/
 
-fn dump(opt Options) {
-	println('V')
-	println('\tVersion ${vxt.version()}')
-	println('\tPath ${vxt.home()}')
-	println('Java')
-	println('\tJDK')
-	println('\t\tVersion ${java.jdk_version()}')
-	println('\t\tPath ${java.jdk_root()}')
-	println('Android')
-	println('\tSDK')
-	println('\t\tPath ${asdk.root()}')
-	println('\tNDK')
-	println('\t\tVersion ${opt.ndk_version}')
-	println('\t\tPath ${andk.root()}')
-	println('\tBuild')
-	println('\t\tAPI ${opt.api_level}')
-	println('\t\tBuild-tools ${opt.build_tools}')
-	if opt.keystore != '' || opt.keystore_alias != '' {
-		println('\tKeystore')
-		println('\t\tFile ${opt.keystore}')
-		println('\t\tAlias ${opt.keystore_alias}')
-	}
-	println('Product')
-	println('\tName "${opt.app_name}"')
-	println('\tPackage ${opt.package_id}')
-	println('\tOutput ${opt.output}')
-	println('')
-}
-
 struct Options {
 	// App essentials
 	app_name		string
@@ -68,7 +39,6 @@ struct Options {
 	verbosity		int
 	work_dir		string
 	// Build and packaging
-	v_flags			[]string
 	version_code	int
 	device_id		string
 	keystore		string
@@ -83,6 +53,7 @@ mut:
 	input			string
 	output			string
 	// Build and packaging
+	v_flags			[]string
 	lib_name		string
 	assets_extra	[]string
 	keystore_password string
@@ -150,11 +121,6 @@ fn main() {
 
 	resolve_options(mut opt)
 
-	if opt.dump_env {
-		dump(opt)
-		exit(0)
-	}
-
 	if opt.list_ndks {
 		for ndk_v in andk.versions_available() {
 			println(ndk_v)
@@ -192,6 +158,17 @@ fn main() {
 			}
 			exit( install_res )
 		}
+	}
+	if '-prod' in additional_args {
+		opt.v_flags << '-prod'
+	}
+	if '-cg' in additional_args {
+		opt.v_flags << '-cg'
+	}
+
+	if opt.dump_env {
+		dump(opt)
+		exit(0)
 	}
 
 	input_ext := os.file_ext(input)
@@ -496,4 +473,36 @@ fn install(opt Options, component string) int {
 		return 1
 	}
 	return 0
+}
+
+fn dump(opt Options) {
+	println('V')
+	println('\tVersion ${vxt.version()}')
+	println('\tPath ${vxt.home()}')
+	if opt.v_flags.len > 0 {
+		println('\tFlags ${opt.v_flags}')
+	}
+	println('Java')
+	println('\tJDK')
+	println('\t\tVersion ${java.jdk_version()}')
+	println('\t\tPath ${java.jdk_root()}')
+	println('Android')
+	println('\tSDK')
+	println('\t\tPath ${asdk.root()}')
+	println('\tNDK')
+	println('\t\tVersion ${opt.ndk_version}')
+	println('\t\tPath ${andk.root()}')
+	println('\tBuild')
+	println('\t\tAPI ${opt.api_level}')
+	println('\t\tBuild-tools ${opt.build_tools}')
+	if opt.keystore != '' || opt.keystore_alias != '' {
+		println('\tKeystore')
+		println('\t\tFile ${opt.keystore}')
+		println('\t\tAlias ${opt.keystore_alias}')
+	}
+	println('Product')
+	println('\tName "${opt.app_name}"')
+	println('\tPackage ${opt.package_id}')
+	println('\tOutput ${opt.output}')
+	println('')
 }

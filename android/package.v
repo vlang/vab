@@ -308,7 +308,7 @@ fn prepare_base(opt PackageOptions) (string,string) {
 			manifest = manifest[0..re.groups[0]] + opt.version_code.str() + manifest[re.groups[1]..manifest.len]
 		}
 
-		is_debug_build := !('-prod' in opt.v_flags)
+		is_debug_build := ('-cg' in opt.v_flags)
 		re = regex.regex_opt(r'.*<application\s.*\s+android:debuggable\s*=\s*"(.*)".*>') or { panic(err) }
 		start, _ = re.match_string(manifest)
 		// Set debuggable attribute if found
