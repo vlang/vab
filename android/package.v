@@ -18,6 +18,8 @@ pub struct PackageOptions {
 	lib_name		string
 	package_id		string
 	icon			string
+	version_code	int
+
 	v_flags			[]string
 
 	input			string
@@ -235,6 +237,13 @@ pub fn package(opt PackageOptions) bool {
 fn prepare_base(opt PackageOptions) (string,string) {
 
 	package_path := os.join_path(opt.work_dir, 'package')
+
+	if os.exists(package_path) {
+		if opt.verbosity > 0 {
+			println('Removing previous package directory')
+		}
+		os.rmdir_all(package_path)
+	}
 	os.mkdir_all(package_path)
 
 	if opt.verbosity > 0 {
@@ -269,7 +278,14 @@ fn prepare_base(opt PackageOptions) (string,string) {
 			java_src = java_src[0..re.groups[0]] + opt.lib_name + java_src[re.groups[1]..java_src.len]
 		}
 		os.write_file(os.join_path(package_path, 'src', package_id_path, 'Native.java'), java_src)
-		os.rmdir_all(os.join_path(package_path, 'src', 'org', 'v'))
+		// TODO this can be done better and smarter - but works for now
+		os.rm(native_activity_file)
+		if os.is_dir_empty(os.join_path(package_path, 'src', 'org', 'v', 'android')) {
+			os.rmdir_all(os.join_path(package_path, 'src', 'org', 'v', 'android'))
+		}
+		if os.is_dir_empty(os.join_path(package_path, 'src', 'org', 'v')) {
+			os.rmdir_all(os.join_path(package_path, 'src', 'org', 'v'))
+		}
 		if os.is_dir_empty(os.join_path(package_path, 'src', 'org')) {
 			os.rmdir_all(os.join_path(package_path, 'src', 'org'))
 		}
@@ -284,6 +300,12 @@ fn prepare_base(opt PackageOptions) (string,string) {
 		// Set package ID if found
 		if start >= 0 && re.groups.len > 0 {
 			manifest = manifest[0..re.groups[0]] + opt.package_id + manifest[re.groups[1]..manifest.len]
+		}
+
+		re = regex.regex_opt(r'.*<manifest\s.*\sandroid:versionCode\s*=\s*"(.+)".*>') or { panic(err) }
+		start, _ = re.match_string(manifest)
+		if start >= 0 && re.groups.len > 0 {
+			manifest = manifest[0..re.groups[0]] + opt.version_code.str() + manifest[re.groups[1]..manifest.len]
 		}
 
 		is_debug_build := !('-prod' in opt.v_flags)

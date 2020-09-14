@@ -67,6 +67,7 @@ struct Options {
 	work_dir		string
 	// Build and packaging
 	v_flags			[]string
+	version_code	int
 	device_id		string
 	keystore		string
 	keystore_alias	string
@@ -118,6 +119,7 @@ fn main() {
 		app_name: fp.string('name', 0, default_app_name, 'Pretty app name')
 		package_id: fp.string('package-id', 0, default_package_id, 'App package ID (e.g. "org.v.app")')
 		icon: fp.string('icon', 0, '', 'App icon')
+		version_code: fp.int('version-code', 0, 0, 'Manifest version code (android:versionCode)')
 
 		output: fp.string('output', `o`, '', 'Path to output (dir or file)')
 
@@ -261,6 +263,7 @@ fn main() {
 		lib_name:					opt.lib_name
 		package_id:					opt.package_id
 		icon:						opt.icon
+		version_code:				opt.version_code
 
 		v_flags:					opt.v_flags
 
