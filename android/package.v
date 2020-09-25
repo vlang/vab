@@ -103,7 +103,7 @@ pub fn package(opt PackageOptions) bool {
 	os.chdir(package_path)
 
 	// Compile java sources
-	java_sources := walk_ext(os.join_path(package_path,'src'), '.java')
+	java_sources := os.walk_ext(os.join_path(package_path,'src'), '.java')
 
 	mut javac_cmd := [
 		javac,
@@ -148,7 +148,7 @@ pub fn package(opt PackageOptions) bool {
 
 	os.chdir(build_path)
 
-	collect_libs := walk_ext(os.join_path(build_path,'lib'), '.so')
+	collect_libs := os.walk_ext(os.join_path(build_path,'lib'), '.so')
 
 	for lib in collect_libs {
 		lib_s := lib.replace(build_path+os.path_separator, '')
