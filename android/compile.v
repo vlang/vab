@@ -114,6 +114,8 @@ pub fn compile(opt CompileOptions) bool {
 	// ... still a bit of a mess
 	if '-prod' in opt.v_flags {
 		cflags << ['-Os']
+	} else {
+		cflags << ['-O0']
 	}
 	cflags << ['-fPIC','-fvisibility=hidden','-ffunction-sections','-fdata-sections','-ferror-limit=1']
 

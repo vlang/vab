@@ -262,7 +262,7 @@ fn prepare_base(opt PackageOptions) (string,string) {
 	}
 
 	if '-prod' in opt.v_flags && opt.package_id == default_package_id {
-		eprintln('Warning: using default package ID "${default_package_id}". Please do not deploy to app stores with this ID')
+		eprintln('Warning: using default package ID "${default_package_id}". Please do not deploy to app stores using this ID')
 	}
 	package_id_path := opt.package_id.split('.').join(os.path_separator)
 	os.mkdir_all(os.join_path(package_path, 'src', package_id_path))
