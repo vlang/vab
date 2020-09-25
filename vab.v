@@ -57,6 +57,8 @@ mut:
 	build_tools		string
 	api_level		string
 	ndk_version		string
+	c_flags			[]string
+	archs			[]string
 }
 
 
@@ -70,14 +72,16 @@ fn main() {
 
 	fp.skip_executable()
 
-	verbosity := fp.int_opt('verbosity', `v`, 'Verbosity level 0-3') or { 0 }
+	verbosity := fp.int_opt('verbosity', `v`, 'Verbosity level 1-3') or { 0 }
 
 	mut opt := Options {
 
 		assets_extra: fp.string_multi('assets', `a`, 'Asset dir(s) to include in build')
 		v_flags: fp.string_multi('flag', `f`, 'Additional flags for the V compiler')
+		c_flags: fp.string_multi('cflag', `c`, 'Additional flags for the C compiler')
+		archs: fp.string('archs', 0, '', 'Comma separated string with any of "${android.default_archs}"').split(',')
 
-		device_id: fp.string('device-id', `d`, '', 'Deploy to device ID')
+		device_id: fp.string('device-id', `d`, '', 'Deploy to device ID. Use "auto" to use first available.')
 		keystore: fp.string('keystore', 0, '', 'Use this keystore file to sign the package')
 		keystore_alias: fp.string('keystore-alias', 0, '', 'Use this keystore alias from the keystore file to sign the package')
 
@@ -176,10 +180,16 @@ fn main() {
 	}
 	opt.input = input
 
+	mut kill_adb := false
+	if os.getenv('VAB_KILL_ADB').len > 0 {
+		kill_adb = true
+	}
 	deploy_opt := android.DeployOptions {
 		verbosity: opt.verbosity
 		device_id: opt.device_id
 		deploy_file: opt.output
+		kill_adb: kill_adb
+		//run: 'com.package.name/com.package.name.ActivityName' // TODO
 	}
 
 	if input_ext in accepted_input_files {
@@ -199,6 +209,8 @@ fn main() {
 	comp_opt := android.CompileOptions {
 		verbosity:		opt.verbosity
 		v_flags:		opt.v_flags
+		c_flags:		opt.c_flags
+		archs:			opt.archs
 
 		work_dir:		opt.work_dir
 		input:			opt.input
@@ -260,7 +272,7 @@ fn main() {
 			exit(1)
 		} else {
 			if opt.verbosity > 0 {
-				println('Deployed to ${opt.device_id} successfully')
+				println('Deployed to device (${opt.device_id}) successfully')
 			}
 		}
 	} else {

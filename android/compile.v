@@ -6,13 +6,19 @@ import vxt
 import android.ndk
 import crypto.md5
 
+const (
+	default_archs = ['arm64-v8a','armeabi-v7a','x86','x86_64']
+)
+
 pub struct CompileOptions {
 	verbosity		int
 
-	v_flags			[]string
-
 	work_dir		string
 	input			string
+
+	archs			[]string
+	v_flags			[]string
+	c_flags			[]string
 
 	ndk_version		string
 	lib_name		string
@@ -79,25 +85,37 @@ pub fn compile(opt CompileOptions) bool {
 
 	android_ndk_root := os.join_path(ndk.root(),opt.ndk_version)
 
-	/*
-	* Compile sources for all Android archs
-	*/
-	archs := ['arm64-v8a','armeabi-v7a','x86','x86_64']
+	mut archs := []string{}
+	if opt.archs.len > 0 {
+		for a in opt.archs {
+			if a in default_archs {
+				archs << a.trim_space()
+			} else {
+				eprintln('Architechture "${a}" not one of ${default_archs}')
+			}
+		}
+	}
+	// Compile sources for all Android archs if no valid archs found
+	if archs.len <= 0 {
+		archs = default_archs
+	}
 
 	if opt.verbosity > 0 {
-		println('Compiling C to $archs')
+		println('Compiling C to ${archs}')
 	}
 
 	// For all compilers
-	mut cflags := []string{}
+	mut cflags := opt.c_flags
 	mut includes := []string{}
 	mut defines := []string{}
 	mut ldflags := []string{}
 	mut sources := []string{}
 
-
 	// ... still a bit of a mess
-	cflags << ['-Os','-fPIC','-fvisibility=hidden','-ffunction-sections','-fdata-sections','-ferror-limit=1']
+	if '-prod' in opt.v_flags {
+		cflags << ['-Os']
+	}
+	cflags << ['-fPIC','-fvisibility=hidden','-ffunction-sections','-fdata-sections','-ferror-limit=1']
 
 	cflags << ['-Wall','-Wextra','-Wno-unused-variable','-Wno-unused-parameter','-Wno-unused-result','-Wno-unused-function','-Wno-missing-braces','-Wno-unused-label','-Werror=implicit-function-declaration']
 
@@ -143,7 +161,6 @@ pub fn compile(opt CompileOptions) bool {
 	if uos == 'macos'   { host_arch = 'darwin-x86_64' }
 	if uos == 'linux'   { host_arch = 'linux-x86_64' }
 
-
 	mut arch_alt := map[string]string
 	arch_alt['arm64-v8a'] = 'aarch64'
 	arch_alt['armeabi-v7a'] = 'armv7a'
@@ -152,7 +169,6 @@ pub fn compile(opt CompileOptions) bool {
 
 	mut arch_cc := map[string]string
 	mut arch_libs := map[string]string
-
 
 	// TODO do Windows and macOS as well
 	for arch in archs {
