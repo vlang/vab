@@ -72,7 +72,11 @@ fn main() {
 
 	fp.skip_executable()
 
-	verbosity := fp.int_opt('verbosity', `v`, 'Verbosity level 1-3') or { 0 }
+	mut verbosity := fp.int_opt('verbosity', `v`, 'Verbosity level 1-3') or { 0 }
+	// TODO implement FlagParser is_sat(name string) bool or something for this usecase
+	/*if verbosity == 0 {
+		verbosity = 1
+	}*/
 
 	mut opt := Options {
 
@@ -230,7 +234,7 @@ fn main() {
 		if keystore != '' {
 			println('Couldn\'t locate "$keystore"')
 		}
-		eprintln('Notice: Using debug.keystore')
+		eprintln('Notice: Using default debug.keystore')
 		keystore = ''
 	}
 	if keystore == '' {
