@@ -1,11 +1,9 @@
 module android
 
 import os
-
 import vxt
 
 import android.ndk
-
 import crypto.md5
 
 pub struct CompileOptions {

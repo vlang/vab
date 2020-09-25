@@ -18,11 +18,6 @@ const (
 )
 
 const (
-	default_app_name = 'V Default App'
-	default_package_id = 'org.v.android.default.app'
-)
-
-const (
 	min_supported_api_level = '21'
 )
 
@@ -89,8 +84,8 @@ fn main() {
 		dump_env: fp.bool('env', `e`, false, 'Dump the detected environment and exit')
 		dump_usage: fp.bool('help', `h`, false, 'Show this help message and exit')
 
-		app_name: fp.string('name', 0, default_app_name, 'Pretty app name')
-		package_id: fp.string('package-id', 0, default_package_id, 'App package ID (e.g. "org.v.app")')
+		app_name: fp.string('name', 0, android.default_app_name, 'Pretty app name')
+		package_id: fp.string('package-id', 0, android.default_package_id, 'App package ID (e.g. "org.v.app")')
 		icon: fp.string('icon', 0, '', 'App icon')
 		version_code: fp.int('version-code', 0, 0, 'Build version code (android:versionCode)')
 
@@ -223,7 +218,7 @@ fn main() {
 		if keystore != '' {
 			println('Couldn\'t locate "$keystore"')
 		}
-		eprintln('Falling back to default debug.keystore')
+		eprintln('Notice: Using debug.keystore')
 		keystore = ''
 	}
 	if keystore == '' {

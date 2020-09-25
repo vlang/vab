@@ -7,6 +7,11 @@ import java
 
 import android.sdk
 
+const (
+	default_app_name = 'V Default App'
+	default_package_id = 'org.v.android.test.app' // Java doesn't allow the word "default" in package IDs???
+)
+
 pub struct PackageOptions {
 	verbosity		int
 	work_dir		string
@@ -256,6 +261,9 @@ fn prepare_base(opt PackageOptions) (string,string) {
 		println('Modifying base files')
 	}
 
+	if '-prod' in opt.v_flags && opt.package_id == default_package_id {
+		eprintln('Warning: using default package ID "${default_package_id}". Please do not deploy to app stores with this ID')
+	}
 	package_id_path := opt.package_id.split('.').join(os.path_separator)
 	os.mkdir_all(os.join_path(package_path, 'src', package_id_path))
 
