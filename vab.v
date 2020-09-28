@@ -106,7 +106,7 @@ fn main() {
 		c_flags: fp.string_multi('cflag', `c`, 'Additional flags for the C compiler')
 		archs: fp.string('archs', 0, '', 'Comma separated string with any of "${android.default_archs}"').split(',')
 
-		device_id: fp.string('device-id', `d`, '', 'Deploy to device ID. Use "auto" to use first available.')
+		device_id: fp.string('device', `d`, '', 'Deploy to device <id>. Use "auto" to use first available.')
 		run: 'run' in cmd_flags //fp.bool('run', `r`, false, 'Run the app on the device after successful deployment.')
 
 		keystore: fp.string('keystore', 0, '', 'Use this keystore file to sign the package')
@@ -313,7 +313,7 @@ fn main() {
 	} else {
 		if opt.verbosity > 0 {
 			println('Generated ${os.real_path(opt.output)}')
-			println('Use `$exe_name --device-id <id> ${os.real_path(opt.output)}` to deploy package')
+			println('Use `$exe_name --device <id> ${os.real_path(opt.output)}` to deploy package')
 		}
 	}
 }
