@@ -57,14 +57,14 @@ For extra speed during development you can choose to only build for specific arc
 
 **Complete list of env variables recognized**
 ```
-JAVA_HOME
-ANDROID_SDK_ROOT
-ANDROID_NDK_ROOT
-VEXE
-ANDROID_SERIAL
-KEYSTORE_PASSWORD
-KEYSTORE_ALIAS_PASSWORD
-VAB_KILL_ADB
+VEXE                     # Absolute path to the V executable to use
+JAVA_HOME                # Absolute path to the Java install to use
+ANDROID_SDK_ROOT         # Absolute path to the Android SDK
+ANDROID_NDK_ROOT         # Absolute path to the Android NDK
+KEYSTORE_PASSWORD        # Password for keystore
+KEYSTORE_ALIAS_PASSWORD  # Password for keystore alias
+
+VAB_KILL_ADB             # Set to let vab kill adb after use. This is useful on some hosts.
 ```
 
 See all options:
