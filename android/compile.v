@@ -54,7 +54,7 @@ pub fn compile(opt CompileOptions) bool {
 		hash = md5.sum(bytes).hex()
 
 		if os.exists(hash_file) {
-			prev_hash := read_file(hash_file) or { '' }
+			prev_hash := os.read_file(hash_file) or { '' }
 			if hash == prev_hash {
 				if opt.verbosity > 2 {
 					println('Skipping compile. Hashes match ${hash}')
@@ -70,7 +70,7 @@ pub fn compile(opt CompileOptions) bool {
 			println('Writing new hash ${hash}')
 		}
 		os.rm(hash_file)
-		mut hash_fh := open_file(hash_file, 'w+', 0o700) or { panic(err) }
+		mut hash_fh := os.open_file(hash_file, 'w+', 0o700) or { panic(err) }
 		hash_fh.write(hash)
 		hash_fh.close()
 	}
@@ -212,13 +212,14 @@ pub fn compile(opt CompileOptions) bool {
 		}
 	}
 
-	// TODO fix DT_NAME crash instead of including a copy of the armeabi-v7a lib
-	armeabi_lib_dir := os.join_path(build_dir, 'lib', 'armeabi')
-	os.mkdir_all(armeabi_lib_dir)
+	if 'armeabi-v7a' in archs {
+		// TODO fix DT_NAME crash instead of including a copy of the armeabi-v7a lib
+		armeabi_lib_dir := os.join_path(build_dir, 'lib', 'armeabi')
+		os.mkdir_all(armeabi_lib_dir)
 
-	armeabi_lib_src := os.join_path(build_dir, 'lib', 'armeabi-v7a','lib${opt.lib_name}.so')
-	armeabi_lib_dst := os.join_path(armeabi_lib_dir, 'lib${opt.lib_name}.so')
-	os.cp( armeabi_lib_src, armeabi_lib_dst) or { panic(err) }
-
+		armeabi_lib_src := os.join_path(build_dir, 'lib', 'armeabi-v7a','lib${opt.lib_name}.so')
+		armeabi_lib_dst := os.join_path(armeabi_lib_dir, 'lib${opt.lib_name}.so')
+		os.cp( armeabi_lib_src, armeabi_lib_dst) or { panic(err) }
+	}
 	return true
 }
