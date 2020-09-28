@@ -82,7 +82,7 @@ pub fn deploy(opt DeployOptions) bool {
 
 		if opt.run != '' {
 			if opt.verbosity > 0 {
-				println('Running ${opt.run} on ${device_id}')
+				println('Running "${opt.run}" on ${device_id}')
 			}
 			adb_run_cmd := [
 				adb,

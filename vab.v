@@ -15,6 +15,7 @@ import android.ndk as andk
 const (
 	exe_name	= os.file_name(os.executable())
 	exe_dir		= os.base_dir(os.real_path(os.executable()))
+	rip_vflags	= ['-autofree','-cg','-prod']
 )
 
 const (
@@ -33,11 +34,16 @@ struct Options {
 	// Internals
 	verbosity		int
 	work_dir		string
-	// Build and packaging
+	// Build, packaging and deployment
 	version_code	int
 	device_id		string
 	keystore		string
 	keystore_alias	string
+	// Build specifics
+	c_flags			[]string // flags passed to the C compiler(s)
+	archs			[]string
+	// Deploy specifics
+	run				bool
 	// Detected environment
 	dump_env		bool
 	dump_usage		bool
@@ -48,7 +54,7 @@ mut:
 	input			string
 	output			string
 	// Build and packaging
-	v_flags			[]string
+	v_flags			[]string // flags passed to the V compiler
 	lib_name		string
 	assets_extra	[]string
 	keystore_password string
@@ -57,14 +63,24 @@ mut:
 	build_tools		string
 	api_level		string
 	ndk_version		string
-	c_flags			[]string
-	archs			[]string
 }
 
 
 fn main() {
 
-	mut fp := flag.new_flag_parser(os.args)
+	mut args := os.args
+	mut v_flags := []string{}
+
+	// Indentify special flags in args before FlagParser ruin them.
+	// E.g. the -autofree flag will result in dump_env being called for some weird reason???
+	for special_flag in rip_vflags {
+		if special_flag in args {
+			v_flags << special_flag
+			args.delete(args.index(special_flag))
+		}
+	}
+
+	mut fp := flag.new_flag_parser(args)
 	fp.application(exe_name)
 	fp.version('0.1.0')
 	fp.description('V Android Bootstrapper.\nCompile, package and deploy graphical V apps for Android.')
@@ -73,10 +89,10 @@ fn main() {
 	fp.skip_executable()
 
 	mut verbosity := fp.int_opt('verbosity', `v`, 'Verbosity level 1-3') or { 0 }
-	// TODO implement FlagParser is_sat(name string) bool or something for this usecase
-	/*if verbosity == 0 {
+	// TODO implement FlagParser 'is_sat(name string) bool' or something in vlib for this usecase?
+	if ('-v' in os.args || 'verbosity' in os.args) && verbosity == 0 {
 		verbosity = 1
-	}*/
+	}
 
 	mut opt := Options {
 
@@ -86,6 +102,8 @@ fn main() {
 		archs: fp.string('archs', 0, '', 'Comma separated string with any of "${android.default_archs}"').split(',')
 
 		device_id: fp.string('device-id', `d`, '', 'Deploy to device ID. Use "auto" to use first available.')
+		run: fp.bool('run', `r`, false, 'Run the app on the device after successful deployment.')
+
 		keystore: fp.string('keystore', 0, '', 'Use this keystore file to sign the package')
 		keystore_alias: fp.string('keystore-alias', 0, '', 'Use this keystore alias from the keystore file to sign the package')
 
@@ -123,6 +141,9 @@ fn main() {
 	check_dependencies()
 
 	resolve_options(mut opt)
+
+	v_flags << opt.v_flags
+	opt.v_flags = v_flags
 
 	if opt.list_ndks {
 		for ndk_v in andk.versions_available() {
@@ -162,12 +183,6 @@ fn main() {
 			exit( install_res )
 		}
 	}
-	if '-prod' in additional_args {
-		opt.v_flags << '-prod'
-	}
-	if '-cg' in additional_args {
-		opt.v_flags << '-cg'
-	}
 
 	if opt.dump_env {
 		dump(opt)
@@ -188,12 +203,23 @@ fn main() {
 	if os.getenv('VAB_KILL_ADB').len > 0 {
 		kill_adb = true
 	}
+
+	mut run := ''
+	if opt.run {
+		//TODO 'com.package.name/com.package.name.ActivityName'
+		mut package_id := opt.package_id
+		if package_id == '' {
+			package_id = android.default_package_id
+		}
+		run = '${package_id}/${package_id}.Native'
+	}
+
 	deploy_opt := android.DeployOptions {
 		verbosity: opt.verbosity
 		device_id: opt.device_id
 		deploy_file: opt.output
 		kill_adb: kill_adb
-		//run: 'com.package.name/com.package.name.ActivityName' // TODO
+		run: run
 	}
 
 	if input_ext in accepted_input_files {
