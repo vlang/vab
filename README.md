@@ -45,6 +45,11 @@ You can also build debug builds and deploy directly to a device for testing
 ./vab --name "V App" --package-id "com.example.app.id" --device-id deadbeef /path/to/v/source/file/or/dir
 ```
 
+For extra speed during development you can choose to only build for specific architectures
+```
+./vab --archs 'armeabi-v7a,arm64-v8a' --device-id deadbeef /path/to/v/source/file/or/dir
+```
+
 **Complete list of env variables recognized**
 ```
 JAVA_HOME
