@@ -87,7 +87,7 @@ fn main() {
 
 	mut fp := flag.new_flag_parser(args)
 	fp.application(exe_name)
-	fp.version('0.1.0')
+	fp.version('0.2.0')
 	fp.description('V Android Bootstrapper.\nCompile, package and deploy graphical V apps for Android.')
 	fp.arguments_description('input')
 
