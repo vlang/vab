@@ -279,6 +279,8 @@ ${ADB} -s "$ANDROID_SERIAL" install -r ${VAPK_OUT}/vapk.apk
 
 # ANDROID_SERIAL=<device id> adb logcat -d > logcat.txt
 
+# ANDROID_SERIAL=<device id> adb logcat <label>:D '*:S'
+
 # ADB shell:
 # ANDROID_SERIAL=<device id> adb shell
 
