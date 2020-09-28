@@ -8,8 +8,8 @@ import java
 import android.sdk
 
 const (
-	default_app_name = 'V Default App'
-	default_package_id = 'org.v.android.test.app' // Java doesn't allow the word "default" in package IDs???
+	default_app_name = 'V Test App'
+	default_package_id = 'org.v.android.test.app'
 )
 
 pub struct PackageOptions {
@@ -242,7 +242,6 @@ pub fn package(opt PackageOptions) bool {
 fn prepare_base(opt PackageOptions) (string,string) {
 
 	package_path := os.join_path(opt.work_dir, 'package')
-
 	if os.exists(package_path) {
 		if opt.verbosity > 0 {
 			println('Removing previous package directory')
@@ -260,6 +259,8 @@ fn prepare_base(opt PackageOptions) (string,string) {
 	if opt.verbosity > 0 {
 		println('Modifying base files')
 	}
+
+	// TODO Validate that Java doesn't allow the word "default" in package IDs???
 
 	if '-prod' in opt.v_flags && opt.package_id == default_package_id {
 		eprintln('Warning: using default package ID "${default_package_id}". Please do not deploy to app stores using this ID')

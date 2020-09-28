@@ -13,9 +13,9 @@ import android.sdk as asdk
 import android.ndk as andk
 
 const (
-	exe_name	= os.file_name(os.executable())
-	exe_dir		= os.base_dir(os.real_path(os.executable()))
-	rip_vflags	= ['-autofree','-cg','-prod']
+	exe_name			= os.file_name(os.executable())
+	exe_dir				= os.base_dir(os.real_path(os.executable()))
+	rip_vflags			= ['-autofree','-cg','-prod', 'run']
 )
 
 const (
@@ -70,12 +70,17 @@ fn main() {
 
 	mut args := os.args
 	mut v_flags := []string{}
+	mut cmd_flags := []string{}
 
 	// Indentify special flags in args before FlagParser ruin them.
 	// E.g. the -autofree flag will result in dump_env being called for some weird reason???
 	for special_flag in rip_vflags {
 		if special_flag in args {
-			v_flags << special_flag
+			if special_flag.starts_with('-') {
+				v_flags << special_flag
+			} else {
+				cmd_flags << special_flag
+			}
 			args.delete(args.index(special_flag))
 		}
 	}
@@ -102,7 +107,7 @@ fn main() {
 		archs: fp.string('archs', 0, '', 'Comma separated string with any of "${android.default_archs}"').split(',')
 
 		device_id: fp.string('device-id', `d`, '', 'Deploy to device ID. Use "auto" to use first available.')
-		run: fp.bool('run', `r`, false, 'Run the app on the device after successful deployment.')
+		run: 'run' in cmd_flags //fp.bool('run', `r`, false, 'Run the app on the device after successful deployment.')
 
 		keystore: fp.string('keystore', 0, '', 'Use this keystore file to sign the package')
 		keystore_alias: fp.string('keystore-alias', 0, '', 'Use this keystore alias from the keystore file to sign the package')
