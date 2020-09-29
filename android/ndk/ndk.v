@@ -41,6 +41,18 @@ pub fn root() string {
 			if os.exists(dir) && os.is_dir(dir) { return dir }
 		}
 	}
+	// Try if ndk-which is in path
+	if ndk_root == '' {
+		mut ndk_which := ''
+
+		if os.exists_in_system_path('ndk-which') {
+			ndk_which = os.find_abs_path_of_executable('ndk-which') or { return '' }
+			if ndk_which != '' {
+				// ndk-which normally reside in ndk root
+				ndk_root = os.real_path(os.dir(ndk_which))
+			}
+		}
+	}
 	return ndk_root
 }
 
