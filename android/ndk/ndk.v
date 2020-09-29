@@ -68,7 +68,7 @@ pub fn versions_available() []string {
 	if is_side_by_side() {
 		return ls_sorted(root())
 	} else {
-		return [os.dir(root())]
+		return [root().all_after_last(os.path_separator)]
 	}
 }
 
