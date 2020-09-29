@@ -534,7 +534,7 @@ fn dump(opt Options) {
 	println('\tNDK')
 	println('\t\tVersion ${opt.ndk_version}')
 	println('\t\tPath ${andk.root()}')
-	println('\t\tSide-by-side ${andk.is_side_by_side()')
+	println('\t\tSide-by-side ${andk.is_side_by_side()}')
 	println('\tBuild')
 	println('\t\tAPI ${opt.api_level}')
 	println('\t\tBuild-tools ${opt.build_tools}')
