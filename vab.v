@@ -364,7 +364,7 @@ fn check_dependencies() {
 
 	build_tools_semantic_version := semver.from(asdk.default_build_tools_version) or { panic(err) }
 
-	if ! build_tools_semantic_version.satisfies('>= 24.0.3') {
+	if ! build_tools_semantic_version.satisfies('>=24.0.3') {
 		// Some Android tools we need like `apksigner` is currently only available with build-tools >= 24.0.3.
 		// (Absolute mess, yes)
 		eprintln('Android build-tools version ${asdk.default_build_tools_version} is not supported')
