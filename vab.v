@@ -140,8 +140,7 @@ fn main() {
 		exit(1)
 	}
 
-	has_additional_args := additional_args.len > 1
-	if has_additional_args {
+	if additional_args.len > 1 {
 		if additional_args[0] == 'install' {
 			install_arg := additional_args[1]
 			install_res := install(opt,install_arg)
@@ -180,9 +179,11 @@ fn main() {
 	v_flags << opt.v_flags
 	opt.v_flags = v_flags
 
-	if 'doctor' in os.args {
-		doctor(opt)
-		exit(0)
+	if additional_args.len > 0 {
+		if additional_args[0] == 'doctor' {
+			doctor(opt)
+			exit(0)
+		}
 	}
 
 	validate_env(opt)
