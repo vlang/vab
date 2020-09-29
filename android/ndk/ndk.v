@@ -108,7 +108,7 @@ pub fn host_arch() string {
 	mut host_arch := ''
 	uos := os.user_os()
 	if uos == 'windows' { host_arch = 'windows-x86_64' }
-	if uos == 'macos'   { host_arch = 'darwin-x86_64' }
+	if uos == 'mac'     { host_arch = 'darwin-x86_64' }
 	if uos == 'linux'   { host_arch = 'linux-x86_64' }
 	return host_arch
 }
