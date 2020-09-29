@@ -50,8 +50,8 @@ pub fn package(opt PackageOptions) bool {
 	build_path := os.join_path(opt.work_dir, 'build')
 	build_tools_path := os.join_path(sdk.build_tools_root(),opt.build_tools)
 
-	javac := os.join_path(java.jdk_root(),'bin','javac')
-	keytool := os.join_path(java.jdk_root(),'bin','keytool')
+	javac := os.join_path(java.jdk_bin_path(),'javac')
+	keytool := os.join_path(java.jdk_bin_path(),'keytool')
 	aapt := os.join_path(build_tools_path,'aapt')
 	dx := os.join_path(build_tools_path,'dx')
 	zipalign := os.join_path(build_tools_path,'zipalign')

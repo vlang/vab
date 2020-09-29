@@ -122,3 +122,8 @@ pub fn jdk_root() string {
 pub fn jdk_found() bool {
 	return jdk_root() != ''
 }
+
+pub fn jdk_bin_path() bool {
+	bin_dir := os.find_abs_path_of_executable('javac') or { jdk_root() }
+	return os.dir(bin_dir)
+}
