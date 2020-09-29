@@ -45,7 +45,6 @@ struct Options {
 	// Deploy specifics
 	run				bool
 	// Detected environment
-	dump_env		bool
 	dump_usage		bool
 	list_ndks		bool
 	list_apis		bool
@@ -112,7 +111,6 @@ fn main() {
 		keystore: fp.string('keystore', 0, '', 'Use this keystore file to sign the package')
 		keystore_alias: fp.string('keystore-alias', 0, '', 'Use this keystore alias from the keystore file to sign the package')
 
-		dump_env: fp.bool('env', `e`, false, 'Dump the detected environment and exit')
 		dump_usage: fp.bool('help', `h`, false, 'Show this help message and exit')
 
 		app_name: fp.string('name', 0, android.default_app_name, 'Pretty app name')
@@ -142,7 +140,8 @@ fn main() {
 		exit(1)
 	}
 
-	if additional_args.len > 1 {
+	has_additional_args := additional_args.len > 1
+	if has_additional_args {
 		if additional_args[0] == 'install' {
 			install_arg := additional_args[1]
 			install_res := install(opt,install_arg)
@@ -175,17 +174,18 @@ fn main() {
 	}
 
 	// Validate environment
-	check_dependencies()
-
+	check_essentials()
 	resolve_options(mut opt)
 
 	v_flags << opt.v_flags
 	opt.v_flags = v_flags
 
-	if opt.dump_env {
-		dump(opt)
+	if 'doctor' in os.args {
+		doctor(opt)
 		exit(0)
 	}
+
+	validate_env(opt)
 
 	if fp.args.len == 0 || opt.dump_usage {
 		println(fp.usage())
@@ -317,7 +317,7 @@ fn main() {
 	}
 }
 
-fn check_dependencies() {
+fn check_essentials() {
 
 	// Validate V install
 	if vxt.vexe() == '' {
@@ -328,12 +328,31 @@ fn check_dependencies() {
 	}
 
 	// Validate Java requirements
-	if ! java.jdk_found() {
+	if !java.jdk_found() {
 		eprintln('No Java install(s) could be detected')
 		eprintln('Please install Java 8 JDK or provide a valid path via JAVA_HOME')
 		eprintln('(Currently Java 8 (1.8.x) is the only Java version supported by the Android SDK)')
 		exit(1)
 	}
+
+	// Validate Android SDK requirements
+	if ! asdk.found() {
+		eprintln('No Android SDK could be detected.')
+		eprintln('Please provide a valid path via ANDROID_SDK_ROOT')
+		eprintln('or run `${exe_name} install sdk`')
+		exit(1)
+	}
+
+	// Validate Android NDK requirements
+	if ! andk.found() {
+		eprintln('No Android NDK could be detected.')
+		eprintln('Please provide a valid path via ANDROID_NDK_ROOT')
+		eprintln('or run `${exe_name} install ndk`')
+		exit(1)
+	}
+}
+
+fn validate_env(opt Options) {
 
 	jdk_version := java.jdk_version()
 	if jdk_version == '' {
@@ -344,7 +363,6 @@ fn check_dependencies() {
 	}
 
 	jdk_semantic_version := semver.from(jdk_version) or { panic(err) }
-
 	if ! jdk_semantic_version.satisfies('1.8.*') {
 		// Some Android tools like `sdkmanager` currently only run with Java 8 JDK (1.8.x).
 		// (Absolute mess, yes)
@@ -354,32 +372,17 @@ fn check_dependencies() {
 		exit(1)
 	}
 
-	// Validate Android SDK requirements
-	if ! asdk.found() {
-		eprintln('No Android SDK could be detected.')
-		eprintln('Please provide a valid path via ANDROID_SDK_ROOT')
-		eprintln('or run `$exe_name install sdk`')
-		exit(1)
-	}
-
 	build_tools_semantic_version := semver.from(asdk.default_build_tools_version) or { panic(err) }
 
 	if ! build_tools_semantic_version.satisfies('>=24.0.3') {
 		// Some Android tools we need like `apksigner` is currently only available with build-tools >= 24.0.3.
 		// (Absolute mess, yes)
 		eprintln('Android build-tools version ${asdk.default_build_tools_version} is not supported')
-		eprintln('Please install a build-tools version >= 24.0.3')
+		eprintln('Please install build-tools version >= 24.0.3')
 		exit(1)
 	}
 
 
-	// Validate Android NDK requirements
-	if ! andk.found() {
-		eprintln('No Android NDK could be detected.')
-		eprintln('Please provide a valid path via ANDROID_NDK_ROOT')
-		eprintln('or run `$exe_name install ndk`')
-		exit(1)
-	}
 }
 
 fn resolve_options(mut opt Options) {
@@ -527,7 +530,7 @@ fn install(opt Options, component string) int {
 	return 0
 }
 
-fn dump(opt Options) {
+fn doctor(opt Options) {
 	println('V')
 	println('\tVersion ${vxt.version()}')
 	println('\tPath ${vxt.home()}')
