@@ -5,8 +5,6 @@ import net.http
 
 import android.sdk
 
-//import szip
-
 pub enum Dependency {
 	commandline_tools
 	sdk
