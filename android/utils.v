@@ -1,6 +1,7 @@
 module android
 
 import os
+//import szip
 
 fn verbosity_print_cmd(args []string, verbosity int) {
 	cmd := args.join(' ')
@@ -25,10 +26,12 @@ fn run_else_exit(args []string) string {
 
 fn unzip(file string, dir string) bool {
 	/*
+	eprintln('Unzipping ${file} to ${dir}...')
 	mut zip := szip.open(file, 0, szip.m_ronly) or { return false }
-	zip.extract_entry(unpck)
+	zip.extract_entry(dir)
 	zip.close()
 	*/
+
 	// TODO unzip
 	unzip_cmd := [
 		'unzip',
