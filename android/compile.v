@@ -83,8 +83,6 @@ pub fn compile(opt CompileOptions) bool {
 
 	v_home := vxt.home()
 
-	mut android_ndk_root := ndk.root_version(opt.ndk_version)
-
 	mut archs := []string{}
 	if opt.archs.len > 0 {
 		for a in opt.archs {
@@ -157,28 +155,14 @@ pub fn compile(opt CompileOptions) bool {
 	mut cflags_x86 := ['-march=i686','-mtune=intel','-mssse3','-mfpmath=sse','-m32']
 	mut cflags_x86_64 := ['-march=x86-64','-msse4.2','-mpopcnt','-m64','-mtune=intel']
 
-	mut host_arch := ''
-	uos := os.user_os()
-	if uos == 'windows' { host_arch = 'windows-x86_64' }
-	if uos == 'macos'   { host_arch = 'darwin-x86_64' }
-	if uos == 'linux'   { host_arch = 'linux-x86_64' }
-
-	mut arch_alt := map[string]string
-	arch_alt['arm64-v8a'] = 'aarch64'
-	arch_alt['armeabi-v7a'] = 'armv7a'
-	arch_alt['x86'] = 'x86_64'
-	arch_alt['x86_64'] = 'x86_64'
-
 	mut arch_cc := map[string]string
 	mut arch_libs := map[string]string
-
-	// TODO do Windows and macOS as well
 	for arch in archs {
-		mut eabi := ''
-		if arch == 'armeabi-v7a' { eabi = 'eabi' }
+		compiler := ndk.compiler(opt.ndk_version, arch, opt.api_level) or { panic(err) }
+		arch_cc[arch] = compiler
 
-		arch_cc[arch] = os.join_path(android_ndk_root,'toolchains','llvm','prebuilt',host_arch,'bin',arch_alt[arch]+'-linux-android${eabi}${opt.api_level}-clang')
-		arch_libs[arch] = os.join_path(android_ndk_root,'toolchains','llvm','prebuilt',host_arch,'sysroot','usr','lib',arch_alt[arch]+'-linux-android'+eabi,opt.api_level)
+		arch_lib := ndk.libs_path(opt.ndk_version, arch, opt.api_level) or { panic(err) }
+		arch_libs[arch] = arch_lib
 	}
 
 	mut arch_cflags := map[string][]string

@@ -6,6 +6,7 @@ import android.sdk
 
 const (
 	home = os.home_dir()
+	supported_archs = ['arm64-v8a','armeabi-v7a','x86','x86_64']
 )
 
 // ANDROID_SDK_ROOT and ANDROID_HOME are official ENV variables to get the SDK
@@ -44,11 +45,10 @@ pub fn root() string {
 	// Try if ndk-which is in path
 	if ndk_root == '' {
 		mut ndk_which := ''
-
 		if os.exists_in_system_path('ndk-which') {
 			ndk_which = os.find_abs_path_of_executable('ndk-which') or { return '' }
 			if ndk_which != '' {
-				// ndk-which normally reside in ndk root
+				// ndk-which reside in some ndk roots
 				ndk_root = os.real_path(os.dir(ndk_which))
 			}
 		}
@@ -100,6 +100,78 @@ pub fn default_version() string {
 		return os.file_name(dirs.first())
 	}
 	return ''
+}
+
+[inline]
+pub fn host_arch() string {
+	mut host_arch := ''
+	uos := os.user_os()
+	if uos == 'windows' { host_arch = 'windows-x86_64' }
+	if uos == 'macos'   { host_arch = 'darwin-x86_64' }
+	if uos == 'linux'   { host_arch = 'linux-x86_64' }
+	return host_arch
+}
+
+[inline]
+pub fn alt_arch(arch string) string {
+	return match arch {
+		'armeabi-v7a' { 'armv7a' }
+		'arm64-v8a' { 'aarch64' }
+		'x86' { 'x86_64' }
+		'x86_64' { 'x86_64' }
+		else { '' }
+	}
+}
+
+[inline] // TODO do Windows and macOS as well
+pub fn compiler(ndk_version string, arch string, api_level string) ?string {
+	mut eabi := ''
+	if arch == 'armeabi-v7a' { eabi = 'eabi' }
+
+	host_architecture := host_arch()
+	arch_alt := alt_arch(arch)
+
+	mut compiler := os.join_path(root_version(ndk_version),'toolchains','llvm','prebuilt',host_architecture,'bin',arch_alt+'-linux-android${eabi}${api_level}-clang')
+	// Try older ndk version setups
+	if !os.is_file(compiler) {
+		toolchains := ls_sorted(os.join_path(root_version(ndk_version),'toolchains'))
+		for toolchain in toolchains {
+			if toolchain.starts_with('llvm') {
+				compiler = os.join_path(root_version(ndk_version),'toolchains',toolchain,'prebuilt',host_architecture,'bin',arch_alt+'-linux-android${eabi}${api_level}-clang')
+				break
+			}
+		}
+	}
+	if !os.is_file(compiler) {
+		return error(@MOD+'.'+@FN+' couldn\'t locate compiler "${compiler}"')
+	}
+	return compiler
+}
+
+[inline] // TODO do Windows and macOS as well
+pub fn libs_path(ndk_version string, arch string, api_level string) ?string {
+	mut eabi := ''
+	if arch == 'armeabi-v7a' { eabi = 'eabi' }
+
+	host_architecture := host_arch()
+	arch_alt := alt_arch(arch)
+
+	mut libs_path := os.join_path(root_version(ndk_version),'toolchains','llvm','prebuilt',host_architecture,'sysroot','usr','lib',arch_alt+'-linux-android'+eabi,api_level)
+
+	if !os.is_dir(libs_path) {
+		toolchains := ls_sorted(os.join_path(root_version(ndk_version),'toolchains'))
+		for toolchain in toolchains {
+			if toolchain.starts_with('llvm') {
+				libs_path = os.join_path(root_version(ndk_version),'toolchains',toolchain,'prebuilt',host_architecture,'sysroot','usr','lib',arch_alt+'-linux-android'+eabi,api_level)
+				break
+			}
+		}
+	}
+	if !os.is_dir(libs_path) {
+		return error(@MOD+'.'+@FN+' couldn\'t locate libraries path "${libs_path}"')
+	}
+
+	return libs_path
 }
 
 /*
