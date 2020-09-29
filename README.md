@@ -14,22 +14,6 @@ ANDROID_NDK_ROOT=/path/to/android_ndk_linux
 VEXE=/path/to/custom/v/binary
 ```
 
-## Android SDK Setup
-
-Until `vab` get support for setting up the complete dependency chain
-you can avoid Android Studio by using commandline tools.
-
-Android commandline tools can be downloaded from [here](https://developer.android.com/studio#command-tools)
-
-Or with curl:
-
-`curl -# --output commandlinetools-linux.zip https://dl.google.com/android/repository/commandlinetools-linux-6609375_latest.zip`
-
-You can then use `sdkmanager` from that zip to install the Android SDK and NDK (NOTE these are quite huge downloads):
-(If your default Java is **not** Java 8 - set `JAVA_HOME` before use)
-
-`JAVA_HOME=/path/to/java sdkmanager "platform-tools" "platforms;android-21" "build-tools;29.0.3" "ndk;21.1.6352462"`
-
 # Usage
 
 You can build an Android app ready for the Play Store with the following command
@@ -70,4 +54,30 @@ VAB_KILL_ADB             # Set to let vab kill adb after use. This is useful on 
 See all options:
 ```
 ./vab -h
+```
+
+# Setup
+
+## Android SDK
+Until `vab` get support for setting up the complete dependency chain
+you can avoid Android Studio by using commandline tools.
+
+Android commandline tools can be downloaded from [here](https://developer.android.com/studio#command-tools)
+
+Or with curl:
+
+`curl -# --output commandlinetools-linux.zip https://dl.google.com/android/repository/commandlinetools-linux-6609375_latest.zip`
+
+You can then use `sdkmanager` from that zip to install the Android SDK and NDK (NOTE these are quite huge downloads):
+(If your default Java is **not** Java 8 - set `JAVA_HOME` before use)
+
+`JAVA_HOME=/path/to/java sdkmanager "platform-tools" "platforms;android-21" "build-tools;29.0.3" "ndk;21.1.6352462"`
+
+## Java 8
+
+### macOS
+Installing Java 8 using homebrew
+```
+brew tap adoptopenjdk/openjdk
+brew cask install adoptopenjdk8
 ```

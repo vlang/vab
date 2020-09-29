@@ -3,6 +3,7 @@ module ndk
 import os
 
 import android.sdk
+import android.util
 
 const (
 	home = os.home_dir()
@@ -75,7 +76,7 @@ pub fn versions_available() []string {
 	if !is_side_by_side() {
 		return [os.file_name(root())]
 	}
-	return ls_sorted(root())
+	return util.ls_sorted(root())
 }
 
 pub fn has_version(version string) bool {
@@ -87,7 +88,7 @@ pub fn has_version(version string) bool {
 
 /*
 pub fn versions_dir() []string {
-	return find_sorted(root())
+	return util.find_sorted(root())
 }
 */
 
@@ -95,7 +96,7 @@ pub fn default_version() string {
 	if !is_side_by_side() {
 		return os.file_name(root())
 	}
-	dirs := find_sorted(root())
+	dirs := util.find_sorted(root())
 	if dirs.len > 0 {
 		return os.file_name(dirs.first())
 	}
@@ -123,7 +124,7 @@ pub fn alt_arch(arch string) string {
 	}
 }
 
-[inline] // TODO do Windows and macOS as well
+[inline] // TODO do Windows as well
 pub fn compiler(ndk_version string, arch string, api_level string) ?string {
 	mut eabi := ''
 	if arch == 'armeabi-v7a' { eabi = 'eabi' }
@@ -134,7 +135,7 @@ pub fn compiler(ndk_version string, arch string, api_level string) ?string {
 	mut compiler := os.join_path(root_version(ndk_version),'toolchains','llvm','prebuilt',host_architecture,'bin',arch_alt+'-linux-android${eabi}${api_level}-clang')
 	// Try older ndk version setups
 	if !os.is_file(compiler) {
-		toolchains := ls_sorted(os.join_path(root_version(ndk_version),'toolchains'))
+		toolchains := util.ls_sorted(os.join_path(root_version(ndk_version),'toolchains'))
 		for toolchain in toolchains {
 			if toolchain.starts_with('llvm') {
 				compiler = os.join_path(root_version(ndk_version),'toolchains',toolchain,'prebuilt',host_architecture,'bin',arch_alt+'-linux-android${eabi}${api_level}-clang')
@@ -148,18 +149,20 @@ pub fn compiler(ndk_version string, arch string, api_level string) ?string {
 	return compiler
 }
 
-[inline] // TODO do Windows and macOS as well
+[inline]
 pub fn libs_path(ndk_version string, arch string, api_level string) ?string {
 	mut eabi := ''
 	if arch == 'armeabi-v7a' { eabi = 'eabi' }
 
-	host_architecture := host_arch()
-	arch_alt := alt_arch(arch)
+	mut host_architecture := host_arch()
+	mut arch_alt := alt_arch(arch)
+
+	if eabi != '' { arch_alt = 'arm' }
 
 	mut libs_path := os.join_path(root_version(ndk_version),'toolchains','llvm','prebuilt',host_architecture,'sysroot','usr','lib',arch_alt+'-linux-android'+eabi,api_level)
 
 	if !os.is_dir(libs_path) {
-		toolchains := ls_sorted(os.join_path(root_version(ndk_version),'toolchains'))
+		toolchains := util.ls_sorted(os.join_path(root_version(ndk_version),'toolchains'))
 		for toolchain in toolchains {
 			if toolchain.starts_with('llvm') {
 				libs_path = os.join_path(root_version(ndk_version),'toolchains',toolchain,'prebuilt',host_architecture,'sysroot','usr','lib',arch_alt+'-linux-android'+eabi,api_level)
@@ -172,34 +175,4 @@ pub fn libs_path(ndk_version string, arch string, api_level string) ?string {
 	}
 
 	return libs_path
-}
-
-/*
- * Utility functions
- * TODO share between sdk/ndk?
- */
-fn find_sorted(path string) []string {
-	mut dirs := []string{}
-	mut files := os.ls(path) or { return dirs }
-	for file in files {
-		if os.is_dir(os.real_path(os.join_path(path,file))) {
-			dirs << os.real_path(os.join_path(path,file))
-		}
-	}
-	dirs.sort()
-	dirs.reverse_in_place()
-	return dirs
-}
-
-fn ls_sorted(path string) []string {
-	mut dirs := []string{}
-	mut files := os.ls(path) or { return dirs }
-	for file in files {
-		if os.is_dir(os.real_path(os.join_path(path,file))) {
-			dirs << file
-		}
-	}
-	dirs.sort()
-	dirs.reverse_in_place()
-	return dirs
 }

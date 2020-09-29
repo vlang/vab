@@ -1,6 +1,7 @@
 module sdk
 
 import os
+import android.util
 
 const (
 	home = os.home_dir()
@@ -95,12 +96,12 @@ pub fn platforms_root() string {
 
 pub fn platforms_dir() []string {
 	if ! found() { return []string{} }
-	return find_sorted(platforms_root())
+	return util.find_sorted(platforms_root())
 }
 
 pub fn api_dirs() []string {
 	if ! found() { return []string{} }
-	return ls_sorted(platforms_root())
+	return util.ls_sorted(platforms_root())
 }
 
 pub fn apis_available() []string {
@@ -121,12 +122,12 @@ pub fn has_build_tools(version string) bool {
 
 pub fn build_tools_available() []string {
 	if ! found() { return []string{} }
-	return ls_sorted(build_tools_root())
+	return util.ls_sorted(build_tools_root())
 }
 
 pub fn default_build_tools_dir() string {
 	if ! found() { return '' }
-	dirs := find_sorted(build_tools_root())
+	dirs := util.find_sorted(build_tools_root())
 	if dirs.len > 0 {
 		return dirs.first()
 	}
@@ -135,7 +136,7 @@ pub fn default_build_tools_dir() string {
 
 pub fn default_platforms_dir() string {
 	if ! found() { return '' }
-	dirs := find_sorted(platforms_root())
+	dirs := util.find_sorted(platforms_root())
 	if dirs.len > 0 {
 		return dirs.first()
 	}
@@ -146,42 +147,3 @@ pub fn setup(component Component, version string) {
 	// TODO
 }
 
-/*
- * Utility functions
- */
-fn find_sorted(path string) []string {
-	mut dirs := []string{}
-	mut files := os.ls(path) or { return dirs }
-	for file in files {
-		if os.is_dir(os.real_path(os.join_path(path,file))) {
-			dirs << os.real_path(os.join_path(path,file))
-		}
-	}
-	dirs.sort()
-	dirs.reverse_in_place()
-	return dirs
-}
-
-fn ls_sorted(path string) []string {
-	mut dirs := []string{}
-	mut files := os.ls(path) or { return dirs }
-	for file in files {
-		if os.is_dir(os.real_path(os.join_path(path,file))) {
-			dirs << file
-		}
-	}
-	dirs.sort()
-	dirs.reverse_in_place()
-	return dirs
-}
-/*
-fn which(exe string) string {
-	mut which_exe := 'which'
-		if uos == 'windows' {
-			which_exe = 'where'
-		}
-		res := os.exec(which_exe+' '+exe) or { os.Result{1,''} }
-		if res.exit_code > 0 { return '' }
-		return res.output
-}
-*/
