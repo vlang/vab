@@ -29,3 +29,7 @@ pub fn ls_sorted(path string) []string {
 	dirs.reverse_in_place()
 	return dirs
 }
+
+pub fn cache_dir() string {
+	return os.join_path(os.cache_dir(),'v','android')
+}

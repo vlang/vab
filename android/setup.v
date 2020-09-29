@@ -4,6 +4,7 @@ import os
 import net.http
 
 import android.sdk
+import android.util
 
 pub enum Dependency {
 	commandline_tools
@@ -78,14 +79,10 @@ pub fn dependency_root(dep Dependency) string {
 	return root
 }
 
-fn cache_dir() string {
-	return os.join_path(os.cache_dir(),'v','android')
-}
-
 fn dependency_dir(dep Dependency) string {
 	mut root := ''
 	if dep == .commandline_tools {
-		root = os.join_path(cache_dir())
+		root = os.join_path(util.cache_dir())
 	}
 	return root
 }

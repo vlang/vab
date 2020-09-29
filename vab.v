@@ -373,6 +373,14 @@ fn validate_env(opt Options) {
 		exit(1)
 	}
 
+	// Validate further Android SDK
+	if asdk.sdkmanager() == '' {
+		eprintln('No "sdkmanager" could be detected.')
+		eprintln('Please provide a valid path via ANDROID_SDK_ROOT')
+		eprintln('or run `${exe_name} install tools`')
+		exit(1)
+	}
+
 	build_tools_semantic_version := semver.from(asdk.default_build_tools_version) or { panic(err) }
 
 	if ! build_tools_semantic_version.satisfies('>=24.0.3') {
@@ -382,7 +390,6 @@ fn validate_env(opt Options) {
 		eprintln('Please install build-tools version >= 24.0.3')
 		exit(1)
 	}
-
 
 }
 
@@ -532,34 +539,35 @@ fn install(opt Options, component string) int {
 }
 
 fn doctor(opt Options) {
-	println('V')
-	println('\tVersion ${vxt.version()}')
-	println('\tPath ${vxt.home()}')
+	println('V
+	Version ${vxt.version()}
+	Path ${vxt.home()}')
 	if opt.v_flags.len > 0 {
 		println('\tFlags ${opt.v_flags}')
 	}
-	println('Java')
-	println('\tJDK')
-	println('\t\tVersion ${java.jdk_version()}')
-	println('\t\tPath ${java.jdk_root()}')
-	println('Android')
-	println('\tSDK')
-	println('\t\tPath ${asdk.root()}')
-	println('\tNDK')
-	println('\t\tVersion ${opt.ndk_version}')
-	println('\t\tPath ${andk.root()}')
-	println('\t\tSide-by-side ${andk.is_side_by_side()}')
-	println('\tBuild')
-	println('\t\tAPI ${opt.api_level}')
-	println('\t\tBuild-tools ${opt.build_tools}')
+	println('Java
+	JDK
+		Version ${java.jdk_version()}
+		Path ${java.jdk_root()}
+	Android
+		SDK
+			Path ${asdk.root()}
+			Tool.sdkmanager ${asdk.sdkmanager()}
+		NDK
+			Version ${opt.ndk_version}
+			Path ${andk.root()}
+			Side-by-side ${andk.is_side_by_side()}
+		Build
+			API ${opt.api_level}
+			Build-tools ${opt.build_tools}')
 	if opt.keystore != '' || opt.keystore_alias != '' {
 		println('\tKeystore')
 		println('\t\tFile ${opt.keystore}')
 		println('\t\tAlias ${opt.keystore_alias}')
 	}
-	println('Product')
-	println('\tName "${opt.app_name}"')
-	println('\tPackage ${opt.package_id}')
-	println('\tOutput ${opt.output}')
-	println('')
+	println('Product
+	Name "${opt.app_name}"
+	Package ${opt.package_id}
+	Output ${opt.output}
+	')
 }
