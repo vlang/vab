@@ -142,13 +142,16 @@ fn main() {
 		exit(1)
 	}
 
-	// Validate environment
-	check_dependencies()
-
-	resolve_options(mut opt)
-
-	v_flags << opt.v_flags
-	opt.v_flags = v_flags
+	if additional_args.len > 1 {
+		if additional_args[0] == 'install' {
+			install_arg := additional_args[1]
+			install_res := install(opt,install_arg)
+			if install_res == 0 && opt.verbosity > 0 {
+				println('Installed ${install_arg} successfully')
+			}
+			exit( install_res )
+		}
+	}
 
 	if opt.list_ndks {
 		for ndk_v in andk.versions_available() {
@@ -180,19 +183,15 @@ fn main() {
 		println(fp.usage())
 		exit(1)
 	}
-
 	input := fp.args[fp.args.len-1]
 
-	if additional_args.len > 1 {
-		if additional_args[0] == 'install' {
-			install_arg := additional_args[1]
-			install_res := install(opt,install_arg)
-			if install_res == 0 && opt.verbosity > 0 {
-				println('Installed ${install_arg} successfully')
-			}
-			exit( install_res )
-		}
-	}
+	// Validate environment
+	check_dependencies()
+
+	resolve_options(mut opt)
+
+	v_flags << opt.v_flags
+	opt.v_flags = v_flags
 
 	input_ext := os.file_ext(input)
 	accepted_input_files := ['.v','.apk','.aab']
