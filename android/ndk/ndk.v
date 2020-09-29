@@ -56,7 +56,7 @@ pub fn root() string {
 	return ndk_root
 }
 
-pub fn root_version(version string) {
+pub fn root_version(version string) string {
 	if !is_side_by_side() {
 		return root()
 	}
