@@ -64,6 +64,11 @@ pub fn jdk_version() string {
 	// Fast - but not most reliable way
 	java_version := os.exec(java+' -version') or { os.Result{1,''} }
 	output := java_version.output
+
+	if java_version.exit_code != 0 {
+		return ''
+	}
+	
 	mut re := regex.regex_opt(r'.*(\d+\.?\d*\.?\d*)') or { panic(err) }
 	start, _ := re.match_string(output)
 	if start >= 0 && re.groups.len > 0 {
