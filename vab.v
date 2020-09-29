@@ -171,6 +171,11 @@ fn main() {
 		exit(0)
 	}
 
+	if opt.dump_env {
+		dump(opt)
+		exit(0)
+	}
+
 	if fp.args.len == 0 || opt.dump_usage {
 		println(fp.usage())
 		exit(1)
@@ -187,11 +192,6 @@ fn main() {
 			}
 			exit( install_res )
 		}
-	}
-
-	if opt.dump_env {
-		dump(opt)
-		exit(0)
 	}
 
 	input_ext := os.file_ext(input)
