@@ -133,7 +133,8 @@ pub fn compiler(ndk_version string, arch string, api_level string) ?string {
 	arch_alt := alt_arch(arch)
 
 	mut compiler := os.join_path(root_version(ndk_version),'toolchains','llvm','prebuilt',host_architecture,'bin',arch_alt+'-linux-android${eabi}${api_level}-clang')
-	// Try older ndk version setups
+	// legacy ndk version setups
+	/*
 	if !os.is_file(compiler) {
 		toolchains := util.ls_sorted(os.join_path(root_version(ndk_version),'toolchains'))
 		for toolchain in toolchains {
@@ -142,9 +143,9 @@ pub fn compiler(ndk_version string, arch string, api_level string) ?string {
 				break
 			}
 		}
-	}
+	}*/
 	if !os.is_file(compiler) {
-		return error(@MOD+'.'+@FN+' couldn\'t locate compiler "${compiler}"')
+		return error(@MOD+'.'+@FN+' couldn\'t locate compiler "${compiler}". You could try with a newer ndk version.')
 	}
 	return compiler
 }
@@ -161,6 +162,7 @@ pub fn libs_path(ndk_version string, arch string, api_level string) ?string {
 
 	mut libs_path := os.join_path(root_version(ndk_version),'toolchains','llvm','prebuilt',host_architecture,'sysroot','usr','lib',arch_alt+'-linux-android'+eabi,api_level)
 
+	/*
 	if !os.is_dir(libs_path) {
 		toolchains := util.ls_sorted(os.join_path(root_version(ndk_version),'toolchains'))
 		for toolchain in toolchains {
@@ -169,9 +171,9 @@ pub fn libs_path(ndk_version string, arch string, api_level string) ?string {
 				break
 			}
 		}
-	}
+	}*/
 	if !os.is_dir(libs_path) {
-		return error(@MOD+'.'+@FN+' couldn\'t locate libraries path "${libs_path}"')
+		return error(@MOD+'.'+@FN+' couldn\'t locate libraries path "${libs_path}". You could try with a newer ndk version.')
 	}
 
 	return libs_path
