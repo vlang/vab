@@ -531,6 +531,18 @@ fn install(opt Options, component string) int {
 			exit(1)
 		}
 
+	} else if component == 'build-tools' {
+		tools_root := android.dependency_root(.commandline_tools)
+		if tools_root == '' {
+			install_tools(opt)
+		}
+
+		bt_setup := android.SetupOptions{.build_tools,opt.verbosity}
+		android.setup(bt_setup) or {
+			eprintln(err)
+			exit(1)
+		}
+
 	} else {
 		eprintln('$exe_name '+@FN+': Unknown component "$component"')
 		return 1
