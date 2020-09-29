@@ -83,7 +83,10 @@ pub fn compile(opt CompileOptions) bool {
 
 	v_home := vxt.home()
 
-	android_ndk_root := os.join_path(ndk.root(),opt.ndk_version)
+	mut android_ndk_root := os.join_path(ndk.root(),opt.ndk_version)
+	if !ndk.is_side_by_side {
+		android_ndk_root := ndk.root()
+	}
 
 	mut archs := []string{}
 	if opt.archs.len > 0 {
