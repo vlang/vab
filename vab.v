@@ -174,6 +174,14 @@ fn main() {
 		exit(0)
 	}
 
+	// Validate environment
+	check_dependencies()
+
+	resolve_options(mut opt)
+
+	v_flags << opt.v_flags
+	opt.v_flags = v_flags
+
 	if opt.dump_env {
 		dump(opt)
 		exit(0)
@@ -184,14 +192,6 @@ fn main() {
 		exit(1)
 	}
 	input := fp.args[fp.args.len-1]
-
-	// Validate environment
-	check_dependencies()
-
-	resolve_options(mut opt)
-
-	v_flags << opt.v_flags
-	opt.v_flags = v_flags
 
 	input_ext := os.file_ext(input)
 	accepted_input_files := ['.v','.apk','.aab']
