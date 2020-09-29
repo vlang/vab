@@ -65,22 +65,26 @@ pub fn is_side_by_side() bool {
 }
 
 pub fn versions_available() []string {
-	if is_side_by_side() {
-		return ls_sorted(root())
-	} else {
-		return [root().all_after_last(os.path_separator)]
+	if !is_side_by_side() {
+		return [os.file_name(root())]
 	}
+	return ls_sorted(root())
 }
 
 pub fn has_version(version string) bool {
 	return version in versions_available()
 }
 
+/*
 pub fn versions_dir() []string {
 	return find_sorted(root())
 }
+*/
 
 pub fn default_version() string {
+	if !is_side_by_side() {
+		return os.file_name(root())
+	}
 	dirs := find_sorted(root())
 	if dirs.len > 0 {
 		return os.file_name(dirs.first())
