@@ -60,8 +60,16 @@ pub fn found() bool {
 	return root() != ''
 }
 
+pub fn is_side_by_side() bool {
+	return os.real_path(os.join_path(sdk.root(),'ndk')) == os.real_path(os.join_path(root()))
+}
+
 pub fn versions_available() []string {
-	return ls_sorted(root())
+	if is_side_by_side() {
+		return ls_sorted(root())
+	} else {
+		return [os.dir(root())]
+	}
 }
 
 pub fn has_version(version string) bool {
