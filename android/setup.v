@@ -46,7 +46,7 @@ pub fn setup(opt SetupOptions) ?bool {
 	} else if opt.dep == .build_tools {
 		bt_cmd := [
 			sdk.sdkmanager(),
-			'--sdk-root "${sdk.root()}"',
+			'--sdk_root "${sdk.root()}"',
 			'build-tools;24.0.3'
 		]
 		if opt.verbosity > 0 {
