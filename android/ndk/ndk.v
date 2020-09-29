@@ -56,6 +56,13 @@ pub fn root() string {
 	return ndk_root
 }
 
+pub fn root_version(version string) {
+	if !is_side_by_side() {
+		return root()
+	}
+	return os.join_path(root(),version)
+}
+
 pub fn found() bool {
 	return root() != ''
 }
@@ -72,6 +79,9 @@ pub fn versions_available() []string {
 }
 
 pub fn has_version(version string) bool {
+	if !is_side_by_side() {
+		return os.file_name(root()) == version
+	}
 	return version in versions_available()
 }
 
