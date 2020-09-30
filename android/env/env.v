@@ -1,4 +1,4 @@
-module android
+module env
 
 import os
 import net.http
@@ -31,10 +31,9 @@ pub fn setup(opt SetupOptions) ?bool {
 		}
 		unzip_dst := os.join_path(dependency_dir(opt.dep))
 		os.mkdir_all(unzip_dst)
-		if unzip(file,unzip_dst) {
+		if util.unzip(file,unzip_dst) {
 			os.chmod(os.join_path(cmdl_root,'sdkmanager'), 0o755)
 		}
-
 		if os.is_executable(os.join_path(cmdl_root,'sdkmanager')) {
 			return true
 		}
@@ -44,16 +43,16 @@ pub fn setup(opt SetupOptions) ?bool {
 	} else if opt.dep == .ndk {
 		return error(@MOD+'.'+@FN+' '+'setup type ${opt.dep} is not implemented yet')
 	} else if opt.dep == .build_tools {
+		if opt.verbosity > 0 {
+			println('Installing "build-tools;24.0.3"...')
+		}
 		bt_cmd := [
 			sdk.sdkmanager(),
 			'--sdk_root="${sdk.root()}"',
 			'build-tools;24.0.3'
 		]
-		if opt.verbosity > 0 {
-			println('Installing "build-tools;24.0.3"...')
-		}
-		verbosity_print_cmd(bt_cmd, opt.verbosity)
-		run_else_exit(bt_cmd)
+		util.verbosity_print_cmd(bt_cmd, opt.verbosity)
+		util.run_or_exit(bt_cmd)
 		return true
 	}
 	return error(@MOD+'.'+@FN+' '+'unknown setup type ${opt.dep}')

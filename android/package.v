@@ -6,6 +6,7 @@ import regex
 import java
 
 import android.sdk
+import android.util
 
 const (
 	default_app_name = 'V Test App'
@@ -96,8 +97,8 @@ pub fn package(opt PackageOptions) bool {
 		'-I '+android_runtime
 		//'--target-sdk-version ${ANDROIDTARGET}'
 	]
-	verbosity_print_cmd(aapt_cmd, opt.verbosity)
-	run_else_exit(aapt_cmd)
+	util.verbosity_print_cmd(aapt_cmd, opt.verbosity)
+	util.run_or_exit(aapt_cmd)
 
 	pwd := os.getwd()
 	os.chdir(package_path)
@@ -115,8 +116,8 @@ pub fn package(opt PackageOptions) bool {
 	]
 	javac_cmd << java_sources
 
-	verbosity_print_cmd(javac_cmd, opt.verbosity)
-	run_else_exit(javac_cmd)
+	util.verbosity_print_cmd(javac_cmd, opt.verbosity)
+	util.run_or_exit(javac_cmd)
 
 	// Dex
 	dx_cmd := [
@@ -126,8 +127,8 @@ pub fn package(opt PackageOptions) bool {
 		'--output='+os.join_path('bin','classes.dex'),
 		'obj', //obj_path
 	]
-	verbosity_print_cmd(dx_cmd, opt.verbosity)
-	run_else_exit(dx_cmd)
+	util.verbosity_print_cmd(dx_cmd, opt.verbosity)
+	util.run_or_exit(dx_cmd)
 
 	// Second run
 	aapt_cmd = [
@@ -142,8 +143,8 @@ pub fn package(opt PackageOptions) bool {
 		'-F '+tmp_unaligned_product,
 		'bin' //bin_path
 	]
-	verbosity_print_cmd(aapt_cmd, opt.verbosity)
-	run_else_exit(aapt_cmd)
+	util.verbosity_print_cmd(aapt_cmd, opt.verbosity)
+	util.run_or_exit(aapt_cmd)
 
 
 	os.chdir(build_path)
@@ -159,8 +160,8 @@ pub fn package(opt PackageOptions) bool {
 			tmp_unaligned_product,
 			lib_s
 		]
-		verbosity_print_cmd(aapt_cmd, opt.verbosity)
-		run_else_exit(aapt_cmd)
+		util.verbosity_print_cmd(aapt_cmd, opt.verbosity)
+		util.run_or_exit(aapt_cmd)
 	}
 
 	os.chdir(pwd)
@@ -173,8 +174,8 @@ pub fn package(opt PackageOptions) bool {
 		tmp_unaligned_product,
 		tmp_unsigned_product
 	]
-	verbosity_print_cmd(zipalign_cmd, opt.verbosity)
-	run_else_exit(zipalign_cmd)
+	util.verbosity_print_cmd(zipalign_cmd, opt.verbosity)
+	util.run_or_exit(zipalign_cmd)
 
 	// Sign the APK
 	keystore_file := opt.keystore
@@ -193,8 +194,8 @@ pub fn package(opt PackageOptions) bool {
 			'-validity 10000',
 			'-dname \'CN=,OU=,O=,L=,S=,C=\''
 		]
-		verbosity_print_cmd(keytool_cmd, opt.verbosity)
-		run_else_exit(keytool_cmd)
+		util.verbosity_print_cmd(keytool_cmd, opt.verbosity)
+		util.run_or_exit(keytool_cmd)
 	}
 
 	// Defaults from Android debug key
@@ -222,8 +223,8 @@ pub fn package(opt PackageOptions) bool {
 		'--out '+tmp_product,
 		tmp_unsigned_product
 	]
-	verbosity_print_cmd(apksigner_cmd, opt.verbosity)
-	run_else_exit(apksigner_cmd)
+	util.verbosity_print_cmd(apksigner_cmd, opt.verbosity)
+	util.run_or_exit(apksigner_cmd)
 
 	apksigner_cmd = [
 		apksigner,
@@ -231,8 +232,8 @@ pub fn package(opt PackageOptions) bool {
 		'-v',
 		tmp_product,
 	]
-	verbosity_print_cmd(apksigner_cmd, opt.verbosity)
-	run_else_exit(apksigner_cmd)
+	util.verbosity_print_cmd(apksigner_cmd, opt.verbosity)
+	util.run_or_exit(apksigner_cmd)
 
 	os.mv_by_cp(tmp_product, opt.output_file) or { panic(err) }
 

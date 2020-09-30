@@ -3,6 +3,7 @@ module android
 import os
 
 import android.sdk
+import android.util
 
 pub struct DeployOptions {
 	verbosity	int
@@ -26,8 +27,8 @@ fn private_device_list(verbosity int) []string {
 		'devices',
 		'-l'
 	]
-	verbosity_print_cmd(adb_list_cmd, verbosity) //opt.verbosity
-	output := run_else_exit(adb_list_cmd).split('\n')
+	util.verbosity_print_cmd(adb_list_cmd, verbosity) //opt.verbosity
+	output := util.run_or_exit(adb_list_cmd).split('\n')
 	mut device_list := []string{}
 	for device in output {
 		if !device.contains(' model:') { continue }
@@ -77,8 +78,8 @@ pub fn deploy(opt DeployOptions) bool {
 			'-r',
 			opt.deploy_file
 		]
-		verbosity_print_cmd(adb_cmd, opt.verbosity)
-		run_else_exit(adb_cmd)
+		util.verbosity_print_cmd(adb_cmd, opt.verbosity)
+		util.run_or_exit(adb_cmd)
 
 		if opt.run != '' {
 			if opt.verbosity > 0 {
@@ -93,8 +94,8 @@ pub fn deploy(opt DeployOptions) bool {
 				'-n',
 				opt.run
 			]
-			verbosity_print_cmd(adb_run_cmd, opt.verbosity)
-			run_else_exit(adb_run_cmd)
+			util.verbosity_print_cmd(adb_run_cmd, opt.verbosity)
+			util.run_or_exit(adb_run_cmd)
 		}
 
 		if opt.kill_adb {

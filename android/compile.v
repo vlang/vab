@@ -4,6 +4,7 @@ import os
 import vxt
 
 import android.ndk
+import android.util
 import crypto.md5
 
 const (
@@ -42,8 +43,8 @@ pub fn compile(opt CompileOptions) bool {
 		'-o "${v_output_file}"',
 		opt.input
 	]
-	verbosity_print_cmd(v_cmd, opt.verbosity)
-	run_else_exit(v_cmd)
+	util.verbosity_print_cmd(v_cmd, opt.verbosity)
+	util.run_or_exit(v_cmd)
 
 	// Poor man's cache check
 	mut hash := ''
@@ -188,8 +189,8 @@ pub fn compile(opt CompileOptions) bool {
 			'-L"'+arch_libs[arch]+'"',
 			ldflags.join(' ')
 		]
-		verbosity_print_cmd(build_cmd, opt.verbosity)
-		comp_res := run_else_exit(build_cmd)
+		util.verbosity_print_cmd(build_cmd, opt.verbosity)
+		comp_res := util.run_or_exit(build_cmd)
 
 		if opt.verbosity > 1 {
 			println(comp_res)

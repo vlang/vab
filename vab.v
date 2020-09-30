@@ -11,6 +11,7 @@ import java
 import android
 import android.sdk as asdk
 import android.ndk as andk
+import android.env
 
 const (
 	exe_name			= os.file_name(os.executable())
@@ -501,44 +502,44 @@ fn install(opt Options, component string) int {
 	}
 
 	if component == 'tools' {
-		android.setup(android.SetupOptions{.commandline_tools,opt.verbosity}) or {
+		env.setup(env.SetupOptions{.commandline_tools,opt.verbosity}) or {
 			eprintln(err)
 			exit(1)
 		}
 	} else if component == 'sdk' {
-		tools_root := android.dependency_root(.commandline_tools)
+		tools_root := env.dependency_root(.commandline_tools)
 
 		if tools_root == '' {
 			install_tools(opt)
 		}
 
-		sdk_setup := android.SetupOptions{.sdk,opt.verbosity}
-		android.setup(sdk_setup) or {
+		sdk_setup := env.SetupOptions{.sdk,opt.verbosity}
+		env.setup(sdk_setup) or {
 			eprintln(err)
 			exit(1)
 		}
 
 	} else if component == 'ndk' {
-		tools_root := android.dependency_root(.commandline_tools)
+		tools_root := env.dependency_root(.commandline_tools)
 
 		if tools_root == '' {
 			install_tools(opt)
 		}
 
-		ndk_setup := android.SetupOptions{.ndk,opt.verbosity}
-		android.setup(ndk_setup) or {
+		ndk_setup := env.SetupOptions{.ndk,opt.verbosity}
+		env.setup(ndk_setup) or {
 			eprintln(err)
 			exit(1)
 		}
 
 	} else if component == 'build-tools' {
-		tools_root := android.dependency_root(.commandline_tools)
+		tools_root := env.dependency_root(.commandline_tools)
 		if tools_root == '' {
 			install_tools(opt)
 		}
 
-		bt_setup := android.SetupOptions{.build_tools,opt.verbosity}
-		android.setup(bt_setup) or {
+		bt_setup := env.SetupOptions{.build_tools,opt.verbosity}
+		env.setup(bt_setup) or {
 			eprintln(err)
 			exit(1)
 		}
