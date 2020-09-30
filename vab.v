@@ -502,7 +502,7 @@ fn install(opt Options, component string) int {
 	}
 
 	if component == 'tools' {
-		env.setup(env.SetupOptions{.commandline_tools,opt.verbosity}) or {
+		env.install(env.SetupOptions{.commandline_tools,opt.verbosity}) or {
 			eprintln(err)
 			exit(1)
 		}
@@ -513,7 +513,7 @@ fn install(opt Options, component string) int {
 		}
 
 		sdk_setup := env.SetupOptions{.sdk,opt.verbosity}
-		env.setup(sdk_setup) or {
+		env.install(sdk_setup) or {
 			eprintln(err)
 			exit(1)
 		}
@@ -525,7 +525,7 @@ fn install(opt Options, component string) int {
 		}
 
 		ndk_setup := env.SetupOptions{.ndk,opt.verbosity}
-		env.setup(ndk_setup) or {
+		env.install(ndk_setup) or {
 			eprintln(err)
 			exit(1)
 		}
@@ -537,7 +537,7 @@ fn install(opt Options, component string) int {
 		}
 
 		bt_setup := env.SetupOptions{.build_tools,opt.verbosity}
-		env.setup(bt_setup) or {
+		env.install(bt_setup) or {
 			eprintln(err)
 			exit(1)
 		}
@@ -564,6 +564,7 @@ fn doctor(opt Options) {
 		SDK
 			Path ${asdk.root()}
 			Tool.sdkmanager ${asdk.sdkmanager()}
+			Writable ${env.can_install()}
 		NDK
 			Version ${opt.ndk_version}
 			Path ${andk.root()}

@@ -18,11 +18,18 @@ pub struct SetupOptions {
 	verbosity	int
 }
 
-pub fn setup(opt SetupOptions) ?bool {
+pub fn can_install() bool {
+	return os.is_writable(sdk.root())
+}
+
+pub fn install(opt SetupOptions) ?bool {
+	if !can_install() {
+		return error(@MOD+'.'+@FN+' '+'No permission to write in Android SDK root "${sdk.root()}". Please install manually.')
+	}
 	if opt.dep == .commandline_tools {
 		cmdl_root := root_for(opt.dep)
 		if cmdl_root != '' {
-			return error(@MOD+'.'+@FN+' '+'commandline tools is already setup in ${cmdl_root}')
+			return error(@MOD+'.'+@FN+' '+'commandline tools is already installed in ${cmdl_root}')
 		}
 
 		file := download(opt)
@@ -37,16 +44,17 @@ pub fn setup(opt SetupOptions) ?bool {
 		if os.is_executable(os.join_path(cmdl_root,'sdkmanager')) {
 			return true
 		}
-		return error(@MOD+'.'+@FN+' '+'failed to setup commandline tools in ${cmdl_root}')
+		return error(@MOD+'.'+@FN+' '+'failed to install commandline tools in ${cmdl_root}')
 	} else if opt.dep == .sdk {
-		return error(@MOD+'.'+@FN+' '+'setup type ${opt.dep} is not implemented yet')
+		return error(@MOD+'.'+@FN+' '+'install type ${opt.dep} is not implemented yet')
 	} else if opt.dep == .ndk {
-		return error(@MOD+'.'+@FN+' '+'setup type ${opt.dep} is not implemented yet')
+		return error(@MOD+'.'+@FN+' '+'install type ${opt.dep} is not implemented yet')
 	} else if opt.dep == .build_tools {
 		if opt.verbosity > 0 {
 			println('Installing "build-tools 24.0.3"...')
 		}
 		bt_cmd := [
+			'yes |' // Windows
 			sdk.sdkmanager(),
 			'--sdk_root="${sdk.root()}"',
 			'"build-tools;24.0.3"'
@@ -59,7 +67,7 @@ pub fn setup(opt SetupOptions) ?bool {
 		}
 		return true
 	}
-	return error(@MOD+'.'+@FN+' '+'unknown setup type ${opt.dep}')
+	return error(@MOD+'.'+@FN+' '+'unknown install type ${opt.dep}')
 }
 
 fn download(opt SetupOptions) string {
