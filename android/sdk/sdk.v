@@ -42,15 +42,14 @@ pub fn root() string {
 		sdk_root = os.getenv('ANDROID_HOME')
 	}
 
-	// Detect OS type at runtime - in case we're in some exotic environment
-	uos := os.user_os()
-
 	if sdk_root == '' {
-		mut dirs := []string{}
-
-		if uos == 'windows' { dirs = possible_sdk_paths_windows }
-		if uos == 'macos'   { dirs = possible_sdk_paths_macos }
-		if uos == 'linux'   { dirs = possible_sdk_paths_linux }
+		// Detect OS type at runtime - in case we're in some exotic environment
+		dirs := match os.user_os() {
+			'windows'	{ possible_sdk_paths_windows }
+			'macos'		{ possible_sdk_paths_macos }
+			'linux'		{ possible_sdk_paths_linux }
+			else		{ []string{} }
+		}
 
 		for dir in dirs {
 			if os.exists(dir) && os.is_dir(dir) { return dir }
@@ -73,6 +72,31 @@ pub fn root() string {
 
 pub fn found() bool {
 	return root() != ''
+}
+
+pub fn sdkmanager() string {
+
+	mut sdkmanager := ''
+	if found() {
+		sdkmanager = os.join_path(tools_root(),'bin','sdkmanager')
+		if ! os.is_executable(sdkmanager) {
+			sdkmanager = os.join_path(root(),'cmdline-tools','tools','bin','sdkmanager')
+		}
+	}
+	if !os.is_executable(sdkmanager) {
+		if os.exists_in_system_path('sdkmanager') {
+			sdkmanager = os.find_abs_path_of_executable('sdkmanager') or { '' }
+		}
+	}
+	// Check in cache
+	if !os.is_executable(sdkmanager) {
+		sdkmanager = os.join_path(util.cache_dir(),'tools','bin','sdkmanager')
+	}
+
+	if !os.is_executable(sdkmanager) {
+		sdkmanager = ''
+	}
+	return sdkmanager
 }
 
 pub fn tools_root() string {
@@ -111,31 +135,6 @@ pub fn apis_available() []string {
 		apis << api.all_after('android-')
 	}
 	return apis
-}
-
-pub fn sdkmanager() string {
-
-	mut sdkmanager := ''
-	if found() {
-		sdkmanager = os.join_path(tools_root(),'bin','sdkmanager')
-		if ! os.is_executable(sdkmanager) {
-			sdkmanager = os.join_path(root(),'cmdline-tools','tools','bin','sdkmanager')
-		}
-	}
-	if !os.is_executable(sdkmanager) {
-		if os.exists_in_system_path('sdkmanager') {
-			sdkmanager = os.find_abs_path_of_executable('sdkmanager') or { '' }
-		}
-	}
-	// Check in cache
-	if !os.is_executable(sdkmanager) {
-		sdkmanager = os.join_path(util.cache_dir(),'tools','bin','sdkmanager')
-	}
-
-	if !os.is_executable(sdkmanager) {
-		sdkmanager = ''
-	}
-	return sdkmanager
 }
 
 pub fn has_api(api string) bool {

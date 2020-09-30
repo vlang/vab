@@ -44,14 +44,18 @@ pub fn verbosity_print_cmd(args []string, verbosity int) {
 }
 
 pub fn run_or_exit(args []string) string {
-	cmd := args.join(' ')
-	res := os.exec(cmd) or { os.Result{1,''} }
+	res := run(args)
 	if res.exit_code > 0 {
 		eprintln('${args[0]} failed with return code ${res.exit_code}')
 		eprintln(res.output)
 		exit(1)
 	}
 	return res.output
+}
+
+pub fn run(args []string) os.Result {
+	res := os.exec(args.join(' ')) or { os.Result{1,''} }
+	return res
 }
 
 pub fn unzip(file string, dir string) bool {

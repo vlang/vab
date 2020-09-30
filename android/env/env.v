@@ -44,7 +44,7 @@ pub fn setup(opt SetupOptions) ?bool {
 		return error(@MOD+'.'+@FN+' '+'setup type ${opt.dep} is not implemented yet')
 	} else if opt.dep == .build_tools {
 		if opt.verbosity > 0 {
-			println('Installing "build-tools;24.0.3"...')
+			println('Installing "build-tools 24.0.3"...')
 		}
 		bt_cmd := [
 			sdk.sdkmanager(),
@@ -52,7 +52,11 @@ pub fn setup(opt SetupOptions) ?bool {
 			'build-tools;24.0.3'
 		]
 		util.verbosity_print_cmd(bt_cmd, opt.verbosity)
-		util.run_or_exit(bt_cmd)
+		bt_cmd_res := util.run(bt_cmd)
+		if bt_cmd_res.exit_code > 0 {
+			eprintln(bt_cmd_res.output)
+			return true
+		}
 		return true
 	}
 	return error(@MOD+'.'+@FN+' '+'unknown setup type ${opt.dep}')

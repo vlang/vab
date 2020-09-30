@@ -105,11 +105,12 @@ pub fn default_version() string {
 
 [inline]
 pub fn host_arch() string {
-	mut host_arch := ''
-	uos := os.user_os()
-	if uos == 'windows' { host_arch = 'windows-x86_64' }
-	if uos == 'macos'     { host_arch = 'darwin-x86_64' }
-	if uos == 'linux'   { host_arch = 'linux-x86_64' }
+	host_arch := match os.user_os() {
+		'windows'	{ 'windows-x86_64' }
+		'macos'		{ 'darwin-x86_64' }
+		'linux'		{ 'linux-x86_64' }
+		else		{ 'unknown' }
+	}
 	return host_arch
 }
 
