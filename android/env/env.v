@@ -111,7 +111,7 @@ pub fn install(components string, verbosity int) int {
 }
 
 fn install_opt(opt InstallOptions) ?bool {
-	if !can_install() {
+	if opt.dep != .tools && !can_install() {
 		return error(@MOD+'.'+@FN+' '+'No permission to write in Android SDK root "${sdk.root()}". Please install manually.')
 	}
 	if opt.verbosity > 0 {
