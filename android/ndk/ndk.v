@@ -8,6 +8,7 @@ import android.util
 const (
 	home = os.home_dir()
 	supported_archs = ['arm64-v8a','armeabi-v7a','x86','x86_64']
+	min_supported_version = "21.1.6352462"
 )
 
 // ANDROID_SDK_ROOT and ANDROID_HOME are official ENV variables to get the SDK

@@ -11,6 +11,9 @@ const (
 const (
 	default_api_level = os.file_name(default_platforms_dir()).all_after('android-')
 	default_build_tools_version = os.file_name(default_build_tools_dir())
+
+	min_supported_api_level = '20'
+	min_supported_build_tools_version = '24.0.3'
 )
 
 // Possible default locations of the SDK
@@ -69,17 +72,19 @@ pub fn root() string {
 	}
 	// Try and detect by getting path to 'sdkmanager'
 	if sdk_root == '' {
-		mut adb_path := ''
+		mut path := sdkmanager()
 
-		if os.exists_in_system_path('adb') {
-			adb_path = os.find_abs_path_of_executable('adb') or { return '' }
-			if adb_path != '' {
-				// adb normally reside in 'path/to/sdk_root/platform-tools/'
-				sdk_root = os.real_path(os.join_path(os.dir(adb_path),'..'))
+		if path != '' {
+			// sdkmanager normally reside in 'path/to/sdk_root/cmdline-tools/tools/bin'
+			// but in older setups it coould reside in 'path/to/sdk_root/tools/bin'
+			// ... Android *sigh* ...
+			if path.contains('cmdline-tools') {
+				sdk_root = os.real_path(os.join_path(os.dir(path),'..','..'))
+			} else {
+				sdk_root = os.real_path(os.join_path(os.dir(path),'..'))
 			}
 		}
 	}
-
 	return sdk_root
 }
 

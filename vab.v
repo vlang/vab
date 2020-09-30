@@ -9,18 +9,14 @@ import semver
 import java
 
 import android
-import android.sdk as asdk
-import android.ndk as andk
+import android.sdk
+import android.ndk
 import android.env
 
 const (
 	exe_name			= os.file_name(os.executable())
 	exe_dir				= os.base_dir(os.real_path(os.executable()))
 	rip_vflags			= ['-autofree','-cg','-prod', 'run']
-)
-
-const (
-	min_supported_api_level = '21'
 )
 
 /* fn appendenv(name, value string) {
@@ -153,21 +149,21 @@ fn main() {
 	}
 
 	if opt.list_ndks {
-		for ndk_v in andk.versions_available() {
+		for ndk_v in ndk.versions_available() {
 			println(ndk_v)
 		}
 		exit(0)
 	}
 
 	if opt.list_apis {
-		for api in asdk.apis_available() {
+		for api in sdk.apis_available() {
 			println(api)
 		}
 		exit(0)
 	}
 
 	if opt.list_build_tools {
-		for btv in asdk.build_tools_available() {
+		for btv in sdk.build_tools_available() {
 			println(btv)
 		}
 		exit(0)
@@ -338,7 +334,7 @@ fn check_essentials() {
 	}
 
 	// Validate Android SDK requirements
-	if ! asdk.found() {
+	if ! sdk.found() {
 		eprintln('No Android SDK could be detected.')
 		eprintln('Please provide a valid path via ANDROID_SDK_ROOT')
 		eprintln('or run `${exe_name} install sdk`')
@@ -346,7 +342,7 @@ fn check_essentials() {
 	}
 
 	// Validate Android NDK requirements
-	if ! andk.found() {
+	if ! ndk.found() {
 		eprintln('No Android NDK could be detected.')
 		eprintln('Please provide a valid path via ANDROID_NDK_ROOT')
 		eprintln('or run `${exe_name} install ndk`')
@@ -375,31 +371,36 @@ fn validate_env(opt Options) {
 	}
 
 	// Validate further Android SDK
-	if asdk.sdkmanager() == '' {
+	if sdk.sdkmanager() == '' {
 		eprintln('No "sdkmanager" could be detected.')
 		eprintln('Please provide a valid path via ANDROID_SDK_ROOT')
 		eprintln('or run `${exe_name} install tools`')
 		exit(1)
 	}
 
-	build_tools_semantic_version := semver.from(asdk.default_build_tools_version) or { panic(err) }
+	build_tools_semantic_version := semver.from(sdk.default_build_tools_version) or { panic(err) }
 
 	if ! build_tools_semantic_version.satisfies('>=24.0.3') {
 		// Some Android tools we need like `apksigner` is currently only available with build-tools >= 24.0.3.
 		// (Absolute mess, yes)
-		eprintln('Android build-tools version ${asdk.default_build_tools_version} is not supported')
+		eprintln('Android build-tools version ${sdk.default_build_tools_version} is not supported')
 		eprintln('Please install build-tools version >= 24.0.3')
+		eprintln('or run `${exe_name} install build-tools`')
 		exit(1)
 	}
 
+	// API level
+	if opt.api_level.i16() < sdk.default_api_level.i16() {
+		eprintln('Notice: Android API level ${opt.api_level} is less than the recomended level (${sdk.default_api_level}).')
+	}
 }
 
 fn resolve_options(mut opt Options) {
 
 	// Validate API level
-	mut api_level := asdk.default_api_level
+	mut api_level := sdk.default_api_level
 	if opt.api_level != '' {
-		if asdk.has_api(opt.api_level) {
+		if sdk.has_api(opt.api_level) {
 			api_level = opt.api_level
 		} else {
 			// TODO Warnings
@@ -410,20 +411,20 @@ fn resolve_options(mut opt Options) {
 	}
 	if api_level == '' {
 		eprintln('Android API level ${opt.api_level} is not available in SDK.')
-		//eprintln('It can be installed with `$exe_name install android-api-${opt.api_level}`')
+		eprintln('It can be installed with `$exe_name install "platform;android-${opt.api_level}"`')
 		exit(1)
 	}
-	if api_level.i16() < 20 {
-		eprintln('Android API level ${api_level} is less than the recomended level (${min_supported_api_level}).')
+	if api_level.i16() < sdk.min_supported_api_level.i16() {
+		eprintln('Android API level ${api_level} is less than the supported level (${sdk.min_supported_api_level}).')
 		exit(1)
 	}
 
 	opt.api_level = api_level
 
 	// Validate build-tools version
-	mut build_tools_version := asdk.default_build_tools_version
+	mut build_tools_version := sdk.default_build_tools_version
 	if opt.build_tools != '' {
-		if asdk.has_build_tools(opt.build_tools) {
+		if sdk.has_build_tools(opt.build_tools) {
 			build_tools_version = opt.build_tools
 		} else {
 			// TODO FIX Warnings and add install function
@@ -441,9 +442,9 @@ fn resolve_options(mut opt Options) {
 	opt.build_tools = build_tools_version
 
 	// Validate ndk version
-	mut ndk_version := andk.default_version()
+	mut ndk_version := ndk.default_version()
 	if opt.ndk_version != '' {
-		if andk.has_version(opt.ndk_version) {
+		if ndk.has_version(opt.ndk_version) {
 			ndk_version = opt.ndk_version
 		} else {
 			// TODO FIX Warnings and add install function
@@ -502,13 +503,13 @@ fn doctor(opt Options) {
 		Path ${java.jdk_root()}
 	Android
 		SDK
-			Path ${asdk.root()}
-			Tool.sdkmanager ${asdk.sdkmanager()}
+			Path ${sdk.root()}
+			Tool.sdkmanager ${sdk.sdkmanager()}
 			Writable ${env.can_install()}
 		NDK
 			Version ${opt.ndk_version}
-			Path ${andk.root()}
-			Side-by-side ${andk.is_side_by_side()}
+			Path ${ndk.root()}
+			Side-by-side ${ndk.is_side_by_side()}
 		Build
 			API ${opt.api_level}
 			Build-tools ${opt.build_tools}')
