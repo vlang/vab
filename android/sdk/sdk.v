@@ -92,9 +92,9 @@ pub fn root() string {
 			// but in older setups it coould reside in 'path/to/sdk_root/tools/bin'
 			// ... Android *sigh* ...
 			if path.contains('cmdline-tools') {
-				sdk_root = os.real_path(os.join_path(os.dir(path),'..','..'))
+				sdk_root = os.real_path(os.join_path(os.dir(path),'..','..','..'))
 			} else {
-				sdk_root = os.real_path(os.join_path(os.dir(path),'..'))
+				sdk_root = os.real_path(os.join_path(os.dir(path),'..','..'))
 			}
 		}
 	}
