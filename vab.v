@@ -336,12 +336,8 @@ fn check_essentials() {
 	if !sdk.found() {
 		eprintln('No Android SDK could be detected.')
 		eprintln('Please provide a valid path via ANDROID_SDK_ROOT')
-		if sdk.sdkmanager() != "" {
-			eprintln('or run `${exe_name} install auto`')
-		} else {
-			eprintln('or run `${exe_name} install sdk`')
-			exit(1)
-		}
+		eprintln('or run `${exe_name} install auto`')
+		exit(1)
 	}
 
 	// Validate Android NDK requirements
