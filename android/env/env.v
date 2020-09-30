@@ -20,7 +20,7 @@ pub struct SetupOptions {
 
 pub fn setup(opt SetupOptions) ?bool {
 	if opt.dep == .commandline_tools {
-		cmdl_root := dependency_root(opt.dep)
+		cmdl_root := root_for(opt.dep)
 		if cmdl_root != '' {
 			return error(@MOD+'.'+@FN+' '+'commandline tools is already setup in ${cmdl_root}')
 		}
@@ -78,7 +78,7 @@ fn download(opt SetupOptions) string {
 	return ''
 }
 
-pub fn dependency_root(dep Dependency) string {
+pub fn root_for(dep Dependency) string {
 	mut root := ''
 	if dep == .commandline_tools {
 		root = os.join_path(sdk.tools_root(),'bin')

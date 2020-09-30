@@ -507,8 +507,7 @@ fn install(opt Options, component string) int {
 			exit(1)
 		}
 	} else if component == 'sdk' {
-		tools_root := env.dependency_root(.commandline_tools)
-
+		tools_root := env.root_for(.commandline_tools)
 		if tools_root == '' {
 			install_tools(opt)
 		}
@@ -520,8 +519,7 @@ fn install(opt Options, component string) int {
 		}
 
 	} else if component == 'ndk' {
-		tools_root := env.dependency_root(.commandline_tools)
-
+		tools_root := env.root_for(.commandline_tools)
 		if tools_root == '' {
 			install_tools(opt)
 		}
@@ -533,7 +531,7 @@ fn install(opt Options, component string) int {
 		}
 
 	} else if component == 'build-tools' {
-		tools_root := env.dependency_root(.commandline_tools)
+		tools_root := env.root_for(.commandline_tools)
 		if tools_root == '' {
 			install_tools(opt)
 		}
