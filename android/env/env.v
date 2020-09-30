@@ -10,10 +10,11 @@ pub enum Dependency {
 	commandline_tools
 	sdk
 	ndk
+	platform
 	build_tools
 }
 
-pub struct SetupOptions {
+pub struct InstallOptions {
 	dep			Dependency
 	verbosity	int
 }
@@ -22,7 +23,7 @@ pub fn can_install() bool {
 	return os.is_writable(sdk.root())
 }
 
-pub fn install(opt SetupOptions) ?bool {
+pub fn install(opt InstallOptions) ?bool {
 	if !can_install() {
 		return error(@MOD+'.'+@FN+' '+'No permission to write in Android SDK root "${sdk.root()}". Please install manually.')
 	}
@@ -46,31 +47,78 @@ pub fn install(opt SetupOptions) ?bool {
 		}
 		return error(@MOD+'.'+@FN+' '+'failed to install commandline tools in ${cmdl_root}')
 	} else if opt.dep == .sdk {
-		return error(@MOD+'.'+@FN+' '+'install type ${opt.dep} is not implemented yet')
+		if opt.verbosity > 0 {
+			println('Installing Latest SDK Platform Tools...')
+		}
+		cmd := [
+			'yes |' // Windows
+			sdk.sdkmanager(),
+			'--sdk_root="${sdk.root()}"',
+			'"platform-tools"'
+		]
+		util.verbosity_print_cmd(cmd, opt.verbosity)
+		cmd_res := util.run(cmd)
+		if cmd_res.exit_code > 0 {
+			eprintln(cmd_res.output)
+			return false
+		}
+		return true
 	} else if opt.dep == .ndk {
-		return error(@MOD+'.'+@FN+' '+'install type ${opt.dep} is not implemented yet')
+		if opt.verbosity > 0 {
+			println('Installing "NDK (Side-by-side) 21.1.6352462"...')
+		}
+		cmd := [
+			'yes |' // TODO Windows
+			sdk.sdkmanager(),
+			'--sdk_root="${sdk.root()}"',
+			'"ndk;21.1.6352462"'
+		]
+		util.verbosity_print_cmd(cmd, opt.verbosity)
+		cmd_res := util.run(cmd)
+		if cmd_res.exit_code > 0 {
+			eprintln(cmd_res.output)
+			return false
+		}
+		return true
 	} else if opt.dep == .build_tools {
 		if opt.verbosity > 0 {
 			println('Installing "build-tools 24.0.3"...')
 		}
-		bt_cmd := [
-			'yes |' // Windows
+		cmd := [
+			'yes |' // TODO Windows
 			sdk.sdkmanager(),
 			'--sdk_root="${sdk.root()}"',
 			'"build-tools;24.0.3"'
 		]
-		util.verbosity_print_cmd(bt_cmd, opt.verbosity)
-		bt_cmd_res := util.run(bt_cmd)
-		if bt_cmd_res.exit_code > 0 {
-			eprintln(bt_cmd_res.output)
-			return true
+		util.verbosity_print_cmd(cmd, opt.verbosity)
+		cmd_res := util.run(cmd)
+		if cmd_res.exit_code > 0 {
+			eprintln(cmd_res.output)
+			return false
+		}
+		return true
+	} else if opt.dep == .platform {
+		if opt.verbosity > 0 {
+			println('Installing "android-29"...')
+		}
+		cmd := [
+			'yes |' // TODO Windows
+			sdk.sdkmanager(),
+			'--sdk_root="${sdk.root()}"',
+			'"platforms;android-29"'
+		]
+		util.verbosity_print_cmd(cmd, opt.verbosity)
+		cmd_res := util.run(cmd)
+		if cmd_res.exit_code > 0 {
+			eprintln(cmd_res.output)
+			return false
 		}
 		return true
 	}
 	return error(@MOD+'.'+@FN+' '+'unknown install type ${opt.dep}')
 }
 
-fn download(opt SetupOptions) string {
+fn download(opt InstallOptions) string {
 	if opt.dep == .commandline_tools {
 		uos := os.user_os().replace('windows','win').replace('macos','mac')
 		url := 'https://dl.google.com/android/repository/commandlinetools-${uos}-6609375_latest.zip'

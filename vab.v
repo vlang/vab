@@ -502,7 +502,7 @@ fn install(opt Options, component string) int {
 	}
 
 	if component == 'tools' {
-		env.install(env.SetupOptions{.commandline_tools,opt.verbosity}) or {
+		env.install(env.InstallOptions{.commandline_tools,opt.verbosity}) or {
 			eprintln(err)
 			exit(1)
 		}
@@ -512,8 +512,8 @@ fn install(opt Options, component string) int {
 			install_tools(opt)
 		}
 
-		sdk_setup := env.SetupOptions{.sdk,opt.verbosity}
-		env.install(sdk_setup) or {
+		so := env.InstallOptions{.sdk,opt.verbosity}
+		env.install(so) or {
 			eprintln(err)
 			exit(1)
 		}
@@ -524,8 +524,8 @@ fn install(opt Options, component string) int {
 			install_tools(opt)
 		}
 
-		ndk_setup := env.SetupOptions{.ndk,opt.verbosity}
-		env.install(ndk_setup) or {
+		so := env.InstallOptions{.ndk,opt.verbosity}
+		env.install(so) or {
 			eprintln(err)
 			exit(1)
 		}
@@ -536,8 +536,20 @@ fn install(opt Options, component string) int {
 			install_tools(opt)
 		}
 
-		bt_setup := env.SetupOptions{.build_tools,opt.verbosity}
-		env.install(bt_setup) or {
+		so := env.InstallOptions{.build_tools,opt.verbosity}
+		env.install(so) or {
+			eprintln(err)
+			exit(1)
+		}
+
+	} else if component == 'platform' {
+		tools_root := env.root_for(.commandline_tools)
+		if tools_root == '' {
+			install_tools(opt)
+		}
+
+		so := env.InstallOptions{.platform,opt.verbosity}
+		env.install(so) or {
 			eprintln(err)
 			exit(1)
 		}
