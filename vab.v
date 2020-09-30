@@ -298,7 +298,6 @@ fn main() {
 	}
 
 	if opt.device_id != '' {
-
 		if ! android.deploy(deploy_opt) {
 			eprintln('Deployment didn\'t succeed')
 			exit(1)
@@ -334,11 +333,15 @@ fn check_essentials() {
 	}
 
 	// Validate Android SDK requirements
-	if ! sdk.found() {
+	if !sdk.found() {
 		eprintln('No Android SDK could be detected.')
 		eprintln('Please provide a valid path via ANDROID_SDK_ROOT')
-		eprintln('or run `${exe_name} install sdk`')
-		exit(1)
+		if sdk.sdkmanager != "" {
+			eprintln('or run `${exe_name} install auto`')
+		} else {
+			eprintln('or run `${exe_name} install sdk`')
+			exit(1)
+		}
 	}
 
 	// Validate Android NDK requirements
