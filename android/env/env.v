@@ -49,7 +49,7 @@ pub fn setup(opt SetupOptions) ?bool {
 		bt_cmd := [
 			sdk.sdkmanager(),
 			'--sdk_root="${sdk.root()}"',
-			'build-tools;24.0.3'
+			'"build-tools;24.0.3"'
 		]
 		util.verbosity_print_cmd(bt_cmd, opt.verbosity)
 		bt_cmd_res := util.run(bt_cmd)
