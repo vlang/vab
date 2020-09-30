@@ -55,7 +55,7 @@ pub fn root() string {
 			if os.exists(dir) && os.is_dir(dir) { return dir }
 		}
 	}
-	// Last resort - try and detect by getting path to 'adb'
+	// Try and detect by getting path to 'adb'
 	if sdk_root == '' {
 		mut adb_path := ''
 
@@ -67,6 +67,19 @@ pub fn root() string {
 			}
 		}
 	}
+	// Try and detect by getting path to 'sdkmanager'
+	if sdk_root == '' {
+		mut adb_path := ''
+
+		if os.exists_in_system_path('adb') {
+			adb_path = os.find_abs_path_of_executable('adb') or { return '' }
+			if adb_path != '' {
+				// adb normally reside in 'path/to/sdk_root/platform-tools/'
+				sdk_root = os.real_path(os.join_path(os.dir(adb_path),'..'))
+			}
+		}
+	}
+
 	return sdk_root
 }
 
@@ -90,9 +103,8 @@ pub fn sdkmanager() string {
 	}
 	// Check in cache
 	if !os.is_executable(sdkmanager) {
-		sdkmanager = os.join_path(util.cache_dir(),'tools','bin','sdkmanager')
+		sdkmanager = os.join_path(util.cache_dir(),'cmdline-tools','tools','bin','sdkmanager')
 	}
-
 	if !os.is_executable(sdkmanager) {
 		sdkmanager = ''
 	}

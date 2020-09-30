@@ -144,11 +144,11 @@ fn main() {
 	if additional_args.len > 1 {
 		if additional_args[0] == 'install' {
 			install_arg := additional_args[1]
-			install_res := install(opt,install_arg)
-			if install_res == 0 && opt.verbosity > 0 {
+			res := env.install(install_arg, opt.verbosity)
+			if res == 0 && opt.verbosity > 0 {
 				println('Installed ${install_arg} successfully')
 			}
-			exit( install_res )
+			exit( res )
 		}
 	}
 
@@ -487,78 +487,6 @@ fn resolve_options(mut opt Options) {
 	if os.getenv('KEYSTORE_ALIAS_PASSWORD') != '' {
 		opt.keystore_alias_password = os.getenv('KEYSTORE_ALIAS_PASSWORD')
 	}
-}
-
-fn install(opt Options, component string) int {
-
-	install_tools := fn (opt Options) {
-		vab_cmd := [exe_name,'install','tools','-v',opt.verbosity.str()]
-		res := os.exec(vab_cmd.join(' ')) or { os.Result{1,''} }
-		if res.exit_code > 0 {
-			eprintln('${vab_cmd[0]} failed with return code ${res.exit_code}')
-			eprintln(res.output)
-			exit(1)
-		}
-	}
-
-	if component == 'tools' {
-		env.install(env.InstallOptions{.commandline_tools,opt.verbosity}) or {
-			eprintln(err)
-			exit(1)
-		}
-	} else if component == 'sdk' {
-		tools_root := env.root_for(.commandline_tools)
-		if tools_root == '' {
-			install_tools(opt)
-		}
-
-		so := env.InstallOptions{.sdk,opt.verbosity}
-		env.install(so) or {
-			eprintln(err)
-			exit(1)
-		}
-
-	} else if component == 'ndk' {
-		tools_root := env.root_for(.commandline_tools)
-		if tools_root == '' {
-			install_tools(opt)
-		}
-
-		so := env.InstallOptions{.ndk,opt.verbosity}
-		env.install(so) or {
-			eprintln(err)
-			exit(1)
-		}
-
-	} else if component == 'build-tools' {
-		tools_root := env.root_for(.commandline_tools)
-		if tools_root == '' {
-			install_tools(opt)
-		}
-
-		so := env.InstallOptions{.build_tools,opt.verbosity}
-		env.install(so) or {
-			eprintln(err)
-			exit(1)
-		}
-
-	} else if component == 'platform' {
-		tools_root := env.root_for(.commandline_tools)
-		if tools_root == '' {
-			install_tools(opt)
-		}
-
-		so := env.InstallOptions{.platform,opt.verbosity}
-		env.install(so) or {
-			eprintln(err)
-			exit(1)
-		}
-
-	} else {
-		eprintln('$exe_name '+@FN+': Unknown component "$component"')
-		return 1
-	}
-	return 0
 }
 
 fn doctor(opt Options) {
