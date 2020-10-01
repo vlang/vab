@@ -15,7 +15,7 @@ import android.env
 
 const (
 	exe_name			= os.file_name(os.executable())
-	exe_dir				= os.base_dir(os.real_path(os.executable()))
+	exe_dir				= os.base(os.real_path(os.executable()))
 	rip_vflags			= ['-autofree','-cg','-prod', 'run']
 )
 
@@ -341,7 +341,7 @@ fn check_essentials() {
 	}
 
 	// Validate Android NDK requirements
-	if ! ndk.found() {
+	if !ndk.found() {
 		eprintln('No Android NDK could be detected.')
 		eprintln('Please provide a valid path via ANDROID_NDK_ROOT')
 		eprintln('or run `${exe_name} install ndk`')
@@ -360,7 +360,7 @@ fn validate_env(opt Options) {
 	}
 
 	jdk_semantic_version := semver.from(jdk_version) or { panic(err) }
-	if ! jdk_semantic_version.satisfies('1.8.*') {
+	if !jdk_semantic_version.satisfies('1.8.*') {
 		// Some Android tools like `sdkmanager` currently only run with Java 8 JDK (1.8.x).
 		// (Absolute mess, yes)
 		eprintln('Java version ${jdk_version} is not supported')
@@ -379,7 +379,7 @@ fn validate_env(opt Options) {
 
 	build_tools_semantic_version := semver.from(sdk.default_build_tools_version) or { panic(err) }
 
-	if ! build_tools_semantic_version.satisfies('>=24.0.3') {
+	if !build_tools_semantic_version.satisfies('>=24.0.3') {
 		// Some Android tools we need like `apksigner` is currently only available with build-tools >= 24.0.3.
 		// (Absolute mess, yes)
 		eprintln('Android build-tools version ${sdk.default_build_tools_version} is not supported')
