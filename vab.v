@@ -142,7 +142,11 @@ fn main() {
 			install_arg := additional_args[1]
 			res := env.install(install_arg, opt.verbosity)
 			if res == 0 && opt.verbosity > 0 {
-				println('Installed ${install_arg} successfully')
+				if install_arg != 'auto' {
+					println('Installed ${install_arg} successfully.')
+				} else {
+					println('Installed all dependencies successfully.')
+				}
 			}
 			exit( res )
 		}
