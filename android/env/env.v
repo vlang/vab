@@ -137,8 +137,8 @@ fn install_opt(opt InstallOptions) ?bool {
 		} else {
 			if opt.verbosity > 0 {
 				println(@MOD+'.'+@FN+' '+'commandline tools is already installed.')
-				return true
 			}
+			return true
 		}
 	} else if opt.dep == .sdk {
 		adb := os.join_path(sdk.platform_tools_root(),'adb')
