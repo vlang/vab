@@ -205,10 +205,7 @@ fn main() {
 	}
 	opt.input = input
 
-	mut kill_adb := false
-	if os.getenv('VAB_KILL_ADB').len > 0 {
-		kill_adb = true
-	}
+	kill_adb := os.getenv('VAB_KILL_ADB') != ''
 
 	mut run := ''
 	if opt.run {
