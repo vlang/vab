@@ -176,17 +176,17 @@ fn main() {
 	// Validate environment
 	check_essentials()
 	resolve_options(mut opt)
-
+	// Merge flags captured before FlagParser
 	v_flags << opt.v_flags
 	opt.v_flags = v_flags
-
+	// Call the doctor at this point
 	if additional_args.len > 0 {
 		if additional_args[0] == 'doctor' {
 			doctor(opt)
 			exit(0)
 		}
 	}
-
+	// Validate environment after options has been resolved
 	validate_env(opt)
 
 	if fp.args.len == 0 || opt.dump_usage {
