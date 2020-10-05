@@ -115,7 +115,7 @@ fn install_opt(opt InstallOptions) ?bool {
 		return error(@MOD+'.'+@FN+' '+'No permission to write in Android SDK root "${sdk.root()}". Please install manually.')
 	}
 	if opt.verbosity > 0 {
-		println(@MOD+'.'+@FN+' installing ${opt.dep} ${opt.version}.')
+		println(@MOD+'.'+@FN+' installing ${opt.dep} ${opt.version}...')
 	}
 	if opt.dep == .tools {
 		dst := os.join_path(util.cache_dir(),'cmdline-tools')
