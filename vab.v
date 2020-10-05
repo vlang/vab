@@ -200,7 +200,7 @@ fn main() {
 
 	if ! (os.is_dir(input) || input_ext in accepted_input_files) {
 		println(fp.usage())
-		eprintln('$exe_name requires input to be a V file, an APK, AAB or or V sources a directory')
+		eprintln('$exe_name requires input to be a V file, an APK, AAB or V a source(s) directory')
 		exit(1)
 	}
 	opt.input = input
