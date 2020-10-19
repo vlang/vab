@@ -44,7 +44,10 @@ pub fn compile(opt CompileOptions) bool {
 		opt.input
 	]
 	util.verbosity_print_cmd(v_cmd, opt.verbosity)
-	util.run_or_exit(v_cmd)
+	v_comp_res := util.run_or_exit(v_cmd)
+	if opt.verbosity > 1 {
+		println(v_comp_res)
+	}
 
 	// Poor man's cache check
 	mut hash := ''

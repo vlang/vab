@@ -14,9 +14,9 @@ import android.ndk
 import android.env
 
 const (
-	exe_name			= os.file_name(os.executable())
-	exe_dir				= os.base(os.real_path(os.executable()))
-	rip_vflags			= ['-autofree','-cg','-prod', 'run']
+	exe_name	= os.file_name(os.executable())
+	exe_dir		= os.dir(os.real_path(os.executable()))
+	rip_vflags	= ['-autofree','-cg','-prod', 'run']
 )
 
 /* fn appendenv(name, value string) {
@@ -108,7 +108,7 @@ fn main() {
 		keystore: fp.string('keystore', 0, '', 'Use this keystore file to sign the package')
 		keystore_alias: fp.string('keystore-alias', 0, '', 'Use this keystore alias from the keystore file to sign the package')
 
-		dump_usage: fp.bool('help', `h`, false, 'Show this help message and exit')
+		dump_usage: fp.bool('help', 0, false, 'Show this help message and exit')
 
 		app_name: fp.string('name', 0, android.default_app_name, 'Pretty app name')
 		package_id: fp.string('package-id', 0, android.default_package_id, 'App package ID (e.g. "org.v.app")')
@@ -126,9 +126,9 @@ fn main() {
 
 		work_dir: os.join_path(os.temp_dir(), exe_name.replace(' ','_').to_lower())
 
-		list_ndks:  fp.bool('list-ndks', 0, false, 'List available NDK versions')
-		list_apis:  fp.bool('list-apis', 0, false, 'List available API levels')
-		list_build_tools:  fp.bool('list-build-tools', 0, false, 'List available Build-tools versions')
+		list_ndks: fp.bool('list-ndks', 0, false, 'List available NDK versions')
+		list_apis: fp.bool('list-apis', 0, false, 'List available API levels')
+		list_build_tools: fp.bool('list-build-tools', 0, false, 'List available Build-tools versions')
 	}
 
 	additional_args := fp.finalize() or {
@@ -189,9 +189,14 @@ fn main() {
 	// Validate environment after options has been resolved
 	validate_env(opt)
 
-	if fp.args.len == 0 || opt.dump_usage {
+	if fp.args.len == 0 {
+		eprintln('No arguments given')
 		println(fp.usage())
 		exit(1)
+	}
+	if opt.dump_usage {
+		println(fp.usage())
+		exit(0)
 	}
 	input := fp.args[fp.args.len-1]
 

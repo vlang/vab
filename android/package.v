@@ -251,10 +251,15 @@ fn prepare_base(opt PackageOptions) (string,string) {
 	}
 	os.mkdir_all(package_path)
 
+	base_files_path := opt.base_files
 	if opt.verbosity > 0 {
 		println('Copying base files')
+		if opt.verbosity > 2 {
+			os.walk(base_files_path, fn(entry string) {
+				println(entry)
+			})
+		}
 	}
-	base_files_path := opt.base_files
 	os.cp_all(base_files_path, package_path, true)
 
 	if opt.verbosity > 0 {
