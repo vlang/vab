@@ -1,9 +1,6 @@
 module semver
 
-/*
- * Private functions.
- */
-
+// * Private functions.
 [inline]
 fn is_version_valid(input string) bool {
 	raw_ver := parse(input)
@@ -24,7 +21,6 @@ fn increment_version(ver Version, typ Increment) Version {
 	mut major := ver.major
 	mut minor := ver.minor
 	mut patch := ver.patch
-
 	match typ {
 		.major {
 			major++
@@ -39,8 +35,7 @@ fn increment_version(ver Version, typ Increment) Version {
 			patch++
 		}
 	}
-
-	return Version { major, minor, patch, ver.prerelease, ver.metadata }
+	return Version{major, minor, patch, ver.prerelease, ver.metadata}
 }
 
 fn is_valid_string(input string) bool {
@@ -49,7 +44,6 @@ fn is_valid_string(input string) bool {
 			return false
 		}
 	}
-
 	return true
 }
 
@@ -59,6 +53,5 @@ fn is_valid_number(input string) bool {
 			return false
 		}
 	}
-
 	return true
 }
