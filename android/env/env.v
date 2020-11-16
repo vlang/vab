@@ -6,7 +6,7 @@ import net.http
 import android.sdk
 import android.ndk
 import android.util
-import android.semver
+import semver
 
 pub const (
 	accepted_components = ['auto','tools', 'sdk', 'ndk','platform','build-tools']

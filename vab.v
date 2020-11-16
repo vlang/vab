@@ -4,7 +4,7 @@ import os
 import flag
 
 import vxt
-import semver
+import semver// as semver
 
 import java
 
@@ -366,7 +366,7 @@ fn validate_env(opt Options) {
 	}
 
 	jdk_semantic_version := semver.from(jdk_version) or { panic(err) }
-	if !jdk_semantic_version.satisfies('1.8.*') {
+	if !jdk_semantic_version.ge(semver.build(1, 8, 0)) { // NOTE When did this break:.satisfies('1.8.*') ???
 		// Some Android tools like `sdkmanager` currently only run with Java 8 JDK (1.8.x).
 		// (Absolute mess, yes)
 		eprintln('Java version ${jdk_version} is not supported')
@@ -385,7 +385,7 @@ fn validate_env(opt Options) {
 
 	build_tools_semantic_version := semver.from(sdk.default_build_tools_version) or { panic(err) }
 
-	if !build_tools_semantic_version.satisfies('>=24.0.3') {
+	if !build_tools_semantic_version.ge(semver.build(24, 0, 3)) { // NOTE When did this break:.satisfies('>=24.0.3') ???
 		// Some Android tools we need like `apksigner` is currently only available with build-tools >= 24.0.3.
 		// (Absolute mess, yes)
 		eprintln('Android build-tools version ${sdk.default_build_tools_version} is not supported')

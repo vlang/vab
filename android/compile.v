@@ -75,7 +75,7 @@ pub fn compile(opt CompileOptions) bool {
 		}
 		os.rm(hash_file)
 		mut hash_fh := os.open_file(hash_file, 'w+', 0o700) or { panic(err) }
-		hash_fh.write(hash)
+		hash_fh.write(hash.bytes())
 		hash_fh.close()
 	}
 
