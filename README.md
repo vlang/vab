@@ -75,3 +75,7 @@ E.g.:
 ```
 sudo apt install openjdk-8-jdk
 ```
+
+# Notes
+`vab` targets as low an API level as possible by default for maximum compatibility, you can however tell it to target newer Android versions by using the `--api` flag. Example: `vab --api 30 <...>`.
+Installed API levels can be listed with `vab --list-apis`.
