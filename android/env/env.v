@@ -245,10 +245,8 @@ fn download(opt InstallOptions) ?string {
 		if os.exists(dst) {
 			return dst
 		}
-		if http.download_file(url,dst) {
-			return dst
-		}
-		return ''
+		http.download_file(url,dst) or { return '' }
+		return dst
 	}
 	return ''
 }
