@@ -14,18 +14,17 @@ const (
 )
 
 pub struct CompileOptions {
-	verbosity		int
-
-	work_dir		string
+	verbosity		int       // level of verbosity
+	// env
+	work_dir		string    // temporary work directory
 	input			string
-
-	archs			[]string
-	v_flags			[]string
-	c_flags			[]string
-
-	ndk_version		string
-	lib_name		string
-	api_level		string
+	//
+	archs			[]string  // compile for these CPU architectures
+	v_flags			[]string  // flags to pass to the v compiler
+	c_flags			[]string  // flags to pass to the C compiler(s)
+	ndk_version		string    // version of the Android NDK to compile against
+	lib_name		string    // filename of the resulting .so ('${lib_name}.so')
+	api_level		string    // Android API level to use when compiling
 }
 
 pub fn compile(opt CompileOptions) bool {
