@@ -1,3 +1,5 @@
+// Copyright(C) 2019 Lars Pontoppidan. All rights reserved.
+// Use of this source code is governed by an MIT license file distributed with this software package
 module vxt
 
 import os
@@ -5,24 +7,24 @@ import regex
 
 pub fn vexe() string {
 	env_vexe := os.getenv('VEXE')
-    if env_vexe != '' {
-        return env_vexe
-    }
-    possible_symlink := os.find_abs_path_of_executable('v') or { panic('can not find v') }
-    vexe := os.real_path( possible_symlink )
-    return vexe
+	if env_vexe != '' {
+		return env_vexe
+	}
+	possible_symlink := os.find_abs_path_of_executable('v') or { panic('can not find v') }
+	vexe := os.real_path( possible_symlink )
+	return vexe
 }
 
 pub fn home() string {
 	// credits to @spytheman:
 	// https://discord.com/channels/592103645835821068/592294828432424960/746040606358503484
 	/*env_vexe := os.getenv('VEXE')
-    if env_vexe != '' {
-        return os.dir(env_vexe)
-    }
-    possible_symlink := os.find_abs_path_of_executable('v') or { panic('can not find v') }
-    vexe := os.real_path( possible_symlink )*/
-    return os.dir(vexe())
+	if env_vexe != '' {
+		return os.dir(env_vexe)
+	}
+	possible_symlink := os.find_abs_path_of_executable('v') or { panic('can not find v') }
+	vexe := os.real_path( possible_symlink )*/
+	return os.dir(vexe())
 }
 
 pub fn version() string {

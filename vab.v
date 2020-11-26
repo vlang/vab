@@ -19,10 +19,6 @@ const (
 	rip_vflags	= ['-autofree','-cg','-prod', 'run']
 )
 
-/* fn appendenv(name, value string) {
-	os.setenv(name, os.getenv(name)+os.path_delimiter+value, true)
-}*/
-
 struct Options {
 	// App essentials
 	app_name		string
