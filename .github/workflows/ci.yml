@@ -1,0 +1,56 @@
+name: Code CI
+
+on:
+  push:
+    paths-ignore:
+      - "**.md"
+  pull_request:
+    paths-ignore:
+      - "**.md"
+
+jobs:
+  ubuntu:
+    runs-on: ubuntu-18.04
+    timeout-minutes: 30
+#    env:
+#      VABV: $GITHUB_WORKSPACE/v/v
+    steps:
+    - name: Checkout V
+      uses: actions/checkout@v2
+      with:
+        repository: vlang/v
+    - uses: actions/checkout@v2
+      with:
+        path: vab
+    - name: Build local v
+      run: make -j4
+    - name: Run tests
+      run: ./v test vab
+    - name: Build VAB
+      run: ./v vab/vab.v
+    - name: Build VAB with -prod
+      run: ./v -prod vab/vab.v
+#    - name: Run vab doctor
+#      run: VEXE=$GITHUB_WORKSPACE/v/v vab/vab doctor
+#    - name: Run vab -h
+#      run: VEXE=$VABV vab/vab -h
+
+#  macos:
+#    runs-on: macOS-latest
+#    timeout-minutes: 30
+#    env:
+      #VFLAGS: -cc clang
+    #steps:
+    #- uses: actions/checkout@v2
+    #- name: Build V
+      #run:  make -j4 && ./v -cg -cflags -Werror -o v cmd/v
+    #- name: Run sanitizers
+      #run: |
+        #./v -o v2 cmd/v -cflags -fsanitize=undefined
+        #UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=1 ./v2 -o v.c cmd/v
+    #- name: Build V using V
+      #run:  ./v -o v2 cmd/v && ./v2 -o v3 cmd/v
+    #- name: v self with -usecache
+      #run: ./v -o v2 -usecache cmd/v
+    #- name: Test symlink
+      #run:  ./v symlink
