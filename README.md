@@ -8,7 +8,7 @@ based devices.
 Currently Linux and macOS build hosts are supported.
 Dependencies: V, Java (JDK) 8, Android SDK + NDK (**no** Android Studio required)
 ```
-git clone git@github.com:Larpon/vab.git
+git clone https://github.com/vlang/vab.git
 cd vab
 v vab.v
 ```
