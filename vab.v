@@ -14,9 +14,10 @@ import android.ndk
 import android.env
 
 const (
-	exe_name	= os.file_name(os.executable())
-	exe_dir		= os.dir(os.real_path(os.executable()))
-	rip_vflags	= ['-autofree','-cg','-prod', 'run']
+	exe_version = '0.2.0'
+	exe_name    = os.file_name(os.executable())
+	exe_dir     = os.dir(os.real_path(os.executable()))
+	rip_vflags  = ['-autofree','-cg','-prod', 'run']
 )
 
 struct Options {
@@ -490,24 +491,27 @@ fn resolve_options(mut opt Options) {
 }
 
 fn doctor(opt Options) {
+	println('$exe_name
+	Version $exe_version
+	Path "$exe_dir"')
 	println('V
-	Version ${vxt.version()}
-	Path ${vxt.home()}')
+	Version $vxt.version()
+	Path "$vxt.home()"')
 	if opt.v_flags.len > 0 {
 		println('\tFlags ${opt.v_flags}')
 	}
 	println('Java
 	JDK
 		Version ${java.jdk_version()}
-		Path ${java.jdk_root()}
+		Path "$java.jdk_root()"
 	Android
 		SDK
-			Path ${sdk.root()}
-			Tool.sdkmanager ${sdk.sdkmanager()}
+			Path "$sdk.root()"
+			Tool.sdkmanager "$sdk.sdkmanager()"
 			Writable ${env.can_install()}
 		NDK
 			Version ${opt.ndk_version}
-			Path ${ndk.root()}
+			Path "$ndk.root()"
 			Side-by-side ${ndk.is_side_by_side()}
 		Build
 			API ${opt.api_level}
@@ -519,7 +523,7 @@ fn doctor(opt Options) {
 	}
 	println('Product
 	Name "${opt.app_name}"
-	Package ${opt.package_id}
-	Output ${opt.output}
+	Package "$opt.package_id"
+	Output "$opt.output"
 	')
 }
