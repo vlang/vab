@@ -38,9 +38,9 @@ pub fn root() string {
 
 		// Detect OS type at runtime - in case we're in some exotic environment
 		uos := os.user_os()
-		if uos == 'windows' { dirs = possible_ndk_paths_windows }
-		if uos == 'macos'   { dirs = possible_ndk_paths_macos }
-		if uos == 'linux'   { dirs = possible_ndk_paths_linux }
+		if uos == 'windows' { dirs = possible_ndk_paths_windows.clone() }
+		if uos == 'macos'   { dirs = possible_ndk_paths_macos.clone() }
+		if uos == 'linux'   { dirs = possible_ndk_paths_linux.clone() }
 
 		for dir in dirs {
 			if os.exists(dir) && os.is_dir(dir) { return dir }

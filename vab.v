@@ -57,10 +57,8 @@ mut:
 	ndk_version		string
 }
 
-
 fn main() {
-
-	mut args := os.args
+	mut args := os.args.clone()
 	mut v_flags := []string{}
 	mut cmd_flags := []string{}
 

@@ -100,7 +100,7 @@ pub fn compile(opt CompileOptions) bool {
 	}
 	// Compile sources for all Android archs if no valid archs found
 	if archs.len <= 0 {
-		archs = default_archs
+		archs = default_archs.clone()
 	}
 
 	if opt.verbosity > 0 {
