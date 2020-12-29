@@ -132,6 +132,16 @@ fn main() {
 		exit(1)
 	}
 
+	if fp.args.len == 0 {
+		eprintln('No arguments given')
+		println(fp.usage())
+		exit(1)
+	}
+	if opt.dump_usage {
+		println(fp.usage())
+		exit(0)
+	}
+
 	if additional_args.len > 1 {
 		if additional_args[0] == 'install' {
 			install_arg := additional_args[1]
@@ -184,15 +194,6 @@ fn main() {
 	// Validate environment after options has been resolved
 	validate_env(opt)
 
-	if fp.args.len == 0 {
-		eprintln('No arguments given')
-		println(fp.usage())
-		exit(1)
-	}
-	if opt.dump_usage {
-		println(fp.usage())
-		exit(0)
-	}
 	input := fp.args[fp.args.len-1]
 
 	input_ext := os.file_ext(input)
