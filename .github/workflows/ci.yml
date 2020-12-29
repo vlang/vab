@@ -30,10 +30,11 @@ jobs:
       run: ./v vab/vab.v
     - name: Build VAB with -prod
       run: ./v -prod vab/vab.v
+    - name: Run vab -h
+      run: VEXE=$VABV vab/vab -h
+
 #    - name: Run vab doctor
 #      run: VEXE=$GITHUB_WORKSPACE/v/v vab/vab doctor
-#    - name: Run vab -h
-#      run: VEXE=$VABV vab/vab -h
 
 #  macos:
 #    runs-on: macOS-latest
