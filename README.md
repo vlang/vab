@@ -63,7 +63,7 @@ See all options:
 
 # Setup
 
-`vab` now has support for guiding and downloading it's dependencies automatically, except the Java 8 JDK.
+`vab` now has support for downloading it's dependencies automatically, except the Java 8 JDK.
 
 If you have nerves to let it try and figure things out automatically simply do:
 `vab install auto`
