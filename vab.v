@@ -496,7 +496,7 @@ fn doctor(opt Options) {
 	Version $exe_version
 	Path "$exe_dir"')
 	println('V
-	Version $vxt.version()
+	Version $vxt.version() $vxt.version_commit_hash()
 	Path "$vxt.home()"')
 	if opt.v_flags.len > 0 {
 		println('\tFlags ${opt.v_flags}')
