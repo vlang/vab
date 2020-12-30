@@ -5,8 +5,11 @@ to compile, package, sign and deploy V graphical apps on Android
 based devices.
 
 # Install
+
 Currently Linux and macOS build hosts are supported.
-Dependencies: V, Java (JDK) 8, Android SDK + NDK (**no** Android Studio required)
+Dependencies: V, Java (JDK) 8, Android SDK + NDK
+(**no** Android Studio required)
+
 ```
 git clone https://github.com/vlang/vab.git
 cd vab
@@ -68,13 +71,16 @@ If you have nerves to let it try and figure things out automatically simply do:
 ## Java 8
 
 ### macOS
+
 Installing Java 8 using homebrew
+
 ```
 brew tap adoptopenjdk/openjdk
 brew cask install adoptopenjdk8
 ```
 
 ### Linux
+
 You should be able to find a way to install Java 8 JDK with your package manager of choice.
 
 E.g.:
