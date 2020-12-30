@@ -12,8 +12,8 @@ jobs:
   ubuntu:
     runs-on: ubuntu-18.04
     timeout-minutes: 30
-#    env:
-#      VABV: $GITHUB_WORKSPACE/v/v
+    env:
+      VAB_VEXE: $GITHUB_WORKSPACE/v/v
     steps:
     - name: Checkout V
       uses: actions/checkout@v2
@@ -30,10 +30,11 @@ jobs:
       run: ./v vab/vab.v
     - name: Build VAB with -prod
       run: ./v -prod vab/vab.v
+    - name: Run vab --help
+      run: VEXE=$VAB_VEXE vab/vab --help
+
 #    - name: Run vab doctor
 #      run: VEXE=$GITHUB_WORKSPACE/v/v vab/vab doctor
-#    - name: Run vab -h
-#      run: VEXE=$VABV vab/vab -h
 
 #  macos:
 #    runs-on: macOS-latest
