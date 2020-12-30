@@ -4,7 +4,7 @@ import os
 import flag
 
 import vxt
-import semver// as semver
+import semver
 
 import java
 
