@@ -103,7 +103,7 @@ fn main() {
 		keystore: fp.string('keystore', 0, '', 'Use this keystore file to sign the package')
 		keystore_alias: fp.string('keystore-alias', 0, '', 'Use this keystore alias from the keystore file to sign the package')
 
-		dump_usage: fp.bool('help', 0, false, 'Show this help message and exit')
+		dump_usage: fp.bool('help', `h`, false, 'Show this help message and exit')
 
 		app_name: fp.string('name', 0, android.default_app_name, 'Pretty app name')
 		package_id: fp.string('package-id', 0, android.default_package_id, 'App package ID (e.g. "org.v.app")')
@@ -132,14 +132,14 @@ fn main() {
 		exit(1)
 	}
 
+	if opt.dump_usage {
+		println(fp.usage())
+		exit(0)
+	}
 	if fp.args.len == 0 {
 		eprintln('No arguments given')
 		println(fp.usage())
 		exit(1)
-	}
-	if opt.dump_usage {
-		println(fp.usage())
-		exit(0)
 	}
 
 	if additional_args.len > 1 {
