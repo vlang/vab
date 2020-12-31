@@ -11,28 +11,31 @@ import android.util
 import semver
 
 pub const (
-	accepted_components = ['auto','tools', 'sdk', 'ndk','platform','build-tools']
+	accepted_components = ['auto','cmdline-tools', 'sdk', 'ndk','platform','build-tools']
 	default_components = {
-		'tools':'https://dl.google.com/android/repository/commandlinetools-{XXX}-6609375_latest.zip' // Replace {XXX} with linux/mac/win
-		'sdk':'platform-tools',								// Latest
-		'ndk':ndk.min_supported_version,					// Works with android.compile(...)
-		'platform':'android-'+sdk.min_supported_api_level	// Google Play minimum
-		'build-tools':sdk.min_supported_build_tools_version,// Version where apksigner is included from
+		// 6858069 = cmdline-tools;3.0 <- zip structure changes *sigh*
+		// 6609375 = cmdline-tools;2.1 <- latest that support `sdkmanager --version` *sigh*
+		'cmdline-tools-bootstrap':'https://dl.google.com/android/repository/commandlinetools-{XXX}-6609375_latest.zip' // Replace {XXX} with linux/mac/win
+		'cmdline-tools': '2.1'                              // Latest more or less sane version that works with java versions >= 8 ...
+		'sdk':'platform-tools'                              // Latest
+		'ndk':ndk.min_supported_version                     // Works with android.compile(...)
+		'platform':'android-'+sdk.min_supported_api_level   // Google Play minimum
+		'build-tools':sdk.min_supported_build_tools_version // Version where apksigner is included from
 	}
 )
 
 pub enum Dependency {
-	tools
 	sdk
 	ndk
 	platform
 	build_tools
+	cmdline_tools
 }
 
 pub struct InstallOptions {
-	dep			Dependency
-	version		string
-	verbosity	int
+	dep       Dependency
+	version   string
+	verbosity int
 }
 
 pub fn can_install() bool {
@@ -41,7 +44,7 @@ pub fn can_install() bool {
 
 pub fn install(components string, verbosity int) int {
 	mut ios := []InstallOptions{}
-
+	// Allows to specify a string list of things to install
 	components_array := components.split(',')
 	for comp in components_array {
 		mut component := comp
@@ -49,8 +52,8 @@ pub fn install(components string, verbosity int) int {
 		is_auto := component.contains('auto')
 
 		if !is_auto {
-			version = default_components[component]
-			if component.contains(';') {
+			version = default_components[component] // Set default version
+			if component.contains(';') { // If user has specified a version, use that
 				cs := component.split(';')
 				component = cs.first()
 				version = cs.last()
@@ -71,7 +74,7 @@ pub fn install(components string, verbosity int) int {
 		match component {
 			'auto' {
 				ios = [
-					InstallOptions{.tools,default_components['tools'],verbosity},
+					InstallOptions{.cmdline_tools,default_components['cmdline-tools'],verbosity},
 					InstallOptions{.sdk,default_components['sdk'],verbosity},
 					InstallOptions{.ndk,default_components['ndk'],verbosity},
 					InstallOptions{.build_tools,default_components['build-tools'],verbosity},
@@ -79,8 +82,8 @@ pub fn install(components string, verbosity int) int {
 				]
 				break
 			}
-			'tools' {
-				ios << InstallOptions{.tools,version,verbosity}
+			'cmdline-tools' {
+				ios << InstallOptions{.cmdline_tools,version,verbosity}
 			}
 			'sdk' {
 				ios << InstallOptions{.sdk,version,verbosity}
@@ -101,52 +104,84 @@ pub fn install(components string, verbosity int) int {
 		}
 	}
 
+	ensure(verbosity) or {
+		eprintln(err)
+		return 1
+	}
+
 	for io in ios {
 		install_opt(io) or {
 			eprintln(err)
 			return 1
 		}
 	}
-
 	return 0
+}
 
+fn ensure(verbosity int) ?bool {
+	// Android development is a complete mess. Struggles include things like:
+	// * Ever changing tool locations
+	// * Missing version info from tools
+	// * Inconsistent versions of tools between major releases.
+	// * Who doesn't remember the big compiler change from gcc to clang ...
+	// For troubleshooting and info, please see
+	// https://stackoverflow.com/a/58652345
+	// https://stackoverflow.com/a/61176718
+	if sdk.sdkmanager() == '' {
+		// Let just cross fingers that it ends up where we want it.
+		dst := os.join_path(util.cache_dir(),'cmdline-tools')
+		if verbosity > 0 {
+			println('No `sdkmanageer` found. Bootstrapping...')
+		}
+		// Download
+		uos := os.user_os().replace('windows','win').replace('macos','mac')
+		url := default_components['cmdline-tools-bootstrap-url'].replace('{XXX}',uos)
+		file := os.join_path(os.temp_dir(),'v-android-sdk-cmdltools.tmp.zip')
+		if !os.exists(file) {
+			http.download_file(url,dst) or {
+				return error(@MOD+'.'+@FN+' '+'failed to download commandline tools needed for bootstrapping: $err')
+			}
+		}
+		// Install
+		os.mkdir_all(dst)
+		dst_check := os.join_path(dst,'tools','bin')
+		if util.unzip(file,dst) {
+			os.chmod(os.join_path(dst_check,'sdkmanager'), 0o755)
+		}
+		if os.is_executable(os.join_path(dst_check,'sdkmanager')) {
+			return true
+		}
+		return error(@MOD+'.'+@FN+' '+'failed to install commandline tools to ${dst_check}.')
+	}
+	return false
 }
 
 fn install_opt(opt InstallOptions) ?bool {
-	if opt.dep != .tools && !can_install() {
+	if opt.dep != .cmdline_tools && !can_install() {
 		return error(@MOD+'.'+@FN+' '+'No permission to write in Android SDK root "${sdk.root()}". Please install manually.')
 	}
 	if opt.verbosity > 0 {
 		println(@MOD+'.'+@FN+' installing ${opt.dep} ${opt.version}...')
 	}
-	if opt.dep == .tools {
-		dst := os.join_path(util.cache_dir(),'cmdline-tools')
-		dst_check := os.join_path(dst,'tools','bin')
-		if sdk.sdkmanager() == '' {
-			// Ignore opt.version when bootstrapping
-			file := download(opt) or {
-				return error(err)
-			}
-			os.mkdir_all(dst)
-			if util.unzip(file,dst) {
-				os.chmod(os.join_path(dst_check,'sdkmanager'), 0o755)
-			}
-			if os.is_executable(os.join_path(dst_check,'sdkmanager')) {
-				return true
-			}
-			return error(@MOD+'.'+@FN+' '+'failed to install commandline tools in ${dst_check}.')
-
-		} else {
-			if opt.verbosity > 0 {
-				println(@MOD+'.'+@FN+' '+'commandline tools is already installed in "$sdk.sdkmanager()".')
-			}
-			// 6858069 = cmdline-tools;3.0 <- zip structure changes *sigh*
-			// 6609375 = cmdline-tools;2.1 <- latest that support `sdkmanager --version` *sigh*
-			// Let just cross fingers that it ends up where we want it.
-			// For troubleshooting and info, please see
-			// https://stackoverflow.com/a/58652345
-			return true
+	if opt.dep == .cmdline_tools {
+		if opt.verbosity > 0 {
+			println(@MOD+'.'+@FN+' '+'commandline tools is already installed in "$sdk.sdkmanager()".')
 		}
+		if opt.verbosity > 0 {
+			println('Installing "Commandline Tools ${opt.version}"...')
+		}
+		cmd := [
+			'yes |' // TODO Windows
+			sdk.sdkmanager(),
+			'--sdk_root="${sdk.root()}"',
+			'"cmdline-tools;${opt.version}"'
+		]
+		util.verbosity_print_cmd(cmd, opt.verbosity)
+		cmd_res := util.run(cmd)
+		if cmd_res.exit_code > 0 {
+			return error(cmd_res.output)
+		}
+		return true
 	} else if opt.dep == .sdk {
 		adb := os.join_path(sdk.platform_tools_root(),'adb')
 		if os.is_executable(adb) {
@@ -240,18 +275,4 @@ fn install_opt(opt InstallOptions) ?bool {
 		return true
 	}
 	return error(@MOD+'.'+@FN+' '+'unknown install type ${opt.dep}')
-}
-
-fn download(opt InstallOptions) ?string {
-	if opt.dep == .tools {
-		uos := os.user_os().replace('windows','win').replace('macos','mac')
-		url := default_components['tools'].replace('{XXX}',uos)
-		dst := os.join_path(os.temp_dir(),'v-android-sdk-cmdltools.zip')
-		if os.exists(dst) {
-			return dst
-		}
-		http.download_file(url,dst) or { return '' }
-		return dst
-	}
-	return ''
 }
