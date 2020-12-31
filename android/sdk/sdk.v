@@ -104,7 +104,7 @@ pub fn root() string {
 			}
 		}
 	}
-	return sdk_root
+	return sdk_root.trim_right(r'\/')
 }
 
 pub fn found() bool {
@@ -132,6 +132,23 @@ pub fn sdkmanager() string {
 		sdkmanager = ''
 	}
 	return sdkmanager
+}
+
+pub fn sdkmanager_version() string {
+	mut version := '0.0.0'
+	sdkm := sdkmanager()
+	if sdkm != '' {
+		cmd := [
+			sdkm,
+			'--version'
+		]
+		cmd_res := util.run(cmd)
+		if cmd_res.exit_code > 0 {
+			return version
+		}
+		version = cmd_res.output.trim(' \n\r')
+	}
+	return version
 }
 
 pub fn tools_root() string {

@@ -191,6 +191,7 @@ fn main() {
 			exit(0)
 		}
 	}
+
 	// Validate environment after options has been resolved
 	validate_env(opt)
 
@@ -509,6 +510,7 @@ fn doctor(opt Options) {
 		SDK
 			Path "$sdk.root()"
 			Tool.sdkmanager "$sdk.sdkmanager()"
+			Tool.sdkmanager.version "$sdk.sdkmanager_version()"
 			Writable ${env.can_install()}
 		NDK
 			Version ${opt.ndk_version}
