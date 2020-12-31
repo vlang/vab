@@ -244,7 +244,7 @@ fn main() {
 		verbosity:		opt.verbosity
 		v_flags:		opt.v_flags
 		c_flags:		opt.c_flags
-		archs:			opt.archs
+		archs:			opt.archs.filter(it.trim(' ') != '')
 
 		work_dir:		opt.work_dir
 		input:			opt.input
