@@ -178,20 +178,23 @@ fn main() {
 		exit(0)
 	}
 
-	// Validate environment
-	check_essentials()
-	resolve_options(mut opt)
 	// Merge flags captured before FlagParser
 	v_flags << opt.v_flags
 	opt.v_flags = v_flags
 	// Call the doctor at this point
 	if additional_args.len > 0 {
 		if additional_args[0] == 'doctor' {
+			// Validate environment
+			check_essentials(false)
+			resolve_options(mut opt, false)
 			doctor(opt)
 			exit(0)
 		}
 	}
 
+	// Validate environment
+	check_essentials(true)
+	resolve_options(mut opt,true)
 	// Validate environment after options has been resolved
 	validate_env(opt)
 
@@ -317,38 +320,34 @@ fn main() {
 	}
 }
 
-fn check_essentials() {
-
+fn check_essentials(exit_on_error bool) {
 	// Validate V install
 	if vxt.vexe() == '' {
 		eprintln('No V install could be detected')
 		eprintln('Please install V from https://github.com/vlang/v')
 		eprintln('or provide a valid path to V via VEXE env variable')
-		exit(1)
+		if exit_on_error { exit(1) }
 	}
-
 	// Validate Java requirements
 	if !java.jdk_found() {
 		eprintln('No Java install(s) could be detected')
 		eprintln('Please install Java 8 JDK or provide a valid path via JAVA_HOME')
 		eprintln('(Currently Java 8 (1.8.x) is the only Java version supported by the Android SDK)')
-		exit(1)
+		if exit_on_error { exit(1) }
 	}
-
 	// Validate Android SDK requirements
 	if !sdk.found() {
 		eprintln('No Android SDK could be detected.')
 		eprintln('Please provide a valid path via ANDROID_SDK_ROOT')
 		eprintln('or run `${exe_name} install auto`')
-		exit(1)
+		if exit_on_error { exit(1) }
 	}
-
 	// Validate Android NDK requirements
 	if !ndk.found() {
 		eprintln('No Android NDK could be detected.')
 		eprintln('Please provide a valid path via ANDROID_NDK_ROOT')
 		eprintln('or run `${exe_name} install ndk`')
-		exit(1)
+		if exit_on_error { exit(1) }
 	}
 }
 
@@ -397,7 +396,7 @@ fn validate_env(opt Options) {
 	}
 }
 
-fn resolve_options(mut opt Options) {
+fn resolve_options(mut opt Options, exit_on_error bool) {
 
 	// Validate API level
 	mut api_level := sdk.default_api_level
@@ -406,19 +405,20 @@ fn resolve_options(mut opt Options) {
 			api_level = opt.api_level
 		} else {
 			// TODO Warnings
-			eprintln('Android API level ${opt.api_level} is not available in SDK.')
+			eprintln('Android API level "$opt.api_level" is not available in SDK.')
 			//eprintln('(It can be installed with `$exe_name install android-api-${opt.api_level}`)')
-			eprintln('Falling back to default ${api_level}')
+			eprintln('Falling back to default "$api_level"')
 		}
 	}
 	if api_level == '' {
-		eprintln('Android API level ${opt.api_level} is not available in SDK.')
-		eprintln('It can be installed with `$exe_name install "platform;android-${opt.api_level}"`')
-		exit(1)
+		eprintln('Android API level "$opt.api_level" is not available in SDK.')
+		eprintln('It can be installed with `$exe_name install "platform;android-<API LEVEL>"`')
+		if exit_on_error { exit(1) }
 	}
 	if api_level.i16() < sdk.min_supported_api_level.i16() {
-		eprintln('Android API level ${api_level} is less than the supported level (${sdk.min_supported_api_level}).')
-		exit(1)
+		eprintln('Android API level "$api_level" is less than the supported level (${sdk.min_supported_api_level}).')
+		eprintln('It can be installed with `$exe_name install "platform;android-${sdk.min_supported_api_level}"`')
+		if exit_on_error { exit(1) }
 	}
 
 	opt.api_level = api_level
@@ -438,7 +438,7 @@ fn resolve_options(mut opt Options) {
 	if build_tools_version == '' {
 		eprintln('Android build-tools version ${opt.build_tools} is not available in SDK.')
 		//eprintln('It can be installed with `$exe_name install android-api-${opt.api_level}`')
-		exit(1)
+		if exit_on_error { exit(1) }
 	}
 
 	opt.build_tools = build_tools_version
@@ -458,7 +458,7 @@ fn resolve_options(mut opt Options) {
 	if ndk_version == '' {
 		eprintln('Android NDK version ${opt.ndk_version} is not available.')
 		//eprintln('It can be installed with `$exe_name install android-api-${opt.api_level}`')
-		exit(1)
+		if exit_on_error { exit(1) }
 	}
 
 	opt.ndk_version = ndk_version
