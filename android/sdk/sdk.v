@@ -90,9 +90,13 @@ pub fn root() string {
 		}
 
 		if path != '' {
-			// sdkmanager normally reside in 'path/to/sdk_root/cmdline-tools/tools/bin'
+			// sdkmanager used to reside in 'path/to/sdk_root/cmdline-tools/tools/bin'
 			// but in older setups it coould reside in 'path/to/sdk_root/tools/bin'
-			// ... Android *sigh* ...
+			// and newer setups in 'path/to/sdk_root/cmdline-tools/latest/bin' or
+			// supposedly 'path/to/sdk_root/cmdline-tools/<version>/bin'
+			// ... Android development is a complete mess. *sigh* ...
+			// For help and updates, please see
+			// https://stackoverflow.com/a/61176718
 			if path.contains('cmdline-tools') {
 				sdk_root = os.real_path(os.join_path(os.dir(path),'..','..','..'))
 			} else {

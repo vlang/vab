@@ -123,7 +123,7 @@ fn install_opt(opt InstallOptions) ?bool {
 		dst := os.join_path(util.cache_dir(),'cmdline-tools')
 		dst_check := os.join_path(dst,'tools','bin')
 		if sdk.sdkmanager() == '' {
-			// Ignore opt.version for now
+			// Ignore opt.version when bootstrapping
 			file := download(opt) or {
 				return error(err)
 			}
@@ -138,8 +138,13 @@ fn install_opt(opt InstallOptions) ?bool {
 
 		} else {
 			if opt.verbosity > 0 {
-				println(@MOD+'.'+@FN+' '+'commandline tools is already installed.')
+				println(@MOD+'.'+@FN+' '+'commandline tools is already installed in "$sdk.sdkmanager()".')
 			}
+			// 6858069 = cmdline-tools;3.0 <- zip structure changes *sigh*
+			// 6609375 = cmdline-tools;2.1 <- latest that support `sdkmanager --version` *sigh*
+			// Let just cross fingers that it ends up where we want it.
+			// For troubleshooting and info, please see
+			// https://stackoverflow.com/a/58652345
 			return true
 		}
 	} else if opt.dep == .sdk {
