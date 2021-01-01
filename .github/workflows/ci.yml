@@ -32,10 +32,12 @@ jobs:
       run: ./v -prod vab/vab.v
     - name: Run vab --help
       run: vab/vab --help
+    - name: tree android
+      run: tree /usr/local/lib/android/
+    - name: tree android/sdk
+      run: tree /usr/local/lib/android/sdk
     - name: Run vab doctor
       run: VEXE=$VAB_VEXE vab/vab doctor
-#    - name: Run vab doctor
-#      run: VEXE=$GITHUB_WORKSPACE/v/v vab/vab doctor
 
 #  macos:
 #    runs-on: macOS-latest
