@@ -29,7 +29,7 @@ VEXE=/path/to/custom/v/binary
 
 ## Development (debug builds)
 
-The fast way from source to device (build, package, deploy and launch app) is:
+The fast way from source to device (build, package, deploy and launch app on device) is:
 ```
 ./vab run --device auto --archs 'armeabi-v7a' /path/to/v/source/file/or/dir
 ```
