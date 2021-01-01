@@ -20,37 +20,41 @@ pub fn vexe() string {
 pub fn home() string {
 	// credits to @spytheman:
 	// https://discord.com/channels/592103645835821068/592294828432424960/746040606358503484
-	/*env_vexe := os.getenv('VEXE')
-	if env_vexe != '' {
-		return os.dir(env_vexe)
+	exe := vexe()
+	if exe != '' {
+		return os.dir(exe)
 	}
-	possible_symlink := os.find_abs_path_of_executable('v') or { panic('can not find v') }
-	vexe := os.real_path( possible_symlink )*/
-	return os.dir(vexe())
+	return ''
 }
 
 pub fn version() string {
 	mut version := ''
 	v := vexe()
-	v_version := os.exec(v+' -version') or { os.Result{1,''} }
-	output := v_version.output
-	mut re := regex.regex_opt(r'.*(\d+\.?\d*\.?\d*)') or { panic(err) }
-	start, _ := re.match_string(output)
-	if start >= 0 && re.groups.len > 0 {
-		version = output[re.groups[0]..re.groups[1]]
+	if v != '' {
+		v_version := os.exec(v+' -version') or { os.Result{1,''} }
+		output := v_version.output
+		mut re := regex.regex_opt(r'.*(\d+\.?\d*\.?\d*)') or { panic(err) }
+		start, _ := re.match_string(output)
+		if start >= 0 && re.groups.len > 0 {
+			version = output[re.groups[0]..re.groups[1]]
+		}
+		return version
 	}
-	return version
+	return '0.0.0'
 }
 
 pub fn version_commit_hash() string {
 	mut hash := ''
 	v := vexe()
-	v_version := os.exec(v+' -version') or { os.Result{1,''} }
-	output := v_version.output
-	mut re := regex.regex_opt(r'.*\d+\.?\d*\.?\d* ([a-fA-F0-9]{7,})') or { panic(err) }
-	start, _ := re.match_string(output)
-	if start >= 0 && re.groups.len > 0 {
-		hash = output[re.groups[0]..re.groups[1]]
+	if v != '' {
+		v_version := os.exec(v+' -version') or { os.Result{1,''} }
+		output := v_version.output
+		mut re := regex.regex_opt(r'.*\d+\.?\d*\.?\d* ([a-fA-F0-9]{7,})') or { panic(err) }
+		start, _ := re.match_string(output)
+		if start >= 0 && re.groups.len > 0 {
+			hash = output[re.groups[0]..re.groups[1]]
+		}
+		return hash
 	}
-	return hash
+	return 'deadbeef'
 }
