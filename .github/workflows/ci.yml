@@ -12,20 +12,19 @@ jobs:
   ubuntu:
     runs-on: ubuntu-18.04
     timeout-minutes: 30
-    env:
-      VAB_VROOT: $GITHUB_WORKSPACE/v
-      VAB_VEXE: $GITHUB_WORKSPACE/v/v
+#    env:
+#      VAB_VROOT: $GITHUB_WORKSPACE/v
+#      VAB_VEXE: $GITHUB_WORKSPACE/v/v
     steps:
     - name: Checkout V
       uses: actions/checkout@v2
       with:
         repository: vlang/v
-        path: v
     - uses: actions/checkout@v2
       with:
         path: vab
     - name: Build local v
-      run: cd $VAB_VROOT; make -j4
+      run: make -j4
     - name: Run tests
       run: ./v test vab
     - name: Build VAB
@@ -34,12 +33,14 @@ jobs:
       run: ./v -prod vab/vab.v
     - name: Run vab --help
       run: vab/vab --help
+    - name: Setup env
+      run: export VROOT=$GITHUB_WORKSPACE && export VEXE=$VROOT
     - name: ls GHWS
-      run: ls -al $GITHUB_WORKSPACE && ls -al $VAB_VROOT
+      run: ls -al $GITHUB_WORKSPACE && ls -al $VROOT
 #    - name: ls -al android/sdk
 #      run: ls -al /usr/local/lib/android/sdk
     - name: Run vab doctor
-      run: VEXE=$VAB_VEXE vab/vab doctor
+      run: vab/vab doctor
 #    - name: Compile (defaults) examples/sokol/particles
 #      run: VEXE=$VAB_VEXE vab/vab $VAB_VROOT/examples/sokol/particles
 
