@@ -6,13 +6,15 @@ import os
 import regex
 
 pub fn vexe() string {
-	env_vexe := os.getenv('VEXE')
-	if env_vexe != '' {
-		return env_vexe
+	mut exe := os.getenv('VEXE')
+	if exe != '' {
+		return exe
 	}
-	possible_symlink := os.find_abs_path_of_executable('v') or { panic('can not find v') }
-	vexe := os.real_path( possible_symlink )
-	return vexe
+	possible_symlink := os.find_abs_path_of_executable('v') or { '' }
+	if possible_symlink != '' {
+		exe = os.real_path( possible_symlink )
+	}
+	return exe
 }
 
 pub fn home() string {
