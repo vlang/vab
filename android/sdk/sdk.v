@@ -29,7 +29,8 @@ const (
 		os.join_path(home, 'Library/Android/sdk')
 	]
 	possible_sdk_paths_linux = [
-		os.join_path(home, "Android/Sdk")
+		os.join_path(home, "Android/Sdk"),
+		'/usr/local/lib/android/sdk'
 	]
 )
 
