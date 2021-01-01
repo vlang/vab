@@ -33,16 +33,18 @@ jobs:
       run: ./v -prod vab/vab.v
     - name: Run vab --help
       run: vab/vab --help
-#    - name: Setup env
-#      run: export VROOT=$GITHUB_WORKSPACE && export VEXE=$VROOT
+    - name: Setup env
+      run: export VROOT=$GITHUB_WORKSPACE; mkdir apks
 #    - name: ls GHWS
 #      run: ls -al $GITHUB_WORKSPACE && ls -al $VROOT
 #    - name: ls -al android/sdk
 #      run: ls -al /usr/local/lib/android/sdk
     - name: Run vab doctor
       run: VEXE=$GITHUB_WORKSPACE/v vab/vab doctor
-#    - name: Compile (defaults) examples/sokol/particles
-#      run: VEXE=$VAB_VEXE vab/vab $VAB_VROOT/examples/sokol/particles
+    - name: Compile (defaults) examples/sokol/particles
+      run: VEXE=$GITHUB_WORKSPACE/v vab/vab examples/sokol/particles -o apks/particles.apk
+    - name: Test
+      run: echo "$VROOT"
 
 # JAVA_HOME_8_X64
 # JAVA_HOME_11_X64
