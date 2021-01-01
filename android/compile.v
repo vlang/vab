@@ -14,17 +14,18 @@ const (
 )
 
 pub struct CompileOptions {
-	verbosity		int       // level of verbosity
+	verbosity   int       // level of verbosity
+	cache       bool
 	// env
-	work_dir		string    // temporary work directory
-	input			string
+	work_dir    string    // temporary work directory
+	input       string
 	//
-	archs			[]string  // compile for these CPU architectures
-	v_flags			[]string  // flags to pass to the v compiler
-	c_flags			[]string  // flags to pass to the C compiler(s)
-	ndk_version		string    // version of the Android NDK to compile against
-	lib_name		string    // filename of the resulting .so ('${lib_name}.so')
-	api_level		string    // Android API level to use when compiling
+	archs       []string  // compile for these CPU architectures
+	v_flags     []string  // flags to pass to the v compiler
+	c_flags     []string  // flags to pass to the C compiler(s)
+	ndk_version string    // version of the Android NDK to compile against
+	lib_name    string    // filename of the resulting .so ('${lib_name}.so')
+	api_level   string    // Android API level to use when compiling
 }
 
 pub fn compile(opt CompileOptions) bool {
@@ -53,7 +54,7 @@ pub fn compile(opt CompileOptions) bool {
 	// Poor man's cache check
 	mut hash := ''
 	hash_file := os.join_path(opt.work_dir, 'v_android.hash')
-	if os.exists(build_dir) && os.exists(v_output_file) {
+	if opt.cache && os.exists(build_dir) && os.exists(v_output_file) {
 		mut bytes := os.read_bytes(v_output_file) or { panic(err) }
 		bytes << opt.str().bytes()
 		hash = md5.sum(bytes).hex()
@@ -61,7 +62,7 @@ pub fn compile(opt CompileOptions) bool {
 		if os.exists(hash_file) {
 			prev_hash := os.read_file(hash_file) or { '' }
 			if hash == prev_hash {
-				if opt.verbosity > 2 {
+				if opt.verbosity > 1 {
 					println('Skipping compile. Hashes match ${hash}')
 				}
 				return true

@@ -29,6 +29,7 @@ struct Options {
 	verbosity		int
 	work_dir		string
 	// Build, packaging and deployment
+	cache			bool
 	version_code	int
 	device_id		string
 	keystore		string
@@ -104,6 +105,7 @@ fn main() {
 		keystore_alias: fp.string('keystore-alias', 0, '', 'Use this keystore alias from the keystore file to sign the package')
 
 		dump_usage: fp.bool('help', `h`, false, 'Show this help message and exit')
+		cache: !fp.bool('nocache', 0, false, 'Do not use build cache')
 
 		app_name: fp.string('name', 0, android.default_app_name, 'Pretty app name')
 		package_id: fp.string('package-id', 0, android.default_package_id, 'App package ID (e.g. "org.v.app")')
@@ -246,6 +248,7 @@ fn main() {
 
 	comp_opt := android.CompileOptions {
 		verbosity:		opt.verbosity
+		cache:			opt.cache
 		v_flags:		opt.v_flags
 		c_flags:		opt.c_flags
 		archs:			opt.archs.filter(it.trim(' ') != '')
