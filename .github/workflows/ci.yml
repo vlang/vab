@@ -33,8 +33,8 @@ jobs:
       run: ./v -prod vab/vab.v
     - name: Run vab --help
       run: vab/vab --help
-#    - name: ls android/sdk/ndk-bundle
-#      run: ls -al /usr/local/lib/android/sdk/ndk-bundle
+    - name: ls GHWS
+      run: ls -al $GITHUB_WORKSPACE
 #    - name: ls -al android/sdk
 #      run: ls -al /usr/local/lib/android/sdk
     - name: Run vab doctor
