@@ -24,6 +24,8 @@ jobs:
         path: vab
     - name: Build local v
       run: make -j4
+    - name: V symlink
+      run: ./v symlink
     - name: Run tests
       run: ./v test vab
     - name: Build VAB
@@ -32,7 +34,7 @@ jobs:
       run: ./v -prod vab/vab.v
     - name: Run vab --help
       run: vab/vab --help
-    - name: Run vab docor
+    - name: Run vab doctor
       run: vab/vab doctor
 #    - name: Run vab doctor
 #      run: VEXE=$GITHUB_WORKSPACE/v/v vab/vab doctor
