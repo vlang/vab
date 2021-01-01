@@ -129,8 +129,8 @@ fn main() {
 	}
 
 	additional_args := fp.finalize() or {
-		eprintln(err)
 		println(fp.usage())
+		eprintln(err)
 		exit(1)
 	}
 
@@ -139,8 +139,8 @@ fn main() {
 		exit(0)
 	}
 	if fp.args.len == 0 {
-		eprintln('No arguments given')
 		println(fp.usage())
+		eprintln('No arguments given')
 		exit(1)
 	}
 
@@ -359,18 +359,18 @@ fn validate_env(opt Options) {
 	jdk_version := java.jdk_version()
 	if jdk_version == '' {
 		eprintln('No Java JDK install(s) could be detected')
-		eprintln('Please install Java 8 JDK or provide a valid path via JAVA_HOME')
-		eprintln('(Currently Java 8 (1.8.x) is the only Java version supported by the Android SDK)')
+		eprintln('Please install Java >= 8 JDK or provide a valid path via JAVA_HOME')
 		exit(1)
 	}
 
-	jdk_semantic_version := semver.from(jdk_version) or { panic(err) }
+	jdk_semantic_version := semver.from(jdk_version) or {
+		panic(@MOD+'.'+@FN+':'+@LINE+' error converting "$jdk_version" to semantic version.\nsemver: '+err)
+	}
 	if !jdk_semantic_version.ge(semver.build(1, 8, 0)) { // NOTE When did this break:.satisfies('1.8.*') ???
-		// Some Android tools like `sdkmanager` currently only run with Java 8 JDK (1.8.x).
+		// Some Android tools like `sdkmanager` in cmdline-tools;1.0 only ran with Java 8 JDK (1.8.x).
 		// (Absolute mess, yes)
 		eprintln('Java version ${jdk_version} is not supported')
-		eprintln('Please install Java 8 JDK or provide a valid path via JAVA_HOME')
-		eprintln('(Currently Java 8 (1.8.x) is the only Java version supported by the Android SDK)')
+		eprintln('Please install Java >= 8 JDK or provide a valid path via JAVA_HOME')
 		exit(1)
 	}
 
@@ -378,11 +378,13 @@ fn validate_env(opt Options) {
 	if sdk.sdkmanager() == '' {
 		eprintln('No "sdkmanager" could be detected.')
 		eprintln('Please provide a valid path via ANDROID_SDK_ROOT')
-		eprintln('or run `${exe_name} install tools`')
+		eprintln('or run `${exe_name} install cmdline-tools`')
 		exit(1)
 	}
 
-	build_tools_semantic_version := semver.from(sdk.default_build_tools_version) or { panic(err) }
+	build_tools_semantic_version := semver.from(sdk.default_build_tools_version) or {
+		panic(@MOD+'.'+@FN+':'+@LINE+' error converting "$sdk.default_build_tools_version" to semantic version.\nsemver: '+err)
+	}
 
 	if !build_tools_semantic_version.ge(semver.build(24, 0, 3)) { // NOTE When did this break:.satisfies('>=24.0.3') ???
 		// Some Android tools we need like `apksigner` is currently only available with build-tools >= 24.0.3.
