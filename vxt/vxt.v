@@ -8,7 +8,7 @@ import regex
 pub fn vexe() string {
 	mut exe := os.getenv('VEXE')
 	if exe != '' {
-		return exe
+		return os.real_path(exe)
 	}
 	possible_symlink := os.find_abs_path_of_executable('v') or { '' }
 	if possible_symlink != '' {
