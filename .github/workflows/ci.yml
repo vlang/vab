@@ -42,13 +42,13 @@ jobs:
     - name: Run vab doctor
       run: VEXE=./v vab/vab doctor
     - name: Compile (Default) examples/sokol/particles
-      run: VEXE=./v vab/vab -v 3 examples/sokol/particles -o apks/java8/particles.apk
+      run: VEXE=./v vab/vab -v 3 examples/sokol/particles -o apks/particles.apk
     - name: Compile (Java 8) examples/sokol/particles
-      run: VEXE=./v; JAVA_HOME=$JAVA_HOME_8_X64 vab/vab -v 3 examples/sokol/particles -o apks/java8/particles.apk
+      run: read -r VEXE JAVA_HOME <<<$(echo ./v $JAVA_HOME_8_X64) ; vab/vab -v 3 examples/sokol/particles -o apks/java8/particles.apk
     - name: Compile (Java 11) examples/sokol/particles
-      run: VEXE=./v; JAVA_HOME=$JAVA_HOME_11_X64 vab/vab -v 3 examples/sokol/particles -o apks/java11/particles.apk
+      run: read -r VEXE JAVA_HOME <<<$(echo ./v $JAVA_HOME_11_X64) ; vab/vab -v 3 examples/sokol/particles -o apks/java11/particles.apk
     - name: Compile (Java 12) examples/sokol/particles
-      run: VEXE=./v; JAVA_HOME=$JAVA_HOME_12_X64 vab/vab -v 3 examples/sokol/particles -o apks/java12/particles.apk
+      run: read -r VEXE JAVA_HOME <<<$(echo ./v $JAVA_HOME_12_X64) ;  vab/vab -v 3 examples/sokol/particles -o apks/java12/particles.apk
 
 # JAVA_HOME_8_X64
 # JAVA_HOME_11_X64
