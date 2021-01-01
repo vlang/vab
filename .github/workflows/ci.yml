@@ -32,8 +32,8 @@ jobs:
       run: ./v -prod vab/vab.v
     - name: Run vab --help
       run: vab/vab --help
-    - name: ls android
-      run: ls -al /usr/local/lib/android/
+    - name: ls android/sdk/ndk-bundle
+      run: ls -al /usr/local/lib/android/sdk/ndk-bundle
     - name: ls -al android/sdk
       run: ls -al /usr/local/lib/android/sdk
     - name: Run vab doctor
