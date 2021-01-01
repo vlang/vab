@@ -32,10 +32,10 @@ jobs:
       run: ./v -prod vab/vab.v
     - name: Run vab --help
       run: vab/vab --help
-    - name: tree android
-      run: tree /usr/local/lib/android/
-    - name: tree android/sdk
-      run: tree /usr/local/lib/android/sdk
+    - name: ls android
+      run: ls -al /usr/local/lib/android/
+    - name: ls -al android/sdk
+      run: ls -al /usr/local/lib/android/sdk
     - name: Run vab doctor
       run: VEXE=$VAB_VEXE vab/vab doctor
 
