@@ -32,7 +32,8 @@ jobs:
       run: ./v -prod vab/vab.v
     - name: Run vab --help
       run: vab/vab --help
-
+    - name: Run vab docor
+      run: vab/vab doctor
 #    - name: Run vab doctor
 #      run: VEXE=$GITHUB_WORKSPACE/v/v vab/vab doctor
 
