@@ -20,6 +20,7 @@ jobs:
       uses: actions/checkout@v2
       with:
         repository: vlang/v
+        path: v
     - uses: actions/checkout@v2
       with:
         path: vab
@@ -34,7 +35,7 @@ jobs:
     - name: Run vab --help
       run: vab/vab --help
     - name: ls GHWS
-      run: ls -al $GITHUB_WORKSPACE
+      run: ls -al $GITHUB_WORKSPACE && ls -al $VAB_VROOT
 #    - name: ls -al android/sdk
 #      run: ls -al /usr/local/lib/android/sdk
     - name: Run vab doctor
