@@ -20,13 +20,16 @@ const (
 // This is also referred to as a "Side by side" install
 const (
 	possible_ndk_paths_windows = [
-		os.join_path(sdk.root(),'ndk')
+		os.join_path(sdk.root(),'ndk'),
+		os.join_path(sdk.root(),'ndk-bundle')
 	]
 	possible_ndk_paths_macos = [
-		os.join_path(sdk.root(),'ndk')
+		os.join_path(sdk.root(),'ndk'),
+		os.join_path(sdk.root(),'ndk-bundle')
 	]
 	possible_ndk_paths_linux = [
-		os.join_path(sdk.root(),'ndk')
+		os.join_path(sdk.root(),'ndk'),
+		os.join_path(sdk.root(),'ndk-bundle')
 	]
 )
 
