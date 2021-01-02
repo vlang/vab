@@ -86,9 +86,9 @@ jobs:
       run: mkdir apks apks/java8 apks/java11 apks/java12 apks/java13 apks/java14
     - name: Run vab doctor
       run: |
-      export ANDROID_NDK_ROOT="$HOME/Library/Android/sdk/ndk-bundle"
-      export VEXE=./v
-      vab/vab doctor
+        export ANDROID_NDK_ROOT="$HOME/Library/Android/sdk/ndk-bundle"
+        export VEXE=./v
+        vab/vab doctor
     - name: Build APK (Default) examples/sokol/particles
       run: |
         export VEXE=./v
