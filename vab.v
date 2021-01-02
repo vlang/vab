@@ -386,7 +386,7 @@ fn validate_env(opt Options) {
 		exit(1)
 	}
 
-	/*
+	/* Currently not possible as version is sniffed from the directory it resides in (which can be anything)
 	// Validate Android NDK requirements
 	if ndk.found() {
 		ndk_semantic_version := semver.from(opt.ndk_version) or {
