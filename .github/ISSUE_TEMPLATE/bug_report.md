@@ -13,7 +13,7 @@ of V available and working on your system. Usually you can run `v up` to update 
 It's also advisable to update vab itself.
 -->
 
-<!-- You can use `v doctor` and `./vab doctor` to fill out the next fields -->
+<!-- You can use `vab doctor` to fill out the next fields -->
 **OS:**
 
 **V version**
