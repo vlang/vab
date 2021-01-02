@@ -334,8 +334,7 @@ fn check_essentials(exit_on_error bool) {
 	// Validate Java requirements
 	if !java.jdk_found() {
 		eprintln('No Java install(s) could be detected')
-		eprintln('Please install Java 8 JDK or provide a valid path via JAVA_HOME')
-		eprintln('(Currently Java 8 (1.8.x) is the only Java version supported by the Android SDK)')
+		eprintln('Please install Java JDK >= 8 or provide a valid path via JAVA_HOME')
 		if exit_on_error { exit(1) }
 	}
 	// Validate Android SDK requirements
@@ -367,18 +366,10 @@ fn validate_env(opt Options) {
 		panic(@MOD+'.'+@FN+':'+@LINE+' error converting "$jdk_version" to semantic version.\nsemver: '+err)
 	}
 	if !jdk_semantic_version.ge(semver.build(1, 8, 0)) { // NOTE When did this break:.satisfies('1.8.*') ???
-		// Some Android tools like `sdkmanager` in cmdline-tools;1.0 only ran with Java 8 JDK (1.8.x).
+		// Some Android tools like `sdkmanager` in cmdline-tools;1.0 only worked with Java 8 JDK (1.8.x).
 		// (Absolute mess, yes)
 		eprintln('Java version ${jdk_version} is not supported')
 		eprintln('Please install Java >= 8 JDK or provide a valid path via JAVA_HOME')
-		exit(1)
-	}
-
-	// Validate further Android SDK
-	if sdk.sdkmanager() == '' {
-		eprintln('No "sdkmanager" could be detected.')
-		eprintln('Please provide a valid path via ANDROID_SDK_ROOT')
-		eprintln('or run `${exe_name} install cmdline-tools`')
 		exit(1)
 	}
 
@@ -411,7 +402,6 @@ fn resolve_options(mut opt Options, exit_on_error bool) {
 		} else {
 			// TODO Warnings
 			eprintln('Android API level "$opt.api_level" is not available in SDK.')
-			//eprintln('(It can be installed with `$exe_name install android-api-${opt.api_level}`)')
 			eprintln('Falling back to default "$api_level"')
 		}
 	}
@@ -434,21 +424,21 @@ fn resolve_options(mut opt Options, exit_on_error bool) {
 		if sdk.has_build_tools(opt.build_tools) {
 			build_tools_version = opt.build_tools
 		} else {
-			// TODO FIX Warnings and add install function
+			// TODO FIX Warnings
 			eprintln('Android build-tools version ${opt.build_tools} is not available in SDK.')
-			//eprintln('(It can be installed with `$exe_name install android-build-tools-${opt.build_tools}`)')
+			eprintln('(It can be installed with `$exe_name install "build-tools;${opt.build_tools}"`)')
 			eprintln('Falling back to default ${build_tools_version}')
 		}
 	}
 	if build_tools_version == '' {
 		eprintln('Android build-tools version ${opt.build_tools} is not available in SDK.')
-		//eprintln('It can be installed with `$exe_name install android-api-${opt.api_level}`')
+		eprintln('(It can be installed with `$exe_name install "build-tools;${opt.build_tools}"`)')
 		if exit_on_error { exit(1) }
 	}
 
 	opt.build_tools = build_tools_version
 
-	// Validate ndk version
+	// Validate NDK version
 	mut ndk_version := ndk.default_version()
 	if opt.ndk_version != '' {
 		if ndk.has_version(opt.ndk_version) {
@@ -456,7 +446,7 @@ fn resolve_options(mut opt Options, exit_on_error bool) {
 		} else {
 			// TODO FIX Warnings and add install function
 			eprintln('Android NDK version ${opt.ndk_version} is not available.')
-			//eprintln('(It can be installed with `$exe_name install android-build-tools-${opt.build_tools}`)')
+			//eprintln('(It can be installed with `$exe_name install "ndk;${opt.build_tools}"`)')
 			eprintln('Falling back to default ${ndk_version}')
 		}
 	}
@@ -498,40 +488,78 @@ fn resolve_options(mut opt Options, exit_on_error bool) {
 }
 
 fn doctor(opt Options) {
+	sdkm := sdk.sdkmanager()
+	env_managable := env.managable()
+
+	// Validate Android `sdkmanager` tool
+	// Just warnings/notices as `sdkmanager` isn't used to in the build process.
+	if sdkm == '' {
+		eprintln('No "sdkmanager" could be detected.\n')
+		if env_managable {
+			eprintln('You can run `${exe_name} install cmdline-tools` to install it.\n')
+		}
+	} else {
+		if !env_managable {
+			eprintln('The detected `sdkmanager` seems outdated or\nincompatible with the Java version used.')
+			eprintln("For `$exe_name` to control it's own dependencies, please update `sdkmanager` found in:")
+			eprintln(sdkm)
+			eprintln('or use a Java version that is compatible with your `sdkmanager`.\n')
+		}
+	}
+	// vab section
 	println('$exe_name
 	Version $exe_version
 	Path "$exe_dir"')
+	// Java section
+	println('Java
+	JDK
+		Version ${java.jdk_version()}
+		Path "$java.jdk_root()"')
+	// Android section
+	println('Android
+	ENV
+		sdkmanager "$sdkm"
+		sdkmanager.version "$sdk.sdkmanager_version()"
+		Managable: $env_managable
+	SDK
+		Path "$sdk.root()"
+		Writable ${os.is_writable(sdk.root())}
+	NDK
+		Version ${opt.ndk_version}
+		Path "$ndk.root()"
+		Side-by-side ${ndk.is_side_by_side()}
+	Build
+		API ${opt.api_level}
+		Build-tools ${opt.build_tools}')
+	if opt.keystore != '' || opt.keystore_alias != '' {
+		println('\tKeystore')
+		println('\t\tFile ${opt.keystore}')
+		println('\t\tAlias ${opt.keystore_alias}')
+	}
+	// Product section
+	println('Product
+	Name "${opt.app_name}"
+	Package "$opt.package_id"
+	Output "$opt.output"')
+	// V section
 	println('V
 	Version $vxt.version() $vxt.version_commit_hash()
 	Path "$vxt.home()"')
 	if opt.v_flags.len > 0 {
 		println('\tFlags ${opt.v_flags}')
 	}
-	println('Java
-	JDK
-		Version ${java.jdk_version()}
-		Path "$java.jdk_root()"
-	Android
-		SDK
-			Path "$sdk.root()"
-			Tool.sdkmanager "$sdk.sdkmanager()"
-			Tool.sdkmanager.version "$sdk.sdkmanager_version()"
-			Writable ${env.can_install()}
-		NDK
-			Version ${opt.ndk_version}
-			Path "$ndk.root()"
-			Side-by-side ${ndk.is_side_by_side()}
-		Build
-			API ${opt.api_level}
-			Build-tools ${opt.build_tools}')
-	if opt.keystore != '' || opt.keystore_alias != '' {
-		println('\tKeystore')
-		println('\t\tFile ${opt.keystore}')
-		println('\t\tAlias ${opt.keystore_alias}')
+	// Print output of `v doctor` if v is found
+	if vxt.found() {
+		println('')
+		v_cmd := [
+			vxt.vexe(),
+			'doctor'
+		]
+		v_res := os.exec(v_cmd.join(' ')) or { os.Result{1,''} }
+		out_lines := v_res.output.split('\n')
+		for line in out_lines {
+			println('\t$line')
+		}
 	}
-	println('Product
-	Name "${opt.app_name}"
-	Package "$opt.package_id"
-	Output "$opt.output"
-	')
+
 }
