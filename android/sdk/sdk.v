@@ -34,6 +34,19 @@ const (
 	]
 )
 
+// Possible locations of the `sdkmanager` tool
+// https://stackoverflow.com/a/61176718
+const (
+	possible_relative_to_sdk_sdkmanager_paths = [
+		os.join_path('cmdline-tools','latest','bin')
+		os.join_path('tools','latest','bin')
+		os.join_path('cmdline-tools','2.1','bin')
+		os.join_path('cmdline-tools','3.0','bin')
+		os.join_path('cmdline-tools','tools','bin')
+		os.join_path('tools','bin')
+	]
+)
+
 enum Component {
 	ndk
 	api_level
@@ -113,11 +126,18 @@ pub fn found() bool {
 }
 
 pub fn sdkmanager() string {
-	mut sdkmanager := ''
-	if found() {
+	mut sdkmanager := os.getenv('SDKMANAGER')
+
+	if !os.is_executable(sdkmanager) && found() {
 		sdkmanager = os.join_path(tools_root(),'bin','sdkmanager')
 		if !os.is_executable(sdkmanager) {
 			sdkmanager = os.join_path(root(),'cmdline-tools','tools','bin','sdkmanager')
+		}
+		if !os.is_executable(sdkmanager) {
+			for relative_path in possible_relative_to_sdk_sdkmanager_paths {
+				sdkmanager = os.join_path(root(),relative_path,'sdkmanager')
+				if os.is_executable(sdkmanager) { break }
+			}
 		}
 	}
 	if !os.is_executable(sdkmanager) {
