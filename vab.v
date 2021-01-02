@@ -386,6 +386,7 @@ fn validate_env(opt Options) {
 		exit(1)
 	}
 
+	/*
 	// Validate Android NDK requirements
 	if ndk.found() {
 		ndk_semantic_version := semver.from(opt.ndk_version) or {
@@ -397,7 +398,7 @@ fn validate_env(opt Options) {
 			eprintln('or run `${exe_name} install "ndk;<version>"`')
 			exit(1)
 		}
-	}
+	}*/
 
 	// API level
 	if opt.api_level.i16() < sdk.default_api_level.i16() {

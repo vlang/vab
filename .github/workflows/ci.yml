@@ -84,6 +84,8 @@ jobs:
       run: vab/vab --help
     - name: Setup env
       run: mkdir apks apks/java8 apks/java11 apks/java12 apks/java13 apks/java14
+    - name: ls -al /Users/runner/Library/Android/sdk/ndk
+      run: ls -al /Users/runner/Library/Android/sdk/ndk
     - name: Run vab doctor
       run: VEXE=./v vab/vab doctor
     - name: Build APK (Default) examples/sokol/particles
