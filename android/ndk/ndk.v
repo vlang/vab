@@ -104,7 +104,7 @@ pub fn default_version() string {
 	}
 	dirs := util.find_sorted(root())
 	if dirs.len > 0 {
-		return os.file_name(dirs.first())
+		return os.file_name(dirs.last())
 	}
 	return ''
 }
