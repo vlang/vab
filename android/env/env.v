@@ -38,8 +38,49 @@ pub struct InstallOptions {
 	verbosity int
 }
 
-pub fn can_install() bool {
-	return os.is_writable(sdk.root())
+pub fn managable() bool {
+	sdk_is_writable := os.is_writable(sdk.root())
+	// sdkmanager checks
+	sdkm := sdk.sdkmanager()
+	has_sdkmanager := sdkm != ''
+	mut sdkmanger_works := false
+	if has_sdkmanager {
+		// We have detected `sdkmanager` - but does it work with the Java version? *sigh*
+		// Android development will let us find out I guess:
+		cmd := [
+			sdkm,
+			'--list'
+		]
+		mut cmd_res := util.run(cmd)
+		if cmd_res.exit_code > 0 {
+			// Failed let's try a workaround from stackoverflow:
+			// https://stackoverflow.com/a/51644855/1904615
+			if 'windows' == os.user_os() {
+				util.run([
+					'set JAVA_OPTS=-XX:+IgnoreUnrecognizedVMOptions --add-modules java.se.ee'
+				])
+				util.run([
+					'set JAVA_OPTS=-XX:+IgnoreUnrecognizedVMOptions --add-modules java.xml.bind'
+				])
+			} else {
+				util.run([
+					"export JAVA_OPTS='-XX:+IgnoreUnrecognizedVMOptions --add-modules java.se.ee'"
+				])
+				util.run([
+					"export JAVA_OPTS='-XX:+IgnoreUnrecognizedVMOptions --add-modules java.xml.bind'"
+				])
+			}
+			// Let try again
+			cmd_res = util.run(cmd)
+			if cmd_res.exit_code == 0 {
+				sdkmanger_works = true
+			}
+			// Give up trying to fix this horrible eco-system
+		} else {
+			sdkmanger_works = true
+		}
+	}
+	return sdk_is_writable && has_sdkmanager && sdkmanger_works
 }
 
 pub fn install(components string, verbosity int) int {
@@ -157,8 +198,12 @@ fn ensure(verbosity int) ?bool {
 }
 
 fn install_opt(opt InstallOptions) ?bool {
-	if opt.dep != .cmdline_tools && !can_install() {
-		return error(@MOD+'.'+@FN+' '+'No permission to write in Android SDK root "${sdk.root()}". Please install manually.')
+	if opt.dep != .cmdline_tools && !managable() {
+		if !os.is_writable(sdk.root()) {
+			return error(@MOD+'.'+@FN+' '+'No permission to write in Android SDK root. Please install manually or ensure write access to "$sdk.root()".')
+		} else {
+			return error(@MOD+'.'+@FN+' '+'The `sdkmanager` seems outdated or incompatible with the Java version used". Please fix your setup manually.')
+		}
 	}
 	if opt.verbosity > 0 {
 		println(@MOD+'.'+@FN+' installing ${opt.dep} ${opt.version}...')

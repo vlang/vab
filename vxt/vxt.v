@@ -17,6 +17,10 @@ pub fn vexe() string {
 	return exe
 }
 
+pub fn found() bool {
+	return home() != ''
+}
+
 pub fn home() string {
 	// credits to @spytheman:
 	// https://discord.com/channels/592103645835821068/592294828432424960/746040606358503484
