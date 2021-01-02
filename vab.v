@@ -496,14 +496,18 @@ fn doctor(opt Options) {
 	if sdkm == '' {
 		eprintln('No "sdkmanager" could be detected.\n')
 		if env_managable {
-			eprintln('You can run `${exe_name} install cmdline-tools` to install it.\n')
+			eprintln('You can run `${exe_name} install cmdline-tools` to install it.')
 		}
+		eprintln('You can set the SDKMANAGER env variable or try your luck with `$exe_name install auto`.')
+		eprintln('Please see https://stackoverflow.com/a/61176718/1904615 for more help.\n')
 	} else {
 		if !env_managable {
-			eprintln('The detected `sdkmanager` seems outdated or\nincompatible with the Java version used.')
+			eprintln('The detected `sdkmanager` seems outdated or incompatible with the Java version used.')
 			eprintln("For `$exe_name` to control it's own dependencies, please update `sdkmanager` found in:")
-			eprintln(sdkm)
-			eprintln('or use a Java version that is compatible with your `sdkmanager`.\n')
+			eprintln('"$sdkm"')
+			eprintln('or use a Java version that is compatible with your `sdkmanager`.')
+			eprintln('You can set the SDKMANAGER env variable or try your luck with `$exe_name install auto`.')
+			eprintln('Please see https://stackoverflow.com/a/61176718/1904615 for more help.\n')
 		}
 	}
 	// vab section
