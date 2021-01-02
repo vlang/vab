@@ -7,7 +7,12 @@ based devices.
 # Install
 
 Currently Linux and macOS build hosts are supported.
-Dependencies: V, Java (JDK) 8, Android SDK + NDK
+Dependencies:
+ * V
+ * Java (JDK) >= 8
+ * Android SDK
+ * Android NDK
+
 (**no** Android Studio required)
 
 ```
@@ -19,7 +24,7 @@ v vab.v
 If `vab` fail to detect your environment you can set ENV variables
 to help it:
 ```
-JAVA_HOME=/path/to/java-8-jdk
+JAVA_HOME=/path/to/java-jdk
 SDKMANAGER=/path/to//sdkmanager
 ANDROID_SDK_ROOT=/path/to/android_sdk_linux
 ANDROID_NDK_ROOT=/path/to/android_ndk_linux
@@ -44,7 +49,6 @@ export KEYSTORE_ALIAS_PASSWORD="word"
 ./vab -prod --name "V App" --package-id "com.example.app.id" --icon /path/to/file.png  --version-code <int> --keystore /path/to/sign.keystore --keystore-alias "example" /path/to/v/source/file/or/dir
 ```
 
-
 **Complete list of env variables recognized**
 ```
 VEXE                     # Absolute path to the V executable to use
@@ -65,31 +69,33 @@ See all options:
 
 # Setup
 
-`vab` now has support for downloading it's dependencies automatically, except the Java 8 JDK.
+`vab` now has support for downloading it's dependencies automatically, except the Java JDK.
 
 If you have nerves to let it try and figure things out automatically simply do:
 `vab install auto`
 
-## Java 8
+## Java
 
 ### macOS
 
-Installing Java 8 using homebrew
+Installing Java JDK using homebrew
 
 ```
 brew tap adoptopenjdk/openjdk
-brew cask install adoptopenjdk8
+brew cask install adoptopenjdk
 ```
 
 ### Linux
 
-You should be able to find a way to install Java 8 JDK with your package manager of choice.
+You should be able to find a way to install Java JDK >= 8 with your package manager of choice.
 
-E.g.:
 ```
-sudo apt install openjdk-8-jdk
+sudo apt install openjdk-<version>-jdk
 ```
+
+E.g.: `sudo apt install openjdk-8-jdk`
 
 # Notes
+
 `vab` targets as low an API level as possible by default for maximum compatibility, you can however tell it to target newer Android versions by using the `--api` flag. Example: `vab --api 30 <...>`.
 Installed API levels can be listed with `vab --list-apis`.

@@ -18,7 +18,7 @@ pub const (
 		'cmdline-tools-bootstrap-url':'https://dl.google.com/android/repository/commandlinetools-{XXX}-6609375_latest.zip' // Replace {XXX} with linux/mac/win
 		'cmdline-tools': '2.1'                              // Latest more or less sane version that works with java versions >= 8 ...
 		'sdk':'platform-tools'                              // Latest
-		'ndk':ndk.min_supported_version                     // Works with android.compile(...)
+		'ndk': ndk.min_supported_version                    // Works with android.compile(...)
 		'platform':'android-'+sdk.min_supported_api_level   // Google Play minimum
 		'build-tools':sdk.min_supported_build_tools_version // Version where apksigner is included from
 	}

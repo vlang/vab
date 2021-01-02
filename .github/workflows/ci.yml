@@ -40,7 +40,9 @@ jobs:
 #    - name: ls -al android/sdk
 #      run: ls -al /usr/local/lib/android/sdk
     - name: Run vab doctor
-      run: VEXE=./v vab/vab doctor
+      run: |
+        VEXE=./v
+        vab/vab doctor
     - name: Build APK (Default) examples/sokol/particles
       run: |
         export VEXE=./v
@@ -61,22 +63,66 @@ jobs:
         export JAVA_HOME=$JAVA_HOME_12_X64
         vab/vab --nocache -v 3 examples/sokol/particles -o apks/java12/particles.apk
 
-#  macos:
-#    runs-on: macOS-latest
-#    timeout-minutes: 30
-#    env:
-      #VFLAGS: -cc clang
-    #steps:
-    #- uses: actions/checkout@v2
-    #- name: Build V
-      #run:  make -j4 && ./v -cg -cflags -Werror -o v cmd/v
-    #- name: Run sanitizers
-      #run: |
-        #./v -o v2 cmd/v -cflags -fsanitize=undefined
-        #UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=1 ./v2 -o v.c cmd/v
-    #- name: Build V using V
-      #run:  ./v -o v2 cmd/v && ./v2 -o v3 cmd/v
-    #- name: v self with -usecache
-      #run: ./v -o v2 -usecache cmd/v
-    #- name: Test symlink
-      #run:  ./v symlink
+  macos:
+    runs-on: macOS-10.15
+    timeout-minutes: 30
+    steps:
+    - name: Checkout V
+      uses: actions/checkout@v2
+      with:
+        repository: vlang/v
+    - uses: actions/checkout@v2
+      with:
+        path: vab
+    - name: Build local v
+      run: make -j4
+    - name: Run tests
+      run: ./v test vab
+    - name: Build VAB
+      run: ./v vab/vab.v
+    - name: Build VAB with -prod
+      run: ./v -prod vab/vab.v
+    - name: Run vab --help
+      run: vab/vab --help
+    - name: Setup env
+      run: mkdir apks apks/java8 apks/java11 apks/java12 apks/java13 apks/java14
+    - name: Run vab doctor
+      run: |
+        export VEXE=./v
+        vab/vab doctor
+# The supported ndk version resides in ndk-bundle
+    - name: Build APK (Default) examples/sokol/particles
+      run: |
+        export VEXE=./v
+        export ANDROID_NDK_ROOT="$HOME/Library/Android/sdk/ndk-bundle"
+        vab/vab --nocache -v 3 examples/sokol/particles -o apks/particles.apk
+    - name: Build APK (Java 8) examples/sokol/particles
+      run: |
+        export VEXE=./v
+        export ANDROID_NDK_ROOT="$HOME/Library/Android/sdk/ndk-bundle"
+        export JAVA_HOME=$JAVA_HOME_8_X64
+        vab/vab --nocache -v 3 examples/sokol/particles -o apks/java8/particles.apk
+    - name: Build APK (Java 11) examples/sokol/particles
+      run: |
+        export VEXE=./v
+        export ANDROID_NDK_ROOT="$HOME/Library/Android/sdk/ndk-bundle"
+        export JAVA_HOME=$JAVA_HOME_11_X64
+        vab/vab --nocache -v 3 examples/sokol/particles -o apks/java11/particles.apk
+    - name: Build APK (Java 12) examples/sokol/particles
+      run: |
+        export VEXE=./v
+        export ANDROID_NDK_ROOT="$HOME/Library/Android/sdk/ndk-bundle"
+        export JAVA_HOME=$JAVA_HOME_12_X64
+        vab/vab --nocache -v 3 examples/sokol/particles -o apks/java12/particles.apk
+    - name: Build APK (Java 13) examples/sokol/particles
+      run: |
+        export VEXE=./v
+        export ANDROID_NDK_ROOT="$HOME/Library/Android/sdk/ndk-bundle"
+        export JAVA_HOME=$JAVA_HOME_13_X64
+        vab/vab --nocache -v 3 examples/sokol/particles -o apks/java13/particles.apk
+    - name: Build APK (Java 14) examples/sokol/particles
+      run: |
+        export VEXE=./v
+        export ANDROID_NDK_ROOT="$HOME/Library/Android/sdk/ndk-bundle"
+        export JAVA_HOME=$JAVA_HOME_14_X64
+        vab/vab --nocache -v 3 examples/sokol/particles -o apks/java14/particles.apk

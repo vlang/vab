@@ -386,6 +386,20 @@ fn validate_env(opt Options) {
 		exit(1)
 	}
 
+	/*
+	// Validate Android NDK requirements
+	if ndk.found() {
+		ndk_semantic_version := semver.from(opt.ndk_version) or {
+			panic(@MOD+'.'+@FN+':'+@LINE+' error converting "$opt.ndk_version" to semantic version.\nsemver: '+err)
+		}
+		if ndk_semantic_version.lt(semver.build(21, 1, 0)) {
+			eprintln('Android NDK >= 21.1.0 is currently needed. "$opt.ndk_version" is too low.')
+			eprintln('Please provide a valid path via ANDROID_NDK_ROOT')
+			eprintln('or run `${exe_name} install "ndk;<version>"`')
+			exit(1)
+		}
+	}*/
+
 	// API level
 	if opt.api_level.i16() < sdk.default_api_level.i16() {
 		eprintln('Notice: Android API level ${opt.api_level} is less than the recomended level (${sdk.default_api_level}).')
