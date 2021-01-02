@@ -84,17 +84,20 @@ jobs:
       run: vab/vab --help
     - name: Setup env
       run: mkdir apks apks/java8 apks/java11 apks/java12 apks/java13 apks/java14
-    - name: ls -al /Users/runner/Library/Android/sdk/ndk-bundle
-      run: ls -al /Users/runner/Library/Android/sdk/ndk-bundle
     - name: Run vab doctor
-      run: VEXE=./v vab/vab doctor
+      run: |
+      export ANDROID_NDK_ROOT="$HOME/Library/Android/sdk/ndk-bundle"
+      export VEXE=./v
+      vab/vab doctor
     - name: Build APK (Default) examples/sokol/particles
       run: |
         export VEXE=./v
+        export ANDROID_NDK_ROOT="$HOME/Library/Android/sdk/ndk-bundle"
         vab/vab --nocache -v 3 examples/sokol/particles -o apks/particles.apk
     - name: Build APK (Java 8) examples/sokol/particles
       run: |
         export VEXE=./v
+        export ANDROID_NDK_ROOT="$HOME/Library/Android/sdk/ndk-bundle"
         export JAVA_HOME=$JAVA_HOME_8_X64
         vab/vab --nocache -v 3 examples/sokol/particles -o apks/java8/particles.apk
     - name: Build APK (Java 11) examples/sokol/particles
