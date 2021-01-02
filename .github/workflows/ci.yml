@@ -40,7 +40,9 @@ jobs:
 #    - name: ls -al android/sdk
 #      run: ls -al /usr/local/lib/android/sdk
     - name: Run vab doctor
-      run: VEXE=./v vab/vab doctor
+      run: |
+        VEXE=./v
+        vab/vab doctor
     - name: Build APK (Default) examples/sokol/particles
       run: |
         export VEXE=./v
@@ -86,9 +88,9 @@ jobs:
       run: mkdir apks apks/java8 apks/java11 apks/java12 apks/java13 apks/java14
     - name: Run vab doctor
       run: |
-        export ANDROID_NDK_ROOT="$HOME/Library/Android/sdk/ndk-bundle"
         export VEXE=./v
         vab/vab doctor
+# The supported ndk version resides in ndk-bundle
     - name: Build APK (Default) examples/sokol/particles
       run: |
         export VEXE=./v
@@ -103,20 +105,24 @@ jobs:
     - name: Build APK (Java 11) examples/sokol/particles
       run: |
         export VEXE=./v
+        export ANDROID_NDK_ROOT="$HOME/Library/Android/sdk/ndk-bundle"
         export JAVA_HOME=$JAVA_HOME_11_X64
         vab/vab --nocache -v 3 examples/sokol/particles -o apks/java11/particles.apk
     - name: Build APK (Java 12) examples/sokol/particles
       run: |
         export VEXE=./v
+        export ANDROID_NDK_ROOT="$HOME/Library/Android/sdk/ndk-bundle"
         export JAVA_HOME=$JAVA_HOME_12_X64
         vab/vab --nocache -v 3 examples/sokol/particles -o apks/java12/particles.apk
     - name: Build APK (Java 13) examples/sokol/particles
       run: |
         export VEXE=./v
+        export ANDROID_NDK_ROOT="$HOME/Library/Android/sdk/ndk-bundle"
         export JAVA_HOME=$JAVA_HOME_13_X64
         vab/vab --nocache -v 3 examples/sokol/particles -o apks/java13/particles.apk
     - name: Build APK (Java 14) examples/sokol/particles
       run: |
         export VEXE=./v
+        export ANDROID_NDK_ROOT="$HOME/Library/Android/sdk/ndk-bundle"
         export JAVA_HOME=$JAVA_HOME_14_X64
         vab/vab --nocache -v 3 examples/sokol/particles -o apks/java14/particles.apk
