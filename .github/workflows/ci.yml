@@ -83,7 +83,7 @@ jobs:
     - name: Run vab --help
       run: vab/vab --help
     - name: Setup env
-      run: mkdir apks apks/java8 apks/java11 apks/java12
+      run: mkdir apks apks/java8 apks/java11 apks/java12 apks/java13 apks/java14
     - name: Run vab doctor
       run: VEXE=./v vab/vab doctor
     - name: Build APK (Default) examples/sokol/particles

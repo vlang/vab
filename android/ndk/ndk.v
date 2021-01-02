@@ -10,8 +10,9 @@ import android.util
 const (
 	home = os.home_dir()
 	supported_archs = ['arm64-v8a','armeabi-v7a','x86','x86_64']
-	min_supported_version = "21.1.6352462"
+	min_supported_version = min_version()
 )
+
 
 // ANDROID_SDK_ROOT and ANDROID_HOME are official ENV variables to get the SDK
 // but no such conventions exists for getting the NDK.
@@ -98,13 +99,22 @@ pub fn versions_dir() []string {
 }
 */
 
+pub fn min_version() string {
+	mut version := '0.0.0'
+	uos := os.user_os()
+	if uos == 'windows' { version = '0.0.0' }
+	if uos == 'macos'   { version = '21.3.6528147' }
+	if uos == 'linux'   { version = '21.1.6352462' }
+ 	return version
+}
+
 pub fn default_version() string {
 	if !is_side_by_side() {
 		return os.file_name(root())
 	}
 	dirs := util.find_sorted(root())
 	if dirs.len > 0 {
-		return os.file_name(dirs.last())
+		return os.file_name(dirs.first())
 	}
 	return ''
 }
