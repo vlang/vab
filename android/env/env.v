@@ -15,7 +15,7 @@ pub const (
 	default_components = {
 		// 6858069 = cmdline-tools;3.0 <- zip structure changes *sigh*
 		// 6609375 = cmdline-tools;2.1 <- latest that support `sdkmanager --version` *sigh*
-		'cmdline-tools-bootstrap':'https://dl.google.com/android/repository/commandlinetools-{XXX}-6609375_latest.zip' // Replace {XXX} with linux/mac/win
+		'cmdline-tools-bootstrap-url':'https://dl.google.com/android/repository/commandlinetools-{XXX}-6609375_latest.zip' // Replace {XXX} with linux/mac/win
 		'cmdline-tools': '2.1'                              // Latest more or less sane version that works with java versions >= 8 ...
 		'sdk':'platform-tools'                              // Latest
 		'ndk':ndk.min_supported_version                     // Works with android.compile(...)
@@ -179,7 +179,7 @@ fn ensure(verbosity int) ?bool {
 		url := default_components['cmdline-tools-bootstrap-url'].replace('{XXX}',uos)
 		file := os.join_path(os.temp_dir(),'v-android-sdk-cmdltools.tmp.zip')
 		if !os.exists(file) {
-			http.download_file(url,dst) or {
+			http.download_file(url,file) or {
 				return error(@MOD+'.'+@FN+' '+'failed to download commandline tools needed for bootstrapping: $err')
 			}
 		}
