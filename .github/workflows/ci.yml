@@ -181,16 +181,15 @@ jobs:
         vab/vab --nocache -v 3 examples/sokol/particles -o apks/java14/particles.apk
 
     - name: Install and run APK (Default) examples/sokol/particles
-        timeout-minutes: 30
-        uses: reactivecircus/android-emulator-runner@v2.2.0
-        with:
-          api-level: 23
-          arch: x86_64
-          disable-animations: true
-          profile: Nexus 5X
-          emulator-options: -no-snapshot -no-window -no-boot-anim -camera-back emulated -camera-front emulated -gpu swiftshader_indirect
-          emulator-build: 6110076
-          script: ./.github/workflows/emulator_script.sh
+      uses: reactivecircus/android-emulator-runner@v2.2.0
+      with:
+        api-level: 23
+        arch: x86_64
+        disable-animations: true
+        profile: Nexus 5X
+        emulator-options: -no-snapshot -no-window -no-boot-anim -camera-back emulated -camera-front emulated -gpu swiftshader_indirect
+        emulator-build: 6110076
+        #script: ./.github/workflows/emulator_script.sh
         run: |
           export VEXE=./v
           export ANDROID_SDK_ROOT="$HOME/Library/Android/sdk"
