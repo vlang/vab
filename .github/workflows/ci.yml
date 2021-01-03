@@ -179,12 +179,23 @@ jobs:
         export ANDROID_NDK_ROOT="$HOME/Library/Android/sdk/ndk-bundle"
         export JAVA_HOME=$JAVA_HOME_14_X64
         vab/vab --nocache -v 3 examples/sokol/particles -o apks/java14/particles.apk
+
     - name: Install and run APK (Default) examples/sokol/particles
+        timeout-minutes: 30
+        uses: reactivecircus/android-emulator-runner@v2.2.0
+        with:
+          api-level: 23
+          arch: x86_64
+          disable-animations: true
+          profile: Nexus 5X
+          emulator-options: -no-snapshot -no-window -no-boot-anim -camera-back emulated -camera-front emulated -gpu swiftshader_indirect
+          emulator-build: 6110076
+          script: ./.github/workflows/emulator_script.sh
       run: |
         export VEXE=./v
         export ANDROID_SDK_ROOT="$HOME/Library/Android/sdk"
         export ANDROID_NDK_ROOT="$ANDROID_SDK_ROOT/ndk-bundle"
-        echo yes | $ANDROID_SDK_ROOT/tools/bin/sdkmanager 'system-images;android-23;google_apis;x86_64'
-        echo no | $ANDROID_SDK_ROOT/tools/bin/avdmanager create avd --force --name test --abi google_apis/x86_64 --package 'system-images;android-23;google_apis;x86_64'
-        $ANDROID_SDK_ROOT/emulator/emulator -avd test
+        #echo yes | $ANDROID_SDK_ROOT/tools/bin/sdkmanager 'system-images;android-23;google_apis;x86_64'
+        #echo no | $ANDROID_SDK_ROOT/tools/bin/avdmanager create avd --force --name test --abi google_apis/x86_64 --package 'system-images;android-23;google_apis;x86_64'
+        $ANDROID_SDK_ROOT/emulator/emulator -avd 'Nexus 5X'
         vab/vab --nocache -v 3 run --device auto --archs 'armeabi-v7a' examples/sokol/particles
