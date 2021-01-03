@@ -41,7 +41,7 @@ jobs:
 #      run: ls -al /usr/local/lib/android/sdk
     - name: Run vab doctor
       run: |
-        VEXE=./v
+        export VEXE=./v
         vab/vab doctor
     - name: Build APK (Default) examples/sokol/particles
       run: |
@@ -96,7 +96,7 @@ jobs:
 
     - name: Run vab doctor
       run: |
-        VEXE=./v
+        export VEXE=./v
         vab/vab doctor
 
     - name: Build APK (Default) examples/sokol/particles
