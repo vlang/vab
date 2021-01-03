@@ -220,7 +220,9 @@ jobs:
       id: cache-images
       uses: actions/cache@v2
       with:
-        path: $HOME/Library/Android/sdk/system-images
+        path: |
+          $HOME/.android/avd
+          $HOME/Library/Android/sdk/system-images
         key: ${{ runner.os }}-images
 
     - name: Prepare emulator
@@ -243,7 +245,7 @@ jobs:
         ADB_TAGS="SOKOL:I SOKOL:W SOKOL:D SOKOL:E"
         ADB_TAGS="$ADB_TAGS v_logcat_test:D v_test_app:D"
         adb logcat -c
-        adb logcat $ADB_TAGS '*:S' &
+        adb logcat $ADB_TAGS '*:S' -v color &
         #adb logcat $ADB_TAGS -v color &
         export JAVA_HOME=$JAVA_HOME_11_X64
         vab/vab --nocache -v 3 --device auto --archs 'armeabi-v7a' examples/sokol/particles
