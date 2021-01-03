@@ -193,4 +193,4 @@ jobs:
         profile: Nexus 5X
         emulator-options: -no-snapshot -no-window -no-boot-anim -camera-back emulated -camera-front emulated -gpu swiftshader_indirect
         emulator-build: 6110076
-        script: ./.github/workflows/emulator_script.sh
+        script: ./.github/workflows/scripts/emulator.sh
