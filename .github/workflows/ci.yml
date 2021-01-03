@@ -116,7 +116,7 @@ jobs:
         export JAVA_HOME=$JAVA_HOME_11_X64
         vab/vab --nocache -v 3 examples/sokol/particles -o apks/java11/particles.apk
 
-  macos-10.15:
+  macos-10_15:
     runs-on: macOS-10.15
     timeout-minutes: 30
     steps:
