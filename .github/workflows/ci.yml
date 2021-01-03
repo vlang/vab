@@ -229,7 +229,7 @@ jobs:
         #ADB_TAGS="$ADB_TAGS SOKOL:I SOKOL:W SOKOL:D"
         adb logcat -c
         adb logcat $ADB_TAGS *:E -v color &
-        sleep 20
+
         vab/vab --nocache -v 3 run --device auto --archs 'armeabi-v7a' examples/sokol/particles
 #    - name: Install and run APK (Default) examples/sokol/particles
 #      uses: reactivecircus/android-emulator-runner@v2.2.0
