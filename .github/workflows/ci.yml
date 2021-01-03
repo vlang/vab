@@ -235,7 +235,6 @@ jobs:
         ADB_TAGS="SOKOL:I SOKOL:W SOKOL:D SOKOL:E"
         #ADB_TAGS="$ADB_TAGS SOKOL:I SOKOL:W SOKOL:D"
         adb logcat -c
-        v_logcat_test
         adb logcat v_logcat_test:D v_test_app:D '*:S' &
         #adb logcat $ADB_TAGS -v color &
         export JAVA_HOME=$JAVA_HOME_11_X64
