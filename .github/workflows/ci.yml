@@ -221,7 +221,6 @@ jobs:
       uses: actions/cache@v2
       with:
         path: |
-          $HOME/.android/avd
           $HOME/Library/Android/sdk/system-images
         key: ${{ runner.os }}-images
 
@@ -230,7 +229,7 @@ jobs:
       run: |
         export ANDROID_SDK_ROOT="$HOME/Library/Android/sdk"
         echo yes | $ANDROID_SDK_ROOT/tools/bin/sdkmanager 'system-images;android-23;google_apis;x86_64'
-        echo no | $ANDROID_SDK_ROOT/tools/bin/avdmanager create avd --force --name test --abi google_apis/x86_64 --package 'system-images;android-23;google_apis;x86_64'
+
     - name: Install and run APK (Default) examples/sokol/particles
       run: |
         export VEXE=./v
@@ -238,7 +237,7 @@ jobs:
         export ANDROID_NDK_ROOT="$ANDROID_SDK_ROOT/ndk-bundle"
         #export JAVA_HOME=$JAVA_HOME_11_X64
         #echo yes | $ANDROID_SDK_ROOT/tools/bin/sdkmanager 'system-images;android-23;google_apis;x86_64' >> /tmp/log.txt
-        #echo no | $ANDROID_SDK_ROOT/tools/bin/avdmanager create avd --force --name test --abi google_apis/x86_64 --package 'system-images;android-23;google_apis;x86_64'
+        echo no | $ANDROID_SDK_ROOT/tools/bin/avdmanager create avd --force --name test --abi google_apis/x86_64 --package 'system-images;android-23;google_apis;x86_64'
         $ANDROID_SDK_ROOT/emulator/emulator -avd test -no-snapshot -no-window -no-boot-anim -camera-back emulated -camera-front emulated -gpu swiftshader_indirect &
         adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed) ]]; do sleep 1; done;'
         # Debugging
