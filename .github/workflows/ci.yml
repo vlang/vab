@@ -9,7 +9,7 @@ on:
       - "**.md"
 
 jobs:
-  ubuntu:
+  ubuntu-18_04:
     runs-on: ubuntu-18.04
     timeout-minutes: 30
 #    env:
@@ -41,7 +41,7 @@ jobs:
 #      run: ls -al /usr/local/lib/android/sdk
     - name: Run vab doctor
       run: |
-        VEXE=./v
+        export VEXE=./v
         vab/vab doctor
     - name: Build APK (Default) examples/sokol/particles
       run: |
@@ -63,7 +63,60 @@ jobs:
         export JAVA_HOME=$JAVA_HOME_12_X64
         vab/vab --nocache -v 3 examples/sokol/particles -o apks/java12/particles.apk
 
-  macos:
+  ubuntu-20_04:
+    runs-on: ubuntu-20.04
+    timeout-minutes: 30
+    steps:
+    - name: Checkout V
+      uses: actions/checkout@v2
+      with:
+        repository: vlang/v
+
+    - uses: actions/checkout@v2
+      with:
+        path: vab
+
+    - name: Build local v
+      run: make -j4
+
+    - name: Run tests
+      run: ./v test vab
+
+    - name: Build VAB
+      run: ./v vab/vab.v
+
+    - name: Build VAB with -prod
+      run: ./v -prod vab/vab.v
+
+    - name: Run vab --help
+      run: vab/vab --help
+
+    - name: Setup env
+      run: mkdir apks apks/java8 apks/java11 apks/java12
+
+    - name: Run vab doctor
+      run: |
+        export VEXE=./v
+        vab/vab doctor
+
+    - name: Build APK (Default) examples/sokol/particles
+      run: |
+        export VEXE=./v
+        vab/vab --nocache -v 3 examples/sokol/particles -o apks/particles.apk
+
+    - name: Build APK (Java 8) examples/sokol/particles
+      run: |
+        export VEXE=./v
+        export JAVA_HOME=$JAVA_HOME_8_X64
+        vab/vab --nocache -v 3 examples/sokol/particles -o apks/java8/particles.apk
+
+    - name: Build APK (Java 11) examples/sokol/particles
+      run: |
+        export VEXE=./v
+        export JAVA_HOME=$JAVA_HOME_11_X64
+        vab/vab --nocache -v 3 examples/sokol/particles -o apks/java11/particles.apk
+
+  macos-10_15:
     runs-on: macOS-10.15
     timeout-minutes: 30
     steps:
@@ -90,7 +143,7 @@ jobs:
       run: |
         export VEXE=./v
         vab/vab doctor
-# The supported ndk version resides in ndk-bundle
+# The supported ndk version (21.x.x) resides in ndk-bundle
     - name: Build APK (Default) examples/sokol/particles
       run: |
         export VEXE=./v
