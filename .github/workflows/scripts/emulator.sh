@@ -10,4 +10,4 @@ ADB_TAGS="SOKOL:I SOKOL:W SOKOL:D"
 #ADB_TAGS="$ADB_TAGS SOKOL:I SOKOL:W SOKOL:D"
 adb logcat -c
 adb logcat $ADB_TAGS *:E -v color &
-vab/vab --nocache -v 3 --device auto --archs 'armeabi-v7a' examples/sokol/particles
+#vab/vab --nocache -v 3 --device auto --archs 'armeabi-v7a' examples/sokol/particles
