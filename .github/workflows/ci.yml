@@ -9,7 +9,7 @@ on:
       - "**.md"
 
 jobs:
-  ubuntu-18.04:
+  ubuntu-18_04:
     runs-on: ubuntu-18.04
     timeout-minutes: 30
 #    env:
@@ -63,7 +63,7 @@ jobs:
         export JAVA_HOME=$JAVA_HOME_12_X64
         vab/vab --nocache -v 3 examples/sokol/particles -o apks/java12/particles.apk
 
-  ubuntu-20.04:
+  ubuntu-20_04:
     runs-on: ubuntu-20.04
     timeout-minutes: 30
     steps:
