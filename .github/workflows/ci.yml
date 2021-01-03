@@ -215,6 +215,7 @@ jobs:
       run: |
         export VEXE=./v
         vab/vab doctor
+
     - name: Install and run APK (Default) examples/sokol/particles
       run: |
         export VEXE=./v
@@ -228,17 +229,8 @@ jobs:
         ADB_TAGS="SOKOL:I SOKOL:W SOKOL:D SOKOL:E"
         #ADB_TAGS="$ADB_TAGS SOKOL:I SOKOL:W SOKOL:D"
         adb logcat -c
-        adb logcat $ADB_TAGS -v color &
+        adb logcat v_test_app:D '*:S' &
+        #adb logcat $ADB_TAGS -v color &
         vab/vab --nocache -v 3 run --device auto --archs 'armeabi-v7a' examples/sokol/particles
-        sleep 10
+        sleep 15
         #adb -s emulator-5554 emu kill
-#    - name: Install and run APK (Default) examples/sokol/particles
-#      uses: reactivecircus/android-emulator-runner@v2.2.0
-#      with:
-#        api-level: 23
-#        arch: x86_64
-#        disable-animations: true
-#        profile: Nexus 5X
-#        emulator-options: -no-snapshot -no-window -no-boot-anim -camera-back emulated -camera-front emulated -gpu swiftshader_indirect
-#        emulator-build: 6110076
-#        script: ./.github/workflows/scripts/emulator.sh
