@@ -221,8 +221,9 @@ jobs:
       uses: actions/cache@v2
       with:
         path: |
-          $HOME/Library/Android/sdk/
-        key: ${{ runner.os }}-android-sdk
+          /Users/runner/Library/Android/sdk/system-images
+          /Users/runner/Library/Android/sdk/platforms
+        key: ${{ runner.os }}-android-sdk-t
 
     - name: Prepare emulator image
       if: steps.cache-sdk.outputs.cache-hit != 'true'
