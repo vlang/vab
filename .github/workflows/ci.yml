@@ -251,5 +251,5 @@ jobs:
         #export JAVA_HOME=$JAVA_HOME_11_X64
         vab/vab --nocache -v 3 --device auto --archs 'armeabi-v7a' --package-id "org.test.v.examples.sokol.particles" examples/sokol/particles
         vab/vab --nocache -v 3 run --device auto --archs 'armeabi-v7a' --package-id "org.test.v.examples.2048" examples/2048
-        sleep 5
+        #sleep 5
         #adb -s emulator-5554 emu kill
