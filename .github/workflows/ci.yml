@@ -216,7 +216,8 @@ jobs:
         export VEXE=./v
         vab/vab doctor
 
-    - name: Cache emulator setup
+    # no env vars picked up in 'path:' :(
+    - name: Cache emulator
       id: cache-emulator
       uses: actions/cache@v2
       with:
@@ -230,10 +231,10 @@ jobs:
       if: steps.cache-emulator.outputs.cache-hit != 'true'
       run: |
         export ANDROID_SDK_ROOT="$HOME/Library/Android/sdk"
-        echo yes | $ANDROID_SDK_ROOT/tools/bin/sdkmanager --sdk_root="$ANDROID_SDK_ROOT" 'system-images;android-23;google_apis;x86_64'
+        echo yes | $ANDROID_SDK_ROOT/tools/bin/sdkmanager 'system-images;android-23;google_apis;x86_64'
         echo no | $ANDROID_SDK_ROOT/tools/bin/avdmanager create avd --force --name test --abi google_apis/x86_64 --package 'system-images;android-23;google_apis;x86_64'
 
-    - name: Install and run APK (Default) examples/sokol/particles
+    - name: Install and run example APK (Default)
       run: |
         export VEXE=./v
         export ANDROID_SDK_ROOT="$HOME/Library/Android/sdk"
