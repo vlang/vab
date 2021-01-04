@@ -21,7 +21,8 @@ fn test_package_ids() {
 		'your.1.org.11212e'
 	]
 	invalid_ids := [
-		'1.valid.package_id',
+		'_ouch.invalid.package_id',
+		'1.invalid.package_id',
 		'abc',
 		'',
 		'a.b.10',

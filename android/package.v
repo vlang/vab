@@ -456,8 +456,13 @@ pub fn is_valid_package_id(id string) bool {
 		return false
 	}
 	first := segments.first()
-	if first[0].is_digit() {
+	first_char := first[0]
+	if first_char.is_digit() {
 		// 1 segment can't start with a digit
+		return false
+	}
+	if !(first_char >= `a` && first_char <= `z`) {
+		// 1 segment can't start with any other than a small letter
 		return false
 	}
 	// segment can't be a java keyword
