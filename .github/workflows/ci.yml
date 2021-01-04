@@ -216,20 +216,22 @@ jobs:
         export VEXE=./v
         vab/vab doctor
 
-    - name: Cache SDK
-      id: cache-sdk
+    - name: Cache emulator setup
+      id: cache-emulator
       uses: actions/cache@v2
       with:
         path: |
-          /Users/runner/Library/Android/sdk/system-images
-          /Users/runner/Library/Android/sdk/platforms
-        key: ${{ runner.os }}-android-sdk-t
+          /Users/runner/.android/avd
+          /Users/runner/Library/Android/sdk/system-images/android-23
+#          /Users/runner/Library/Android/sdk/platforms
+        key: ${{ runner.os }}-android-emulator
 
-    - name: Prepare emulator image
-      if: steps.cache-sdk.outputs.cache-hit != 'true'
+    - name: Prepare emulator
+      if: steps.cache-emulator.outputs.cache-hit != 'true'
       run: |
         export ANDROID_SDK_ROOT="$HOME/Library/Android/sdk"
         echo yes | $ANDROID_SDK_ROOT/tools/bin/sdkmanager --sdk_root="$ANDROID_SDK_ROOT" 'system-images;android-23;google_apis;x86_64'
+        echo no | $ANDROID_SDK_ROOT/tools/bin/avdmanager create avd --force --name test --abi google_apis/x86_64 --package 'system-images;android-23;google_apis;x86_64'
 
     - name: Install and run APK (Default) examples/sokol/particles
       run: |
@@ -238,7 +240,7 @@ jobs:
         export ANDROID_NDK_ROOT="$ANDROID_SDK_ROOT/ndk-bundle"
         #export JAVA_HOME=$JAVA_HOME_11_X64
         #echo yes | $ANDROID_SDK_ROOT/tools/bin/sdkmanager 'system-images;android-23;google_apis;x86_64' >> /tmp/log.txt
-        echo no | $ANDROID_SDK_ROOT/tools/bin/avdmanager create avd --force --name test --abi google_apis/x86_64 --package 'system-images;android-23;google_apis;x86_64'
+        #echo no | $ANDROID_SDK_ROOT/tools/bin/avdmanager create avd --force --name test --abi google_apis/x86_64 --package 'system-images;android-23;google_apis;x86_64'
         $ANDROID_SDK_ROOT/emulator/emulator -avd test -no-snapshot -no-window -no-boot-anim -camera-back emulated -camera-front emulated -gpu swiftshader_indirect &
         adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed) ]]; do sleep 1; done;'
         # Debugging
