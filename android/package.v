@@ -47,7 +47,15 @@ pub fn package(opt PackageOptions) bool {
 
 	// Build APK
 	if opt.verbosity > 0 {
-		println('Preparing package')
+		println('Preparing package "$opt.package_id"...')
+	}
+
+	// Validate package_id to our best effort
+	if !is_valid_package_id(opt.package_id) {
+		eprintln('Package id "$opt.package_id" seems invalid.')
+		eprintln('Please consult the Android documentation for details:')
+		eprintln('https://developer.android.com/studio/build/application-id')
+		return false
 	}
 
 	build_path := os.join_path(opt.work_dir, 'build')
@@ -431,4 +439,55 @@ fn prepare_base(opt PackageOptions) (string,string) {
 		}
 	}
 	return package_path, assets_path
+}
+
+pub fn is_valid_package_id(id string) bool {
+	// https://developer.android.com/studio/build/application-id
+	// https://stackoverflow.com/a/39331217
+	// https://gist.github.com/rishabhmhjn/8663966
+	raw_segments := id.split('.')
+	if '' in raw_segments {
+		// no empty (a..b.c) segments
+		return false
+	}
+	segments := raw_segments.filter(it != '')
+	if segments.len < 2 {
+		// No top-level names
+		return false
+	}
+	first := segments.first()
+	if first[0].is_digit() {
+		// 1 segment can't start with a digit
+		return false
+	}
+	// segment can't be a java keyword
+	for segment in segments {
+		if segment in java.keywords {
+			return false
+		}
+	}
+	last := segments.last()
+
+	mut is_all_digits := true
+	for c in last {
+		if !c.is_digit() {
+			is_all_digits = false
+			break
+		}
+	}
+	if is_all_digits {
+		// Last segment can't be all digits
+		return false
+	}
+
+	for segment in segments {
+		for c in segment {
+			// is not [a-z0-9_]
+			if !((c >= `a` && c <= `z`) || (c >= `0` && c <= `9`) || c == `_`) {
+				return false
+			}
+		}
+	}
+
+	return true
 }
