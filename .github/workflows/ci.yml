@@ -250,6 +250,6 @@ jobs:
         # Compile for x86_64 only to speed up already-too-slow process
         export JAVA_HOME=$JAVA_HOME_11_X64 # Use Java 11 for kicks
         vab/vab --nocache -v 3 --device auto --archs 'x86_64' --package-id "org.v.test.ci.examples.sokol.particles" examples/sokol/particles
-        vab/vab --nocache -v 3 run --device auto --archs 'x86_64' --package-id "org.v.test.ci.examples.e2048" examples/2048
+        vab/vab --nocache -v 3 run --device auto --archs 'x86_64' --package-id "org.v.test.ci.examples.game2048" examples/2048
         #sleep 5
         #adb -s emulator-5554 emu kill
