@@ -179,3 +179,75 @@ jobs:
         export ANDROID_NDK_ROOT="$HOME/Library/Android/sdk/ndk-bundle"
         export JAVA_HOME=$JAVA_HOME_14_X64
         vab/vab --nocache -v 3 examples/sokol/particles -o apks/java14/particles.apk
+
+  macos-latest:
+    runs-on: macOS-latest
+    timeout-minutes: 30
+    steps:
+    - name: Checkout V
+      uses: actions/checkout@v2
+      with:
+        repository: vlang/v
+
+    - uses: actions/checkout@v2
+      with:
+        path: vab
+
+    - name: Build local v
+      run: make -j4
+
+    - name: Run tests
+      run: ./v test vab
+
+    - name: Build VAB
+      run: ./v vab/vab.v
+
+    - name: Build VAB with -prod
+      run: ./v -prod vab/vab.v
+
+    - name: Run vab --help
+      run: vab/vab --help
+
+    - name: Setup env
+      run: mkdir apks apks/java8 apks/java11 apks/java12 apks/java13 apks/java14
+
+    - name: Run vab doctor
+      run: |
+        export VEXE=./v
+        vab/vab doctor
+
+#    - name: Cache images
+#      id: cache-images
+#      uses: actions/cache@v2
+#      with:
+#        path: |
+#          $HOME/Library/Android/sdk/system-images
+#        key: ${{ runner.os }}-images
+
+    - name: Prepare emulator
+      if: steps.cache-images.outputs.cache-hit != 'true'
+      run: |
+        export ANDROID_SDK_ROOT="$HOME/Library/Android/sdk"
+        echo yes | $ANDROID_SDK_ROOT/tools/bin/sdkmanager 'system-images;android-23;google_apis;x86_64'
+
+    - name: Install and run APK (Default) examples/sokol/particles
+      run: |
+        export VEXE=./v
+        export ANDROID_SDK_ROOT="$HOME/Library/Android/sdk"
+        export ANDROID_NDK_ROOT="$ANDROID_SDK_ROOT/ndk-bundle"
+        #export JAVA_HOME=$JAVA_HOME_11_X64
+        echo yes | $ANDROID_SDK_ROOT/tools/bin/sdkmanager 'system-images;android-23;google_apis;x86_64' >> /tmp/log.txt
+        echo no | $ANDROID_SDK_ROOT/tools/bin/avdmanager create avd --force --name test --abi google_apis/x86_64 --package 'system-images;android-23;google_apis;x86_64'
+        $ANDROID_SDK_ROOT/emulator/emulator -avd test -no-snapshot -no-window -no-boot-anim -camera-back emulated -camera-front emulated -gpu swiftshader_indirect &
+        adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed) ]]; do sleep 1; done;'
+        # Debugging
+        ADB_TAGS="SOKOL:I SOKOL:W SOKOL:D SOKOL:E"
+        ADB_TAGS="$ADB_TAGS v_logcat_test:D v_test_app:D"
+        adb logcat -c
+        adb logcat $ADB_TAGS '*:S' -v color &
+        #adb logcat $ADB_TAGS -v color &
+        export JAVA_HOME=$JAVA_HOME_11_X64
+        vab/vab --nocache -v 3 --device auto --archs 'armeabi-v7a' examples/sokol/particles
+        vab/vab --nocache -v 3 run --device auto --archs 'armeabi-v7a' examples/2048
+        sleep 25
+        #adb -s emulator-5554 emu kill
