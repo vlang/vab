@@ -216,19 +216,19 @@ jobs:
         export VEXE=./v
         vab/vab doctor
 
-#    - name: Cache images
-#      id: cache-images
-#      uses: actions/cache@v2
-#      with:
-#        path: |
-#          $HOME/Library/Android/sdk/system-images
-#        key: ${{ runner.os }}-images
+    - name: Cache SDK
+      id: cache-sdk
+      uses: actions/cache@v2
+      with:
+        path: |
+          $HOME/Library/Android/sdk/
+        key: ${{ runner.os }}-android-sdk
 
-    - name: Prepare emulator
-      if: steps.cache-images.outputs.cache-hit != 'true'
+    - name: Prepare emulator image
+      if: steps.cache-sdk.outputs.cache-hit != 'true'
       run: |
         export ANDROID_SDK_ROOT="$HOME/Library/Android/sdk"
-        echo yes | $ANDROID_SDK_ROOT/tools/bin/sdkmanager 'system-images;android-23;google_apis;x86_64'
+        echo yes | $ANDROID_SDK_ROOT/tools/bin/sdkmanager --sdk_root="$ANDROID_SDK_ROOT" 'system-images;android-23;google_apis;x86_64'
 
     - name: Install and run APK (Default) examples/sokol/particles
       run: |
@@ -236,7 +236,7 @@ jobs:
         export ANDROID_SDK_ROOT="$HOME/Library/Android/sdk"
         export ANDROID_NDK_ROOT="$ANDROID_SDK_ROOT/ndk-bundle"
         #export JAVA_HOME=$JAVA_HOME_11_X64
-        echo yes | $ANDROID_SDK_ROOT/tools/bin/sdkmanager 'system-images;android-23;google_apis;x86_64' >> /tmp/log.txt
+        #echo yes | $ANDROID_SDK_ROOT/tools/bin/sdkmanager 'system-images;android-23;google_apis;x86_64' >> /tmp/log.txt
         echo no | $ANDROID_SDK_ROOT/tools/bin/avdmanager create avd --force --name test --abi google_apis/x86_64 --package 'system-images;android-23;google_apis;x86_64'
         $ANDROID_SDK_ROOT/emulator/emulator -avd test -no-snapshot -no-window -no-boot-anim -camera-back emulated -camera-front emulated -gpu swiftshader_indirect &
         adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed) ]]; do sleep 1; done;'
@@ -246,7 +246,7 @@ jobs:
         adb logcat -c
         adb logcat $ADB_TAGS '*:S' -v color &
         #adb logcat $ADB_TAGS -v color &
-        export JAVA_HOME=$JAVA_HOME_11_X64
+        #export JAVA_HOME=$JAVA_HOME_11_X64
         vab/vab --nocache -v 3 --device auto --archs 'armeabi-v7a' examples/sokol/particles
         vab/vab --nocache -v 3 run --device auto --archs 'armeabi-v7a' examples/2048
         sleep 25
