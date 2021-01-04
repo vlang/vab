@@ -216,38 +216,40 @@ jobs:
         export VEXE=./v
         vab/vab doctor
 
-#    - name: Cache images
-#      id: cache-images
-#      uses: actions/cache@v2
-#      with:
-#        path: |
-#          $HOME/Library/Android/sdk/system-images
-#        key: ${{ runner.os }}-images
+    # no env vars picked up in 'path:' :(
+    - name: Cache emulator
+      id: cache-emulator
+      uses: actions/cache@v2
+      with:
+        path: |
+          /Users/runner/.android/avd
+          /Users/runner/Library/Android/sdk/system-images/android-23
+#          /Users/runner/Library/Android/sdk/platforms
+        key: ${{ runner.os }}-android-emulator
 
     - name: Prepare emulator
-      if: steps.cache-images.outputs.cache-hit != 'true'
+      if: steps.cache-emulator.outputs.cache-hit != 'true'
       run: |
         export ANDROID_SDK_ROOT="$HOME/Library/Android/sdk"
         echo yes | $ANDROID_SDK_ROOT/tools/bin/sdkmanager 'system-images;android-23;google_apis;x86_64'
+        echo no | $ANDROID_SDK_ROOT/tools/bin/avdmanager create avd --force --name test --abi google_apis/x86_64 --package 'system-images;android-23;google_apis;x86_64'
 
-    - name: Install and run APK (Default) examples/sokol/particles
+    - name: Install and run example APK (Default)
       run: |
         export VEXE=./v
         export ANDROID_SDK_ROOT="$HOME/Library/Android/sdk"
         export ANDROID_NDK_ROOT="$ANDROID_SDK_ROOT/ndk-bundle"
-        #export JAVA_HOME=$JAVA_HOME_11_X64
-        echo yes | $ANDROID_SDK_ROOT/tools/bin/sdkmanager 'system-images;android-23;google_apis;x86_64' >> /tmp/log.txt
-        echo no | $ANDROID_SDK_ROOT/tools/bin/avdmanager create avd --force --name test --abi google_apis/x86_64 --package 'system-images;android-23;google_apis;x86_64'
+        # Don't set Java > 8 here! #export JAVA_HOME=$JAVA_HOME_11_X64
         $ANDROID_SDK_ROOT/emulator/emulator -avd test -no-snapshot -no-window -no-boot-anim -camera-back emulated -camera-front emulated -gpu swiftshader_indirect &
         adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed) ]]; do sleep 1; done;'
         # Debugging
         ADB_TAGS="SOKOL:I SOKOL:W SOKOL:D SOKOL:E"
-        ADB_TAGS="$ADB_TAGS v_logcat_test:D v_test_app:D"
+        ADB_TAGS="$ADB_TAGS v_log:D v_logcat_test:D v_test_app:D"
         adb logcat -c
         adb logcat $ADB_TAGS '*:S' -v color &
-        #adb logcat $ADB_TAGS -v color &
-        export JAVA_HOME=$JAVA_HOME_11_X64
-        vab/vab --nocache -v 3 --device auto --archs 'armeabi-v7a' examples/sokol/particles
-        vab/vab --nocache -v 3 run --device auto --archs 'armeabi-v7a' examples/2048
-        sleep 25
+        # Compile for x86_64 only to speed up already-too-slow process
+        export JAVA_HOME=$JAVA_HOME_11_X64 # Use Java 11 for kicks
+        vab/vab --nocache -v 3 --device auto --archs 'x86_64' --package-id "org.v.test.ci.examples.sokol.particles" examples/sokol/particles
+        vab/vab --nocache -v 3 run --device auto --archs 'x86_64' --package-id "org.v.test.ci.examples.game2048" examples/2048
+        #sleep 5
         #adb -s emulator-5554 emu kill
