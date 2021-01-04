@@ -247,9 +247,9 @@ jobs:
         ADB_TAGS="$ADB_TAGS v_log:D v_logcat_test:D v_test_app:D"
         adb logcat -c
         adb logcat $ADB_TAGS '*:S' -v color &
-        #adb logcat $ADB_TAGS -v color &
-        #export JAVA_HOME=$JAVA_HOME_11_X64
-        vab/vab --nocache -v 3 --device auto --archs 'armeabi-v7a' --package-id "org.test.v.examples.sokol.particles" examples/sokol/particles
-        vab/vab --nocache -v 3 run --device auto --archs 'armeabi-v7a' --package-id "org.test.v.examples.2048" examples/2048
+        # Compile for x86_64 only to speed up already-too-slow process
+        export JAVA_HOME=$JAVA_HOME_11_X64
+        vab/vab --nocache -v 3 --device auto --archs 'x86_64' --package-id "org.v.test.ci.examples.sokol.particles" examples/sokol/particles
+        vab/vab --nocache -v 3 run --device auto --archs 'x86_64' --package-id "org.v.test.ci.examples.2048" examples/2048
         #sleep 5
         #adb -s emulator-5554 emu kill
