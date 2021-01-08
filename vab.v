@@ -17,7 +17,7 @@ const (
 	exe_version = '0.2.0'
 	exe_name    = os.file_name(os.executable())
 	exe_dir     = os.dir(os.real_path(os.executable()))
-	rip_vflags  = ['-autofree','-cg','-prod', 'run']
+	rip_vflags  = ['-autofree','-g','-cg','-prod', 'run']
 )
 
 struct Options {
