@@ -276,8 +276,6 @@ fn prepare_base(opt PackageOptions) (string,string) {
 		println('Modifying base files')
 	}
 
-	// TODO Validate that Java doesn't allow the word "default" in package IDs???
-
 	if '-prod' in opt.v_flags && opt.package_id == default_package_id {
 		eprintln('Warning: using default package ID "${default_package_id}". Please do not deploy to app stores using this ID')
 	}
@@ -411,16 +409,28 @@ fn prepare_base(opt PackageOptions) (string,string) {
 	assets_by_side := os.join_path(assets_by_side_path,'assets')
 	if os.is_dir(assets_by_side) {
 		if opt.verbosity > 0 {
-			println('Including assets from ${assets_by_side}')
+			println('Including assets from "$assets_by_side"')
 		}
 		os.cp_all(assets_by_side, assets_path, false)
+	}
+
+	// Look for "assets" in dir above input dir.
+	// This is mostly an exception for the shared example assets in V examples.
+	if os.real_path(assets_by_side_path).contains(os.join_path('v','examples')) {
+		assets_above := os.real_path(os.join_path(assets_by_side_path,'..','assets'))
+		if os.is_dir(assets_above) {
+			if opt.verbosity > 0 {
+				println('Including assets from "$assets_above"')
+			}
+			os.cp_all(assets_above, assets_path, false)
+		}
 	}
 
 	// Look for "assets" dir in current dir
 	assets_in_dir := 'assets'
 	if os.is_dir(assets_in_dir) {
 		if opt.verbosity > 0 {
-			println('Including assets from ${assets_in_dir}')
+			println('Including assets from "$assets_in_dir"')
 		}
 		os.cp_all(assets_in_dir, assets_path, false)
 	}
@@ -429,12 +439,12 @@ fn prepare_base(opt PackageOptions) (string,string) {
 	for user_asset in opt.assets_extra {
 		if os.is_dir(user_asset) {
 			if opt.verbosity > 0 {
-				println('Including assets from ${user_asset}')
+				println('Including assets from "$user_asset"')
 			}
 			os.cp_all(user_asset, assets_path, false)
 		} else {
 			os.cp(user_asset, assets_path) or {
-				eprintln('Skipping invalid asset file ${user_asset}')
+				eprintln('Skipping invalid asset file "$user_asset"')
 			}
 		}
 	}
