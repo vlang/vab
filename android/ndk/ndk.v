@@ -135,7 +135,7 @@ pub fn alt_arch(arch string) string {
 	return match arch {
 		'armeabi-v7a' { 'armv7a' }
 		'arm64-v8a' { 'aarch64' }
-		'x86' { 'x86_64' }
+		'x86' { 'i686' }
 		'x86_64' { 'x86_64' }
 		else { '' }
 	}
