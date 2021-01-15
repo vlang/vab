@@ -130,12 +130,14 @@ pub fn host_arch() string {
 	return host_arch
 }
 
+// arch_to_instruction_set maps `arch` to an instruction set
+// Example: assert ndk.arch_to_instruction_set('x86') == 'i686'
 [inline]
-pub fn alt_arch(arch string) string {
+pub fn arch_to_instruction_set(arch string) string {
 	return match arch {
 		'armeabi-v7a' { 'armv7a' }
 		'arm64-v8a' { 'aarch64' }
-		'x86' { 'x86_64' }
+		'x86' { 'i686' }
 		'x86_64' { 'x86_64' }
 		else { '' }
 	}
@@ -147,16 +149,16 @@ pub fn compiler(ndk_version string, arch string, api_level string) ?string {
 	if arch == 'armeabi-v7a' { eabi = 'eabi' }
 
 	host_architecture := host_arch()
-	arch_alt := alt_arch(arch)
+	arch_is := arch_to_instruction_set(arch)
 
-	mut compiler := os.join_path(root_version(ndk_version),'toolchains','llvm','prebuilt',host_architecture,'bin',arch_alt+'-linux-android${eabi}${api_level}-clang')
+	mut compiler := os.join_path(root_version(ndk_version),'toolchains','llvm','prebuilt',host_architecture,'bin',arch_is+'-linux-android${eabi}${api_level}-clang')
 	// legacy ndk version setups
 	/*
 	if !os.is_file(compiler) {
 		toolchains := util.ls_sorted(os.join_path(root_version(ndk_version),'toolchains'))
 		for toolchain in toolchains {
 			if toolchain.starts_with('llvm') {
-				compiler = os.join_path(root_version(ndk_version),'toolchains',toolchain,'prebuilt',host_architecture,'bin',arch_alt+'-linux-android${eabi}${api_level}-clang')
+				compiler = os.join_path(root_version(ndk_version),'toolchains',toolchain,'prebuilt',host_architecture,'bin',arch_is+'-linux-android${eabi}${api_level}-clang')
 				break
 			}
 		}
@@ -173,18 +175,18 @@ pub fn libs_path(ndk_version string, arch string, api_level string) ?string {
 	if arch == 'armeabi-v7a' { eabi = 'eabi' }
 
 	mut host_architecture := host_arch()
-	mut arch_alt := alt_arch(arch)
+	mut arch_is := arch_to_instruction_set(arch)
 
-	if eabi != '' { arch_alt = 'arm' }
+	if eabi != '' { arch_is = 'arm' }
 
-	mut libs_path := os.join_path(root_version(ndk_version),'toolchains','llvm','prebuilt',host_architecture,'sysroot','usr','lib',arch_alt+'-linux-android'+eabi,api_level)
+	mut libs_path := os.join_path(root_version(ndk_version),'toolchains','llvm','prebuilt',host_architecture,'sysroot','usr','lib',arch_is+'-linux-android'+eabi,api_level)
 
 	/*
 	if !os.is_dir(libs_path) {
 		toolchains := util.ls_sorted(os.join_path(root_version(ndk_version),'toolchains'))
 		for toolchain in toolchains {
 			if toolchain.starts_with('llvm') {
-				libs_path = os.join_path(root_version(ndk_version),'toolchains',toolchain,'prebuilt',host_architecture,'sysroot','usr','lib',arch_alt+'-linux-android'+eabi,api_level)
+				libs_path = os.join_path(root_version(ndk_version),'toolchains',toolchain,'prebuilt',host_architecture,'sysroot','usr','lib',arch_is+'-linux-android'+eabi,api_level)
 				break
 			}
 		}
