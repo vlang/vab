@@ -232,7 +232,8 @@ fn main() {
 		run: run
 	}
 
-	if input_ext in accepted_input_files {
+	// Early deployment
+	if input_ext in ['.apk','.aab'] {
 		if opt.device_id != '' {
 			if ! android.deploy(deploy_opt) {
 				eprintln('$exe_name deployment didn\'t succeed')
@@ -241,14 +242,16 @@ fn main() {
 				if opt.verbosity > 0 {
 					println('Deployed to ${opt.device_id} successfully')
 				}
-				exit(1)
+				exit(0)
 			}
 		}
 	}
 
+	compile_cache_key := if os.is_dir(input) || input_ext in ['.v'] { opt.input } else { '' }
 	comp_opt := android.CompileOptions {
 		verbosity:		opt.verbosity
 		cache:			opt.cache
+		cache_key:		compile_cache_key
 		v_flags:		opt.v_flags
 		c_flags:		opt.c_flags
 		archs:			opt.archs.filter(it.trim(' ') != '')

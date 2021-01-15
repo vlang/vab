@@ -16,6 +16,7 @@ const (
 pub struct CompileOptions {
 	verbosity   int       // level of verbosity
 	cache       bool
+	cache_key   string
 	// env
 	work_dir    string    // temporary work directory
 	input       string
@@ -56,7 +57,7 @@ pub fn compile(opt CompileOptions) bool {
 	hash_file := os.join_path(opt.work_dir, 'v_android.hash')
 	if opt.cache && os.exists(build_dir) && os.exists(v_output_file) {
 		mut bytes := os.read_bytes(v_output_file) or { panic(err) }
-		bytes << opt.str().bytes()
+		bytes << '$opt.str()-$opt.cache_key'.bytes()
 		hash = md5.sum(bytes).hex()
 
 		if os.exists(hash_file) {
