@@ -139,9 +139,12 @@ pub fn compile(opt CompileOptions) bool {
 	includes << ['-I"${ndk.root()}/sysroot/usr/include"','-I"${ndk.root()}/sysroot/usr/include/android"']
 
 	// Sokol
+	if '-cg' in opt.v_flags || '-g' in opt.v_flags {
+		defines << ['-DSOKOL_DEBUG']
+	}
 	// TODO support both GLES2 & GLES3 - GLES2 should be default - trust me
-	// TODO Toggle debug - probably follow v -prod flag somehow
-	defines << ['-DSOKOL_DEBUG','-DSOKOL_GLES2']
+	defines << ['-DSOKOL_GLES2']
+
 	ldflags << ['-uANativeActivity_onCreate','-usokol_main']
 	includes << ['-I"${v_home}/thirdparty/sokol"','-I"${v_home}/thirdparty/sokol/util"']
 

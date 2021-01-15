@@ -224,11 +224,14 @@ fn main() {
 		run = '${package_id}/${package_id}.Native'
 	}
 
+	log_tag := opt.lib_name
 	deploy_opt := android.DeployOptions {
 		verbosity: opt.verbosity
 		device_id: opt.device_id
 		deploy_file: opt.output
 		kill_adb: kill_adb
+		device_log: true
+		log_tag: log_tag
 		run: run
 	}
 
