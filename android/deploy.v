@@ -10,7 +10,9 @@ import android.util
 pub struct DeployOptions {
 	verbosity	int
 	device_id	string
+	device_log  bool
 	deploy_file string
+	log_tag     string
 	run			string	// Full id 'com.package.name/com.package.name.ActivityName'
 	kill_adb	bool	// Kill ADB after use.
 }
@@ -98,6 +100,44 @@ pub fn deploy(opt DeployOptions) bool {
 			]
 			util.verbosity_print_cmd(adb_run_cmd, opt.verbosity)
 			util.run_or_exit(adb_run_cmd)
+		}
+
+		if opt.device_log {
+			// Clear logs first
+			if opt.verbosity > 0 {
+				println('Clearing log buffer on device ${device_id}')
+			}
+			adb_run_cmd := [
+				adb,
+				'-s "${device_id}"',
+				'logcat',
+				'-c'
+			]
+			util.verbosity_print_cmd(adb_run_cmd, opt.verbosity)
+			util.run_or_exit(adb_run_cmd)
+
+			// TODO Log tags via '-DV_ANDROID_LOG_TAG="V log tag"'
+			/*
+			if opt.verbosity > 0 {
+				println('Showing log output from device "$device_id"')
+			}
+			println('Ctrl+C to cancel logging"')*/
+			adb_logcat_cmd := [
+				adb,
+				'-s "${device_id}"',
+				'logcat',
+				//'-d',
+				'SOKOL_APP:D',
+				'V_ANDROID:D',
+				'$opt.log_tag:D',
+				"'*:S'"
+			]
+			log_cmd := adb_logcat_cmd.join(' ')
+			println('Use "$log_cmd" to view logs...')
+			/*
+			util.verbosity_print_cmd(adb_logcat_cmd, opt.verbosity)
+			util.run_or_exit(adb_logcat_cmd)
+			*/
 		}
 
 		if opt.kill_adb {
