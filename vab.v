@@ -39,6 +39,7 @@ struct Options {
 	archs			[]string
 	// Deploy specifics
 	run				bool
+	device_log		bool
 	// Detected environment
 	dump_usage		bool
 	list_ndks		bool
@@ -92,37 +93,37 @@ fn main() {
 	}
 
 	mut opt := Options {
-
 		assets_extra: fp.string_multi('assets', `a`, 'Asset dir(s) to include in build')
 		v_flags: fp.string_multi('flag', `f`, 'Additional flags for the V compiler')
 		c_flags: fp.string_multi('cflag', `c`, 'Additional flags for the C compiler')
 		archs: fp.string('archs', 0, '', 'Comma separated string with any of "${android.default_archs}"').split(',')
-
+		//
 		device_id: fp.string('device', `d`, '', 'Deploy to device <id>. Use "auto" to use first available.')
 		run: 'run' in cmd_flags //fp.bool('run', `r`, false, 'Run the app on the device after successful deployment.')
-
+		device_log: fp.bool('log', 0, false, 'Enable device logging after deployment.')
+		//
 		keystore: fp.string('keystore', 0, '', 'Use this keystore file to sign the package')
 		keystore_alias: fp.string('keystore-alias', 0, '', 'Use this keystore alias from the keystore file to sign the package')
-
+		//
 		dump_usage: fp.bool('help', `h`, false, 'Show this help message and exit')
 		cache: !fp.bool('nocache', 0, false, 'Do not use build cache')
-
+		//
 		app_name: fp.string('name', 0, android.default_app_name, 'Pretty app name')
 		package_id: fp.string('package-id', 0, android.default_package_id, 'App package ID (e.g. "org.v.app")')
 		icon: fp.string('icon', 0, '', 'App icon')
 		version_code: fp.int('version-code', 0, 0, 'Build version code (android:versionCode)')
-
+		//
 		output: fp.string('output', `o`, '', 'Path to output (dir/file)')
-
+		//
 		verbosity: verbosity
-
+		//
 		build_tools: fp.string('build-tools', 0, '', 'Version of build-tools to use (--list-build-tools)')
 		api_level: fp.string('api', 0, '', 'Android API level to use (--list-apis)')
-
+		//
 		ndk_version: fp.string('ndk-version', 0, '', 'Android NDK version to use (--list-ndks)')
-
+		//
 		work_dir: os.join_path(os.temp_dir(), exe_name.replace(' ','_').to_lower())
-
+		//
 		list_ndks: fp.bool('list-ndks', 0, false, 'List available NDK versions')
 		list_apis: fp.bool('list-apis', 0, false, 'List available API levels')
 		list_build_tools: fp.bool('list-build-tools', 0, false, 'List available Build-tools versions')
@@ -227,10 +228,11 @@ fn main() {
 	log_tag := opt.lib_name
 	deploy_opt := android.DeployOptions {
 		verbosity: opt.verbosity
+		v_flags: opt.v_flags
 		device_id: opt.device_id
 		deploy_file: opt.output
 		kill_adb: kill_adb
-		device_log: true
+		device_log: opt.device_log
 		log_tag: log_tag
 		run: run
 	}
