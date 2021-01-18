@@ -511,22 +511,15 @@ fn resolve_options(mut opt Options, exit_on_error bool) {
 
 fn vab_commit_hash() string {
 	mut hash := ''
-	$if true {
-		if hash == '' {
-			git_exe := os.find_abs_path_of_executable('git') or { '' }
-			if git_exe != '' {
-				mut git_cmd := 'git -C "$exe_dir" rev-parse --short HEAD'
-				$if windows {
-					git_cmd = 'git.exe -C "$exe_dir" rev-parse --short HEAD'
-				}
-				res := os.exec(git_cmd) or { os.Result{1,''} }
-				if res.exit_code == 0 {
-					hash = res.output
-				}
-			}
-			if hash == '' {
-				hash = os.getenv('VAB_GIT_COMMIT_HASH')
-			}
+	git_exe := os.find_abs_path_of_executable('git') or { '' }
+	if git_exe != '' {
+		mut git_cmd := 'git -C "$exe_dir" rev-parse --short HEAD'
+		$if windows {
+			git_cmd = 'git.exe -C "$exe_dir" rev-parse --short HEAD'
+		}
+		res := os.exec(git_cmd) or { os.Result{1,''} }
+		if res.exit_code == 0 {
+			hash = res.output
 		}
 	}
 	return hash
