@@ -252,11 +252,10 @@ jobs:
         # Output test
         adb -e logcat -c
         vab/vab -cg --nocache -v 3 run --device auto --archs 'x86_64' --package-id "org.v.test.ci.examples.tetris" examples/tetris
-        sleep 25
-        true
-        sleep 25
+        sleep 5
         #adb -e -s "emulator-5554" logcat -d SOKOL_APP:D V_ANDROID:D v_test_app:D *:S > /tmp/logcat.dump.txt
-        adb -e logcat -d > /tmp/logcat.dump.txt
-        cat /tmp/logcat.dump.txt
+        adb -e logcat -d SOKOL_APP:D V_ANDROID:D v_test_app:D *:S > /tmp/logcat.dump.txt
+        cat /tmp/logcat.dump.txt | grep -q 'SOKOL_APP: ... ok'
+        if [ ! $? -eq 0 ]; then cat /tmp/logcat.dump.txt; fi
         #sleep 5
         #adb -s emulator-5554 emu kill
