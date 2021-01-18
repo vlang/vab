@@ -277,7 +277,6 @@ fn main() {
 		if keystore != '' {
 			println('Couldn\'t locate "$keystore"')
 		}
-		eprintln('Notice: Using default debug.keystore')
 		keystore = ''
 	}
 	if keystore == '' {
