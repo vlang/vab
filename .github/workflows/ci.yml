@@ -225,7 +225,7 @@ jobs:
           /Users/runner/.android/avd
           /Users/runner/Library/Android/sdk/system-images/android-30
 #          /Users/runner/Library/Android/sdk/platforms
-        key: ${{ runner.os }}-android-emulator
+        key: ${{ runner.os }}-android-emulator-${{ hashFiles('/Users/runner/.android/avd')
 
     - name: Prepare emulator
       if: steps.cache-emulator.outputs.cache-hit != 'true'
