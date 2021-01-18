@@ -79,7 +79,7 @@ pub fn root() string {
 		mut adb_path := ''
 
 		if os.exists_in_system_path('adb') {
-			adb_path = os.find_abs_path_of_executable('adb') or { return '' }
+			adb_path = os.find_abs_path_of_executable('adb') or { '' }
 			if adb_path != '' {
 				// adb normally reside in 'path/to/sdk_root/platform-tools/'
 				sdk_root = os.real_path(os.join_path(os.dir(adb_path),'..'))
