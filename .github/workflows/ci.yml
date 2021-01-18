@@ -251,8 +251,8 @@ jobs:
         vab/vab --nocache -v 3 run --device auto --archs 'x86_64' --package-id "org.v.test.ci.examples.game2048" examples/2048
         # Output test
         adb logcat -c
-        vab/vab -cg --nocache -v 3 run --device auto --archs 'x86_64' --package-id "org.v.test.ci.examples.game2048" examples/tetris
-        sleep 1
-        adb logcat -d $ADB_TAGS *:S -v color
+        vab/vab -cg --nocache -v 3 run --device auto --archs 'x86_64' --package-id "org.v.test.ci.examples.tetris" examples/tetris
+        sleep 10
+        adb logcat -e $ADB_TAGS *:S -v color
         #sleep 5
         #adb -s emulator-5554 emu kill
