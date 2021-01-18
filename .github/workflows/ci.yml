@@ -253,7 +253,7 @@ jobs:
         adb logcat -c
         vab/vab -cg --nocache -v 3 run --device auto --archs 'x86_64' --package-id "org.v.test.ci.examples.tetris" examples/tetris
         sleep 5
-        adb logcat -d SOKOL_APP:D V_ANDROID:D v_test_app:D *:S > /tmp/logcat.dump.txt
+        adb -s "emulator-5554" logcat -d SOKOL_APP:D V_ANDROID:D v_test_app:D *:S > /tmp/logcat.dump.txt
         cat /tmp/logcat.dump.txt
         #sleep 5
         #adb -s emulator-5554 emu kill
