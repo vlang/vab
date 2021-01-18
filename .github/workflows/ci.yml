@@ -223,7 +223,7 @@ jobs:
       with:
         path: |
           /Users/runner/.android/avd
-          /Users/runner/Library/Android/sdk/system-images/android-23
+          /Users/runner/Library/Android/sdk/system-images/android-30
 #          /Users/runner/Library/Android/sdk/platforms
         key: ${{ runner.os }}-android-emulator
 
@@ -231,8 +231,8 @@ jobs:
       if: steps.cache-emulator.outputs.cache-hit != 'true'
       run: |
         export ANDROID_SDK_ROOT="$HOME/Library/Android/sdk"
-        echo yes | $ANDROID_SDK_ROOT/tools/bin/sdkmanager 'system-images;android-23;google_apis;x86_64'
-        echo no | $ANDROID_SDK_ROOT/tools/bin/avdmanager create avd --force --name test --abi google_apis/x86_64 --package 'system-images;android-23;google_apis;x86_64'
+        echo yes | $ANDROID_SDK_ROOT/tools/bin/sdkmanager 'system-images;android-30;google_apis;x86_64'
+        echo no | $ANDROID_SDK_ROOT/tools/bin/avdmanager create avd --force --name test --abi google_apis/x86_64 --package 'system-images;android-30;google_apis;x86_64'
 
     - name: Install and run example APK (Default)
       run: |
@@ -242,14 +242,25 @@ jobs:
         # Don't set Java > 8 here! #export JAVA_HOME=$JAVA_HOME_11_X64
         $ANDROID_SDK_ROOT/emulator/emulator -avd test -no-snapshot -no-window -no-boot-anim -camera-back emulated -camera-front emulated -gpu swiftshader_indirect &
         adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed) ]]; do sleep 1; done;'
+        # Remove if cache is run
+        echo "Removing particles" && adb uninstall org.v.test.ci.examples.sokol.particles
+        echo "Removing 2048" && adb uninstall org.v.test.ci.examples.game2048
+        echo "Removing tetris" && adb uninstall org.v.test.ci.examples.tetris
         # Debugging
-        ADB_TAGS="SOKOL:I SOKOL:W SOKOL:D SOKOL:E"
-        ADB_TAGS="$ADB_TAGS v_log:D v_logcat_test:D v_test_app:D"
-        adb logcat -c
-        adb logcat $ADB_TAGS '*:S' -v color &
+        #export ADB_TAGS="SOKOL_APP:D"
+        #export ADB_TAGS="$ADB_TAGS V_ANDROID:D v_test_app:D"
         # Compile for x86_64 only to speed up already-too-slow process
         export JAVA_HOME=$JAVA_HOME_11_X64 # Use Java 11 for kicks
         vab/vab --nocache -v 3 --device auto --archs 'x86_64' --package-id "org.v.test.ci.examples.sokol.particles" examples/sokol/particles
         vab/vab --nocache -v 3 run --device auto --archs 'x86_64' --package-id "org.v.test.ci.examples.game2048" examples/2048
-        #sleep 5
+        # Output test
+        adb -e logcat -c
+        vab/vab -cg --nocache -v 3 run --device auto --archs 'x86_64' --package-id "org.v.test.ci.examples.tetris" examples/tetris
+        sleep 5
+        adb -e logcat -d SOKOL_APP:D V_ANDROID:D v_test_app:D *:S > /tmp/logcat.dump.txt
+        cat /tmp/logcat.dump.txt | grep -q 'SOKOL_APP: ... ok'; if [ ! $? -eq 0 ]; then cat /tmp/logcat.dump.txt; fi
+        # Remove if cache is run
+        echo "Removing particles" && adb uninstall org.v.test.ci.examples.sokol.particles
+        echo "Removing 2048" && adb uninstall org.v.test.ci.examples.game2048
+        echo "Removing tetris" && adb uninstall org.v.test.ci.examples.tetris
         #adb -s emulator-5554 emu kill
