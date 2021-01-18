@@ -225,7 +225,7 @@ jobs:
           /Users/runner/.android/avd
           /Users/runner/Library/Android/sdk/system-images/android-30
 #          /Users/runner/Library/Android/sdk/platforms
-        key: ${{ runner.os }}-android-emulator
+        key: ${{ runner.os }}-android-emulator-${{ hashFiles('/Users/runner/.android/avd')
 
     - name: Prepare emulator
       if: steps.cache-emulator.outputs.cache-hit != 'true'
@@ -243,9 +243,9 @@ jobs:
         $ANDROID_SDK_ROOT/emulator/emulator -avd test -no-snapshot -no-window -no-boot-anim -camera-back emulated -camera-front emulated -gpu swiftshader_indirect &
         adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed) ]]; do sleep 1; done;'
         # Remove if cache is run
-        echo "Removing particles" && adb uninstall org.v.test.ci.examples.sokol.particles
-        echo "Removing 2048" && adb uninstall org.v.test.ci.examples.game2048
-        echo "Removing tetris" && adb uninstall org.v.test.ci.examples.tetris
+        #echo "Removing particles" && adb uninstall org.v.test.ci.examples.sokol.particles
+        #echo "Removing 2048" && adb uninstall org.v.test.ci.examples.game2048
+        #echo "Removing tetris" && adb uninstall org.v.test.ci.examples.tetris
         # Debugging
         #export ADB_TAGS="SOKOL_APP:D"
         #export ADB_TAGS="$ADB_TAGS V_ANDROID:D v_test_app:D"
