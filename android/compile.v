@@ -39,6 +39,9 @@ pub fn compile(opt CompileOptions) bool {
 	vexe := vxt.vexe()
 	v_output_file := os.join_path(opt.work_dir, 'v_android.c')
 	mut v_cmd := [ vexe ]
+	if !opt.cache {
+		v_cmd << '-nocache'
+	}
 	v_cmd << opt.v_flags
 	v_cmd << [
 		'-os android',
@@ -127,7 +130,7 @@ pub fn compile(opt CompileOptions) bool {
 	cflags << ['-Wall','-Wextra','-Wno-unused-variable','-Wno-unused-parameter','-Wno-unused-result','-Wno-unused-function','-Wno-missing-braces','-Wno-unused-label','-Werror=implicit-function-declaration']
 
 	// TODO Here to make the compilers shut up :/
-	cflags << ['-Wno-braced-scalar-init','-Wno-incompatible-pointer-types','-Wno-implicitly-unsigned-literal','-Wno-pointer-sign','-Wno-enum-conversion','-Wno-int-conversion','-Wno-int-to-pointer-cast','-Wno-sign-compare','-Wno-return-type']
+	cflags << ['-Wno-braced-scalar-init','-Wno-incompatible-pointer-types','-Wno-implicitly-unsigned-literal','-Wno-pointer-sign','-Wno-enum-conversion','-Wno-int-conversion','-Wno-int-to-pointer-cast','-Wno-sign-compare','-Wno-return-type','-Wno-extra-tokens']
 
 	defines << ['-DAPPNAME="${opt.lib_name}"']
 	defines << ['-DANDROID','-D__ANDROID__','-DANDROIDVERSION=${opt.api_level}']

@@ -9,6 +9,7 @@ import android.util
 
 pub struct DeployOptions {
 	verbosity	int
+	v_flags		[]string
 	device_id	string
 	device_log  bool
 	deploy_file string
@@ -75,6 +76,21 @@ pub fn deploy(opt DeployOptions) bool {
 			println('Deploying to ${device_id}')
 		}
 
+		if opt.run != '' && opt.device_log {
+			// Clear logs first
+			if opt.verbosity > 0 {
+				println('Clearing log buffer on device ${device_id}')
+			}
+			adb_run_cmd := [
+				adb,
+				'-s "${device_id}"',
+				'logcat',
+				'-c'
+			]
+			util.verbosity_print_cmd(adb_run_cmd, opt.verbosity)
+			util.run_or_exit(adb_run_cmd)
+		}
+
 		adb_cmd := [
 			adb,
 			'-s "${device_id}"',
@@ -103,41 +119,43 @@ pub fn deploy(opt DeployOptions) bool {
 		}
 
 		if opt.device_log {
-			// Clear logs first
-			if opt.verbosity > 0 {
-				println('Clearing log buffer on device ${device_id}')
-			}
-			adb_run_cmd := [
-				adb,
-				'-s "${device_id}"',
-				'logcat',
-				'-c'
-			]
-			util.verbosity_print_cmd(adb_run_cmd, opt.verbosity)
-			util.run_or_exit(adb_run_cmd)
-
-			// TODO Log tags via '-DV_ANDROID_LOG_TAG="V log tag"'
-			/*
 			if opt.verbosity > 0 {
 				println('Showing log output from device "$device_id"')
 			}
-			println('Ctrl+C to cancel logging"')*/
-			adb_logcat_cmd := [
+			println('Ctrl+C to cancel logging')
+			mut adb_logcat_cmd := [
 				adb,
-				'-s "${device_id}"',
-				'logcat',
-				//'-d',
-				'SOKOL_APP:D',
+				'-s',
+				'$device_id',
+				'logcat'
+			]
+			// Sokol
+			if '-cg' in opt.v_flags || '-g' in opt.v_flags {
+				adb_logcat_cmd << 'SOKOL_APP:D'
+			}
+			adb_logcat_cmd << [
 				'V_ANDROID:D',
 				'$opt.log_tag:D',
-				"'*:S'"
+				'*:S'
 			]
-			log_cmd := adb_logcat_cmd.join(' ')
-			println('Use "$log_cmd" to view logs...')
-			/*
+			//log_cmd := adb_logcat_cmd.join(' ')
+			//println('Use "$log_cmd" to view logs...')
 			util.verbosity_print_cmd(adb_logcat_cmd, opt.verbosity)
-			util.run_or_exit(adb_logcat_cmd)
-			*/
+			mut p := os.new_process(adb_logcat_cmd[0])
+			p.set_args(adb_logcat_cmd[1..])
+			p.set_redirect_stdio()
+			p.run()
+			for p.is_alive() {
+				s, b := os.fd_read(p.stdio_fd[1], 2*4096)
+				if b <= 0 {
+					break
+				}
+				print('$s')
+				flush()
+			}
+			rest := p.stdout_slurp()
+			p.wait()
+			println('$rest')
 		}
 
 		if opt.kill_adb {
