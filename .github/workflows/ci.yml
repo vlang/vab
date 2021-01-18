@@ -250,9 +250,11 @@ jobs:
         vab/vab --nocache -v 3 --device auto --archs 'x86_64' --package-id "org.v.test.ci.examples.sokol.particles" examples/sokol/particles
         vab/vab --nocache -v 3 run --device auto --archs 'x86_64' --package-id "org.v.test.ci.examples.game2048" examples/2048
         # Output test
-        adb logcat -c
+        adb -e logcat -c
         vab/vab -cg --nocache -v 3 run --device auto --archs 'x86_64' --package-id "org.v.test.ci.examples.tetris" examples/tetris
-        sleep 5
+        sleep 25
+        true
+        sleep 25
         #adb -e -s "emulator-5554" logcat -d SOKOL_APP:D V_ANDROID:D v_test_app:D *:S > /tmp/logcat.dump.txt
         adb -e logcat -d > /tmp/logcat.dump.txt
         cat /tmp/logcat.dump.txt
