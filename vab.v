@@ -14,7 +14,7 @@ import android.ndk
 import android.env
 
 const (
-	exe_version  = '0.2.0'
+	exe_version  = '0.2.1'
 	exe_name     = os.file_name(os.executable())
 	exe_dir      = os.dir(os.real_path(os.executable()))
 	exe_git_hash = vab_commit_hash()
