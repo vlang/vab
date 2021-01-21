@@ -151,7 +151,7 @@ pub fn deploy(opt DeployOptions) bool {
 					break
 				}
 				print('$s')
-				flush()
+				os.flush()
 			}
 			rest := p.stdout_slurp()
 			p.wait()
