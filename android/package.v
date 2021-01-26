@@ -238,12 +238,10 @@ pub fn package(opt PackageOptions) bool {
 
 fn prepare_base(opt PackageOptions) (string, string) {
 	package_path := os.join_path(opt.work_dir, 'package')
-	if os.exists(package_path) {
-		if opt.verbosity > 0 {
-			println('Removing previous package directory $package_path')
-		}
-		os.rmdir_all(package_path) or { panic(err) }
+	if opt.verbosity > 0 {
+		println('Removing previous package directory $package_path')
 	}
+	os.rmdir_all(package_path) or { }
 	os.mkdir_all(package_path) or { panic(err) }
 
 	base_files_path := opt.base_files
