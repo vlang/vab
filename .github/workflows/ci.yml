@@ -25,14 +25,19 @@ jobs:
         path: vab
     - name: Build local v
       run: make -j4
+      
     - name: Run tests
       run: ./v test vab
-    - name: Build VAB
-      run: ./v vab/vab.v
+      
     - name: Build VAB with -prod
-      run: ./v -prod vab/vab.v
+      run: ./v -prod -g vab/vab.v
+      
+    - name: Build VAB
+      run: ./v -g vab/vab.v
+      
     - name: Run vab --help
       run: vab/vab --help
+      
     - name: Setup env
       run: mkdir apks apks/java8 apks/java11 apks/java12
 #    - name: ls GHWS
@@ -82,11 +87,11 @@ jobs:
     - name: Run tests
       run: ./v test vab
 
-    - name: Build VAB
-      run: ./v vab/vab.v
-
     - name: Build VAB with -prod
       run: ./v -prod vab/vab.v
+      
+    - name: Build VAB
+      run: ./v -g vab/vab.v
 
     - name: Run vab --help
       run: vab/vab --help
@@ -127,22 +132,30 @@ jobs:
     - uses: actions/checkout@v2
       with:
         path: vab
+        
     - name: Build local v
       run: make -j4
+      
     - name: Run tests
       run: ./v test vab
-    - name: Build VAB
-      run: ./v vab/vab.v
+      
     - name: Build VAB with -prod
       run: ./v -prod vab/vab.v
+      
+    - name: Build VAB
+      run: ./v -g vab/vab.v
+      
     - name: Run vab --help
       run: vab/vab --help
+      
     - name: Setup env
       run: mkdir apks apks/java8 apks/java11 apks/java12 apks/java13 apks/java14
+      
     - name: Run vab doctor
       run: |
         export VEXE=./v
         vab/vab doctor
+        
 # The supported ndk version (21.x.x) resides in ndk-bundle
     - name: Build APK (Default) examples/sokol/particles
       run: |
@@ -199,11 +212,11 @@ jobs:
     - name: Run tests
       run: ./v test vab
 
-    - name: Build VAB
-      run: ./v vab/vab.v
-
     - name: Build VAB with -prod
       run: ./v -prod vab/vab.v
+
+    - name: Build VAB
+      run: ./v -g vab/vab.v
 
     - name: Run vab --help
       run: vab/vab --help

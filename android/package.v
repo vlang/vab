@@ -240,7 +240,7 @@ fn prepare_base(opt PackageOptions) (string, string) {
 	package_path := os.join_path(opt.work_dir, 'package')
 	if os.exists(package_path) {
 		if opt.verbosity > 0 {
-			println('Removing previous package directory')
+			println('Removing previous package directory $package_path')
 		}
 		os.rmdir_all(package_path) or { panic(err) }
 	}
@@ -248,7 +248,7 @@ fn prepare_base(opt PackageOptions) (string, string) {
 
 	base_files_path := opt.base_files
 	if opt.verbosity > 0 {
-		println('Copying base files')
+		println('Copying base files from $base_files_path to $package_path')
 		if opt.verbosity > 2 {
 			os.walk(base_files_path, fn (entry string) {
 				println(entry)
