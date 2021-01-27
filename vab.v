@@ -110,7 +110,7 @@ fn main() {
 		cache: !fp.bool('nocache', 0, false, 'Do not use build cache')
 		//
 		app_name: fp.string('name', 0, android.default_app_name, 'Pretty app name')
-		package_id: fp.string('package-id', 0, android.default_package_id, 'App package ID (e.g. "org.v.app")')
+		package_id: fp.string('package-id', 0, android.default_package_id, 'App package ID (e.g. "io.v.app")')
 		icon: fp.string('icon', 0, '', 'App icon')
 		version_code: fp.int('version-code', 0, 0, 'Build version code (android:versionCode)')
 		//
@@ -223,7 +223,7 @@ fn main() {
 		if package_id == '' {
 			package_id = android.default_package_id
 		}
-		run = '${package_id}/${package_id}.Native'
+		run = '${package_id}/${package_id}.V'
 	}
 
 	log_tag := opt.lib_name

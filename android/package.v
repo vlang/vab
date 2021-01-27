@@ -10,7 +10,7 @@ import android.util
 
 const (
 	default_app_name   = 'V Test App'
-	default_package_id = 'org.v.android.test.app'
+	default_package_id = 'io.v.android.test.app'
 )
 
 pub struct PackageOptions {
@@ -265,12 +265,12 @@ fn prepare_base(opt PackageOptions) (string, string) {
 	package_id_path := opt.package_id.split('.').join(os.path_separator)
 	os.mkdir_all(os.join_path(package_path, 'src', package_id_path)) or { panic(err) }
 
-	native_activity_path := os.join_path(package_path, 'src', 'org', 'v', 'android')
-	native_activity_file := os.join_path(native_activity_path, 'Native.java')
+	native_activity_path := os.join_path(package_path, 'src', 'io', 'v', 'android')
+	native_activity_file := os.join_path(native_activity_path, 'V.java')
 	if os.is_file(native_activity_file) {
 		mut java_src := os.read_file(native_activity_file) or { panic(err) }
 
-		mut re := regex.regex_opt(r'.*package\s+(org.v.android).*') or { panic(err) }
+		mut re := regex.regex_opt(r'.*package\s+(io.v.android).*') or { panic(err) }
 		mut start, _ := re.match_string(java_src)
 		// Set new package ID if found
 		if start >= 0 && re.groups.len > 0 {
@@ -285,18 +285,18 @@ fn prepare_base(opt PackageOptions) (string, string) {
 			java_src = java_src[0..re.groups[0]] + opt.lib_name +
 				java_src[re.groups[1]..java_src.len]
 		}
-		os.write_file(os.join_path(package_path, 'src', package_id_path, 'Native.java'),
+		os.write_file(os.join_path(package_path, 'src', package_id_path, 'V.java'),
 			java_src) or { panic(err) }
 		// TODO this can be done better and smarter - but works for now
 		os.rm(native_activity_file) or { panic(err) }
-		if os.is_dir_empty(os.join_path(package_path, 'src', 'org', 'v', 'android')) {
-			os.rmdir_all(os.join_path(package_path, 'src', 'org', 'v', 'android')) or { panic(err) }
+		if os.is_dir_empty(os.join_path(package_path, 'src', 'io', 'v', 'android')) {
+			os.rmdir_all(os.join_path(package_path, 'src', 'io', 'v', 'android')) or { panic(err) }
 		}
-		if os.is_dir_empty(os.join_path(package_path, 'src', 'org', 'v')) {
-			os.rmdir_all(os.join_path(package_path, 'src', 'org', 'v')) or { panic(err) }
+		if os.is_dir_empty(os.join_path(package_path, 'src', 'io', 'v')) {
+			os.rmdir_all(os.join_path(package_path, 'src', 'io', 'v')) or { panic(err) }
 		}
-		if os.is_dir_empty(os.join_path(package_path, 'src', 'org')) {
-			os.rmdir_all(os.join_path(package_path, 'src', 'org')) or { panic(err) }
+		if os.is_dir_empty(os.join_path(package_path, 'src', 'io')) {
+			os.rmdir_all(os.join_path(package_path, 'src', 'io')) or { panic(err) }
 		}
 	}
 	// Replace in AndroidManifest.xml
