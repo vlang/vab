@@ -1,2 +1,5 @@
 vab
 vab.exe
+*.apk
+*.aab
+*.keystore
