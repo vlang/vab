@@ -2,9 +2,9 @@ module main
 
 import os
 import flag
+import semver
 
 import vxt
-import semver
 
 import java
 
