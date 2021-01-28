@@ -16,6 +16,7 @@ const (
 pub struct PackageOptions {
 	verbosity               int
 	work_dir                string
+	is_prod					bool
 	api_level               string
 	build_tools             string
 	app_name                string
@@ -209,6 +210,10 @@ pub fn package(opt PackageOptions) bool {
 		keystore_alias_password = opt.keystore_alias_password
 	}
 
+	if opt.is_prod && os.file_name(keystore_file) == 'debug.keystore' {
+		eprintln('Warning: It looks like you are using the debug.keystore\nfile to sign your application build in production mode ("-prod").')
+	}
+
 	mut apksigner_cmd := [
 		apksigner,
 		'sign',
@@ -259,7 +264,7 @@ fn prepare_base(opt PackageOptions) (string, string) {
 		println('Modifying base files')
 	}
 
-	if '-prod' in opt.v_flags && opt.package_id == android.default_package_id {
+	if opt.is_prod && opt.package_id == android.default_package_id {
 		panic('Do not deploy to app stores using the default package id "$android.default_package_id"\nYou can set your own package ID with the --package-id flag')
 	}
 	package_id_path := opt.package_id.split('.').join(os.path_separator)
