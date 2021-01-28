@@ -10,7 +10,7 @@ import android.util
 
 const (
 	default_app_name   = 'V Test App'
-	default_package_id = 'org.v.android.test.app'
+	default_package_id = 'io.v.android'
 )
 
 pub struct PackageOptions {
@@ -260,20 +260,35 @@ fn prepare_base(opt PackageOptions) (string, string) {
 	}
 
 	if '-prod' in opt.v_flags && opt.package_id == android.default_package_id {
-		eprintln('Warning: using default package ID "$android.default_package_id". Please do not deploy to app stores using this ID')
+		panic('Do not deploy to app stores using the default package id "$android.default_package_id"\nYou can set your own package ID with the --package-id flag')
 	}
 	package_id_path := opt.package_id.split('.').join(os.path_separator)
 	os.mkdir_all(os.join_path(package_path, 'src', package_id_path)) or { panic(err) }
 
-	native_activity_path := os.join_path(package_path, 'src', 'org', 'v', 'android')
-	native_activity_file := os.join_path(native_activity_path, 'Native.java')
+	default_pkg_id_split := android.default_package_id.split('.')
+	native_activity_path := os.join_path(package_path, 'src', default_pkg_id_split.join(os.path_separator))
+	native_activity_file := os.join_path(native_activity_path, 'V.java')
+	//eprintln(native_activity_file)
 	if os.is_file(native_activity_file) {
+		if opt.verbosity > 1 {
+			println('Modifying native activity "$native_activity_file"')
+		}
 		mut java_src := os.read_file(native_activity_file) or { panic(err) }
 
-		mut re := regex.regex_opt(r'.*package\s+(org.v.android).*') or { panic(err) }
+		//r'.*package\s+(io.v.android).*'
+		mut re := regex.regex_opt(r'.*package\s+('+android.default_package_id+r').*') or { panic(err) }
 		mut start, _ := re.match_string(java_src)
 		// Set new package ID if found
 		if start >= 0 && re.groups.len > 0 {
+			if opt.verbosity > 1 {
+				r := java_src[re.groups[0]..re.groups[1]]
+				// ATT: @spytheman
+				//t := opt.package_id
+				//println('Replacing "$r" with "$t"') // <- this results in a warning about $t not being used
+				//println('Replacing "$r" with ...')
+				//println('Replacing "$t" with ...') // <- this prints $t correctly
+				println('Replacing "$r" with "${opt.package_id}"')
+			}
 			java_src = java_src[0..re.groups[0]] + opt.package_id +
 				java_src[re.groups[1]..java_src.len]
 		}
@@ -282,21 +297,29 @@ fn prepare_base(opt PackageOptions) (string, string) {
 		start, _ = re.match_string(java_src)
 		// Set new package ID if found
 		if start >= 0 && re.groups.len > 0 {
+			if opt.verbosity > 1 {
+				r := java_src[re.groups[0]..re.groups[1]]
+				println('Replacing "$r" with "${opt.lib_name}"')
+			}
 			java_src = java_src[0..re.groups[0]] + opt.lib_name +
 				java_src[re.groups[1]..java_src.len]
 		}
-		os.write_file(os.join_path(package_path, 'src', package_id_path, 'Native.java'),
+		os.write_file(os.join_path(package_path, 'src', package_id_path, 'V.java'),
 			java_src) or { panic(err) }
-		// TODO this can be done better and smarter - but works for now
-		os.rm(native_activity_file) or { panic(err) }
-		if os.is_dir_empty(os.join_path(package_path, 'src', 'org', 'v', 'android')) {
-			os.rmdir_all(os.join_path(package_path, 'src', 'org', 'v', 'android')) or { panic(err) }
-		}
-		if os.is_dir_empty(os.join_path(package_path, 'src', 'org', 'v')) {
-			os.rmdir_all(os.join_path(package_path, 'src', 'org', 'v')) or { panic(err) }
-		}
-		if os.is_dir_empty(os.join_path(package_path, 'src', 'org')) {
-			os.rmdir_all(os.join_path(package_path, 'src', 'org')) or { panic(err) }
+		// Remove left-overs from vab's copied skeleton
+		if opt.package_id != android.default_package_id {
+			os.rm(native_activity_file) or { panic(err) }
+			v_default_package_id := default_pkg_id_split.clone()
+			for i := v_default_package_id.len-1; i >= 0; i-- {
+				if os.is_dir_empty(os.join_path(package_path, 'src', v_default_package_id.join(os.path_separator))) {
+					if opt.verbosity > 1 {
+						p := os.join_path(package_path, 'src', v_default_package_id.join(os.path_separator))
+						println('Removing default left-over directory "$p"')
+					}
+					os.rmdir_all(os.join_path(package_path, 'src',  v_default_package_id.join(os.path_separator))) or { panic(err) }
+				}
+				v_default_package_id.pop()
+			}
 		}
 	}
 	// Replace in AndroidManifest.xml

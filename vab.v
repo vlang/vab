@@ -110,7 +110,7 @@ fn main() {
 		cache: !fp.bool('nocache', 0, false, 'Do not use build cache')
 		//
 		app_name: fp.string('name', 0, android.default_app_name, 'Pretty app name')
-		package_id: fp.string('package-id', 0, android.default_package_id, 'App package ID (e.g. "org.v.app")')
+		package_id: fp.string('package-id', 0, android.default_package_id, 'App package ID (e.g. "org.company.app")')
 		icon: fp.string('icon', 0, '', 'App icon')
 		version_code: fp.int('version-code', 0, 0, 'Build version code (android:versionCode)')
 		//
@@ -223,7 +223,7 @@ fn main() {
 		if package_id == '' {
 			package_id = android.default_package_id
 		}
-		run = '${package_id}/${package_id}.Native'
+		run = '${package_id}/${package_id}.V'
 	}
 
 	log_tag := opt.lib_name
@@ -371,18 +371,18 @@ fn validate_env(opt Options) {
 	}
 
 	jdk_semantic_version := semver.from(jdk_version) or {
-		panic(@MOD+'.'+@FN+':'+@LINE+' error converting "$jdk_version" to semantic version.\nsemver: '+err)
+		panic(@MOD+'.'+@FN+':'+@LINE+' error converting jdk_version "$jdk_version" to semantic version.\nsemver: '+err)
 	}
 	if !jdk_semantic_version.ge(semver.build(1, 8, 0)) { // NOTE When did this break:.satisfies('1.8.*') ???
 		// Some Android tools like `sdkmanager` in cmdline-tools;1.0 only worked with Java 8 JDK (1.8.x).
 		// (Absolute mess, yes)
-		eprintln('Java version ${jdk_version} is not supported')
+		eprintln('Java JDK version ${jdk_version} is not supported')
 		eprintln('Please install Java >= 8 JDK or provide a valid path via JAVA_HOME')
 		exit(1)
 	}
 
 	build_tools_semantic_version := semver.from(sdk.default_build_tools_version) or {
-		panic(@MOD+'.'+@FN+':'+@LINE+' error converting "$sdk.default_build_tools_version" to semantic version.\nsemver: '+err)
+		panic(@MOD+'.'+@FN+':'+@LINE+' error converting build-tools version "$sdk.default_build_tools_version" to semantic version.\nsemver: '+err)
 	}
 
 	if !build_tools_semantic_version.ge(semver.build(24, 0, 3)) { // NOTE When did this break:.satisfies('>=24.0.3') ???
