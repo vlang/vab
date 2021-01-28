@@ -76,19 +76,19 @@ pub fn deploy(opt DeployOptions) bool {
 			println('Deploying to ${device_id}')
 		}
 
+		adb_logcat_clear_cmd := [
+			adb,
+			'-s "${device_id}"',
+			'logcat',
+			'-c'
+		]
 		if opt.run != '' && opt.device_log {
 			// Clear logs first
 			if opt.verbosity > 0 {
 				println('Clearing log buffer on device ${device_id}')
 			}
-			adb_run_cmd := [
-				adb,
-				'-s "${device_id}"',
-				'logcat',
-				'-c'
-			]
-			util.verbosity_print_cmd(adb_run_cmd, opt.verbosity)
-			util.run_or_exit(adb_run_cmd)
+			util.verbosity_print_cmd(adb_logcat_clear_cmd, opt.verbosity)
+			util.run_or_exit(adb_logcat_clear_cmd)
 		}
 
 		adb_cmd := [
@@ -118,6 +118,7 @@ pub fn deploy(opt DeployOptions) bool {
 			util.run_or_exit(adb_run_cmd)
 		}
 
+		mut crash_mode := false
 		if opt.device_log {
 			if opt.verbosity > 0 {
 				println('Showing log output from device "$device_id"')
@@ -130,14 +131,18 @@ pub fn deploy(opt DeployOptions) bool {
 				'logcat'
 			]
 			// Sokol
-			if '-cg' in opt.v_flags || '-g' in opt.v_flags {
+			is_debug := '-cg' in opt.v_flags || '-g' in opt.v_flags
+			if is_debug {
 				adb_logcat_cmd << 'SOKOL_APP:D'
 			}
 			adb_logcat_cmd << [
 				'V_ANDROID:D',
 				'$opt.log_tag:D',
-				'*:S'
 			]
+			//if !is_debug {
+			adb_logcat_cmd << '*:S'
+			//}
+
 			//log_cmd := adb_logcat_cmd.join(' ')
 			//println('Use "$log_cmd" to view logs...')
 			util.verbosity_print_cmd(adb_logcat_cmd, opt.verbosity)
@@ -147,15 +152,37 @@ pub fn deploy(opt DeployOptions) bool {
 			p.run()
 			for p.is_alive() {
 				s, b := os.fd_read(p.stdio_fd[1], 2*4096)
+				if s.contains('beginning of crash') {
+					crash_mode = true
+					break
+				}
 				if b <= 0 {
 					break
 				}
 				print('$s')
 				os.flush()
 			}
-			rest := p.stdout_slurp()
-			p.wait()
-			println('$rest')
+			if !crash_mode {
+				rest := p.stdout_slurp()
+				p.wait()
+				println('$rest')
+			}
+		}
+
+		adb_logcat_cmd := [
+			adb,
+			'-s',
+			'$device_id',
+			'logcat',
+			'--buffer=crash',
+			'-d'
+		]
+		util.verbosity_print_cmd(adb_logcat_cmd, opt.verbosity)
+		crash_log := util.run_or_exit(adb_logcat_cmd)
+		if crash_log.count('\n') > 3 {
+			eprintln('It looks like your app might have crashed\nDumping crash buffer:')
+			eprintln(crash_log)
+			eprintln('You can clear all logs by running:\n"'+adb_logcat_clear_cmd.join(' ')+'"')
 		}
 
 		if opt.kill_adb {
