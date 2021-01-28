@@ -3,6 +3,7 @@
 module sdk
 
 import os
+import semver
 
 import android.util
 
@@ -197,6 +198,19 @@ pub fn platforms_dir() []string {
 	return util.find_sorted(platforms_root())
 }
 
+pub fn platforms_available() []string {
+	mut available := []string{}
+	if ! found() { return available }
+	available = util.ls_sorted(platforms_root())
+	available.filter(it.starts_with('android-'))
+	return available
+}
+
+/*
+pub fn platforms_dir() []string {
+
+}*/
+
 pub fn api_dirs() []string {
 	if ! found() { return []string{} }
 	return util.ls_sorted(platforms_root())
@@ -219,13 +233,16 @@ pub fn has_build_tools(version string) bool {
 }
 
 pub fn build_tools_available() []string {
-	if ! found() { return []string{} }
-	return util.ls_sorted(build_tools_root())
+	mut available := []string{}
+	if ! found() { return available }
+	available = util.ls_sorted(build_tools_root())
+	available.filter(semver.is_valid(it))
+	return available
 }
 
 pub fn default_build_tools_dir() string {
 	if ! found() { return '' }
-	dirs := util.find_sorted(build_tools_root())
+	dirs := build_tools_available()
 	if dirs.len > 0 {
 		return dirs.first()
 	}
@@ -234,7 +251,7 @@ pub fn default_build_tools_dir() string {
 
 pub fn default_platforms_dir() string {
 	if ! found() { return '' }
-	dirs := util.find_sorted(platforms_root())
+	dirs := platforms_dir()
 	if dirs.len > 0 {
 		return dirs.first()
 	}
