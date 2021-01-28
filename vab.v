@@ -288,6 +288,7 @@ fn main() {
 	pck_opt := android.PackageOptions {
 		verbosity:					opt.verbosity
 		work_dir:					opt.work_dir
+		is_prod:					'-prod' in opt.v_flags
 
 		api_level:					opt.api_level
 		build_tools:				opt.build_tools
