@@ -192,7 +192,7 @@ fn main() {
 					println('Installed all dependencies successfully.')
 				}
 			}
-			exit( res )
+			exit(res)
 		}
 	}
 
@@ -267,7 +267,7 @@ fn main() {
 		}
 	}
 
-	compile_cache_key := if os.is_dir(input) || input_ext in ['.v'] { opt.input } else { '' }
+	compile_cache_key := if os.is_dir(input) || input_ext == '.v' { opt.input } else { '' }
 	comp_opt := android.CompileOptions {
 		verbosity:		opt.verbosity
 		cache:			opt.cache
