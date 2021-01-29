@@ -3,16 +3,14 @@
 module ndk
 
 import os
-
 import android.sdk
 import android.util
 
 const (
-	home = os.home_dir()
-	supported_archs = ['arm64-v8a','armeabi-v7a','x86','x86_64']
+	home                  = os.home_dir()
+	supported_archs       = ['arm64-v8a', 'armeabi-v7a', 'x86', 'x86_64']
 	min_supported_version = min_version()
 )
-
 
 // ANDROID_SDK_ROOT and ANDROID_HOME are official ENV variables to get the SDK
 // but no such conventions exists for getting the NDK.
@@ -21,16 +19,16 @@ const (
 // This is also referred to as a "Side by side" install
 const (
 	possible_ndk_paths_windows = [
-		os.join_path(sdk.root(),'ndk'),
-		os.join_path(sdk.root(),'ndk-bundle')
+		os.join_path(sdk.root(), 'ndk'),
+		os.join_path(sdk.root(), 'ndk-bundle'),
 	]
-	possible_ndk_paths_macos = [
-		os.join_path(sdk.root(),'ndk'),
-		os.join_path(sdk.root(),'ndk-bundle')
+	possible_ndk_paths_macos   = [
+		os.join_path(sdk.root(), 'ndk'),
+		os.join_path(sdk.root(), 'ndk-bundle'),
 	]
-	possible_ndk_paths_linux = [
-		os.join_path(sdk.root(),'ndk'),
-		os.join_path(sdk.root(),'ndk-bundle')
+	possible_ndk_paths_linux   = [
+		os.join_path(sdk.root(), 'ndk'),
+		os.join_path(sdk.root(), 'ndk-bundle'),
 	]
 )
 
@@ -42,12 +40,20 @@ pub fn root() string {
 
 		// Detect OS type at runtime - in case we're in some exotic environment
 		uos := os.user_os()
-		if uos == 'windows' { dirs = possible_ndk_paths_windows.clone() }
-		if uos == 'macos'   { dirs = possible_ndk_paths_macos.clone() }
-		if uos == 'linux'   { dirs = possible_ndk_paths_linux.clone() }
+		if uos == 'windows' {
+			dirs = ndk.possible_ndk_paths_windows.clone()
+		}
+		if uos == 'macos' {
+			dirs = ndk.possible_ndk_paths_macos.clone()
+		}
+		if uos == 'linux' {
+			dirs = ndk.possible_ndk_paths_linux.clone()
+		}
 
 		for dir in dirs {
-			if os.exists(dir) && os.is_dir(dir) { return dir }
+			if os.exists(dir) && os.is_dir(dir) {
+				return dir
+			}
 		}
 	}
 	// Try if ndk-which is in path
@@ -68,7 +74,7 @@ pub fn root_version(version string) string {
 	if !is_side_by_side() {
 		return root()
 	}
-	return os.join_path(root(),version)
+	return os.join_path(root(), version)
 }
 
 pub fn found() bool {
@@ -76,7 +82,7 @@ pub fn found() bool {
 }
 
 pub fn is_side_by_side() bool {
-	return os.real_path(os.join_path(sdk.root(),'ndk')) == os.real_path(os.join_path(root()))
+	return os.real_path(os.join_path(sdk.root(), 'ndk')) == os.real_path(os.join_path(root()))
 }
 
 pub fn versions_available() []string {
@@ -102,10 +108,16 @@ pub fn versions_dir() []string {
 pub fn min_version() string {
 	mut version := '0.0.0'
 	uos := os.user_os()
-	if uos == 'windows' { version = '0.0.0' }
-	if uos == 'macos'   { version = '21.3.6528147' }
-	if uos == 'linux'   { version = '21.1.6352462' }
- 	return version
+	if uos == 'windows' {
+		version = '0.0.0'
+	}
+	if uos == 'macos' {
+		version = '21.3.6528147'
+	}
+	if uos == 'linux' {
+		version = '21.1.6352462'
+	}
+	return version
 }
 
 pub fn default_version() string {
@@ -122,10 +134,10 @@ pub fn default_version() string {
 [inline]
 pub fn host_arch() string {
 	host_arch := match os.user_os() {
-		'windows'	{ 'windows-x86_64' }
-		'macos'		{ 'darwin-x86_64' }
-		'linux'		{ 'linux-x86_64' }
-		else		{ 'unknown' }
+		'windows' { 'windows-x86_64' }
+		'macos' { 'darwin-x86_64' }
+		'linux' { 'linux-x86_64' }
+		else { 'unknown' }
 	}
 	return host_arch
 }
@@ -143,15 +155,19 @@ pub fn arch_to_instruction_set(arch string) string {
 	}
 }
 
-[inline] // TODO do Windows as well
+// TODO do Windows as well
+[inline]
 pub fn compiler(ndk_version string, arch string, api_level string) ?string {
 	mut eabi := ''
-	if arch == 'armeabi-v7a' { eabi = 'eabi' }
+	if arch == 'armeabi-v7a' {
+		eabi = 'eabi'
+	}
 
 	host_architecture := host_arch()
 	arch_is := arch_to_instruction_set(arch)
 
-	mut compiler := os.join_path(root_version(ndk_version),'toolchains','llvm','prebuilt',host_architecture,'bin',arch_is+'-linux-android${eabi}${api_level}-clang')
+	mut compiler := os.join_path(root_version(ndk_version), 'toolchains', 'llvm', 'prebuilt',
+		host_architecture, 'bin', arch_is + '-linux-android$eabi$api_level-clang')
 	// legacy ndk version setups
 	/*
 	if !os.is_file(compiler) {
@@ -162,9 +178,11 @@ pub fn compiler(ndk_version string, arch string, api_level string) ?string {
 				break
 			}
 		}
-	}*/
+	}
+	*/
 	if !os.is_file(compiler) {
-		return error(@MOD+'.'+@FN+' couldn\'t locate compiler "${compiler}". You could try with a newer ndk version.')
+		return error(@MOD + '.' + @FN +
+			' couldn\'t locate compiler "$compiler". You could try with a newer ndk version.')
 	}
 	return compiler
 }
@@ -172,14 +190,20 @@ pub fn compiler(ndk_version string, arch string, api_level string) ?string {
 [inline]
 pub fn libs_path(ndk_version string, arch string, api_level string) ?string {
 	mut eabi := ''
-	if arch == 'armeabi-v7a' { eabi = 'eabi' }
+	if arch == 'armeabi-v7a' {
+		eabi = 'eabi'
+	}
 
 	mut host_architecture := host_arch()
 	mut arch_is := arch_to_instruction_set(arch)
 
-	if eabi != '' { arch_is = 'arm' }
+	if eabi != '' {
+		arch_is = 'arm'
+	}
 
-	mut libs_path := os.join_path(root_version(ndk_version),'toolchains','llvm','prebuilt',host_architecture,'sysroot','usr','lib',arch_is+'-linux-android'+eabi,api_level)
+	mut libs_path := os.join_path(root_version(ndk_version), 'toolchains', 'llvm', 'prebuilt',
+		host_architecture, 'sysroot', 'usr', 'lib', arch_is + '-linux-android' + eabi,
+		api_level)
 
 	/*
 	if !os.is_dir(libs_path) {
@@ -190,9 +214,11 @@ pub fn libs_path(ndk_version string, arch string, api_level string) ?string {
 				break
 			}
 		}
-	}*/
+	}
+	*/
 	if !os.is_dir(libs_path) {
-		return error(@MOD+'.'+@FN+' couldn\'t locate libraries path "${libs_path}". You could try with a newer ndk version.')
+		return error(@MOD + '.' + @FN +
+			' couldn\'t locate libraries path "$libs_path". You could try with a newer ndk version.')
 	}
 
 	return libs_path
