@@ -12,7 +12,7 @@ pub fn vexe() string {
 	}
 	possible_symlink := os.find_abs_path_of_executable('v') or { '' }
 	if possible_symlink != '' {
-		exe = os.real_path( possible_symlink )
+		exe = os.real_path(possible_symlink)
 	}
 	return exe
 }
@@ -35,7 +35,7 @@ pub fn version() string {
 	mut version := ''
 	v := vexe()
 	if v != '' {
-		v_version := os.exec(v+' -version') or { os.Result{1,''} }
+		v_version := os.exec(v + ' -version') or { os.Result{1, ''} }
 		output := v_version.output
 		mut re := regex.regex_opt(r'.*(\d+\.?\d*\.?\d*)') or { panic(err) }
 		start, _ := re.match_string(output)
@@ -51,7 +51,7 @@ pub fn version_commit_hash() string {
 	mut hash := ''
 	v := vexe()
 	if v != '' {
-		v_version := os.exec(v+' -version') or { os.Result{1,''} }
+		v_version := os.exec(v + ' -version') or { os.Result{1, ''} }
 		output := v_version.output
 		mut re := regex.regex_opt(r'.*\d+\.?\d*\.?\d* ([a-fA-F0-9]{7,})') or { panic(err) }
 		start, _ := re.match_string(output)
