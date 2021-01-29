@@ -128,7 +128,17 @@ pub fn found() bool {
 
 pub fn sdkmanager() string {
 	mut sdkmanager := os.getenv('SDKMANAGER')
-
+	// Check in cache
+	if !os.is_executable(sdkmanager) {
+		sdkmanager = os.join_path(util.cache_dir(),'cmdline-tools','tools','bin','sdkmanager')
+	}
+	// Try the one in PATH
+	if !os.is_executable(sdkmanager) {
+		if os.exists_in_system_path('sdkmanager') {
+			sdkmanager = os.find_abs_path_of_executable('sdkmanager') or { '' }
+		}
+	}
+	// Try detecting it in the SDK
 	if !os.is_executable(sdkmanager) && found() {
 		sdkmanager = os.join_path(tools_root(),'bin','sdkmanager')
 		if !os.is_executable(sdkmanager) {
@@ -141,15 +151,7 @@ pub fn sdkmanager() string {
 			}
 		}
 	}
-	if !os.is_executable(sdkmanager) {
-		if os.exists_in_system_path('sdkmanager') {
-			sdkmanager = os.find_abs_path_of_executable('sdkmanager') or { '' }
-		}
-	}
-	// Check in cache
-	if !os.is_executable(sdkmanager) {
-		sdkmanager = os.join_path(util.cache_dir(),'cmdline-tools','tools','bin','sdkmanager')
-	}
+	// Give up
 	if !os.is_executable(sdkmanager) {
 		sdkmanager = ''
 	}
