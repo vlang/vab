@@ -5,11 +5,8 @@ module main
 import os
 import flag
 import semver
-
 import vxt
-
 import java
-
 import android
 import android.sdk
 import android.ndk
@@ -20,47 +17,47 @@ const (
 	exe_name     = os.file_name(os.executable())
 	exe_dir      = os.dir(os.real_path(os.executable()))
 	exe_git_hash = vab_commit_hash()
-	rip_vflags   = ['-autofree','-g','-cg','-prod', 'run']
+	rip_vflags   = ['-autofree', '-g', '-cg', '-prod', 'run']
 )
 
 struct Options {
 	// App essentials
-	app_name		string
-	package_id		string
-	icon			string
+	app_name   string
+	package_id string
+	icon       string
 	// Internals
-	verbosity		int
-	work_dir		string
+	verbosity int
+	work_dir  string
 	// Build, packaging and deployment
-	cache			bool
-	version_code	int
-	device_id		string
-	keystore		string
-	keystore_alias	string
+	cache          bool
+	version_code   int
+	device_id      string
+	keystore       string
+	keystore_alias string
 	// Build specifics
-	c_flags			[]string // flags passed to the C compiler(s)
-	archs			[]string
+	c_flags []string // flags passed to the C compiler(s)
+	archs   []string
 	// Deploy specifics
-	run				bool
-	device_log		bool
+	run        bool
+	device_log bool
 	// Detected environment
-	dump_usage		bool
-	list_ndks		bool
-	list_apis		bool
+	dump_usage       bool
+	list_ndks        bool
+	list_apis        bool
 	list_build_tools bool
 mut:
-	input			string
-	output			string
+	input  string
+	output string
 	// Build and packaging
-	v_flags			[]string // flags passed to the V compiler
-	lib_name		string
-	assets_extra	[]string
-	keystore_password string
-	keystore_alias_password	string
+	v_flags                 []string // flags passed to the V compiler
+	lib_name                string
+	assets_extra            []string
+	keystore_password       string
+	keystore_alias_password string
 	// Build specifics
-	build_tools		string
-	api_level		string
-	ndk_version		string
+	build_tools string
+	api_level   string
+	ndk_version string
 }
 
 fn main() {
@@ -95,14 +92,14 @@ fn main() {
 		verbosity = 1
 	}
 
-	mut opt := Options {
+	mut opt := Options{
 		assets_extra: fp.string_multi('assets', `a`, 'Asset dir(s) to include in build')
 		v_flags: fp.string_multi('flag', `f`, 'Additional flags for the V compiler')
 		c_flags: fp.string_multi('cflag', `c`, 'Additional flags for the C compiler')
-		archs: fp.string('archs', 0, '', 'Comma separated string with any of "${android.default_archs}"').split(',')
+		archs: fp.string('archs', 0, '', 'Comma separated string with any of "$android.default_archs"').split(',')
 		//
 		device_id: fp.string('device', `d`, '', 'Deploy to device <id>. Use "auto" to use first available.')
-		run: 'run' in cmd_flags //fp.bool('run', `r`, false, 'Run the app on the device after successful deployment.')
+		run: 'run' in cmd_flags // fp.bool('run', `r`, false, 'Run the app on the device after successful deployment.')
 		device_log: fp.bool('log', 0, false, 'Enable device logging after deployment.')
 		//
 		keystore: fp.string('keystore', 0, '', 'Use this keystore file to sign the package')
@@ -125,7 +122,7 @@ fn main() {
 		//
 		ndk_version: fp.string('ndk-version', 0, '', 'Android NDK version to use (--list-ndks)')
 		//
-		work_dir: os.join_path(os.temp_dir(), exe_name.replace(' ','_').to_lower())
+		work_dir: os.join_path(os.temp_dir(), exe_name.replace(' ', '_').to_lower())
 		//
 		list_ndks: fp.bool('list-ndks', 0, false, 'List available NDK versions')
 		list_apis: fp.bool('list-apis', 0, false, 'List available API levels')
@@ -175,7 +172,6 @@ fn main() {
 		}
 		exit(0)
 	}
-
 	// All flags after this requires an input argument
 	if fp.args.len == 0 {
 		println(fp.usage())
@@ -189,7 +185,7 @@ fn main() {
 			res := env.install(install_arg, opt.verbosity)
 			if res == 0 && opt.verbosity > 0 {
 				if install_arg != 'auto' {
-					println('Installed ${install_arg} successfully.')
+					println('Installed $install_arg successfully.')
 				} else {
 					println('Installed all dependencies successfully.')
 				}
@@ -197,7 +193,6 @@ fn main() {
 			exit(res)
 		}
 	}
-
 	// Merge flags captured before FlagParser
 	v_flags << opt.v_flags
 	opt.v_flags = v_flags
@@ -211,19 +206,18 @@ fn main() {
 			exit(0)
 		}
 	}
-
 	// Validate environment
 	check_essentials(true)
-	resolve_options(mut opt,true)
+	resolve_options(mut opt, true)
 	// Validate environment after options has been resolved
 	validate_env(opt)
 
-	input := fp.args[fp.args.len-1]
+	input := fp.args[fp.args.len - 1]
 
 	input_ext := os.file_ext(input)
-	accepted_input_files := ['.v','.apk','.aab']
+	accepted_input_files := ['.v', '.apk', '.aab']
 
-	if ! (os.is_dir(input) || input_ext in accepted_input_files) {
+	if !(os.is_dir(input) || input_ext in accepted_input_files) {
 		println(fp.usage())
 		eprintln('$exe_name requires input to be a V file, an APK, AAB or a V source(s) directory')
 		exit(1)
@@ -234,16 +228,16 @@ fn main() {
 
 	mut run := ''
 	if opt.run {
-		//TODO 'com.package.name/com.package.name.ActivityName'
+		// TODO 'com.package.name/com.package.name.ActivityName'
 		mut package_id := opt.package_id
 		if package_id == '' {
 			package_id = android.default_package_id
 		}
-		run = '${package_id}/${package_id}.V'
+		run = '$package_id/${package_id}.V'
 	}
 
 	log_tag := opt.lib_name
-	deploy_opt := android.DeployOptions {
+	deploy_opt := android.DeployOptions{
 		verbosity: opt.verbosity
 		v_flags: opt.v_flags
 		device_id: opt.device_id
@@ -255,14 +249,14 @@ fn main() {
 	}
 
 	// Early deployment
-	if input_ext in ['.apk','.aab'] {
+	if input_ext in ['.apk', '.aab'] {
 		if opt.device_id != '' {
-			if ! android.deploy(deploy_opt) {
-				eprintln('$exe_name deployment didn\'t succeed')
+			if !android.deploy(deploy_opt) {
+				eprintln("$exe_name deployment didn\'t succeed")
 				exit(1)
 			} else {
 				if opt.verbosity > 0 {
-					println('Deployed to ${opt.device_id} successfully')
+					println('Deployed to $opt.device_id successfully')
 				}
 				exit(0)
 			}
@@ -270,26 +264,23 @@ fn main() {
 	}
 
 	compile_cache_key := if os.is_dir(input) || input_ext == '.v' { opt.input } else { '' }
-	comp_opt := android.CompileOptions {
-		verbosity:		opt.verbosity
-		cache:			opt.cache
-		cache_key:		compile_cache_key
-		v_flags:		opt.v_flags
-		c_flags:		opt.c_flags
-		archs:			opt.archs.filter(it.trim(' ') != '')
-
-		work_dir:		opt.work_dir
-		input:			opt.input
-
-		ndk_version:	opt.ndk_version
-		lib_name:		opt.lib_name
-		api_level:		opt.api_level
+	comp_opt := android.CompileOptions{
+		verbosity: opt.verbosity
+		cache: opt.cache
+		cache_key: compile_cache_key
+		v_flags: opt.v_flags
+		c_flags: opt.c_flags
+		archs: opt.archs.filter(it.trim(' ') != '')
+		work_dir: opt.work_dir
+		input: opt.input
+		ndk_version: opt.ndk_version
+		lib_name: opt.lib_name
+		api_level: opt.api_level
 	}
-	if ! android.compile(comp_opt) {
-		eprintln('$exe_name compiling didn\'t succeed')
+	if !android.compile(comp_opt) {
+		eprintln("$exe_name compiling didn\'t succeed")
 		exit(1)
 	}
-
 	// Keystore file
 	mut keystore := opt.keystore
 	if !os.is_file(keystore) {
@@ -299,45 +290,41 @@ fn main() {
 		keystore = ''
 	}
 	if keystore == '' {
-		keystore = os.join_path(exe_dir,'debug.keystore')
+		keystore = os.join_path(exe_dir, 'debug.keystore')
 	}
-	pck_opt := android.PackageOptions {
-		verbosity:					opt.verbosity
-		work_dir:					opt.work_dir
-		is_prod:					'-prod' in opt.v_flags
-
-		api_level:					opt.api_level
-		build_tools:				opt.build_tools
-
-		app_name:					opt.app_name
-		lib_name:					opt.lib_name
-		package_id:					opt.package_id
-		icon:						opt.icon
-		version_code:				opt.version_code
-
-		v_flags:					opt.v_flags
-
-		input:						opt.input
-		assets_extra:				opt.assets_extra
-		output_file:				opt.output
-		keystore: 					keystore
-		keystore_alias: 			opt.keystore_alias
-		keystore_password:			opt.keystore_password
-		keystore_alias_password:	opt.keystore_alias_password
-		base_files:					os.join_path(exe_dir, 'platforms', 'android')
+	pck_opt := android.PackageOptions{
+		verbosity: opt.verbosity
+		work_dir: opt.work_dir
+		is_prod: '-prod' in opt.v_flags
+		api_level: opt.api_level
+		build_tools: opt.build_tools
+		app_name: opt.app_name
+		lib_name: opt.lib_name
+		package_id: opt.package_id
+		icon: opt.icon
+		version_code: opt.version_code
+		v_flags: opt.v_flags
+		input: opt.input
+		assets_extra: opt.assets_extra
+		output_file: opt.output
+		keystore: keystore
+		keystore_alias: opt.keystore_alias
+		keystore_password: opt.keystore_password
+		keystore_alias_password: opt.keystore_alias_password
+		base_files: os.join_path(exe_dir, 'platforms', 'android')
 	}
-	if ! android.package(pck_opt) {
-		eprintln('Packaging didn\'t succeed')
+	if !android.package(pck_opt) {
+		eprintln("Packaging didn't succeed")
 		exit(1)
 	}
 
 	if opt.device_id != '' {
-		if ! android.deploy(deploy_opt) {
-			eprintln('Deployment didn\'t succeed')
+		if !android.deploy(deploy_opt) {
+			eprintln("Deployment didn't succeed")
 			exit(1)
 		} else {
 			if opt.verbosity > 0 {
-				println('Deployed to device (${opt.device_id}) successfully')
+				println('Deployed to device ($opt.device_id) successfully')
 			}
 		}
 	} else {
@@ -354,32 +341,39 @@ fn check_essentials(exit_on_error bool) {
 		eprintln('No V install could be detected')
 		eprintln('Please install V from https://github.com/vlang/v')
 		eprintln('or provide a valid path to V via VEXE env variable')
-		if exit_on_error { exit(1) }
+		if exit_on_error {
+			exit(1)
+		}
 	}
 	// Validate Java requirements
 	if !java.jdk_found() {
 		eprintln('No Java install(s) could be detected')
 		eprintln('Please install Java JDK >= 8 or provide a valid path via JAVA_HOME')
-		if exit_on_error { exit(1) }
+		if exit_on_error {
+			exit(1)
+		}
 	}
 	// Validate Android SDK requirements
 	if !sdk.found() {
 		eprintln('No Android SDK could be detected.')
 		eprintln('Please provide a valid path via ANDROID_SDK_ROOT')
-		eprintln('or run `${exe_name} install auto`')
-		if exit_on_error { exit(1) }
+		eprintln('or run `$exe_name install auto`')
+		if exit_on_error {
+			exit(1)
+		}
 	}
 	// Validate Android NDK requirements
 	if !ndk.found() {
 		eprintln('No Android NDK could be detected.')
 		eprintln('Please provide a valid path via ANDROID_NDK_ROOT')
-		eprintln('or run `${exe_name} install ndk`')
-		if exit_on_error { exit(1) }
+		eprintln('or run `$exe_name install ndk`')
+		if exit_on_error {
+			exit(1)
+		}
 	}
 }
 
 fn validate_env(opt Options) {
-
 	jdk_version := java.jdk_version()
 	if jdk_version == '' {
 		eprintln('No Java JDK install(s) could be detected')
@@ -388,30 +382,33 @@ fn validate_env(opt Options) {
 	}
 
 	jdk_semantic_version := semver.from(jdk_version) or {
-		panic(@MOD+'.'+@FN+':'+@LINE+' error converting jdk_version "$jdk_version" to semantic version.\nsemver: '+err)
+		panic(@MOD + '.' + @FN + ':' + @LINE +
+			' error converting jdk_version "$jdk_version" to semantic version.\nsemver: ' + err)
 	}
 	if !jdk_semantic_version.ge(semver.build(1, 8, 0)) { // NOTE When did this break:.satisfies('1.8.*') ???
 		// Some Android tools like `sdkmanager` in cmdline-tools;1.0 only worked with Java 8 JDK (1.8.x).
 		// (Absolute mess, yes)
-		eprintln('Java JDK version ${jdk_version} is not supported')
+		eprintln('Java JDK version $jdk_version is not supported')
 		eprintln('Please install Java >= 8 JDK or provide a valid path via JAVA_HOME')
 		exit(1)
 	}
 
 	build_tools_semantic_version := semver.from(sdk.default_build_tools_version) or {
-		panic(@MOD+'.'+@FN+':'+@LINE+' error converting build-tools version "$sdk.default_build_tools_version" to semantic version.\nsemver: '+err)
+		panic(@MOD + '.' + @FN + ':' + @LINE +
+			' error converting build-tools version "$sdk.default_build_tools_version" to semantic version.\nsemver: ' +
+			err)
 	}
 
 	if !build_tools_semantic_version.ge(semver.build(24, 0, 3)) { // NOTE When did this break:.satisfies('>=24.0.3') ???
 		// Some Android tools we need like `apksigner` is currently only available with build-tools >= 24.0.3.
 		// (Absolute mess, yes)
-		eprintln('Android build-tools version ${sdk.default_build_tools_version} is not supported')
+		eprintln('Android build-tools version $sdk.default_build_tools_version is not supported')
 		eprintln('Please install build-tools version >= 24.0.3')
-		eprintln('or run `${exe_name} install build-tools`')
+		eprintln('or run `$exe_name install build-tools`')
 		exit(1)
 	}
-
-	/* Currently not possible as version is sniffed from the directory it resides in (which can be anything)
+	/*
+	Currently not possible as version is sniffed from the directory it resides in (which can be anything)
 	// Validate Android NDK requirements
 	if ndk.found() {
 		ndk_semantic_version := semver.from(opt.ndk_version) or {
@@ -423,16 +420,15 @@ fn validate_env(opt Options) {
 			eprintln('or run `${exe_name} install "ndk;<version>"`')
 			exit(1)
 		}
-	}*/
-
+	}
+	*/
 	// API level
 	if opt.api_level.i16() < sdk.default_api_level.i16() {
-		eprintln('Notice: Android API level ${opt.api_level} is less than the recomended level (${sdk.default_api_level}).')
+		eprintln('Notice: Android API level $opt.api_level is less than the recomended level ($sdk.default_api_level).')
 	}
 }
 
 fn resolve_options(mut opt Options, exit_on_error bool) {
-
 	// Validate API level
 	mut api_level := sdk.default_api_level
 	if opt.api_level != '' {
@@ -447,12 +443,16 @@ fn resolve_options(mut opt Options, exit_on_error bool) {
 	if api_level == '' {
 		eprintln('Android API level "$opt.api_level" is not available in SDK.')
 		eprintln('It can be installed with `$exe_name install "platform;android-<API LEVEL>"`')
-		if exit_on_error { exit(1) }
+		if exit_on_error {
+			exit(1)
+		}
 	}
 	if api_level.i16() < sdk.min_supported_api_level.i16() {
-		eprintln('Android API level "$api_level" is less than the supported level (${sdk.min_supported_api_level}).')
-		eprintln('It can be installed with `$exe_name install "platform;android-${sdk.min_supported_api_level}"`')
-		if exit_on_error { exit(1) }
+		eprintln('Android API level "$api_level" is less than the supported level ($sdk.min_supported_api_level).')
+		eprintln('It can be installed with `$exe_name install "platform;android-$sdk.min_supported_api_level"`')
+		if exit_on_error {
+			exit(1)
+		}
 	}
 
 	opt.api_level = api_level
@@ -464,15 +464,17 @@ fn resolve_options(mut opt Options, exit_on_error bool) {
 			build_tools_version = opt.build_tools
 		} else {
 			// TODO FIX Warnings
-			eprintln('Android build-tools version ${opt.build_tools} is not available in SDK.')
-			eprintln('(It can be installed with `$exe_name install "build-tools;${opt.build_tools}"`)')
-			eprintln('Falling back to default ${build_tools_version}')
+			eprintln('Android build-tools version $opt.build_tools is not available in SDK.')
+			eprintln('(It can be installed with `$exe_name install "build-tools;$opt.build_tools"`)')
+			eprintln('Falling back to default $build_tools_version')
 		}
 	}
 	if build_tools_version == '' {
-		eprintln('Android build-tools version ${opt.build_tools} is not available in SDK.')
-		eprintln('(It can be installed with `$exe_name install "build-tools;${opt.build_tools}"`)')
-		if exit_on_error { exit(1) }
+		eprintln('Android build-tools version $opt.build_tools is not available in SDK.')
+		eprintln('(It can be installed with `$exe_name install "build-tools;$opt.build_tools"`)')
+		if exit_on_error {
+			exit(1)
+		}
 	}
 
 	opt.build_tools = build_tools_version
@@ -484,21 +486,24 @@ fn resolve_options(mut opt Options, exit_on_error bool) {
 			ndk_version = opt.ndk_version
 		} else {
 			// TODO FIX Warnings and add install function
-			eprintln('Android NDK version ${opt.ndk_version} is not available.')
-			//eprintln('(It can be installed with `$exe_name install "ndk;${opt.build_tools}"`)')
-			eprintln('Falling back to default ${ndk_version}')
+			eprintln('Android NDK version $opt.ndk_version is not available.')
+			// eprintln('(It can be installed with `$exe_name install "ndk;${opt.build_tools}"`)')
+			eprintln('Falling back to default $ndk_version')
 		}
 	}
 	if ndk_version == '' {
-		eprintln('Android NDK version ${opt.ndk_version} is not available.')
-		//eprintln('It can be installed with `$exe_name install android-api-${opt.api_level}`')
-		if exit_on_error { exit(1) }
+		eprintln('Android NDK version $opt.ndk_version is not available.')
+		// eprintln('It can be installed with `$exe_name install android-api-${opt.api_level}`')
+		if exit_on_error {
+			exit(1)
+		}
 	}
 
 	opt.ndk_version = ndk_version
 
 	// Output specific
-	default_file_name := opt.app_name.replace(os.path_separator.str(),'').replace(' ','_').to_lower()
+	default_file_name := opt.app_name.replace(os.path_separator.str(), '').replace(' ',
+		'_').to_lower()
 
 	mut output_file := ''
 	if opt.output != '' {
@@ -506,7 +511,7 @@ fn resolve_options(mut opt Options, exit_on_error bool) {
 		if ext != '' {
 			output_file = opt.output.all_before(ext)
 		} else {
-			output_file = os.join_path(opt.output.trim_right(os.path_separator),default_file_name)
+			output_file = os.join_path(opt.output.trim_right(os.path_separator), default_file_name)
 		}
 	} else {
 		output_file = default_file_name
@@ -516,7 +521,7 @@ fn resolve_options(mut opt Options, exit_on_error bool) {
 
 	// TODO can be supported when we can manipulate or generate AndroidManifest.xml + sources from code
 	// Java package ids/names are integrated hard into the eco-system
-	opt.lib_name = opt.app_name.replace(' ','_').to_lower()
+	opt.lib_name = opt.app_name.replace(' ', '_').to_lower()
 
 	if os.getenv('KEYSTORE_PASSWORD') != '' {
 		opt.keystore_password = os.getenv('KEYSTORE_PASSWORD')
@@ -534,7 +539,7 @@ fn vab_commit_hash() string {
 		$if windows {
 			git_cmd = 'git.exe -C "$exe_dir" rev-parse --short HEAD'
 		}
-		res := os.exec(git_cmd) or { os.Result{1,''} }
+		res := os.exec(git_cmd) or { os.Result{1, ''} }
 		if res.exit_code == 0 {
 			hash = res.output
 		}
@@ -551,7 +556,7 @@ fn doctor(opt Options) {
 	if sdkm == '' {
 		eprintln('No "sdkmanager" could be detected.\n')
 		if env_managable {
-			eprintln('You can run `${exe_name} install cmdline-tools` to install it.')
+			eprintln('You can run `$exe_name install cmdline-tools` to install it.')
 		}
 		eprintln('You can set the SDKMANAGER env variable or try your luck with `$exe_name install auto`.')
 		eprintln('Please see https://stackoverflow.com/a/61176718/1904615 for more help.\n')
@@ -578,7 +583,7 @@ fn doctor(opt Options) {
 	// Java section
 	println('Java
 	JDK
-		Version ${java.jdk_version()}
+		Version $java.jdk_version()
 		Path "$java.jdk_root()"')
 	// Android section
 	println('Android
@@ -590,20 +595,20 @@ fn doctor(opt Options) {
 		Path "$sdk.root()"
 		Writable ${os.is_writable(sdk.root())}
 	NDK
-		Version ${opt.ndk_version}
+		Version $opt.ndk_version
 		Path "$ndk.root()"
-		Side-by-side ${ndk.is_side_by_side()}
+		Side-by-side $ndk.is_side_by_side()
 	Build
-		API ${opt.api_level}
-		Build-tools ${opt.build_tools}')
+		API $opt.api_level
+		Build-tools $opt.build_tools')
 	if opt.keystore != '' || opt.keystore_alias != '' {
 		println('\tKeystore')
-		println('\t\tFile ${opt.keystore}')
-		println('\t\tAlias ${opt.keystore_alias}')
+		println('\t\tFile $opt.keystore')
+		println('\t\tAlias $opt.keystore_alias')
 	}
 	// Product section
 	println('Product
-	Name "${opt.app_name}"
+	Name "$opt.app_name"
 	Package "$opt.package_id"
 	Output "$opt.output"')
 	// V section
@@ -611,20 +616,19 @@ fn doctor(opt Options) {
 	Version $vxt.version() $vxt.version_commit_hash()
 	Path "$vxt.home()"')
 	if opt.v_flags.len > 0 {
-		println('\tFlags ${opt.v_flags}')
+		println('\tFlags $opt.v_flags')
 	}
 	// Print output of `v doctor` if v is found
 	if vxt.found() {
 		println('')
 		v_cmd := [
 			vxt.vexe(),
-			'doctor'
+			'doctor',
 		]
-		v_res := os.exec(v_cmd.join(' ')) or { os.Result{1,''} }
+		v_res := os.exec(v_cmd.join(' ')) or { os.Result{1, ''} }
 		out_lines := v_res.output.split('\n')
 		for line in out_lines {
 			println('\t$line')
 		}
 	}
-
 }
