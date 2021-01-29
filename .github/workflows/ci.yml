@@ -25,7 +25,7 @@ jobs:
     - name: Build local v
       run: make -j4
     - name: v test-fmt
-      run: \
+      run: |
         cd vab
         ../v/v -silent test-fmt
 
