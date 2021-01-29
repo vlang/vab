@@ -42,7 +42,12 @@ pub fn compile(opt CompileOptions) bool {
 		v_cmd << '-nocache'
 	}
 	v_cmd << opt.v_flags
-	v_cmd << ['-os android', '-apk', '-o "$v_output_file"', opt.input]
+	v_cmd << [
+		'-os android',
+		'-apk',
+		'-o "$v_output_file"',
+	]
+	v_cmd << opt.input
 	util.verbosity_print_cmd(v_cmd, opt.verbosity)
 	v_comp_res := util.run_or_exit(v_cmd)
 	if opt.verbosity > 1 {
@@ -117,10 +122,13 @@ pub fn compile(opt CompileOptions) bool {
 	}
 	cflags << ['-fPIC', '-fvisibility=hidden', '-ffunction-sections', '-fdata-sections', '-ferror-limit=1']
 
-	cflags << ['-Wall', '-Wextra', '-Wno-unused-variable', '-Wno-unused-parameter', '-Wno-unused-result', '-Wno-unused-function', '-Wno-missing-braces', '-Wno-unused-label', '-Werror=implicit-function-declaration']
+	cflags << ['-Wall', '-Wextra', '-Wno-unused-variable', '-Wno-unused-parameter', '-Wno-unused-result',
+		'-Wno-unused-function', '-Wno-missing-braces', '-Wno-unused-label', '-Werror=implicit-function-declaration']
 
 	// TODO Here to make the compilers shut up :/
-	cflags << ['-Wno-braced-scalar-init', '-Wno-incompatible-pointer-types', '-Wno-implicitly-unsigned-literal', '-Wno-pointer-sign', '-Wno-enum-conversion', '-Wno-int-conversion', '-Wno-int-to-pointer-cast', '-Wno-sign-compare', '-Wno-return-type', '-Wno-extra-tokens']
+	cflags << ['-Wno-braced-scalar-init', '-Wno-incompatible-pointer-types', '-Wno-implicitly-unsigned-literal',
+		'-Wno-pointer-sign', '-Wno-enum-conversion', '-Wno-int-conversion', '-Wno-int-to-pointer-cast',
+		'-Wno-sign-compare', '-Wno-return-type', '-Wno-extra-tokens']
 
 	defines << ['-DAPPNAME="$opt.lib_name"']
 	defines << ['-DANDROID', '-D__ANDROID__', '-DANDROIDVERSION=$opt.api_level']
