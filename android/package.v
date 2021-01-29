@@ -125,7 +125,8 @@ pub fn package(opt PackageOptions) bool {
 		'--verbose',
 		'--dex',
 		'--output=' + os.join_path('bin', 'classes.dex'),
-		'obj', /* obj_path */
+		'obj'
+		/* obj_path */
 	]
 	util.verbosity_print_cmd(dx_cmd, opt.verbosity)
 	util.run_or_exit(dx_cmd)
