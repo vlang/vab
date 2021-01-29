@@ -16,7 +16,7 @@ const (
 pub struct PackageOptions {
 	verbosity               int
 	work_dir                string
-	is_prod					bool
+	is_prod                 bool
 	api_level               string
 	build_tools             string
 	app_name                string
@@ -125,8 +125,7 @@ pub fn package(opt PackageOptions) bool {
 		'--verbose',
 		'--dex',
 		'--output=' + os.join_path('bin', 'classes.dex'),
-		'obj'
-		/* obj_path */
+		'obj' /* obj_path, */,
 	]
 	util.verbosity_print_cmd(dx_cmd, opt.verbosity)
 	util.run_or_exit(dx_cmd)
@@ -274,26 +273,28 @@ fn prepare_base(opt PackageOptions) (string, string) {
 	default_pkg_id_split := android.default_package_id.split('.')
 	native_activity_path := os.join_path(package_path, 'src', default_pkg_id_split.join(os.path_separator))
 	native_activity_file := os.join_path(native_activity_path, 'V.java')
-	//eprintln(native_activity_file)
+	// eprintln(native_activity_file)
 	if os.is_file(native_activity_file) {
 		if opt.verbosity > 1 {
 			println('Modifying native activity "$native_activity_file"')
 		}
 		mut java_src := os.read_file(native_activity_file) or { panic(err) }
 
-		//r'.*package\s+(io.v.android).*'
-		mut re := regex.regex_opt(r'.*package\s+('+android.default_package_id+r').*') or { panic(err) }
+		// r'.*package\s+(io.v.android).*'
+		mut re := regex.regex_opt(r'.*package\s+(' + android.default_package_id + r').*') or {
+			panic(err)
+		}
 		mut start, _ := re.match_string(java_src)
 		// Set new package ID if found
 		if start >= 0 && re.groups.len > 0 {
 			if opt.verbosity > 1 {
 				r := java_src[re.groups[0]..re.groups[1]]
 				// ATT: @spytheman
-				//t := opt.package_id
-				//println('Replacing "$r" with "$t"') // <- this results in a warning about $t not being used
-				//println('Replacing "$r" with ...')
-				//println('Replacing "$t" with ...') // <- this prints $t correctly
-				println('Replacing "$r" with "${opt.package_id}"')
+				// t := opt.package_id
+				// println('Replacing "$r" with "$t"') // <- this results in a warning about $t not being used
+				// println('Replacing "$r" with ...')
+				// println('Replacing "$t" with ...') // <- this prints $t correctly
+				println('Replacing "$r" with "$opt.package_id"')
 			}
 			java_src = java_src[0..re.groups[0]] + opt.package_id +
 				java_src[re.groups[1]..java_src.len]
@@ -305,24 +306,27 @@ fn prepare_base(opt PackageOptions) (string, string) {
 		if start >= 0 && re.groups.len > 0 {
 			if opt.verbosity > 1 {
 				r := java_src[re.groups[0]..re.groups[1]]
-				println('Replacing "$r" with "${opt.lib_name}"')
+				println('Replacing "$r" with "$opt.lib_name"')
 			}
 			java_src = java_src[0..re.groups[0]] + opt.lib_name +
 				java_src[re.groups[1]..java_src.len]
 		}
-		os.write_file(os.join_path(package_path, 'src', package_id_path, 'V.java'),
-			java_src) or { panic(err) }
+		os.write_file(os.join_path(package_path, 'src', package_id_path, 'V.java'), java_src) or {
+			panic(err)
+		}
 		// Remove left-overs from vab's copied skeleton
 		if opt.package_id != android.default_package_id {
 			os.rm(native_activity_file) or { panic(err) }
 			v_default_package_id := default_pkg_id_split.clone()
-			for i := v_default_package_id.len-1; i >= 0; i-- {
+			for i := v_default_package_id.len - 1; i >= 0; i-- {
 				if os.is_dir_empty(os.join_path(package_path, 'src', v_default_package_id.join(os.path_separator))) {
 					if opt.verbosity > 1 {
 						p := os.join_path(package_path, 'src', v_default_package_id.join(os.path_separator))
 						println('Removing default left-over directory "$p"')
 					}
-					os.rmdir_all(os.join_path(package_path, 'src',  v_default_package_id.join(os.path_separator))) or { panic(err) }
+					os.rmdir_all(os.join_path(package_path, 'src', v_default_package_id.join(os.path_separator))) or {
+						panic(err)
+					}
 				}
 				v_default_package_id.pop()
 			}
