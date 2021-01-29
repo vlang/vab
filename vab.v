@@ -140,6 +140,41 @@ fn main() {
 		println(fp.usage())
 		exit(0)
 	}
+
+	if opt.list_ndks {
+		if !ndk.found() {
+			eprintln('No NDK could be found. Please use `$exe_name doctor` to get more information.')
+			exit(1)
+		}
+		for ndk_v in ndk.versions_available() {
+			println(ndk_v)
+		}
+		exit(0)
+	}
+
+	if opt.list_apis {
+		if !sdk.found() {
+			eprintln('No SDK could be found. Please use `$exe_name doctor` to get more information.')
+			exit(1)
+		}
+		for api in sdk.apis_available() {
+			println(api)
+		}
+		exit(0)
+	}
+
+	if opt.list_build_tools {
+		if !sdk.found() {
+			eprintln('No SDK could be found. Please use `$exe_name doctor` to get more information.')
+			exit(1)
+		}
+		for btv in sdk.build_tools_available() {
+			println(btv)
+		}
+		exit(0)
+	}
+
+	// All flags after this requires an input argument
 	if fp.args.len == 0 {
 		println(fp.usage())
 		eprintln('No arguments given')
@@ -159,27 +194,6 @@ fn main() {
 			}
 			exit( res )
 		}
-	}
-
-	if opt.list_ndks {
-		for ndk_v in ndk.versions_available() {
-			println(ndk_v)
-		}
-		exit(0)
-	}
-
-	if opt.list_apis {
-		for api in sdk.apis_available() {
-			println(api)
-		}
-		exit(0)
-	}
-
-	if opt.list_build_tools {
-		for btv in sdk.build_tools_available() {
-			println(btv)
-		}
-		exit(0)
 	}
 
 	// Merge flags captured before FlagParser
@@ -541,12 +555,18 @@ fn doctor(opt Options) {
 		eprintln('Please see https://stackoverflow.com/a/61176718/1904615 for more help.\n')
 	} else {
 		if !env_managable {
-			eprintln('The detected `sdkmanager` seems outdated or incompatible with the Java version used.')
-			eprintln("For `$exe_name` to control it's own dependencies, please update `sdkmanager` found in:")
-			eprintln('"$sdkm"')
-			eprintln('or use a Java version that is compatible with your `sdkmanager`.')
-			eprintln('You can set the SDKMANAGER env variable or try your luck with `$exe_name install auto`.')
-			eprintln('Please see https://stackoverflow.com/a/61176718/1904615 for more help.\n')
+			sdk_is_writable := os.is_writable(sdk.root())
+			if !sdk_is_writable {
+				eprintln('The SDK at "$sdk.root()" is not writable.')
+				eprintln("`$exe_name` is not able to control the SDK and it's dependencies.")
+			} else {
+				eprintln('The detected `sdkmanager` seems outdated or incompatible with the Java version used.')
+				eprintln("For `$exe_name` to control it's own dependencies, please update `sdkmanager` found in:")
+				eprintln('"$sdkm"')
+				eprintln('or use a Java version that is compatible with your `sdkmanager`.')
+				eprintln('You can set the SDKMANAGER env variable or try your luck with `$exe_name install auto`.')
+				eprintln('Please see https://stackoverflow.com/a/61176718/1904615 for more help.\n')
+			}
 		}
 	}
 	// vab section
