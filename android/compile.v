@@ -37,7 +37,27 @@ pub fn compile(opt CompileOptions) bool {
 	}
 	vexe := vxt.vexe()
 	v_output_file := os.join_path(opt.work_dir, 'v_android.c')
+
+	// Dump C flags
+	vcflags_file := os.join_path(opt.work_dir, 'v.cflags')
+	os.rm(vcflags_file) or { }
 	mut v_cmd := [vexe]
+	if !opt.cache {
+		v_cmd << '-nocache'
+	}
+	v_cmd << opt.v_flags
+	v_cmd << [
+		'-dump-c-flags',
+		'"$vcflags_file"',
+		'-os android',
+		'-apk',
+	]
+	v_cmd << opt.input
+	util.verbosity_print_cmd(v_cmd, opt.verbosity)
+	util.run(v_cmd)
+	//
+
+	v_cmd = [vexe]
 	if !opt.cache {
 		v_cmd << '-nocache'
 	}
@@ -114,6 +134,20 @@ pub fn compile(opt CompileOptions) bool {
 	mut ldflags := []string{}
 	mut sources := []string{}
 
+	// Read in the dumped cflags
+	vcflags := os.read_file(vcflags_file) or { panic(err) }
+	for line in vcflags.split('\n') {
+		if line.contains('.tmp.c') || line.ends_with('.o"') {
+			continue
+		}
+		if line.starts_with('-I') {
+			includes << line
+		}
+		if line.starts_with('-l') {
+			ldflags << line
+		}
+	}
+
 	// ... still a bit of a mess
 	if '-prod' in opt.v_flags {
 		cflags << ['-Os']
@@ -145,16 +179,11 @@ pub fn compile(opt CompileOptions) bool {
 	}
 	// TODO support both GLES2 & GLES3 - GLES2 should be default - trust me
 	defines << ['-DSOKOL_GLES2']
-
 	ldflags << ['-uANativeActivity_onCreate', '-usokol_main']
-	includes << ['-I"$v_home/thirdparty/sokol"', '-I"$v_home/thirdparty/sokol/util"']
 
 	// stb_image
-	includes << ['-I"$v_home/thirdparty/stb_image"']
+	// includes << ['-I"$v_home/thirdparty/stb_image"']
 	sources << ['"$v_home/thirdparty/stb_image/stbi.c"']
-
-	// fontstash
-	includes << ['-I"$v_home/thirdparty/fontstash"']
 
 	// misc
 	ldflags << ['-llog', '-landroid', '-lEGL', '-lGLESv2', '-lm']
