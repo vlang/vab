@@ -16,11 +16,14 @@ pub fn run(args []string) os.Result {
 }
 
 fn main() {
-	mut test_dirs := []string{}
+	mut test_paths := []string{}
 	if os.args.len > 1 {
-		test_dirs << os.args[1..]
+		test_paths << os.args[1..]
 	}
-	v_test_clean_code(test_dirs)
+	if test_paths.len == 0 {
+		test_paths << os.getwd()
+	}
+	v_test_clean_code(test_paths)
 }
 
 fn v_test_clean_code(paths []string) {
