@@ -9,6 +9,26 @@ on:
       - "**.md"
 
 jobs:
+  code-formatting:
+    runs-on: ubuntu-20.04
+    timeout-minutes: 30
+    env:
+      VFLAGS: -cc tcc
+    steps:
+    - name: Checkout V
+      uses: actions/checkout@v2
+      with:
+        repository: vlang/v
+    - uses: actions/checkout@v2
+      with:
+        path: vab
+    - name: Build local v
+      run: make -j4
+    - name: v test-fmt
+      run: \
+        cd vab
+        ../v/v -silent test-fmt
+
   ubuntu-18_04:
     runs-on: ubuntu-18.04
     timeout-minutes: 30
