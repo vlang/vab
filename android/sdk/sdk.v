@@ -285,4 +285,6 @@ pub fn default_platforms_dir() string {
 
 pub fn setup(component Component, version string) {
 	// TODO
+	_ = component
+	_ = version
 }
