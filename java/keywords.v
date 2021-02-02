@@ -2,7 +2,7 @@
 // Use of this source code is governed by an MIT license file distributed with this software package
 module java
 
-const (
+pub const (
 	keywords = [
 		'abstract',
 		'assert',
