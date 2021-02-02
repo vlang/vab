@@ -74,7 +74,12 @@ jobs:
         export VEXE=./v
         vab/vab doctor
 
-    - name: Build APK (Default) examples/sokol/particles
+    - name: Build APK with cache (Default) examples/sokol/particles
+      run: |
+        export VEXE=./v
+        vab/vab -v 3 examples/sokol/particles -o apks/particles.apk
+
+    - name: Build APK without cache (Default) examples/sokol/particles
       run: |
         export VEXE=./v
         vab/vab --nocache -v 3 examples/sokol/particles -o apks/particles.apk
@@ -133,7 +138,12 @@ jobs:
         export VEXE=./v
         vab/vab doctor
 
-    - name: Build APK (Default) examples/sokol/particles
+    - name: Build APK with cache (Default) examples/sokol/particles
+      run: |
+        export VEXE=./v
+        vab/vab -v 3 examples/sokol/particles -o apks/particles.apk
+
+    - name: Build APK without cache (Default) examples/sokol/particles
       run: |
         export VEXE=./v
         vab/vab --nocache -v 3 examples/sokol/particles -o apks/particles.apk
@@ -186,7 +196,13 @@ jobs:
         vab/vab doctor
 
 # The supported ndk version (21.x.x) resides in ndk-bundle
-    - name: Build APK (Default) examples/sokol/particles
+    - name: Build APK with cache (Default) examples/sokol/particles
+      run: |
+        export VEXE=./v
+        export ANDROID_NDK_ROOT="$HOME/Library/Android/sdk/ndk-bundle"
+        vab/vab -v 3 examples/sokol/particles -o apks/particles.apk
+
+    - name: Build APK without cache (Default) examples/sokol/particles
       run: |
         export VEXE=./v
         export ANDROID_NDK_ROOT="$HOME/Library/Android/sdk/ndk-bundle"
