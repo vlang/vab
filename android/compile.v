@@ -101,7 +101,7 @@ pub fn compile(opt CompileOptions) bool {
 		if opt.verbosity > 2 {
 			println('Writing new hash $hash')
 		}
-		os.rm(hash_file) or { }
+		os.rm(hash_file) or { panic('$err_sig: failed removing "$hash_file". ' + err) }
 		mut hash_fh := os.open_file(hash_file, 'w+', 0o700) or {
 			panic('$err_sig: failed opening "$hash_file". ' + err)
 		}
