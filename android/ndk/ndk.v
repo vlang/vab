@@ -7,7 +7,7 @@ import android.sdk
 import android.util
 
 const (
-	home                  = os.home_dir()
+	home = os.home_dir()
 )
 
 pub const (
