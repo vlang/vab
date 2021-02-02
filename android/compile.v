@@ -30,7 +30,9 @@ pub struct CompileOptions {
 
 pub fn compile(opt CompileOptions) bool {
 	err_sig := @MOD + '.' + @FN
-	os.mkdir_all(opt.work_dir) or { panic('$err_sig: failed making directory "$opt.work_dir". ' + err) }
+	os.mkdir_all(opt.work_dir) or {
+		panic('$err_sig: failed making directory "$opt.work_dir". ' + err)
+	}
 	build_dir := os.join_path(opt.work_dir, 'build')
 
 	if opt.verbosity > 0 {
@@ -99,7 +101,7 @@ pub fn compile(opt CompileOptions) bool {
 		if opt.verbosity > 2 {
 			println('Writing new hash $hash')
 		}
-		os.rm(hash_file) or { panic('$err_sig: failed removing "$hash_file". ' + err) }
+		os.rm(hash_file) or { }
 		mut hash_fh := os.open_file(hash_file, 'w+', 0o700) or {
 			panic('$err_sig: failed opening "$hash_file". ' + err)
 		}
