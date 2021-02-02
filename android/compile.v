@@ -29,7 +29,10 @@ pub struct CompileOptions {
 }
 
 pub fn compile(opt CompileOptions) bool {
-	os.mkdir_all(opt.work_dir) or { panic(err) }
+	err_sig := @MOD + '.' + @FN
+	os.mkdir_all(opt.work_dir) or {
+		panic('$err_sig: failed making directory "$opt.work_dir". ' + err)
+	}
 	build_dir := os.join_path(opt.work_dir, 'build')
 
 	if opt.verbosity > 0 {
@@ -77,7 +80,9 @@ pub fn compile(opt CompileOptions) bool {
 	mut hash := ''
 	hash_file := os.join_path(opt.work_dir, 'v_android.hash')
 	if opt.cache && os.exists(build_dir) && os.exists(v_output_file) {
-		mut bytes := os.read_bytes(v_output_file) or { panic(err) }
+		mut bytes := os.read_bytes(v_output_file) or {
+			panic('$err_sig: failed reading "$v_output_file". ' + err)
+		}
 		bytes << '$opt.str()-$opt.cache_key'.bytes()
 		hash = md5.sum(bytes).hex()
 
@@ -96,9 +101,11 @@ pub fn compile(opt CompileOptions) bool {
 		if opt.verbosity > 2 {
 			println('Writing new hash $hash')
 		}
-		os.rm(hash_file) or { panic(err) }
-		mut hash_fh := os.open_file(hash_file, 'w+', 0o700) or { panic(err) }
-		hash_fh.write(hash.bytes()) or { panic(err) }
+		os.rm(hash_file) or { panic('$err_sig: failed removing "$hash_file". ' + err) }
+		mut hash_fh := os.open_file(hash_file, 'w+', 0o700) or {
+			panic('$err_sig: failed opening "$hash_file". ' + err)
+		}
+		hash_fh.write(hash.bytes()) or { panic('$err_sig: failed writing to "$hash_file". ' + err) }
 		hash_fh.close()
 	}
 	// Remove any previous builds
@@ -135,7 +142,9 @@ pub fn compile(opt CompileOptions) bool {
 	mut sources := []string{}
 
 	// Read in the dumped cflags
-	vcflags := os.read_file(vcflags_file) or { panic(err) }
+	vcflags := os.read_file(vcflags_file) or {
+		panic('$err_sig: failed writing C flags to "$vcflags_file". ' + err)
+	}
 	for line in vcflags.split('\n') {
 		if line.contains('.tmp.c') || line.ends_with('.o"') {
 			continue
@@ -198,10 +207,14 @@ pub fn compile(opt CompileOptions) bool {
 	mut arch_cc := map[string]string{}
 	mut arch_libs := map[string]string{}
 	for arch in archs {
-		compiler := ndk.compiler(opt.ndk_version, arch, opt.api_level) or { panic(err) }
+		compiler := ndk.compiler(opt.ndk_version, arch, opt.api_level) or {
+			panic('$err_sig: failed getting NDK compiler. ' + err)
+		}
 		arch_cc[arch] = compiler
 
-		arch_lib := ndk.libs_path(opt.ndk_version, arch, opt.api_level) or { panic(err) }
+		arch_lib := ndk.libs_path(opt.ndk_version, arch, opt.api_level) or {
+			panic('$err_sig: failed getting NDK libs path. ' + err)
+		}
 		arch_libs[arch] = arch_lib
 	}
 
@@ -214,7 +227,9 @@ pub fn compile(opt CompileOptions) bool {
 	// Cross compile .so lib files
 	for arch in archs {
 		arch_lib_dir := os.join_path(build_dir, 'lib', arch)
-		os.mkdir_all(arch_lib_dir) or { panic(err) }
+		os.mkdir_all(arch_lib_dir) or {
+			panic('$err_sig: failed making directory "$arch_lib_dir". ' + err)
+		}
 
 		build_cmd := [arch_cc[arch], cflags.join(' '), includes.join(' '),
 			defines.join(' '), sources.join(' '), arch_cflags[arch].join(' '), '-o "$arch_lib_dir/lib${opt.lib_name}.so"',
@@ -230,11 +245,15 @@ pub fn compile(opt CompileOptions) bool {
 	if 'armeabi-v7a' in archs {
 		// TODO fix DT_NAME crash instead of including a copy of the armeabi-v7a lib
 		armeabi_lib_dir := os.join_path(build_dir, 'lib', 'armeabi')
-		os.mkdir_all(armeabi_lib_dir) or { panic(err) }
+		os.mkdir_all(armeabi_lib_dir) or {
+			panic('$err_sig: failed making directory "$armeabi_lib_dir". ' + err)
+		}
 
 		armeabi_lib_src := os.join_path(build_dir, 'lib', 'armeabi-v7a', 'lib${opt.lib_name}.so')
 		armeabi_lib_dst := os.join_path(armeabi_lib_dir, 'lib${opt.lib_name}.so')
-		os.cp(armeabi_lib_src, armeabi_lib_dst) or { panic(err) }
+		os.cp(armeabi_lib_src, armeabi_lib_dst) or {
+			panic('$err_sig: failed copying "$armeabi_lib_src" to "$armeabi_lib_dst". ' + err)
+		}
 	}
 	return true
 }
