@@ -8,7 +8,7 @@ import java
 import android.sdk
 import android.util
 
-const (
+pub const (
 	default_app_name   = 'V Test App'
 	default_package_id = 'io.v.android'
 )
