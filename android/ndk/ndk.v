@@ -8,6 +8,9 @@ import android.util
 
 const (
 	home                  = os.home_dir()
+)
+
+pub const (
 	supported_archs       = ['arm64-v8a', 'armeabi-v7a', 'x86', 'x86_64']
 	min_supported_version = min_version()
 )

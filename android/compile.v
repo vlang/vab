@@ -8,7 +8,7 @@ import android.ndk
 import android.util
 import crypto.md5
 
-const (
+pub const (
 	default_archs = ['arm64-v8a', 'armeabi-v7a', 'x86', 'x86_64']
 )
 
