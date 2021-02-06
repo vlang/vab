@@ -28,6 +28,7 @@ JAVA_HOME=/path/to/java-jdk
 SDKMANAGER=/path/to//sdkmanager
 ANDROID_SDK_ROOT=/path/to/android_sdk_linux
 ANDROID_NDK_ROOT=/path/to/android_ndk_linux
+ANDROID_SERIAL=<device id>
 VEXE=/path/to/custom/v/binary
 ```
 
