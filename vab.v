@@ -236,11 +236,19 @@ fn main() {
 		run = '$package_id/${package_id}.V'
 	}
 
+	mut device_id := opt.device_id
+	if device_id == '' {
+		device_id = os.getenv('ANDROID_SERIAL')
+		if opt.verbosity > 0 && device_id != '' {
+			println('Using device "$device_id" from ANDROID_SERIAL env')
+		}
+	}
+
 	log_tag := opt.lib_name
 	deploy_opt := android.DeployOptions{
 		verbosity: opt.verbosity
 		v_flags: opt.v_flags
-		device_id: opt.device_id
+		device_id: device_id
 		deploy_file: opt.output
 		kill_adb: kill_adb
 		device_log: opt.device_log
@@ -318,13 +326,13 @@ fn main() {
 		exit(1)
 	}
 
-	if opt.device_id != '' {
+	if device_id != '' {
 		if !android.deploy(deploy_opt) {
 			eprintln("Deployment didn't succeed")
 			exit(1)
 		} else {
 			if opt.verbosity > 0 {
-				println('Deployed to device ($opt.device_id) successfully')
+				println('Deployed to device ($device_id) successfully')
 			}
 		}
 	} else {
