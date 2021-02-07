@@ -28,7 +28,6 @@ JAVA_HOME=/path/to/java-jdk
 SDKMANAGER=/path/to//sdkmanager
 ANDROID_SDK_ROOT=/path/to/android_sdk_linux
 ANDROID_NDK_ROOT=/path/to/android_ndk_linux
-ANDROID_SERIAL=<device id>
 VEXE=/path/to/custom/v/binary
 ```
 
@@ -66,6 +65,7 @@ Please make sure to adhere to all [guidelines](https://developer.android.com/stu
 VEXE                     # Absolute path to the V executable to use
 JAVA_HOME                # Absolute path to the Java install to use
 SDKMANAGER               # Absolute path to the sdkmanager to use
+ANDROID_SERIAL           # ID of the device to deploy to
 ANDROID_SDK_ROOT         # Absolute path to the Android SDK
 ANDROID_NDK_ROOT         # Absolute path to the Android NDK
 KEYSTORE_PASSWORD        # Password for keystore
