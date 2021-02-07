@@ -396,10 +396,6 @@ jobs:
         export VEXE=./v
         export ANDROID_SDK_ROOT="$HOME/Library/Android/sdk"
         export ANDROID_NDK_ROOT="$ANDROID_SDK_ROOT/ndk-bundle"
-        # Test
-        ls -al .
-        ls -al ui
-        ls -al ui/examples
         # Don't set Java > 8 here!
         $ANDROID_SDK_ROOT/emulator/emulator -avd test -no-snapshot -no-window -no-boot-anim -camera-back emulated -camera-front emulated -gpu swiftshader_indirect &
         adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed) ]]; do sleep 1; done;'
