@@ -114,4 +114,4 @@ Installed API levels can be listed with `vab --list-apis`.
 
 # Troubleshooting
 
-Android is a complex ecosystem - please consult our [FAQ](docs/faq.md) for answers to frequently asked questions.
+Android is a complex ecosystem - please consult our [FAQ](docs/FAQ.md) for answers to frequently asked questions.
