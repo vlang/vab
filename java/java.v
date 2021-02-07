@@ -96,6 +96,12 @@ pub fn jdk_version() string {
 		os.chdir(pwd)
 	}
 
+	if version.count('.') == 0 {
+		// Java 9 returns just "9".
+		// The semver module doesn't condsider this a semantic version number
+		version += '.0'
+	}
+
 	return version
 }
 
