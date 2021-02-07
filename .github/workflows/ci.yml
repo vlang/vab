@@ -408,10 +408,10 @@ jobs:
         #vab/vab -v 3 --device auto --archs 'x86_64' --package-id "io.v.ui.ci.examples.sokol.particles" run examples/sokol/particles
         # Output test
         adb -e logcat -c
-        vab/vab -cg -v 3 --device auto --archs 'x86_64' --package-id "io.v.ui.ci.examples.calcutator" run ui/examples/calcutator.v
+        vab/vab -cg -v 3 --device auto --archs 'x86_64' --package-id "io.v.ui.ci.examples.calculator" run ui/examples/calculator.v
         sleep 5
         adb -e logcat -d SOKOL_APP:D V_ANDROID:D v_test_app:D *:S > /tmp/logcat.dump.txt
         cat /tmp/logcat.dump.txt | grep -q 'SOKOL_APP: ... ok'; if [ ! $? -eq 0 ]; then cat /tmp/logcat.dump.txt; fi
         # Remove if cache is run
-        echo "Removing ui.calcutator" && adb uninstall io.v.ui.ci.examples.calcutator
+        echo "Removing ui.calculator" && adb uninstall io.v.ui.ci.examples.calculator
         adb -s emulator-5554 emu kill
