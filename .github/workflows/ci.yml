@@ -393,6 +393,11 @@ jobs:
 
     - name: Install and run V UI examples
       run: |
+        git clone --depth 1 https://github.com/vlang/ui
+        cd ui
+        mkdir -p ~/.vmodules
+        ln -s $(pwd) ~/.vmodules/ui
+        cd ..
         export VEXE=./v
         export ANDROID_SDK_ROOT="$HOME/Library/Android/sdk"
         export ANDROID_NDK_ROOT="$ANDROID_SDK_ROOT/ndk-bundle"
@@ -404,7 +409,7 @@ jobs:
         #vab/vab -v 3 --device auto --archs 'x86_64' --package-id "io.v.ui.ci.examples.sokol.particles" run examples/sokol/particles
         # Output test
         adb -e logcat -c
-        vab/vab -cg -v 3 --device auto --archs 'x86_64' --package-id "io.v.ui.ci.examples.calculator" run $HOME/.vmodules/ui/examples/calculator.v
+        vab/vab -cg -v 3 --device auto --archs 'x86_64' --package-id "io.v.ui.ci.examples.calculator" run ui/examples/calculator.v
         sleep 5
         adb -e logcat -d SOKOL_APP:D V_ANDROID:D v_test_app:D *:S > /tmp/logcat.dump.txt
         cat /tmp/logcat.dump.txt | grep -q 'SOKOL_APP: ... ok'; if [ ! $? -eq 0 ]; then cat /tmp/logcat.dump.txt; fi
