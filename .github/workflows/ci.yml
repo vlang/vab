@@ -243,7 +243,7 @@ jobs:
         export JAVA_HOME=$JAVA_HOME_14_X64
         vab/vab --nocache -v 3 examples/sokol/particles -o apks/java14/particles.apk
 
-  macos-latest-run-examples:
+  macos-latest-run-v-examples:
     runs-on: macOS-latest
     timeout-minutes: 30
     steps:
@@ -252,7 +252,8 @@ jobs:
       with:
         repository: vlang/v
 
-    - uses: actions/checkout@v2
+    - name: Checkout VAB
+      uses: actions/checkout@v2
       with:
         path: vab
 
@@ -305,7 +306,7 @@ jobs:
         # Don't set Java > 8 here! #export JAVA_HOME=$JAVA_HOME_11_X64
         $ANDROID_SDK_ROOT/emulator/emulator -avd test -no-snapshot -no-window -no-boot-anim -camera-back emulated -camera-front emulated -gpu swiftshader_indirect &
         adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed) ]]; do sleep 1; done;'
-        # Remove if cache is run
+        # Remove if cache is run, and emulator failed
         #echo "Removing particles" && adb uninstall org.v.test.ci.examples.sokol.particles
         #echo "Removing 2048" && adb uninstall org.v.test.ci.examples.game2048
         #echo "Removing tetris" && adb uninstall org.v.test.ci.examples.tetris
@@ -314,22 +315,104 @@ jobs:
         #export ADB_TAGS="$ADB_TAGS V_ANDROID:D v_test_app:D"
         # Compile for x86_64 only to speed up an already too slow process
         export JAVA_HOME=$JAVA_HOME_11_X64 # Use Java 11 for kicks
-        vab/vab -v 3 --device auto --archs 'x86_64' --package-id "io.v.test.ci.examples.sokol.particles" run examples/sokol/particles
-        vab/vab -v 3 --device auto --archs 'x86_64' --package-id "io.v.test.ci.examples.game2048" run examples/2048
-        vab/vab -v 3 --device auto --archs 'x86_64' --package-id "io.v.test.ci.examples.fireworks" run examples/fireworks
-        vab/vab -v 3 --device auto --archs 'x86_64' --package-id "io.v.test.ci.examples.gg.raven_text_rendering" run examples/gg/raven_text_rendering.v
-        vab/vab -v 3 --device auto --archs 'x86_64' --package-id "io.v.test.ci.examples.gg.rectangles" run examples/gg/rectangles.v
+        vab/vab -v 3 --device auto --archs 'x86_64' --package-id "io.v.ci.examples.sokol.particles" run examples/sokol/particles
+        vab/vab -v 3 --device auto --archs 'x86_64' --package-id "io.v.ci.examples.game2048" run examples/2048
+        vab/vab -v 3 --device auto --archs 'x86_64' --package-id "io.v.ci.examples.fireworks" run examples/fireworks
+        vab/vab -v 3 --device auto --archs 'x86_64' --package-id "io.v.ci.examples.gg.raven_text_rendering" run examples/gg/raven_text_rendering.v
+        vab/vab -v 3 --device auto --archs 'x86_64' --package-id "io.v.ci.examples.gg.rectangles" run examples/gg/rectangles.v
         # Output test
         adb -e logcat -c
-        vab/vab -cg -v 3 run --device auto --archs 'x86_64' --package-id "io.v.test.ci.examples.tetris" examples/tetris
+        vab/vab -cg -v 3 --device auto --archs 'x86_64' --package-id "io.v.ci.examples.tetris" run examples/tetris
         sleep 5
         adb -e logcat -d SOKOL_APP:D V_ANDROID:D v_test_app:D *:S > /tmp/logcat.dump.txt
         cat /tmp/logcat.dump.txt | grep -q 'SOKOL_APP: ... ok'; if [ ! $? -eq 0 ]; then cat /tmp/logcat.dump.txt; fi
         # Remove if cache is run
-        echo "Removing particles" && adb uninstall io.v.test.ci.examples.sokol.particles
-        echo "Removing 2048" && adb uninstall io.v.test.ci.examples.game2048
-        echo "Removing tetris" && adb uninstall io.v.test.ci.examples.tetris
-        echo "Removing fireworks" && adb uninstall io.v.test.ci.examples.fireworks
-        echo "Removing gg.raven_text_rendering" && adb uninstall io.v.test.ci.examples.gg.raven_text_rendering
-        echo "Removing gg.rectangles" && adb uninstall io.v.test.ci.examples.gg.rectangles
+        echo "Removing particles" && adb uninstall io.v.ci.examples.sokol.particles
+        echo "Removing 2048" && adb uninstall io.v.ci.examples.game2048
+        echo "Removing tetris" && adb uninstall io.v.ci.examples.tetris
+        echo "Removing fireworks" && adb uninstall io.v.ci.examples.fireworks
+        echo "Removing gg.raven_text_rendering" && adb uninstall io.v.ci.examples.gg.raven_text_rendering
+        echo "Removing gg.rectangles" && adb uninstall io.v.ci.examples.gg.rectangles
+        adb -s emulator-5554 emu kill
+
+  macos-latest-run-v-ui-examples:
+    runs-on: macOS-latest
+    timeout-minutes: 30
+    steps:
+    - name: Checkout V
+      uses: actions/checkout@v2
+      with:
+        repository: vlang/v
+
+    - name: Checkout V UI
+      uses: actions/checkout@v2
+      with:
+        repository: vlang/ui
+        path: $HOME/.vmodules/ui
+
+    - name: Checkout VAB
+      uses: actions/checkout@v2
+      with:
+        path: vab
+
+    - name: Build local v
+      run: make -j4
+
+    - name: Run tests
+      run: ./v test vab
+
+    - name: Build VAB with -prod
+      run: ./v -prod vab/vab.v
+
+    - name: Build VAB
+      run: ./v -g vab/vab.v
+
+    - name: Run vab --help
+      run: vab/vab --help
+
+    - name: Run vab doctor
+      run: |
+        export VEXE=./v
+        vab/vab doctor
+
+    - name: Cache emulator
+      id: cache-emulator
+      uses: actions/cache@v2
+      with:
+        path: |
+          /Users/runner/.android/avd
+          /Users/runner/Library/Android/sdk/system-images/android-30
+        key: ${{ runner.os }}-android-emulator-${{ hashFiles('/Users/runner/.android/avd') }}
+
+    - name: Prepare emulator
+      if: steps.cache-emulator.outputs.cache-hit != 'true'
+      run: |
+        export ANDROID_SDK_ROOT="$HOME/Library/Android/sdk"
+        echo yes | $ANDROID_SDK_ROOT/tools/bin/sdkmanager 'system-images;android-30;google_apis;x86_64'
+        echo no | $ANDROID_SDK_ROOT/tools/bin/avdmanager create avd --force --name test --abi google_apis/x86_64 --package 'system-images;android-30;google_apis;x86_64'
+
+    - name: Install and run V UI examples
+      run: |
+        git clone --depth 1 https://github.com/vlang/ui
+        cd ui
+        mkdir -p ~/.vmodules
+        ln -s $(pwd) ~/.vmodules/ui
+        cd ..
+        export VEXE=./v
+        export ANDROID_SDK_ROOT="$HOME/Library/Android/sdk"
+        export ANDROID_NDK_ROOT="$ANDROID_SDK_ROOT/ndk-bundle"
+        # Don't set Java > 8 here!
+        $ANDROID_SDK_ROOT/emulator/emulator -avd test -no-snapshot -no-window -no-boot-anim -camera-back emulated -camera-front emulated -gpu swiftshader_indirect &
+        adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed) ]]; do sleep 1; done;'
+        # Compile for x86_64 only to speed up an already too slow process
+        export JAVA_HOME=$JAVA_HOME_11_X64 # Use Java 11 for kicks
+        #vab/vab -v 3 --device auto --archs 'x86_64' --package-id "io.v.ui.ci.examples.sokol.particles" run examples/sokol/particles
+        # Output test
+        adb -e logcat -c
+        vab/vab -cg -v 3 --device auto --archs 'x86_64' --package-id "io.v.ui.ci.examples.calculator" run ui/examples/calculator.v
+        sleep 5
+        adb -e logcat -d SOKOL_APP:D V_ANDROID:D v_test_app:D *:S > /tmp/logcat.dump.txt
+        cat /tmp/logcat.dump.txt | grep -q 'SOKOL_APP: ... ok'; if [ ! $? -eq 0 ]; then cat /tmp/logcat.dump.txt; fi
+        # Remove if cache is run
+        echo "Removing ui.calculator" && adb uninstall io.v.ui.ci.examples.calculator
         adb -s emulator-5554 emu kill
