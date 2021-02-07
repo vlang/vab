@@ -252,6 +252,7 @@ jobs:
       with:
         repository: vlang/v
 
+    - name: Checkout VAB
     - uses: actions/checkout@v2
       with:
         path: vab
@@ -347,7 +348,9 @@ jobs:
       uses: actions/checkout@v2
       with:
         repository: vlang/ui
+        path: ui
 
+    - name: Checkout VAB
     - uses: actions/checkout@v2
       with:
         path: vab
