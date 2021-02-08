@@ -368,3 +368,4 @@ jobs:
         # Remove if cache is run
         echo "Removing ui.calculator" && adb uninstall io.v.ui.ci.examples.calculator
         echo "Removing ui.rectangles" && adb uninstall io.v.ui.ci.examples.rectangles
+        adb -s emulator-5554 emu kill
