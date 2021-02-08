@@ -304,7 +304,8 @@ jobs:
         export ANDROID_SDK_ROOT="$HOME/Library/Android/sdk"
         export ANDROID_NDK_ROOT="$ANDROID_SDK_ROOT/ndk-bundle"
         # Don't set Java > 8 here! #export JAVA_HOME=$JAVA_HOME_11_X64
-        pgrep emulator >/dev/null 2>&1 || $ANDROID_SDK_ROOT/emulator/emulator -avd test -no-snapshot -no-window -no-boot-anim -camera-back emulated -camera-front emulated -gpu swiftshader_indirect &
+        #pgrep emulator >/dev/null 2>&1 ||
+        $ANDROID_SDK_ROOT/emulator/emulator -avd test -no-snapshot -no-window -no-boot-anim -camera-back emulated -camera-front emulated -gpu swiftshader_indirect &
         adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed) ]]; do sleep 1; done;'
         # Remove if cache is run, and emulator failed
         #echo "Removing particles" && adb uninstall org.v.test.ci.examples.sokol.particles
@@ -335,61 +336,11 @@ jobs:
         echo "Removing gg.rectangles" && adb uninstall io.v.ci.examples.gg.rectangles
         adb -s emulator-5554 emu kill
 
-  macos-latest-run-v-ui-examples:
-    runs-on: macOS-latest
-    timeout-minutes: 30
-    steps:
-    - name: Checkout V
-      uses: actions/checkout@v2
-      with:
-        repository: vlang/v
-
     - name: Checkout V UI
       uses: actions/checkout@v2
       with:
         repository: vlang/ui
         path: $HOME/.vmodules/ui
-
-    - name: Checkout VAB
-      uses: actions/checkout@v2
-      with:
-        path: vab
-
-    - name: Build local v
-      run: make -j4
-
-    - name: Run tests
-      run: ./v test vab
-
-    - name: Build VAB with -prod
-      run: ./v -prod vab/vab.v
-
-    - name: Build VAB
-      run: ./v -g vab/vab.v
-
-    - name: Run vab --help
-      run: vab/vab --help
-
-    - name: Run vab doctor
-      run: |
-        export VEXE=./v
-        vab/vab doctor
-
-    - name: Cache emulator
-      id: cache-emulator
-      uses: actions/cache@v2
-      with:
-        path: |
-          /Users/runner/.android/avd
-          /Users/runner/Library/Android/sdk/system-images/android-30
-        key: ${{ runner.os }}-android-emulator-${{ hashFiles('/Users/runner/.android/avd') }}
-
-    - name: Prepare emulator
-      if: steps.cache-emulator.outputs.cache-hit != 'true'
-      run: |
-        export ANDROID_SDK_ROOT="$HOME/Library/Android/sdk"
-        echo yes | $ANDROID_SDK_ROOT/tools/bin/sdkmanager 'system-images;android-30;google_apis;x86_64'
-        echo no | $ANDROID_SDK_ROOT/tools/bin/avdmanager create avd --force --name test --abi google_apis/x86_64 --package 'system-images;android-30;google_apis;x86_64'
 
     - name: Install and run V UI examples
       run: |
@@ -402,7 +353,8 @@ jobs:
         export ANDROID_SDK_ROOT="$HOME/Library/Android/sdk"
         export ANDROID_NDK_ROOT="$ANDROID_SDK_ROOT/ndk-bundle"
         # Don't set Java > 8 here!
-        pgrep emulator >/dev/null 2>&1 || $ANDROID_SDK_ROOT/emulator/emulator -avd test -no-snapshot -no-window -no-boot-anim -camera-back emulated -camera-front emulated -gpu swiftshader_indirect &
+        #pgrep emulator >/dev/null 2>&1 ||
+        $ANDROID_SDK_ROOT/emulator/emulator -avd test -no-snapshot -no-window -no-boot-anim -camera-back emulated -camera-front emulated -gpu swiftshader_indirect &
         adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed) ]]; do sleep 1; done;'
         # Compile for x86_64 only to speed up an already too slow process
         export JAVA_HOME=$JAVA_HOME_11_X64 # Use Java 11 for kicks
@@ -416,4 +368,3 @@ jobs:
         # Remove if cache is run
         echo "Removing ui.calculator" && adb uninstall io.v.ui.ci.examples.calculator
         echo "Removing ui.rectangles" && adb uninstall io.v.ui.ci.examples.rectangles
-        adb -s emulator-5554 emu kill
