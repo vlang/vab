@@ -179,8 +179,9 @@ pub fn compile(opt CompileOptions) bool {
 	// TODO if full_screen
 	defines << ['-DANDROID_FULLSCREEN']
 
+	ndk_root := ndk.root_version(opt.ndk_version)
 	// NDK headers
-	includes << ['-I"$ndk.root()/sysroot/usr/include"', '-I"$ndk.root()/sysroot/usr/include/android"']
+	includes << ['-I"$ndk_root/sysroot/usr/include"', '-I"$ndk_root/sysroot/usr/include/android"']
 
 	// Sokol
 	if '-cg' in opt.v_flags || '-g' in opt.v_flags {
