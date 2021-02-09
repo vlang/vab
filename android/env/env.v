@@ -19,7 +19,7 @@ pub const (
 	// ndk - Works with android.compile(...)
 	// platform - Google Play minimum
 	// build-tools - Version where apksigner is included from
-	default_components  = {
+	default_components  = map{
 		'cmdline-tools-bootstrap-url': 'https://dl.google.com/android/repository/commandlinetools-{XXX}-6609375_latest.zip'
 		'cmdline-tools':               '2.1'
 		'sdk':                         'platform-tools'

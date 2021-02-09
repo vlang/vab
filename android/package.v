@@ -311,9 +311,8 @@ fn prepare_base(opt PackageOptions) (string, string) {
 			java_src = java_src[0..re.groups[0]] + opt.lib_name +
 				java_src[re.groups[1]..java_src.len]
 		}
-		os.write_file(os.join_path(package_path, 'src', package_id_path, 'VActivity.java'), java_src) or {
-			panic(err)
-		}
+		os.write_file(os.join_path(package_path, 'src', package_id_path, 'VActivity.java'),
+			java_src) or { panic(err) }
 		// Remove left-overs from vab's copied skeleton
 		if opt.package_id != android.default_package_id {
 			os.rm(native_activity_file) or { panic(err) }
