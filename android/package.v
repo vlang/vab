@@ -272,7 +272,7 @@ fn prepare_base(opt PackageOptions) (string, string) {
 
 	default_pkg_id_split := android.default_package_id.split('.')
 	native_activity_path := os.join_path(package_path, 'src', default_pkg_id_split.join(os.path_separator))
-	native_activity_file := os.join_path(native_activity_path, 'V.java')
+	native_activity_file := os.join_path(native_activity_path, 'VActivity.java')
 	// eprintln(native_activity_file)
 	if os.is_file(native_activity_file) {
 		if opt.verbosity > 1 {
@@ -311,7 +311,7 @@ fn prepare_base(opt PackageOptions) (string, string) {
 			java_src = java_src[0..re.groups[0]] + opt.lib_name +
 				java_src[re.groups[1]..java_src.len]
 		}
-		os.write_file(os.join_path(package_path, 'src', package_id_path, 'V.java'), java_src) or {
+		os.write_file(os.join_path(package_path, 'src', package_id_path, 'VActivity.java'), java_src) or {
 			panic(err)
 		}
 		// Remove left-overs from vab's copied skeleton
