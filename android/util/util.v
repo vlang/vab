@@ -78,3 +78,48 @@ pub fn unzip(file string, dir string) bool {
 	run_or_exit(unzip_cmd)
 	return true
 }
+
+// TODO remove when vlib os.cp_all is fixed
+// cp_all will recursively copy `src` to `dst`,
+// optionally overwriting files or dirs in `dst`.
+pub fn cp_all(src string, dst string, overwrite bool) ? {
+	source_path := real_path(src)
+	dest_path := real_path(dst)
+	if !exists(source_path) {
+		return error("Source path doesn't exist")
+	}
+	// single file copy
+	if !is_dir(source_path) {
+		adjusted_path := if is_dir(dest_path) {
+			join_path(dest_path, file_name(source_path))
+		} else {
+			dest_path
+		}
+		if exists(adjusted_path) {
+			if overwrite {
+				rm(adjusted_path) ?
+			} else {
+				return error('Destination file path already exist')
+			}
+		}
+		cp(source_path, adjusted_path) or { panic('cp $err') }
+		return
+	}
+	if !is_dir(dest_path) {
+		return error('Destination path is not a valid directory')
+	}
+	files := ls(source_path) ?
+	for file in files {
+		sp := join_path(source_path, file)
+		dp := join_path(dest_path, file)
+		if is_dir(sp) {
+			if !exists(dp) {
+				mkdir(dp) ?
+			}
+		}
+		cp_all(sp, dp, overwrite) or {
+			rmdir(dp) or { return error(err) }
+			return error(err)
+		}
+	}
+}

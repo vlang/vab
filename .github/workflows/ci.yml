@@ -322,11 +322,11 @@ jobs:
         vab/vab -v 3 --device auto --archs 'x86_64' --package-id "io.v.ci.examples.gg.raven_text_rendering" run examples/gg/raven_text_rendering.v
         vab/vab -v 3 --device auto --archs 'x86_64' --package-id "io.v.ci.examples.gg.rectangles" run examples/gg/rectangles.v
         # Output test
-        adb -e logcat -c
+        #adb -e logcat -c
         vab/vab -cg -v 3 --device auto --archs 'x86_64' --package-id "io.v.ci.examples.tetris" run examples/tetris
-        sleep 5
-        adb -e logcat -d SOKOL_APP:D V_ANDROID:D v_test_app:D *:S > /tmp/logcat.dump.txt
-        cat /tmp/logcat.dump.txt | grep -q 'SOKOL_APP: ... ok'; if [ ! $? -eq 0 ]; then cat /tmp/logcat.dump.txt; fi
+        #sleep 5
+        #adb -e logcat -d SOKOL_APP:D V_ANDROID:D v_test_app:D *:S > /tmp/logcat.dump.txt
+        #cat /tmp/logcat.dump.txt | grep -q 'SOKOL_APP: ... ok'; if [ ! $? -eq 0 ]; then cat /tmp/logcat.dump.txt; fi
         # Remove if cache is run
         echo "Removing particles" && adb uninstall io.v.ci.examples.sokol.particles
         echo "Removing 2048" && adb uninstall io.v.ci.examples.game2048
@@ -360,11 +360,11 @@ jobs:
         export JAVA_HOME=$JAVA_HOME_11_X64 # Use Java 11 for kicks
         vab/vab -cg -v 3 --device auto --archs 'x86_64' --package-id "io.v.ui.ci.examples.rectangles" run ui/examples/rectangles.v
         # Output test
-        adb -e logcat -c
+        #adb -e logcat -c
         vab/vab -cg -v 3 --device auto --archs 'x86_64' --package-id "io.v.ui.ci.examples.calculator" run ui/examples/calculator.v
-        sleep 5
-        adb -e logcat -d SOKOL_APP:D V_ANDROID:D v_test_app:D *:S > /tmp/logcat.dump.txt
-        cat /tmp/logcat.dump.txt | grep -q 'SOKOL_APP: ... ok'; if [ ! $? -eq 0 ]; then cat /tmp/logcat.dump.txt; fi
+        #sleep 5
+        #adb -e logcat -d SOKOL_APP:D V_ANDROID:D v_test_app:D *:S > /tmp/logcat.dump.txt
+        #cat /tmp/logcat.dump.txt | grep -q 'SOKOL_APP: ... ok'; if [ ! $? -eq 0 ]; then cat /tmp/logcat.dump.txt; fi
         # Remove if cache is run
         echo "Removing ui.calculator" && adb uninstall io.v.ui.ci.examples.calculator
         echo "Removing ui.rectangles" && adb uninstall io.v.ui.ci.examples.rectangles
