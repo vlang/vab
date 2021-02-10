@@ -250,7 +250,7 @@ fn main() {
 	mut device_id := opt.device_id
 	if device_id == '' {
 		device_id = os.getenv('ANDROID_SERIAL')
-		if opt.verbosity > 0 && device_id != '' {
+		if opt.verbosity > 1 && device_id != '' {
 			println('Using device "$device_id" from ANDROID_SERIAL env')
 		}
 	}
@@ -560,7 +560,7 @@ fn extend_from_v_mod(mut opt Options, exit_on_error bool) {
 				vab_package_id := v_mod.all_after('vab.package_id:').all_before('\n').replace("'",
 					'').replace('"', '').trim(' ')
 				if vab_package_id != '' {
-					if opt.verbosity > 0 {
+					if opt.verbosity > 1 {
 						println('Using package id "$vab_package_id" from v.mod file "$v_mod_file"')
 					}
 					opt.package_id = vab_package_id
@@ -570,7 +570,7 @@ fn extend_from_v_mod(mut opt Options, exit_on_error bool) {
 				vab_activity := v_mod.all_after('vab.activity:').all_before('\n').replace("'",
 					'').replace('"', '').trim(' ')
 				if vab_activity != '' {
-					if opt.verbosity > 0 {
+					if opt.verbosity > 1 {
 						println('Using package id "$vab_activity" from v.mod file "$v_mod_file"')
 					}
 					opt.activity_name = vab_activity
