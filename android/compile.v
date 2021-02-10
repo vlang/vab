@@ -189,7 +189,7 @@ pub fn compile(opt CompileOptions) bool {
 	}
 	// TODO support both GLES2 & GLES3 - GLES2 should be default
 	defines << ['-DSOKOL_GLES2']
-	//defines << ['-DSOKOL_GLES3']
+	// defines << ['-DSOKOL_GLES3']
 	ldflags << ['-uANativeActivity_onCreate', '-usokol_main']
 
 	// stb_image
