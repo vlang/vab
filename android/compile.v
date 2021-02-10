@@ -187,8 +187,9 @@ pub fn compile(opt CompileOptions) bool {
 	if '-cg' in opt.v_flags || '-g' in opt.v_flags {
 		defines << ['-DSOKOL_DEBUG']
 	}
-	// TODO support both GLES2 & GLES3 - GLES2 should be default - trust me
+	// TODO support both GLES2 & GLES3 - GLES2 should be default
 	defines << ['-DSOKOL_GLES2']
+	//defines << ['-DSOKOL_GLES3']
 	ldflags << ['-uANativeActivity_onCreate', '-usokol_main']
 
 	// stb_image
