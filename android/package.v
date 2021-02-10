@@ -408,7 +408,7 @@ fn prepare_base(opt PackageOptions) (string, string) {
 			}
 
 			is_debug_build := ('-cg' in opt.v_flags)
-			re = regex.regex_opt(r'.*<application\s.*\s+android:debuggable\s*=\s*"(.*)".*>') or {
+			re = regex.regex_opt(r'.*<application\s.*android:debuggable\s*=\s*"(.*)".*>') or {
 				panic(err)
 			}
 			start, _ = re.match_string(manifest)
@@ -437,16 +437,17 @@ fn prepare_base(opt PackageOptions) (string, string) {
 			}
 
 			if opt.activity_name != '' {
-				re = regex.regex_opt(r'.*<activity\s.*\s+android:name\s*=\s*"(.*)".*>') or {
+				re = regex.regex_opt(r'.*<activity\s.*android:name\s*=\s*"(.*)".*>') or {
 					panic(err)
 				}
 				start, _ = re.match_string(manifest)
 				if start >= 0 && re.groups.len > 0 {
+					fq_activity_name := opt.package_id + '.' + opt.activity_name
 					if opt.verbosity > 1 {
 						r := manifest[re.groups[0]..re.groups[1]]
-						println('Replacing activity name "$r" with "$opt.activity_name"')
+						println('Replacing activity name "$r" with "$fq_activity_name"')
 					}
-					manifest = manifest[0..re.groups[0]] + opt.activity_name +
+					manifest = manifest[0..re.groups[0]] + fq_activity_name +
 						manifest[re.groups[1]..manifest.len]
 				}
 			}

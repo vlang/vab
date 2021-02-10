@@ -232,9 +232,9 @@ fn main() {
 	kill_adb := os.getenv('VAB_KILL_ADB') != ''
 
 	mut run := ''
+	mut package_id := opt.package_id
+	mut activity_name := opt.activity_name
 	if opt.run {
-		mut package_id := opt.package_id
-		mut activity_name := opt.activity_name
 		if package_id == '' {
 			package_id = android.default_package_id
 		}
@@ -242,6 +242,9 @@ fn main() {
 			activity_name = android.default_activity_name
 		}
 		run = '$package_id/${package_id}.$activity_name'
+		if opt.verbosity > 1 {
+			println('Should run "$package_id/${package_id}.$activity_name"')
+		}
 	}
 
 	mut device_id := opt.device_id
@@ -316,8 +319,8 @@ fn main() {
 		build_tools: opt.build_tools
 		app_name: opt.app_name
 		lib_name: opt.lib_name
-		package_id: opt.package_id
-		activity_name: opt.activity_name
+		package_id: package_id
+		activity_name: activity_name
 		icon: opt.icon
 		version_code: opt.version_code
 		v_flags: opt.v_flags
