@@ -556,7 +556,7 @@ fn extend_from_v_mod(mut opt Options, exit_on_error bool) {
 	if opt.package_id == android.default_package_id || opt.activity_name == '' {
 		v_mod := os.read_file(v_mod_file) or { '' }
 		if v_mod.len > 0 {
-			if opt.package_id == android.default_package_id {
+			if opt.package_id == android.default_package_id && v_mod.contains('vab.package_id:') {
 				vab_package_id := v_mod.all_after('vab.package_id:').all_before('\n').replace("'",
 					'').replace('"', '').trim(' ')
 				if vab_package_id != '' {
@@ -566,7 +566,7 @@ fn extend_from_v_mod(mut opt Options, exit_on_error bool) {
 					opt.package_id = vab_package_id
 				}
 			}
-			if opt.activity_name == '' {
+			if opt.activity_name == '' && v_mod.contains('vab.activity:') {
 				vab_activity := v_mod.all_after('vab.activity:').all_before('\n').replace("'",
 					'').replace('"', '').trim(' ')
 				if vab_activity != '' {
