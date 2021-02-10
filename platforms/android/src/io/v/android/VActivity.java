@@ -7,7 +7,7 @@ public class VActivity extends NativeActivity {
 	private static VActivity thiz;
 	// Set instance reference
 	public VActivity() { thiz = this; }
-	private static VActivity getVActivity() {
+	public static VActivity getVActivity() {
 		return thiz;
 	}
 }

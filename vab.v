@@ -22,9 +22,8 @@ const (
 
 struct Options {
 	// App essentials
-	app_name   string
-	package_id string
-	icon       string
+	app_name string
+	icon     string
 	// Internals
 	verbosity int
 	work_dir  string
@@ -48,6 +47,9 @@ struct Options {
 mut:
 	input  string
 	output string
+	// App essentials
+	package_id    string
+	activity_name string
 	// Build and packaging
 	v_flags                 []string // flags passed to the V compiler
 	lib_name                string
@@ -110,6 +112,7 @@ fn main() {
 		//
 		app_name: fp.string('name', 0, android.default_app_name, 'Pretty app name')
 		package_id: fp.string('package-id', 0, android.default_package_id, 'App package ID (e.g. "org.company.app")')
+		activity_name: fp.string('activity-name', 0, '', 'The name of the main activity (e.g. "VActivity")')
 		icon: fp.string('icon', 0, '', 'App icon')
 		version_code: fp.int('version-code', 0, 0, 'Build version code (android:versionCode)')
 		//
@@ -219,21 +222,26 @@ fn main() {
 
 	if !(os.is_dir(input) || input_ext in accepted_input_files) {
 		println(fp.usage())
-		eprintln('$exe_name requires input to be a V file, an APK, AAB or a V source(s) directory')
+		eprintln('$exe_name requires input to be a V file, an APK, AAB or a directory containing V sources')
 		exit(1)
 	}
 	opt.input = input
+
+	extend_from_v_mod(mut opt, true)
 
 	kill_adb := os.getenv('VAB_KILL_ADB') != ''
 
 	mut run := ''
 	if opt.run {
-		// TODO 'com.package.name/com.package.name.ActivityName'
 		mut package_id := opt.package_id
+		mut activity_name := opt.activity_name
 		if package_id == '' {
 			package_id = android.default_package_id
 		}
-		run = '$package_id/${package_id}.V'
+		if activity_name == '' {
+			activity_name = android.default_activity_name
+		}
+		run = '$package_id/${package_id}.$activity_name'
 	}
 
 	mut device_id := opt.device_id
@@ -309,6 +317,7 @@ fn main() {
 		app_name: opt.app_name
 		lib_name: opt.lib_name
 		package_id: opt.package_id
+		activity_name: opt.activity_name
 		icon: opt.icon
 		version_code: opt.version_code
 		v_flags: opt.v_flags
@@ -527,7 +536,6 @@ fn resolve_options(mut opt Options, exit_on_error bool) {
 	output_file += '.apk'
 	opt.output = output_file
 
-	// TODO can be supported when we can manipulate or generate AndroidManifest.xml + sources from code
 	// Java package ids/names are integrated hard into the eco-system
 	opt.lib_name = opt.app_name.replace(' ', '_').to_lower()
 
@@ -536,6 +544,36 @@ fn resolve_options(mut opt Options, exit_on_error bool) {
 	}
 	if os.getenv('KEYSTORE_ALIAS_PASSWORD') != '' {
 		opt.keystore_alias_password = os.getenv('KEYSTORE_ALIAS_PASSWORD')
+	}
+}
+
+fn extend_from_v_mod(mut opt Options, exit_on_error bool) {
+	// Look up values in input v.mod file if no flags or defaults was set
+	v_mod_file := vxt.v_mod_path(opt.input)
+	if opt.package_id == android.default_package_id || opt.activity_name == '' {
+		v_mod := os.read_file(v_mod_file) or { '' }
+		if v_mod.len > 0 {
+			if opt.package_id == android.default_package_id {
+				vab_package_id := v_mod.all_after('vab.package_id:').all_before('\n').replace("'",
+					'').replace('"', '').trim(' ')
+				if vab_package_id != '' {
+					if opt.verbosity > 0 {
+						println('Using package id "$vab_package_id" from v.mod file "$v_mod_file"')
+					}
+					opt.package_id = vab_package_id
+				}
+			}
+			if opt.activity_name == '' {
+				vab_activity := v_mod.all_after('vab.activity:').all_before('\n').replace("'",
+					'').replace('"', '').trim(' ')
+				if vab_activity != '' {
+					if opt.verbosity > 0 {
+						println('Using package id "$vab_activity" from v.mod file "$v_mod_file"')
+					}
+					opt.activity_name = vab_activity
+				}
+			}
+		}
 	}
 }
 
