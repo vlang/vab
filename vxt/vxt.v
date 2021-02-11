@@ -63,7 +63,7 @@ pub fn version_commit_hash() string {
 	return 'deadbeef'
 }
 
-// v_mod_path returns the path to the nearest `v.mod` file if found, an empty string otherwise.
+// v_mod_path returns the path to the `v.mod` file next to `v_file_or_dir_path` if found, an empty string otherwise.
 pub fn v_mod_path(v_file_or_dir_path string) string {
 	if os.is_dir(v_file_or_dir_path) {
 		if os.is_file(os.join_path(v_file_or_dir_path, 'v.mod')) {
