@@ -227,7 +227,7 @@ fn main() {
 	}
 	opt.input = input
 
-	extend_from_v_mod(mut opt, true)
+	extend_from_dot_vab(mut opt)
 
 	kill_adb := os.getenv('VAB_KILL_ADB') != ''
 
@@ -550,28 +550,28 @@ fn resolve_options(mut opt Options, exit_on_error bool) {
 	}
 }
 
-fn extend_from_v_mod(mut opt Options, exit_on_error bool) {
-	// Look up values in input v.mod file if no flags or defaults was set
-	v_mod_file := vxt.v_mod_path(opt.input)
+fn extend_from_dot_vab(mut opt Options) {
+	// Look up values in input .vab file next to input if no flags or defaults was set
 	if opt.package_id == android.default_package_id || opt.activity_name == '' {
-		v_mod := os.read_file(v_mod_file) or { '' }
-		if v_mod.len > 0 {
-			if opt.package_id == android.default_package_id && v_mod.contains('vab.package_id:') {
-				vab_package_id := v_mod.all_after('vab.package_id:').all_before('\n').replace("'",
+		dot_vab_file := dot_vab_path(opt.input)
+		dot_vab := os.read_file(dot_vab_file) or { '' }
+		if dot_vab.len > 0 {
+			if opt.package_id == android.default_package_id && dot_vab.contains('package_id:') {
+				vab_package_id := dot_vab.all_after('package_id:').all_before('\n').replace("'",
 					'').replace('"', '').trim(' ')
 				if vab_package_id != '' {
 					if opt.verbosity > 1 {
-						println('Using package id "$vab_package_id" from v.mod file "$v_mod_file"')
+						println('Using package id "$vab_package_id" from .vab file "$dot_vab_file"')
 					}
 					opt.package_id = vab_package_id
 				}
 			}
-			if opt.activity_name == '' && v_mod.contains('vab.activity:') {
-				vab_activity := v_mod.all_after('vab.activity:').all_before('\n').replace("'",
+			if opt.activity_name == '' && dot_vab.contains('activity_name:') {
+				vab_activity := dot_vab.all_after('activity_name:').all_before('\n').replace("'",
 					'').replace('"', '').trim(' ')
 				if vab_activity != '' {
 					if opt.verbosity > 1 {
-						println('Using package id "$vab_activity" from v.mod file "$v_mod_file"')
+						println('Using package id "$vab_activity" from .vab file "$dot_vab_file"')
 					}
 					opt.activity_name = vab_activity
 				}
@@ -680,4 +680,18 @@ fn doctor(opt Options) {
 			println('\t$line')
 		}
 	}
+}
+
+// dot_vab_path returns the path to the `.vab` file next to `file_or_dir_path` if found, an empty string otherwise.
+pub fn dot_vab_path(file_or_dir_path string) string {
+	if os.is_dir(file_or_dir_path) {
+		if os.is_file(os.join_path(file_or_dir_path, '.vab')) {
+			return os.join_path(file_or_dir_path, '.vab')
+		}
+	} else {
+		if os.is_file(os.join_path(os.dir(file_or_dir_path), '.vab')) {
+			return os.join_path(os.dir(file_or_dir_path), '.vab')
+		}
+	}
+	return ''
 }
