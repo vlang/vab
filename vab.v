@@ -21,9 +21,6 @@ const (
 )
 
 struct Options {
-	// App essentials
-	app_name string
-	icon     string
 	// Internals
 	verbosity int
 	work_dir  string
@@ -48,6 +45,8 @@ mut:
 	input  string
 	output string
 	// App essentials
+	app_name      string
+	icon          string
 	package_id    string
 	activity_name string
 	// Build and packaging
@@ -556,6 +555,26 @@ fn extend_from_dot_vab(mut opt Options) {
 		dot_vab_file := dot_vab_path(opt.input)
 		dot_vab := os.read_file(dot_vab_file) or { '' }
 		if dot_vab.len > 0 {
+			if opt.icon == '' && dot_vab.contains('icon:') {
+				vab_icon := dot_vab.all_after('icon:').all_before('\n').replace("'", '').replace('"',
+					'').trim(' ')
+				if vab_icon != '' {
+					if opt.verbosity > 1 {
+						println('Using icon "vab_icon" from .vab file "$dot_vab_file"')
+					}
+					opt.icon = vab_icon
+				}
+			}
+			if opt.app_name == '' && dot_vab.contains('app_name:') {
+				vab_app_name := dot_vab.all_after('app_name:').all_before('\n').replace("'",
+					'').replace('"', '').trim(' ')
+				if vab_app_name != '' {
+					if opt.verbosity > 1 {
+						println('Using app name "vab_app_name" from .vab file "$dot_vab_file"')
+					}
+					opt.app_name = vab_app_name
+				}
+			}
 			if opt.package_id == android.default_package_id && dot_vab.contains('package_id:') {
 				vab_package_id := dot_vab.all_after('package_id:').all_before('\n').replace("'",
 					'').replace('"', '').trim(' ')
