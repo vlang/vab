@@ -551,7 +551,8 @@ fn resolve_options(mut opt Options, exit_on_error bool) {
 
 fn extend_from_dot_vab(mut opt Options) {
 	// Look up values in input .vab file next to input if no flags or defaults was set
-	if opt.package_id == android.default_package_id || opt.activity_name == '' {
+	if opt.package_id == android.default_package_id || opt.activity_name == ''
+		|| opt.app_name == android.default_app_name || opt.icon == '' {
 		dot_vab_file := dot_vab_path(opt.input)
 		dot_vab := os.read_file(dot_vab_file) or { '' }
 		if dot_vab.len > 0 {
@@ -565,7 +566,7 @@ fn extend_from_dot_vab(mut opt Options) {
 					opt.icon = vab_icon
 				}
 			}
-			if opt.app_name == '' && dot_vab.contains('app_name:') {
+			if opt.app_name == android.default_app_name && dot_vab.contains('app_name:') {
 				vab_app_name := dot_vab.all_after('app_name:').all_before('\n').replace("'",
 					'').replace('"', '').trim(' ')
 				if vab_app_name != '' {
