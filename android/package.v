@@ -289,7 +289,7 @@ fn prepare_base(opt PackageOptions) (string, string) {
 				})
 			}
 		}
-		util.cp_all(user_files_path, package_path, true) or { panic(err) }
+		os.cp_all(user_files_path, package_path, true) or { panic(err) }
 		is_custom = true
 	}
 
@@ -315,7 +315,9 @@ fn prepare_base(opt PackageOptions) (string, string) {
 	native_activity_path := os.join_path(package_path, 'src', default_pkg_id_path)
 	activity_file_name := android.default_activity_name + '.java'
 	native_activity_file := os.join_path(native_activity_path, activity_file_name)
-	eprintln(native_activity_file)
+	$if debug {
+		eprintln('Native activity file: "$native_activity_file"')
+	}
 	if os.is_file(native_activity_file) {
 		if opt.verbosity > 1 {
 			println('Modifying native activity "$native_activity_file"')
