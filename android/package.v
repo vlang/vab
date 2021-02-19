@@ -67,6 +67,7 @@ pub fn package(opt PackageOptions) bool {
 }
 
 fn package_aab(opt PackageOptions) bool {
+	/*
 	build_path := os.join_path(opt.work_dir, 'build', 'aab')
 	build_tools_path := os.join_path(sdk.build_tools_root(), opt.build_tools)
 
@@ -74,6 +75,7 @@ fn package_aab(opt PackageOptions) bool {
 	// keytool := os.join_path(java.jdk_bin_path(), 'keytool')
 	bundletool := env.bundletool()
 	aapt2 := env.aapt2()
+	*/
 	/*
 	dx := os.join_path(build_tools_path, 'dx')
 	zipalign := os.join_path(build_tools_path, 'zipalign')
