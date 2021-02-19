@@ -539,11 +539,11 @@ pub fn bundletool() string {
 			}
 		}
 	}
+	*/
 	// Give up
-	if !os.is_executable(bundletool) {
+	if !os.exists(bundletool) {
 		bundletool = ''
 	}
-	*/
 	return bundletool
 }
 
@@ -552,11 +552,13 @@ pub fn aapt2() string {
 	if !os.exists(aapt2) {
 		aapt2 = os.join_path(util.cache_dir(), 'aapt2')
 	}
+	if !os.is_executable(aapt2) {
+		aapt2 = ''
+	}
 	return aapt2
 }
 
 fn ensure_aapt2(verbosity int) ?bool {
-	/*
 	if aapt2() == '' {
 		dst := util.cache_dir()
 		if verbosity > 0 {
@@ -564,28 +566,33 @@ fn ensure_aapt2(verbosity int) ?bool {
 		}
 		// Download
 		uos := os.user_os().replace('windows', 'win').replace('macos', 'mac')
-		url := env.default_components['aapt2']['bootstrap_url'].replace('{XXX}',  uos)
-
-		// file := os.join_path(os.temp_dir(), 'bundletool.jar')
-		file := os.join_path(dst, 'aapt2.jar')
+		url := env.default_components['aapt2']['bootstrap_url'].replace('{XXX}', uos)
+		file := os.join_path(os.temp_dir(), 'aapt2.jar')
+		// file := os.join_path(dst, 'aapt2.jar')
 		if !os.exists(file) {
 			http.download_file(url, file) or {
 				return error(@MOD + '.' + @FN + ' ' +
 					'failed to download aapt2 needed for aab support: $err')
 			}
 		}
+		// Unpack
+		unpack_path := os.join_path(os.temp_dir(), 'vab-aapt2')
+		os.rmdir_all(unpack_path) or { }
+		os.mkdir_all(unpack_path) or {
+			return error(@MOD + '.' + @FN + ' ' + 'failed to install aapt2: $err')
+		}
+		util.unzip(file, unpack_path)
 		// Install
-		dst_check := os.join_path(dst, 'aapt2.jar')
-
-		//os.mv(file, dst+os.path_separator) or {
-		//	return error(@MOD + '.' + @FN + ' ' + 'failed to install bundletool: $err')
-		//}
-
+		aapt2_file := os.join_path(unpack_path, 'aapt2')
+		dst_check := os.join_path(dst, 'aapt2')
+		os.rm(dst_check) or { }
+		os.cp(aapt2_file, dst_check) or {
+			return error(@MOD + '.' + @FN + ' ' + 'failed to install aapt2: $err')
+		}
 		if os.exists(dst_check) {
 			return true
 		}
-		return error(@MOD + '.' + @FN + ' ' + 'failed to install bundletool to "$dst_check".')
+		return error(@MOD + '.' + @FN + ' ' + 'failed to install aapt2 to "$dst_check".')
 	}
-	*/
 	return false
 }

@@ -276,7 +276,7 @@ fn package_aab(opt PackageOptions) bool {
 	javac := os.join_path(java.jdk_bin_path(), 'javac')
 	jarsigner := os.join_path(java.jdk_bin_path(), 'jarsigner')
 	dx := os.join_path(build_tools_path, 'dx')
-	bundletool := env.bundletool()
+	bundletool := env.bundletool() // Run with "java -jar ..."
 	aapt2 := env.aapt2()
 	*/
 
