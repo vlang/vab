@@ -31,8 +31,9 @@ struct Options {
 	keystore       string
 	keystore_alias string
 	// Build specifics
-	c_flags []string // flags passed to the C compiler(s)
-	archs   []string
+	gles_version int
+	c_flags      []string // flags passed to the C compiler(s)
+	archs        []string
 	// Deploy specifics
 	run        bool
 	device_log bool
@@ -98,6 +99,7 @@ fn main() {
 		v_flags: fp.string_multi('flag', `f`, 'Additional flags for the V compiler')
 		c_flags: fp.string_multi('cflag', `c`, 'Additional flags for the C compiler')
 		archs: fp.string('archs', 0, '', 'Comma separated string with any of "$android.default_archs"').split(',')
+		gles_version: fp.int('gles', 0, android.default_gles_version, 'GLES version to use from any of "$android.supported_gles_versions"')
 		//
 		device_id: fp.string('device', `d`, '', 'Deploy to device <id>. Use "auto" to use first available.')
 		run: 'run' in cmd_flags // fp.bool('run', `r`, false, 'Run the app on the device after successful deployment.')
@@ -286,6 +288,7 @@ fn main() {
 		verbosity: opt.verbosity
 		cache: opt.cache
 		cache_key: compile_cache_key
+		gles_version: opt.gles_version
 		v_flags: opt.v_flags
 		c_flags: opt.c_flags
 		archs: opt.archs.filter(it.trim(' ') != '')

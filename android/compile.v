@@ -9,7 +9,9 @@ import android.util
 import crypto.md5
 
 pub const (
-	default_archs = ['arm64-v8a', 'armeabi-v7a', 'x86', 'x86_64']
+	default_archs           = ['arm64-v8a', 'armeabi-v7a', 'x86', 'x86_64']
+	supported_gles_versions = [2, 3]
+	default_gles_version    = 2
 )
 
 pub struct CompileOptions {
@@ -20,12 +22,13 @@ pub struct CompileOptions {
 	work_dir string // temporary work directory
 	input    string
 	//
-	archs       []string // compile for these CPU architectures
-	v_flags     []string // flags to pass to the v compiler
-	c_flags     []string // flags to pass to the C compiler(s)
-	ndk_version string   // version of the Android NDK to compile against
-	lib_name    string   // filename of the resulting .so ('${lib_name}.so')
-	api_level   string   // Android API level to use when compiling
+	gles_version int = android.default_gles_version
+	archs        []string // compile for these CPU architectures
+	v_flags      []string // flags to pass to the v compiler
+	c_flags      []string // flags to pass to the C compiler(s)
+	ndk_version  string   // version of the Android NDK to compile against
+	lib_name     string   // filename of the resulting .so ('${lib_name}.so')
+	api_level    string   // Android API level to use when compiling
 }
 
 pub fn compile(opt CompileOptions) bool {
@@ -185,11 +188,21 @@ pub fn compile(opt CompileOptions) bool {
 
 	// Sokol
 	if '-cg' in opt.v_flags || '-g' in opt.v_flags {
+		if opt.verbosity > 1 {
+			println('Define SOKOL_DEBUG')
+		}
 		defines << ['-DSOKOL_DEBUG']
 	}
-	// TODO support both GLES2 & GLES3 - GLES2 should be default
-	defines << ['-DSOKOL_GLES2']
-	// defines << ['-DSOKOL_GLES3']
+
+	if opt.verbosity > 1 {
+		println('Using GLES $opt.gles_version')
+	}
+	if opt.gles_version == 3 {
+		defines << ['-DSOKOL_GLES3']
+	} else {
+		defines << ['-DSOKOL_GLES2']
+	}
+
 	ldflags << ['-uANativeActivity_onCreate', '-usokol_main']
 
 	// stb_image
