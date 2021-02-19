@@ -386,7 +386,7 @@ fn ensure_bundletool(verbosity int) ?bool {
 		}
 		// Download
 		url := env.default_components['bundletool']['bootstrap_url']
-		//file := os.join_path(os.temp_dir(), 'bundletool.jar')
+		// file := os.join_path(os.temp_dir(), 'bundletool.jar')
 		file := os.join_path(dst, 'bundletool.jar')
 		if !os.exists(file) {
 			http.download_file(url, file) or {
@@ -396,9 +396,11 @@ fn ensure_bundletool(verbosity int) ?bool {
 		}
 		// Install
 		dst_check := os.join_path(dst, 'bundletool.jar')
-		/*os.mv(file, dst+os.path_separator) or {
+		/*
+		os.mv(file, dst+os.path_separator) or {
 			return error(@MOD + '.' + @FN + ' ' + 'failed to install bundletool: $err')
-		}*/
+		}
+		*/
 		if os.is_executable(dst_check) {
 			return true
 		}
