@@ -68,47 +68,6 @@ pub fn package(opt PackageOptions) bool {
 	}
 }
 
-fn package_aab(opt PackageOptions) bool {
-	// https://musteresel.github.io/posts/2019/07/build-android-app-bundle-on-command-line.html
-
-	/*
-	build_path := os.join_path(opt.work_dir, 'build', 'aab')
-	build_tools_path := os.join_path(sdk.build_tools_root(), opt.build_tools)
-
-	javac := os.join_path(java.jdk_bin_path(), 'javac')
-	jarsigner := os.join_path(java.jdk_bin_path(), 'jarsigner')
-	dx := os.join_path(build_tools_path, 'dx')
-	bundletool := env.bundletool()
-	aapt2 := env.aapt2()
-	*/
-
-	// aapt2 compile project/app/src/main/res/**/* -o compiled_resources
-
-	// aapt2 link --proto-format -o temporary.apk \
-	//      -I android_sdk/platforms/android-NN/android.jar \
-	//      --manifest project/app/src/main/AndroidManifest.xml \
-	//      -R compiled_resources/*.flat \
-	//      --auto-add-overlay --java gen
-
-	// javac -source 1.7 -target 1.7 \
-	//  -bootclasspath $JAVA_HOME/jre/lib/rt.jar \
-	//  -classpath android_sdk/platforms/android-NN/android.jar \
-	//  -d classes \
-	//  gen/**/*.java project/app/src/main/java/**/*.java
-
-	// unzip temporary.apk -d staging
-
-	// dx --dex --output=staging/dex/classes.dex classes/
-
-	// cd staging; zip -r ../base.zip *
-
-	// bundletool build-bundle --modules=base.zip --output=bundle.aab
-
-	// jarsigner -keystore mykeystore.jks bundle.aab my-id
-
-	return true
-}
-
 fn package_apk(opt PackageOptions) bool {
 	build_path := os.join_path(opt.work_dir, 'build')
 	build_tools_path := os.join_path(sdk.build_tools_root(), opt.build_tools)
@@ -307,8 +266,57 @@ fn package_apk(opt PackageOptions) bool {
 	return true
 }
 
+fn package_aab(opt PackageOptions) bool {
+	// https://musteresel.github.io/posts/2019/07/build-android-app-bundle-on-command-line.html
+
+	/*
+	build_path := os.join_path(opt.work_dir, 'build', 'aab')
+	build_tools_path := os.join_path(sdk.build_tools_root(), opt.build_tools)
+
+	javac := os.join_path(java.jdk_bin_path(), 'javac')
+	jarsigner := os.join_path(java.jdk_bin_path(), 'jarsigner')
+	dx := os.join_path(build_tools_path, 'dx')
+	bundletool := env.bundletool()
+	aapt2 := env.aapt2()
+	*/
+
+	// aapt2 compile project/app/src/main/res/**/* -o compiled_resources
+
+	// aapt2 link --proto-format -o temporary.apk \
+	//      -I android_sdk/platforms/android-NN/android.jar \
+	//      --manifest project/app/src/main/AndroidManifest.xml \
+	//      -R compiled_resources/*.flat \
+	//      --auto-add-overlay --java gen
+
+	// javac -source 1.7 -target 1.7 \
+	//  -bootclasspath $JAVA_HOME/jre/lib/rt.jar \
+	//  -classpath android_sdk/platforms/android-NN/android.jar \
+	//  -d classes \
+	//  gen/**/*.java project/app/src/main/java/**/*.java
+
+	// unzip temporary.apk -d staging
+
+	// dx --dex --output=staging/dex/classes.dex classes/
+
+	// cd staging; zip -r ../base.zip *
+
+	// bundletool build-bundle --modules=base.zip --output=bundle.aab
+
+	// jarsigner -keystore mykeystore.jks bundle.aab my-id
+
+	return true
+}
+
 fn prepare_base(opt PackageOptions) (string, string) {
-	package_path := os.join_path(opt.work_dir, 'package')
+	format := match opt.format {
+		.apk {
+			'apk'
+		}
+		.aab {
+			'aab'
+		}
+	}
+	package_path := os.join_path(opt.work_dir, 'package', format)
 	if opt.verbosity > 0 {
 		println('Removing previous package directory $package_path')
 	}
