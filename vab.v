@@ -50,6 +50,7 @@ mut:
 	icon          string
 	package_id    string
 	activity_name string
+	package_format string
 	// Build and packaging
 	v_flags                 []string // flags passed to the V compiler
 	lib_name                string
@@ -98,8 +99,8 @@ fn main() {
 		assets_extra: fp.string_multi('assets', `a`, 'Asset dir(s) to include in build')
 		v_flags: fp.string_multi('flag', `f`, 'Additional flags for the V compiler')
 		c_flags: fp.string_multi('cflag', `c`, 'Additional flags for the C compiler')
-		archs: fp.string('archs', 0, '', 'Comma separated string with any of "$android.default_archs"').split(',')
-		gles_version: fp.int('gles', 0, android.default_gles_version, 'GLES version to use from any of "$android.supported_gles_versions"')
+		archs: fp.string('archs', 0, '', 'Comma separated string with any of $android.default_archs').split(',')
+		gles_version: fp.int('gles', 0, android.default_gles_version, 'GLES version to use from any of $android.supported_gles_versions')
 		//
 		device_id: fp.string('device', `d`, '', 'Deploy to device <id>. Use "auto" to use first available.')
 		run: 'run' in cmd_flags // fp.bool('run', `r`, false, 'Run the app on the device after successful deployment.')
@@ -114,6 +115,7 @@ fn main() {
 		app_name: fp.string('name', 0, android.default_app_name, 'Pretty app name')
 		package_id: fp.string('package-id', 0, android.default_package_id, 'App package ID (e.g. "org.company.app")')
 		activity_name: fp.string('activity-name', 0, '', 'The name of the main activity (e.g. "VActivity")')
+		package_format: fp.string('format', 0, android.default_package_format, 'App package format. Any of $android.supported_package_formats')
 		icon: fp.string('icon', 0, '', 'App icon')
 		version_code: fp.int('version-code', 0, 0, 'Build version code (android:versionCode)')
 		//
@@ -313,6 +315,11 @@ fn main() {
 	if keystore == '' {
 		keystore = os.join_path(exe_dir, 'debug.keystore')
 	}
+	// Package format apk/aab
+	mut format := android.PackageFormat.apk
+	if opt.package_format == 'aab' {
+		format = android.PackageFormat.aab
+	}
 	pck_opt := android.PackageOptions{
 		verbosity: opt.verbosity
 		work_dir: opt.work_dir
@@ -322,6 +329,7 @@ fn main() {
 		app_name: opt.app_name
 		lib_name: opt.lib_name
 		package_id: package_id
+		format: format
 		activity_name: activity_name
 		icon: opt.icon
 		version_code: opt.version_code
