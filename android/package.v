@@ -5,16 +5,16 @@ module android
 import os
 import regex
 import java
-//import android.env
+// import android.env
 import android.sdk
 import android.util
 
 pub const (
-	default_app_name      = 'V Test App'
-	default_package_id    = 'io.v.android'
-	default_activity_name = 'VActivity'
-	default_package_format = 'apk'
-	supported_package_formats = ['apk','aab']
+	default_app_name          = 'V Test App'
+	default_package_id        = 'io.v.android'
+	default_activity_name     = 'VActivity'
+	default_package_format    = 'apk'
+	supported_package_formats = ['apk', 'aab']
 )
 
 pub enum PackageFormat {
@@ -84,18 +84,16 @@ fn package_aab(opt PackageOptions) bool {
 
 	// aapt2 compile project/app/src/main/res/**/* -o compiled_resources
 
+	// aapt2 link --proto-format -o temporary.apk \
+	//      -I android_sdk/platforms/android-NN/android.jar \
+	//      --manifest project/app/src/main/AndroidManifest.xml \
+	//      -R compiled_resources/*.flat \
+	//      --auto-add-overlay --java gen
 
-	 //aapt2 link --proto-format -o temporary.apk \
-     //      -I android_sdk/platforms/android-NN/android.jar \
-     //      --manifest project/app/src/main/AndroidManifest.xml \
-     //      -R compiled_resources/*.flat \
-     //      --auto-add-overlay --java gen
-
-
-	//javac -source 1.7 -target 1.7 \
-    //  -bootclasspath $JAVA_HOME/jre/lib/rt.jar \
-    //  -classpath android_sdk/platforms/android-NN/android.jar \
-    //  -d classes \
+	// javac -source 1.7 -target 1.7 \
+	//  -bootclasspath $JAVA_HOME/jre/lib/rt.jar \
+	//  -classpath android_sdk/platforms/android-NN/android.jar \
+	//  -d classes \
 	//  gen/**/*.java project/app/src/main/java/**/*.java
 
 	// unzip temporary.apk -d staging
@@ -112,7 +110,7 @@ fn package_aab(opt PackageOptions) bool {
 }
 
 fn package_apk(opt PackageOptions) bool {
-	build_path := os.join_path(opt.work_dir, 'build', 'apk')
+	build_path := os.join_path(opt.work_dir, 'build')
 	build_tools_path := os.join_path(sdk.build_tools_root(), opt.build_tools)
 
 	javac := os.join_path(java.jdk_bin_path(), 'javac')

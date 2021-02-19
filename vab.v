@@ -46,10 +46,10 @@ mut:
 	input  string
 	output string
 	// App essentials
-	app_name      string
-	icon          string
-	package_id    string
-	activity_name string
+	app_name       string
+	icon           string
+	package_id     string
+	activity_name  string
 	package_format string
 	// Build and packaging
 	v_flags                 []string // flags passed to the V compiler
