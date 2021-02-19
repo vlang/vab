@@ -56,6 +56,17 @@ pub const (
 	}
 )
 
+// Possible locations of the `sdkmanager` tool
+// https://stackoverflow.com/a/61176718
+const (
+	possible_relative_to_sdk_sdkmanager_paths = [
+		os.join_path('cmdline-tools', 'latest', 'bin'),
+		os.join_path('tools', 'latest', 'bin'),
+		os.join_path('cmdline-tools', 'tools', 'bin'),
+		os.join_path('tools', 'bin'),
+	]
+)
+
 pub enum Dependency {
 	sdk
 	ndk
@@ -75,7 +86,7 @@ pub struct InstallOptions {
 pub fn managable() bool {
 	sdk_is_writable := os.is_writable(sdk.root())
 	// sdkmanager checks
-	sdkm := sdk.sdkmanager()
+	sdkm := sdkmanager()
 	has_sdkmanager := sdkm != ''
 	mut sdkmanger_works := false
 	if has_sdkmanager {
@@ -224,14 +235,14 @@ fn install_opt(opt InstallOptions) ?bool {
 	} else if opt.dep == .cmdline_tools {
 		if opt.verbosity > 0 {
 			println(@MOD + '.' + @FN + ' ' +
-				'commandline tools is already installed in "$sdk.sdkmanager()".')
+				'commandline tools is already installed in "$sdkmanager()".')
 		}
 		if opt.verbosity > 0 {
 			println('Installing "Commandline Tools $opt.version"...')
 		}
 		cmd := [
 			'yes |' /* TODO Windows */,
-			sdk.sdkmanager(),
+			sdkmanager(),
 			'--sdk_root="$sdk.root()"',
 			'"cmdline-tools;$opt.version"',
 		]
@@ -254,7 +265,7 @@ fn install_opt(opt InstallOptions) ?bool {
 		// Ignore opt.version for now
 		cmd := [
 			'yes |' /* TODO Windows */,
-			sdk.sdkmanager(),
+			sdkmanager(),
 			'--sdk_root="$sdk.root()"',
 			'"platform-tools"',
 		]
@@ -277,7 +288,7 @@ fn install_opt(opt InstallOptions) ?bool {
 		}
 		cmd := [
 			'yes |' /* TODO Windows */,
-			sdk.sdkmanager(),
+			sdkmanager(),
 			'--sdk_root="$sdk.root()"',
 			'"ndk;$opt.version"',
 		]
@@ -300,7 +311,7 @@ fn install_opt(opt InstallOptions) ?bool {
 		}
 		cmd := [
 			'yes |' /* TODO Windows */,
-			sdk.sdkmanager(),
+			sdkmanager(),
 			'--sdk_root="$sdk.root()"',
 			'"build-tools;$opt.version"',
 		]
@@ -322,7 +333,7 @@ fn install_opt(opt InstallOptions) ?bool {
 		}
 		cmd := [
 			'yes |' /* TODO Windows */,
-			sdk.sdkmanager(),
+			sdkmanager(),
 			'--sdk_root="$sdk.root()"',
 			'"platforms;$opt.version"',
 		]
@@ -346,7 +357,7 @@ fn ensure_sdkmanager(verbosity int) ?bool {
 	// For troubleshooting and info, please see
 	// https://stackoverflow.com/a/58652345
 	// https://stackoverflow.com/a/61176718
-	if sdk.sdkmanager() == '' {
+	if sdkmanager() == '' {
 		// Let just cross fingers that it ends up where we want it.
 		dst := os.join_path(sdk.cache_dir(), 'cmdline-tools')
 		if verbosity > 0 {
@@ -378,8 +389,7 @@ fn ensure_sdkmanager(verbosity int) ?bool {
 }
 
 fn ensure_bundletool(verbosity int) ?bool {
-	if sdk.bundletool() == '' {
-		// Let just cross fingers that it ends up where we want it.
+	if bundletool() == '' {
 		dst := util.cache_dir()
 		if verbosity > 0 {
 			println('No `bundletool` found. Bootstrapping...')
@@ -401,12 +411,146 @@ fn ensure_bundletool(verbosity int) ?bool {
 			return error(@MOD + '.' + @FN + ' ' + 'failed to install bundletool: $err')
 		}
 		*/
-		if os.is_executable(dst_check) {
+		if os.exists(dst_check) {
 			return true
 		}
 		return error(@MOD + '.' + @FN + ' ' + 'failed to install bundletool to "$dst_check".')
 	}
 	return false
+}
+
+pub fn sdkmanager() string {
+	mut sdkmanager := os.getenv('SDKMANAGER')
+	// Check in cache
+	if !os.is_executable(sdkmanager) {
+		sdkmanager = os.join_path(util.cache_dir(), 'sdkmanager')
+		if !os.is_executable(sdkmanager) {
+			sdkmanager = os.join_path(sdk.cache_dir(), 'cmdline-tools', '3.0', 'bin',
+				'sdkmanager')
+		}
+		if !os.is_executable(sdkmanager) {
+			sdkmanager = os.join_path(sdk.cache_dir(), 'cmdline-tools', '2.1', 'bin',
+				'sdkmanager')
+		}
+		if !os.is_executable(sdkmanager) {
+			sdkmanager = os.join_path(sdk.cache_dir(), 'cmdline-tools', 'tools', 'bin',
+				'sdkmanager')
+		}
+	}
+	// Try if one is in PATH
+	if !os.is_executable(sdkmanager) {
+		if os.exists_in_system_path('sdkmanager') {
+			sdkmanager = os.find_abs_path_of_executable('sdkmanager') or { '' }
+		}
+	}
+	// Try detecting it in the SDK
+	if sdk.found() {
+		if !os.is_executable(sdkmanager) {
+			sdkmanager = os.join_path(sdk.tools_root(), 'bin', 'sdkmanager')
+		}
+		if !os.is_executable(sdkmanager) {
+			sdkmanager = os.join_path(sdk.root(), 'cmdline-tools', 'tools', 'bin', 'sdkmanager')
+		}
+		if !os.is_executable(sdkmanager) {
+			for relative_path in env.possible_relative_to_sdk_sdkmanager_paths {
+				sdkmanager = os.join_path(sdk.root(), relative_path, 'sdkmanager')
+				if os.is_executable(sdkmanager) {
+					break
+				}
+			}
+		}
+		if !os.is_executable(sdkmanager) {
+			version_dirs := util.ls_sorted(os.join_path(sdk.root(), 'cmdline-tools')).filter(fn (a string) bool {
+				return util.is_version(a)
+			})
+			for version_dir in version_dirs {
+				sdkmanager = os.join_path(sdk.root(), 'cmdline-tools', version_dir, 'bin',
+					'sdkmanager')
+				if os.is_executable(sdkmanager) {
+					break
+				}
+			}
+		}
+	}
+	// Give up
+	if !os.is_executable(sdkmanager) {
+		sdkmanager = ''
+	}
+	return sdkmanager
+}
+
+pub fn sdkmanager_version() string {
+	mut version := '0.0.0'
+	sdkm := sdkmanager()
+	if sdkm != '' {
+		cmd := [
+			sdkm,
+			'--version',
+		]
+		cmd_res := util.run(cmd)
+		if cmd_res.exit_code > 0 {
+			return version
+		}
+		version = cmd_res.output.trim(' \n\r')
+	}
+	return version
+}
+
+pub fn bundletool() string {
+	mut bundletool := os.getenv('BUNDLETOOL')
+	if !os.exists(bundletool) {
+		bundletool = os.join_path(util.cache_dir(), 'bundletool.jar')
+	}
+	// No fancy stuff right now
+	/*
+	// Check in cache
+	if !os.is_executable(bundletool) {
+		bundletool = os.join_path(util.cache_dir(), 'bundletool')
+		if !os.is_executable(bundletool) {
+			bundletool = os.join_path(util.cache_dir(), 'tools', 'bin', 'bundletool')
+		}
+	}
+	// Try if one is in PATH
+	if !os.is_executable(bundletool) {
+		if os.exists_in_system_path('bundletool') {
+			bundletool = os.find_abs_path_of_executable('bundletool') or { '' }
+		}
+	}
+	// Try detecting it in the SDK
+	if found() {
+		if !os.is_executable(bundletool) {
+			bundletool = os.join_path(root(), 'cmdline-tools', 'tools', 'bin', 'bundletool')
+		}
+		if !os.is_executable(bundletool) {
+			bundletool = os.join_path(root(), 'bin', 'bundletool')
+		}
+		if !os.is_executable(bundletool) {
+			version_dirs := util.ls_sorted(os.join_path(root(), 'cmdline-tools')).filter(fn (a string) bool {
+				return util.is_version(a)
+			})
+			for version_dir in version_dirs {
+				bundletool = os.join_path(root(), 'cmdline-tools', version_dir, 'bin',
+					'bundletool')
+				if os.is_executable(bundletool) {
+					break
+				}
+			}
+		}
+	}
+	// Give up
+	if !os.is_executable(bundletool) {
+		bundletool = ''
+	}
+	*/
+	return bundletool
+}
+
+pub fn aapt2() string {
+	mut aapt2 := os.getenv('AAPT2')
+	if !os.exists(aapt2) {
+		aapt2 = os.join_path(util.cache_dir(), 'aapt2')
+	}
+	return aapt2
 }
 
 /*

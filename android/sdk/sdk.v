@@ -33,17 +33,6 @@ const (
 	]
 )
 
-// Possible locations of the `sdkmanager` tool
-// https://stackoverflow.com/a/61176718
-const (
-	possible_relative_to_sdk_sdkmanager_paths = [
-		os.join_path('cmdline-tools', 'latest', 'bin'),
-		os.join_path('tools', 'latest', 'bin'),
-		os.join_path('cmdline-tools', 'tools', 'bin'),
-		os.join_path('tools', 'bin'),
-	]
-)
-
 enum Component {
 	ndk
 	api_level
@@ -132,80 +121,6 @@ pub fn cache_dir() string {
 		}
 	}
 	return cache_dir
-}
-
-pub fn sdkmanager() string {
-	mut sdkmanager := os.getenv('SDKMANAGER')
-	// Check in cache
-	if !os.is_executable(sdkmanager) {
-		sdkmanager = os.join_path(util.cache_dir(), 'sdkmanager')
-		if !os.is_executable(sdkmanager) {
-			sdkmanager = os.join_path(cache_dir(), 'cmdline-tools', '3.0', 'bin', 'sdkmanager')
-		}
-		if !os.is_executable(sdkmanager) {
-			sdkmanager = os.join_path(cache_dir(), 'cmdline-tools', '2.1', 'bin', 'sdkmanager')
-		}
-		if !os.is_executable(sdkmanager) {
-			sdkmanager = os.join_path(cache_dir(), 'cmdline-tools', 'tools', 'bin', 'sdkmanager')
-		}
-	}
-	// Try if one is in PATH
-	if !os.is_executable(sdkmanager) {
-		if os.exists_in_system_path('sdkmanager') {
-			sdkmanager = os.find_abs_path_of_executable('sdkmanager') or { '' }
-		}
-	}
-	// Try detecting it in the SDK
-	if found() {
-		if !os.is_executable(sdkmanager) {
-			sdkmanager = os.join_path(tools_root(), 'bin', 'sdkmanager')
-		}
-		if !os.is_executable(sdkmanager) {
-			sdkmanager = os.join_path(root(), 'cmdline-tools', 'tools', 'bin', 'sdkmanager')
-		}
-		if !os.is_executable(sdkmanager) {
-			for relative_path in sdk.possible_relative_to_sdk_sdkmanager_paths {
-				sdkmanager = os.join_path(root(), relative_path, 'sdkmanager')
-				if os.is_executable(sdkmanager) {
-					break
-				}
-			}
-		}
-		if !os.is_executable(sdkmanager) {
-			version_dirs := util.ls_sorted(os.join_path(root(), 'cmdline-tools')).filter(fn (a string) bool {
-				return util.is_version(a)
-			})
-			for version_dir in version_dirs {
-				sdkmanager = os.join_path(root(), 'cmdline-tools', version_dir, 'bin',
-					'sdkmanager')
-				if os.is_executable(sdkmanager) {
-					break
-				}
-			}
-		}
-	}
-	// Give up
-	if !os.is_executable(sdkmanager) {
-		sdkmanager = ''
-	}
-	return sdkmanager
-}
-
-pub fn sdkmanager_version() string {
-	mut version := '0.0.0'
-	sdkm := sdkmanager()
-	if sdkm != '' {
-		cmd := [
-			sdkm,
-			'--version',
-		]
-		cmd_res := util.run(cmd)
-		if cmd_res.exit_code > 0 {
-			return version
-		}
-		version = cmd_res.output.trim(' \n\r')
-	}
-	return version
 }
 
 pub fn tools_root() string {
@@ -312,47 +227,4 @@ pub fn default_platforms_dir() string {
 		return dirs.first()
 	}
 	return ''
-}
-
-pub fn bundletool() string {
-	mut bundletool := os.getenv('BUNDLETOOL')
-	// Check in cache
-	if !os.is_executable(bundletool) {
-		bundletool = os.join_path(util.cache_dir(), 'bundletool')
-		if !os.is_executable(bundletool) {
-			bundletool = os.join_path(util.cache_dir(), 'tools', 'bin', 'bundletool')
-		}
-	}
-	// Try if one is in PATH
-	if !os.is_executable(bundletool) {
-		if os.exists_in_system_path('bundletool') {
-			bundletool = os.find_abs_path_of_executable('bundletool') or { '' }
-		}
-	}
-	// Try detecting it in the SDK
-	if found() {
-		if !os.is_executable(bundletool) {
-			bundletool = os.join_path(root(), 'cmdline-tools', 'tools', 'bin', 'bundletool')
-		}
-		if !os.is_executable(bundletool) {
-			bundletool = os.join_path(root(), 'bin', 'bundletool')
-		}
-		if !os.is_executable(bundletool) {
-			version_dirs := util.ls_sorted(os.join_path(root(), 'cmdline-tools')).filter(fn (a string) bool {
-				return util.is_version(a)
-			})
-			for version_dir in version_dirs {
-				bundletool = os.join_path(root(), 'cmdline-tools', version_dir, 'bin',
-					'bundletool')
-				if os.is_executable(bundletool) {
-					break
-				}
-			}
-		}
-	}
-	// Give up
-	if !os.is_executable(bundletool) {
-		bundletool = ''
-	}
-	return bundletool
 }

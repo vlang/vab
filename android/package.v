@@ -5,6 +5,7 @@ module android
 import os
 import regex
 import java
+import android.env
 import android.sdk
 import android.util
 
@@ -14,12 +15,18 @@ pub const (
 	default_activity_name = 'VActivity'
 )
 
+pub enum PackageFormat {
+	apk
+	aab
+}
+
 pub struct PackageOptions {
 	verbosity               int
 	work_dir                string
 	is_prod                 bool
 	api_level               string
 	build_tools             string
+	format                  PackageFormat = .apk
 	app_name                string
 	lib_name                string
 	package_id              string
@@ -38,7 +45,6 @@ pub struct PackageOptions {
 }
 
 pub fn package(opt PackageOptions) bool {
-	// Build APK
 	if opt.verbosity > 0 {
 		println('Preparing package "$opt.package_id"...')
 	}
@@ -49,8 +55,36 @@ pub fn package(opt PackageOptions) bool {
 		eprintln('https://developer.android.com/studio/build/application-id')
 		return false
 	}
+	// Build APK
+	return match opt.format {
+		.apk {
+			package_apk(opt)
+		}
+		.aab {
+			package_aab(opt)
+		}
+	}
+}
 
-	build_path := os.join_path(opt.work_dir, 'build')
+fn package_aab(opt PackageOptions) bool {
+	build_path := os.join_path(opt.work_dir, 'build', 'aab')
+	build_tools_path := os.join_path(sdk.build_tools_root(), opt.build_tools)
+
+	javac := os.join_path(java.jdk_bin_path(), 'javac')
+	// keytool := os.join_path(java.jdk_bin_path(), 'keytool')
+	bundletool := env.bundletool()
+	aapt2 := env.aapt2()
+	/*
+	dx := os.join_path(build_tools_path, 'dx')
+	zipalign := os.join_path(build_tools_path, 'zipalign')
+	apksigner := os.join_path(build_tools_path, 'apksigner')
+	*/
+
+	return true
+}
+
+fn package_apk(opt PackageOptions) bool {
+	build_path := os.join_path(opt.work_dir, 'build', 'apk')
 	build_tools_path := os.join_path(sdk.build_tools_root(), opt.build_tools)
 
 	javac := os.join_path(java.jdk_bin_path(), 'javac')

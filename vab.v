@@ -620,7 +620,7 @@ fn vab_commit_hash() string {
 }
 
 fn doctor(opt Options) {
-	sdkm := sdk.sdkmanager()
+	sdkm := env.sdkmanager()
 	env_managable := env.managable()
 
 	// Validate Android `sdkmanager` tool
@@ -661,7 +661,7 @@ fn doctor(opt Options) {
 	println('Android
 	ENV
 		sdkmanager "$sdkm"
-		sdkmanager.version "$sdk.sdkmanager_version()"
+		sdkmanager.version "$env.sdkmanager_version()"
 		Managable: $env_managable
 	SDK
 		Path "$sdk.root()"
