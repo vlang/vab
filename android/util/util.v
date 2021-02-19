@@ -32,7 +32,27 @@ pub fn ls_sorted(path string) []string {
 }
 
 pub fn cache_dir() string {
-	return os.join_path(os.cache_dir(), 'v', 'android')
+	cache_dir := os.join_path(os.cache_dir(), 'v', 'android')
+	if !os.exists(cache_dir) {
+		os.mkdir_all(cache_dir) or {
+			panic(@MOD + '.' + @FN + ' error making cache directory "$cache_dir". ' + err)
+		}
+	}
+	return cache_dir
+}
+
+pub fn is_version(str string) bool {
+	dots := str.count('.')
+	if dots >= 1 && dots <= 2 {
+		stripped := str.split('.').join('')
+		for byt in stripped.bytes() {
+			if !byt.is_digit() {
+				return false
+			}
+		}
+		return true
+	}
+	return false
 }
 
 pub fn verbosity_print_cmd(args []string, verbosity int) {

@@ -10,7 +10,9 @@ import android.util
 import semver
 
 pub const (
-	accepted_components = ['auto', 'cmdline-tools', 'sdk', 'ndk', 'platform', 'build-tools']
+	accepted_components = ['auto', 'cmdline-tools', 'sdk', 'ndk', 'platform', 'build-tools', 'bundletool',
+		'aapt2',
+	]
 	// 6858069 = cmdline-tools;3.0 <- zip structure changes *sigh*
 	// 6609375 = cmdline-tools;2.1 <- latest that support `sdkmanager --version` *sigh*
 	// cmdline-tools-bootstrap-url - Replace {XXX} with linux/mac/win
@@ -20,12 +22,37 @@ pub const (
 	// platform - Google Play minimum
 	// build-tools - Version where apksigner is included from
 	default_components  = map{
-		'cmdline-tools-bootstrap-url': 'https://dl.google.com/android/repository/commandlinetools-{XXX}-6609375_latest.zip'
-		'cmdline-tools':               '2.1'
-		'sdk':                         'platform-tools'
-		'ndk':                         ndk.min_supported_version
-		'platform':                    'android-' + sdk.min_supported_api_level
-		'build-tools':                 sdk.min_supported_build_tools_version
+		'cmdline-tools': map{
+			'name':          'cmdline-tools'
+			'version':       '2.1'
+			'bootstrap_url': 'https://dl.google.com/android/repository/commandlinetools-{XXX}-6609375_latest.zip'
+		}
+		'sdk':           map{
+			'name':    'platform-tools'
+			'version': ''
+		}
+		'ndk':           map{
+			'name':    'ndk'
+			'version': ndk.min_supported_version
+		}
+		'platform':      map{
+			'name':    'platform'
+			'version': 'android-' + sdk.min_supported_api_level
+		}
+		'build-tools':   map{
+			'name':    'build-tools'
+			'version': sdk.min_supported_build_tools_version
+		}
+		'bundletool':    map{
+			'name':          'bundletool'
+			'version':       '1.5.0'
+			'bootstrap_url': 'https://github.com/google/bundletool/releases/download/1.5.0/bundletool-all-1.5.0.jar'
+		}
+		'aapt2':         map{
+			'name':          'aapt2'
+			'version':       '7.0.0'
+			'bootstrap_url': 'https://dl.google.com/android/maven2/com/android/tools/build/aapt2/7.0.0-alpha07-7087017/aapt2-7.0.0-alpha07-7087017-{XXX}.jar'
+		}
 	}
 )
 
@@ -35,6 +62,8 @@ pub enum Dependency {
 	platform
 	build_tools
 	cmdline_tools
+	bundletool
+	aapt2
 }
 
 pub struct InstallOptions {
@@ -90,6 +119,7 @@ pub fn managable() bool {
 
 pub fn install(components string, verbosity int) int {
 	mut ios := []InstallOptions{}
+	mut ensure_sdk := true
 	// Allows to specify a string list of things to install
 	components_array := components.split(',')
 	for comp in components_array {
@@ -98,7 +128,7 @@ pub fn install(components string, verbosity int) int {
 		is_auto := component.contains('auto')
 
 		if !is_auto {
-			version = env.default_components[component] // Set default version
+			version = env.default_components[component]['version'] // Set default version
 			if component.contains(';') { // If user has specified a version, use that
 				cs := component.split(';')
 				component = cs.first()
@@ -107,7 +137,7 @@ pub fn install(components string, verbosity int) int {
 		}
 
 		if !(component in env.accepted_components) {
-			eprintln(@MOD + ' ' + @FN + ' install component "$component" not recognized.')
+			eprintln(@MOD + ' ' + @FN + ' component "$component" not recognized.')
 			eprintln('Available components ${env.accepted_components}.')
 			return 1
 		}
@@ -120,11 +150,11 @@ pub fn install(components string, verbosity int) int {
 		match component {
 			'auto' {
 				ios = [
-					InstallOptions{.cmdline_tools, env.default_components['cmdline-tools'], verbosity},
-					InstallOptions{.sdk, env.default_components['sdk'], verbosity},
-					InstallOptions{.ndk, env.default_components['ndk'], verbosity},
-					InstallOptions{.build_tools, env.default_components['build-tools'], verbosity},
-					InstallOptions{.platform, env.default_components['platform'], verbosity},
+					InstallOptions{.cmdline_tools, env.default_components['cmdline-tools']['name'], verbosity},
+					InstallOptions{.sdk, env.default_components['sdk']['name'], verbosity},
+					InstallOptions{.ndk, env.default_components['ndk']['name'], verbosity},
+					InstallOptions{.build_tools, env.default_components['build-tools']['name'], verbosity},
+					InstallOptions{.platform, env.default_components['platform']['name'], verbosity},
 				]
 				break
 			}
@@ -143,6 +173,14 @@ pub fn install(components string, verbosity int) int {
 			'platform' {
 				ios << InstallOptions{.platform, version, verbosity}
 			}
+			'bundletool' {
+				ensure_sdk = false
+				ios << InstallOptions{.bundletool, version, verbosity}
+			}
+			'aapt2' {
+				ensure_sdk = false
+				ios << InstallOptions{.aapt2, version, verbosity}
+			}
 			else {
 				eprintln(@MOD + ' ' + @FN + ' unknown component "$component"')
 				return 1
@@ -150,9 +188,11 @@ pub fn install(components string, verbosity int) int {
 		}
 	}
 
-	ensure(verbosity) or {
-		eprintln(err)
-		return 1
+	if ensure_sdk {
+		ensure_sdkmanager(verbosity) or {
+			eprintln(err)
+			return 1
+		}
 	}
 
 	for io in ios {
@@ -164,48 +204,10 @@ pub fn install(components string, verbosity int) int {
 	return 0
 }
 
-fn ensure(verbosity int) ?bool {
-	// Android development is a complete mess. Struggles include things like:
-	// * Ever changing tool locations
-	// * Missing version info from tools
-	// * Inconsistent versions of tools between major releases.
-	// * Who doesn't remember the big compiler change from gcc to clang ...
-	// For troubleshooting and info, please see
-	// https://stackoverflow.com/a/58652345
-	// https://stackoverflow.com/a/61176718
-	if sdk.sdkmanager() == '' {
-		// Let just cross fingers that it ends up where we want it.
-		dst := os.join_path(util.cache_dir(), 'cmdline-tools')
-		if verbosity > 0 {
-			println('No `sdkmanageer` found. Bootstrapping...')
-		}
-		// Download
-		uos := os.user_os().replace('windows', 'win').replace('macos', 'mac')
-		url := env.default_components['cmdline-tools-bootstrap-url'].replace('{XXX}',
-			uos)
-		file := os.join_path(os.temp_dir(), 'v-android-sdk-cmdltools.tmp.zip')
-		if !os.exists(file) {
-			http.download_file(url, file) or {
-				return error(@MOD + '.' + @FN + ' ' +
-					'failed to download commandline tools needed for bootstrapping: $err')
-			}
-		}
-		// Install
-		os.mkdir_all(dst) or { panic(err) }
-		dst_check := os.join_path(dst, 'tools', 'bin')
-		if util.unzip(file, dst) {
-			os.chmod(os.join_path(dst_check, 'sdkmanager'), 0o755)
-		}
-		if os.is_executable(os.join_path(dst_check, 'sdkmanager')) {
-			return true
-		}
-		return error(@MOD + '.' + @FN + ' ' + 'failed to install commandline tools to ${dst_check}.')
-	}
-	return false
-}
-
 fn install_opt(opt InstallOptions) ?bool {
-	if opt.dep != .cmdline_tools && !managable() {
+	loose := opt.dep == .bundletool || opt.dep == .aapt2
+
+	if !loose && opt.dep != .cmdline_tools && !managable() {
 		if !os.is_writable(sdk.root()) {
 			return error(@MOD + '.' + @FN + ' ' +
 				'No permission to write in Android SDK root. Please install manually or ensure write access to "$sdk.root()".')
@@ -217,7 +219,9 @@ fn install_opt(opt InstallOptions) ?bool {
 	if opt.verbosity > 0 {
 		println(@MOD + '.' + @FN + ' installing $opt.dep ${opt.version}...')
 	}
-	if opt.dep == .cmdline_tools {
+	if opt.dep == .bundletool {
+		return ensure_bundletool(opt.verbosity)
+	} else if opt.dep == .cmdline_tools {
 		if opt.verbosity > 0 {
 			println(@MOD + '.' + @FN + ' ' +
 				'commandline tools is already installed in "$sdk.sdkmanager()".')
@@ -331,3 +335,80 @@ fn install_opt(opt InstallOptions) ?bool {
 	}
 	return error(@MOD + '.' + @FN + ' ' + 'unknown install type $opt.dep')
 }
+
+fn ensure_sdkmanager(verbosity int) ?bool {
+	// Android development is a complete mess. Struggles include things like:
+	// * Ever changing tool locations
+	// * Missing version info from tools
+	// * Core tools living their life outside the SDK (bundletool, modified AAPT2)
+	// * Inconsistent versions of tools between major/minor releases.
+	// * ... and who doesn't remember the big compiler change from gcc to clang ...
+	// For troubleshooting and info, please see
+	// https://stackoverflow.com/a/58652345
+	// https://stackoverflow.com/a/61176718
+	if sdk.sdkmanager() == '' {
+		// Let just cross fingers that it ends up where we want it.
+		dst := os.join_path(sdk.cache_dir(), 'cmdline-tools')
+		if verbosity > 0 {
+			println('No `sdkmanager` found. Bootstrapping...')
+		}
+		// Download
+		uos := os.user_os().replace('windows', 'win').replace('macos', 'mac')
+		url := env.default_components['cmdline-tools']['bootstrap_url'].replace('{XXX}',
+			uos)
+		file := os.join_path(os.temp_dir(), 'v-android-sdk-cmdltools.tmp.zip')
+		if !os.exists(file) {
+			http.download_file(url, file) or {
+				return error(@MOD + '.' + @FN + ' ' +
+					'failed to download commandline tools needed for bootstrapping: $err')
+			}
+		}
+		// Install
+		os.mkdir_all(dst) or { panic(err) }
+		dst_check := os.join_path(dst, 'tools', 'bin')
+		if util.unzip(file, dst) {
+			os.chmod(os.join_path(dst_check, 'sdkmanager'), 0o755)
+		}
+		if os.is_executable(os.join_path(dst_check, 'sdkmanager')) {
+			return true
+		}
+		return error(@MOD + '.' + @FN + ' ' + 'failed to install commandline tools to "$dst_check".')
+	}
+	return false
+}
+
+fn ensure_bundletool(verbosity int) ?bool {
+	if sdk.bundletool() == '' {
+		// Let just cross fingers that it ends up where we want it.
+		dst := util.cache_dir()
+		if verbosity > 0 {
+			println('No `bundletool` found. Bootstrapping...')
+		}
+		// Download
+		url := env.default_components['bundletool']['bootstrap_url']
+		//file := os.join_path(os.temp_dir(), 'bundletool.jar')
+		file := os.join_path(dst, 'bundletool.jar')
+		if !os.exists(file) {
+			http.download_file(url, file) or {
+				return error(@MOD + '.' + @FN + ' ' +
+					'failed to download bundletool needed for aab support: $err')
+			}
+		}
+		// Install
+		dst_check := os.join_path(dst, 'bundletool.jar')
+		/*os.mv(file, dst+os.path_separator) or {
+			return error(@MOD + '.' + @FN + ' ' + 'failed to install bundletool: $err')
+		}*/
+		if os.is_executable(dst_check) {
+			return true
+		}
+		return error(@MOD + '.' + @FN + ' ' + 'failed to install bundletool to "$dst_check".')
+	}
+	return false
+}
+
+/*
+fn ensure_aapt2(verbosity int) ?bool {
+
+}
+*/
