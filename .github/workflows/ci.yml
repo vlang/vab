@@ -104,6 +104,13 @@ jobs:
         export JAVA_HOME=$JAVA_HOME_12_X64
         vab/vab --nocache -v 3 examples/sokol/particles -o apks/java12/particles.apk
 
+    # AAB Testing
+    - name: Install AAB dependencies
+      run: |
+        export VEXE=./v
+        vab/vab install bundletool
+        vab/vab install aapt2
+
     - name: Build AAB with cache (Default) examples/sokol/particles
       run: |
         export VEXE=./v
@@ -221,7 +228,9 @@ jobs:
       run: vab/vab --help
 
     - name: Setup env
-      run: mkdir apks apks/java8 apks/java11 apks/java12
+      run: |
+        mkdir apks apks/java8 apks/java11 apks/java12
+        mkdir aabs aabs/java8 aabs/java11 aabs/java12
 
     - name: Run vab doctor
       run: |
