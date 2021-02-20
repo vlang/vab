@@ -68,8 +68,8 @@ jobs:
 
     - name: Setup env
       run: |
-      mkdir apks apks/java8 apks/java11 apks/java12
-      mkdir aabs aabs/java8 aabs/java11 aabs/java12
+        mkdir apks apks/java8 apks/java11 apks/java12
+        mkdir aabs aabs/java8 aabs/java11 aabs/java12
 
     - name: Run vab doctor
       run: |
