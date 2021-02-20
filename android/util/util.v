@@ -98,3 +98,21 @@ pub fn unzip(file string, dir string) bool {
 	run_or_exit(unzip_cmd)
 	return true
 }
+
+pub fn zip(dir string, file string) bool {
+	/*
+	eprintln('Zipping ${file} to ${dir}...')
+	mut zip := szip.open(file, 0, szip.m_ronly) or { return false }
+	zip.close()
+	*/
+
+	// TODO zip
+	zip_cmd := [
+		'zip',
+		'-f',
+		file,
+		dir,
+	]
+	run_or_exit(zip_cmd)
+	return true
+}

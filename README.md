@@ -70,6 +70,9 @@ ANDROID_SDK_ROOT         # Absolute path to the Android SDK
 ANDROID_NDK_ROOT         # Absolute path to the Android NDK
 KEYSTORE_PASSWORD        # Password for keystore
 KEYSTORE_ALIAS_PASSWORD  # Password for keystore alias
+BUNDLETOOL               # Absolute path to the bundletool to use
+AAPT2                    # Absolute path to the aapt2 to use
+ADB                      # Absolute path to the adb to use
 
 VAB_KILL_ADB             # Set to let vab kill adb after use. This is useful on some hosts.
 ```

@@ -5,7 +5,7 @@ module android
 import os
 import regex
 import java
-// import android.env
+import android.env
 import android.sdk
 import android.util
 
@@ -17,35 +17,36 @@ pub const (
 	supported_package_formats = ['apk', 'aab']
 )
 
+// PackageFormat holds all supported package formats
 pub enum PackageFormat {
 	apk
 	aab
 }
 
+// PackageOptions represents an Android package configuration
 pub struct PackageOptions {
-	verbosity               int
-	work_dir                string
-	is_prod                 bool
-	api_level               string
-	build_tools             string
-	format                  PackageFormat = .apk
-	app_name                string
-	lib_name                string
-	package_id              string
-	activity_name           string
-	icon                    string
-	version_code            int
-	v_flags                 []string
-	input                   string
-	assets_extra            []string
-	output_file             string
-	keystore                string
-	keystore_alias          string
-	keystore_password       string
-	keystore_alias_password string
-	base_files              string
+	verbosity     int
+	work_dir      string
+	is_prod       bool
+	api_level     string
+	build_tools   string
+	format        PackageFormat = .apk
+	app_name      string
+	lib_name      string
+	package_id    string
+	activity_name string
+	icon          string
+	version_code  int
+	v_flags       []string
+	input         string
+	assets_extra  []string
+	output_file   string
+	keystore      Keystore
+	base_files    string
 }
 
+// package ouputs one of the supported Android package formats based on
+// `PackageOptions`
 pub fn package(opt PackageOptions) bool {
 	if opt.verbosity > 0 {
 		println('Preparing package "$opt.package_id"...')
@@ -55,6 +56,11 @@ pub fn package(opt PackageOptions) bool {
 		eprintln('Package id "$opt.package_id" seems invalid.')
 		eprintln('Please consult the Android documentation for details:')
 		eprintln('https://developer.android.com/studio/build/application-id')
+		return false
+	}
+	if opt.is_prod && opt.package_id == android.default_package_id {
+		eprintln('Package id "$opt.package_id" is used by the V team.')
+		eprintln('Please do not deploy to app stores using package id "$android.default_package_id".')
 		return false
 	}
 	// Build APK
@@ -68,12 +74,14 @@ pub fn package(opt PackageOptions) bool {
 	}
 }
 
+// package_apk ouputs an Android .apk package file based on the `PackageOptions`.
 fn package_apk(opt PackageOptions) bool {
+	pwd := os.getwd()
+
 	build_path := os.join_path(opt.work_dir, 'build')
 	build_tools_path := os.join_path(sdk.build_tools_root(), opt.build_tools)
 
 	javac := os.join_path(java.jdk_bin_path(), 'javac')
-	keytool := os.join_path(java.jdk_bin_path(), 'keytool')
 	aapt := os.join_path(build_tools_path, 'aapt')
 	dx := os.join_path(build_tools_path, 'dx')
 	zipalign := os.join_path(build_tools_path, 'zipalign')
@@ -121,7 +129,6 @@ fn package_apk(opt PackageOptions) bool {
 	util.verbosity_print_cmd(aapt_cmd, opt.verbosity)
 	util.run_or_exit(aapt_cmd)
 
-	pwd := os.getwd()
 	os.chdir(package_path)
 
 	// Compile java sources
@@ -135,7 +142,7 @@ fn package_apk(opt PackageOptions) bool {
 		'-d obj', /* +obj_path, */
 		'-source 1.7',
 		'-target 1.7',
-		'-cp .',
+		'-classpath .',
 		'-sourcepath src',
 		'-bootclasspath ' + android_runtime,
 	]
@@ -173,9 +180,9 @@ fn package_apk(opt PackageOptions) bool {
 
 	os.chdir(build_path)
 
-	collect_libs := os.walk_ext(os.join_path(build_path, 'lib'), '.so')
+	collected_libs := os.walk_ext(os.join_path(build_path, 'lib'), '.so')
 
-	for lib in collect_libs {
+	for lib in collected_libs {
 		lib_s := lib.replace(build_path + os.path_separator, '')
 		aapt_cmd = [
 			aapt,
@@ -201,51 +208,19 @@ fn package_apk(opt PackageOptions) bool {
 	util.run_or_exit(zipalign_cmd)
 
 	// Sign the APK
-	keystore_file := opt.keystore
-	if !os.is_file(keystore_file) {
-		if opt.verbosity > 0 {
-			println('Generating debug.keystore')
-		}
-		keytool_cmd := [
-			keytool,
-			'-genkeypair',
-			'-keystore ' + keystore_file,
-			'-storepass android',
-			'-alias androiddebugkey',
-			'-keypass android',
-			'-keyalg RSA',
-			'-validity 10000',
-			"-dname 'CN=,OU=,O=,L=,S=,C='",
-		]
-		util.verbosity_print_cmd(keytool_cmd, opt.verbosity)
-		util.run_or_exit(keytool_cmd)
-	}
-	// Defaults from Android debug key
-	mut keystore_alias := 'androiddebugkey'
-	mut keystore_password := 'android'
-	mut keystore_alias_password := keystore_password
+	keystore := resolve_keystore(opt.keystore, opt.verbosity)
 
-	if opt.keystore_alias != '' {
-		keystore_alias = opt.keystore_alias
-	}
-	if opt.keystore_password != '' {
-		keystore_password = opt.keystore_password
-	}
-	if opt.keystore_alias_password != '' {
-		keystore_alias_password = opt.keystore_alias_password
-	}
-
-	if opt.is_prod && os.file_name(keystore_file) == 'debug.keystore' {
+	if opt.is_prod && os.file_name(keystore.path) == 'debug.keystore' {
 		eprintln('Warning: It looks like you are using the debug.keystore\nfile to sign your application build in production mode ("-prod").')
 	}
 
 	mut apksigner_cmd := [
 		apksigner,
 		'sign',
-		'--ks "' + keystore_file + '"',
-		'--ks-pass pass:' + keystore_password,
-		'--key-pass pass:' + keystore_alias_password,
-		'--ks-key-alias "' + keystore_alias + '"',
+		'--ks "' + keystore.path + '"',
+		'--ks-pass pass:' + keystore.password,
+		'--ks-key-alias "' + keystore.alias + '"',
+		'--key-pass pass:' + keystore.alias_password,
 		'--out ' + tmp_product,
 		tmp_unsigned_product,
 	]
@@ -261,32 +236,104 @@ fn package_apk(opt PackageOptions) bool {
 	util.verbosity_print_cmd(apksigner_cmd, opt.verbosity)
 	util.run_or_exit(apksigner_cmd)
 
+	if opt.verbosity > 1 {
+		println('Moving product from "$tmp_product" to "$opt.output_file"')
+	}
 	os.mv_by_cp(tmp_product, opt.output_file) or { panic(err) }
 
 	return true
 }
 
+// package_aab ouputs an Android .aab package file based on the `PackageOptions`.
 fn package_aab(opt PackageOptions) bool {
+	// Initially adapted from:
 	// https://musteresel.github.io/posts/2019/07/build-android-app-bundle-on-command-line.html
+	pwd := os.getwd()
 
-	/*
-	build_path := os.join_path(opt.work_dir, 'build', 'aab')
+	build_path := os.join_path(opt.work_dir, 'build')
 	build_tools_path := os.join_path(sdk.build_tools_root(), opt.build_tools)
 
+	java_exe := os.join_path(java.jre_bin_path(), 'java')
 	javac := os.join_path(java.jdk_bin_path(), 'javac')
 	jarsigner := os.join_path(java.jdk_bin_path(), 'jarsigner')
 	dx := os.join_path(build_tools_path, 'dx')
 	bundletool := env.bundletool() // Run with "java -jar ..."
 	aapt2 := env.aapt2()
-	*/
 
+	package_path, assets_path := prepare_base(opt)
+
+	output_fn := os.file_name(opt.output_file).replace(os.file_ext(opt.output_file), '')
+	tmp_product := os.join_path(opt.work_dir, '${output_fn}.aab')
+	tmp_unsigned_product := os.join_path(opt.work_dir, '${output_fn}.unsigned.aab')
+	// tmp_unaligned_product := os.join_path(opt.work_dir, '${output_fn}.unaligned.apk')
+
+	os.rm(tmp_product) or { }
+	os.rm(tmp_unsigned_product) or { }
+	// os.rm(tmp_unaligned_product) or { }
+
+	android_runtime := os.join_path(sdk.platforms_root(), 'android-' + opt.api_level,
+		'android.jar')
+
+	src_path := os.join_path(package_path, 'src')
+	res_path := os.join_path(package_path, 'res')
+
+	classes_path := os.join_path(package_path, 'classes')
+	os.mkdir_all(classes_path) or { panic(err) }
+	staging_path := os.join_path(package_path, 'staging')
+	// os.mkdir_all(staging_path) or { panic(err) }
+	os.rmdir(staging_path) or { }
+
+	os.chdir(package_path)
+
+	if opt.verbosity > 1 {
+		println('Compiling resources')
+	}
 	// aapt2 compile project/app/src/main/res/**/* -o compiled_resources
+	aapt2_cmd := [
+		aapt2,
+		'compile',
+		os.join_path(res_path, '**', '*'),
+		'-o',
+		'compiled_resources.tmp.zip',
+	]
+	util.verbosity_print_cmd(aapt2_cmd, opt.verbosity)
+	util.run_or_exit(aapt2_cmd)
 
+	util.unzip('compiled_resources.tmp.zip', 'compiled_resources')
+
+	if opt.verbosity > 1 {
+		println('Preparing resources and assets')
+	}
 	// aapt2 link --proto-format -o temporary.apk \
 	//      -I android_sdk/platforms/android-NN/android.jar \
 	//      --manifest project/app/src/main/AndroidManifest.xml \
 	//      -R compiled_resources/*.flat \
 	//      --auto-add-overlay --java gen
+	aapt2_link_cmd := [
+		aapt2,
+		'link',
+		'--proto-format',
+		'-o',
+		'temporary.apk',
+		'-I',
+		android_runtime,
+		'--manifest',
+		os.join_path(package_path, 'AndroidManifest.xml'),
+		'-R',
+		/* 'compiled_resources' */
+		os.join_path('compiled_resources', '*.flat'),
+		'-A',
+		assets_path,
+		'--auto-add-overlay --java gen',
+	]
+	util.verbosity_print_cmd(aapt2_link_cmd, opt.verbosity)
+	util.run_or_exit(aapt2_link_cmd)
+
+	if opt.verbosity > 1 {
+		println('Compiling java sources')
+	}
+	java_sources := os.walk_ext(src_path, '.java')
+	java_gen_sources := os.walk_ext(os.join_path(package_path, 'gen'), '.java')
 
 	// javac -source 1.7 -target 1.7 \
 	//  -bootclasspath $JAVA_HOME/jre/lib/rt.jar \
@@ -294,15 +341,120 @@ fn package_aab(opt PackageOptions) bool {
 	//  -d classes \
 	//  gen/**/*.java project/app/src/main/java/**/*.java
 
-	// unzip temporary.apk -d staging
+	mut javac_cmd := [
+		javac,
+		'-source 1.7',
+		'-target 1.7',
+		/* '-bootclasspath ' + os.join_path(java.jre_root(),'lib','rt.jar') */
+		'-bootclasspath ' + android_runtime,
+		/* '-classpath ' + android_runtime, */
+		'-d classes',
+		'-classpath .',
+	]
+	javac_cmd << java_gen_sources
+	javac_cmd << java_sources
 
+	util.verbosity_print_cmd(javac_cmd, opt.verbosity)
+	util.run_or_exit(javac_cmd)
+
+	// unzip temporary.apk -d staging
+	util.unzip('temporary.apk', staging_path)
+
+	os.mkdir_all(os.join_path(staging_path, 'manifest')) or { panic(err) }
+	os.mv(os.join_path(staging_path, 'AndroidManifest.xml'), os.join_path(staging_path,
+		'manifest')) or { panic(err) }
+
+	// copy libs
+	collected_libs := os.walk_ext(os.join_path(build_path, 'lib'), '.so')
+	for lib in collected_libs {
+		lib_base := lib.replace(build_path + os.path_separator, '')
+		os.mkdir_all(os.join_path(staging_path, os.dir(lib_base))) or { panic(err) }
+		os.cp_all(lib, os.join_path(staging_path, lib_base), true) or { panic(err) }
+	}
+	// os.chdir(pwd)
+
+	os.mkdir_all(os.join_path(staging_path, 'dex')) or { panic(err) }
 	// dx --dex --output=staging/dex/classes.dex classes/
+	dx_cmd := [
+		dx,
+		'--verbose',
+		'--dex',
+		'--output=' + os.join_path(staging_path, 'dex', 'classes.dex'),
+		'classes/',
+	]
+	util.verbosity_print_cmd(dx_cmd, opt.verbosity)
+	util.run_or_exit(dx_cmd)
 
 	// cd staging; zip -r ../base.zip *
+	os.chdir(staging_path)
+	zip_cmd := [
+		'zip',
+		'-r',
+		os.join_path(package_path, 'base.zip'),
+		'*',
+	]
+	util.verbosity_print_cmd(zip_cmd, opt.verbosity)
+	util.run_or_exit(zip_cmd)
+	os.chdir(package_path)
 
-	// bundletool build-bundle --modules=base.zip --output=bundle.aab
+	// java -jar bundletool build-bundle --modules=base.zip --output=bundle.aab
+	bundletool_cmd := [
+		java_exe,
+		'-jar',
+		bundletool,
+		'build-bundle',
+		'--modules=' + 'base.zip',
+		'--output=' + tmp_unsigned_product,
+	]
+	util.verbosity_print_cmd(bundletool_cmd, opt.verbosity)
+	util.run_or_exit(bundletool_cmd)
 
-	// jarsigner -keystore mykeystore.jks bundle.aab my-id
+	os.cp_all(tmp_unsigned_product, tmp_product, true) or { panic(err) }
+
+	// Make debug signing key if nothing else is provided
+	keystore := resolve_keystore(opt.keystore, opt.verbosity)
+
+	// Sign the APK
+	if opt.is_prod && os.file_name(keystore.path) == 'debug.keystore' {
+		eprintln('Warning: It looks like you are using the debug.keystore\nfile to sign your application build in production mode ("-prod").')
+	}
+	// jarsigner -verbose -keystore ~/.android/debug.keystore -storepass android -keypass android path/to/my.apk androiddebugkey
+	// jarsigner -keystore $KEYSTORE -storetype $STORETYPE -storepass $STOREPASS -digestalg SHA1 -sigalg SHA256withRSA application.zip $KEYALIAS
+	jarsigner_cmd := [
+		jarsigner,
+		'-verbose',
+		'-keystore',
+		keystore.path,
+		'-storepass',
+		keystore.password,
+		'-keypass',
+		keystore.alias_password,
+		tmp_product,
+		keystore.alias,
+	]
+	util.verbosity_print_cmd(jarsigner_cmd, opt.verbosity)
+	util.run_or_exit(jarsigner_cmd)
+
+	// java -jar bundletool.jar validate --bundle application.aab
+	bundletool_validate_cmd := [
+		java_exe,
+		'-jar',
+		bundletool,
+		'validate',
+		'--bundle',
+		/* tmp_unsigned_product */
+		tmp_product,
+	]
+	util.verbosity_print_cmd(bundletool_validate_cmd, opt.verbosity)
+	// println(util.run(bundletool_validate_cmd).output)
+	util.run_or_exit(bundletool_validate_cmd)
+
+	os.chdir(pwd)
+
+	if opt.verbosity > 1 {
+		println('Moving product from "$tmp_product" to "$opt.output_file"')
+	}
+	os.mv_by_cp(tmp_product, opt.output_file) or { panic(err) }
 
 	return true
 }

@@ -255,8 +255,8 @@ fn install_opt(opt InstallOptions) ?bool {
 		}
 		return true
 	} else if opt.dep == .sdk {
-		adb := os.join_path(sdk.platform_tools_root(), 'adb')
-		if os.is_executable(adb) {
+		adb_tool := os.join_path(sdk.platform_tools_root(), 'adb')
+		if os.exists(adb_tool) {
 			eprintln('Notice: Skipping install. Platform Tools seem to be installed in "$sdk.platform_tools_root()"...')
 			return true
 		}
@@ -398,7 +398,6 @@ fn ensure_bundletool(verbosity int) ?bool {
 		}
 		// Download
 		url := env.default_components['bundletool']['bootstrap_url']
-		// file := os.join_path(os.temp_dir(), 'bundletool.jar')
 		file := os.join_path(dst, 'bundletool.jar')
 		if !os.exists(file) {
 			http.download_file(url, file) or {
@@ -408,17 +407,16 @@ fn ensure_bundletool(verbosity int) ?bool {
 		}
 		// Install
 		dst_check := os.join_path(dst, 'bundletool.jar')
-		/*
-		os.mv(file, dst+os.path_separator) or {
-			return error(@MOD + '.' + @FN + ' ' + 'failed to install bundletool: $err')
-		}
-		*/
 		if os.exists(dst_check) {
 			return true
 		}
 		return error(@MOD + '.' + @FN + ' ' + 'failed to install bundletool to "$dst_check".')
 	}
 	return false
+}
+
+pub fn has_sdkmanager() bool {
+	return sdkmanager() != ''
 }
 
 pub fn sdkmanager() string {
@@ -498,6 +496,31 @@ pub fn sdkmanager_version() string {
 	return version
 }
 
+pub fn has_adb() bool {
+	return adb() != ''
+}
+
+pub fn adb() string {
+	mut adb_path := os.getenv('ADB')
+	if !os.exists(adb_path) {
+		adb_path = os.join_path(sdk.platform_tools_root(), 'adb')
+	}
+	if !os.exists(adb_path) {
+		if os.exists_in_system_path('adb') {
+			adb_path = os.find_abs_path_of_executable('adb') or { '' }
+			if adb_path != '' {
+				// adb normally reside in 'path/to/sdk_root/platform-tools/'
+				adb_path = os.real_path(os.join_path(os.dir(adb_path), '..'))
+			}
+		}
+	}
+	return adb_path
+}
+
+pub fn has_bundletool() bool {
+	return bundletool() != ''
+}
+
 pub fn bundletool() string {
 	mut bundletool := os.getenv('BUNDLETOOL')
 	if !os.exists(bundletool) {
@@ -545,6 +568,10 @@ pub fn bundletool() string {
 		bundletool = ''
 	}
 	return bundletool
+}
+
+pub fn has_aapt2() bool {
+	return aapt2() != ''
 }
 
 pub fn aapt2() string {
