@@ -290,11 +290,14 @@ fn install_opt(opt InstallOptions) ?bool {
 		}
 		return true
 	} else if opt.dep == .ndk {
-		sv := semver.from(opt.version) or { panic(err) }
-		comp_sv := semver.from(ndk.min_supported_version) or { panic(err) }
-		if sv.lt(comp_sv) {
-			eprintln('Notice: Skipping install. NDK $version is lower than supported ${ndk.min_supported_version}...')
-			return true
+		version_check := version.all_after(';')
+		if version_check != '' {
+			sv_check := semver.from(version_check) or { panic(err) }
+			comp_sv := semver.from(ndk.min_supported_version) or { panic(err) }
+			if sv_check.lt(comp_sv) {
+				eprintln('Notice: Skipping install. NDK $version is lower than supported ${ndk.min_supported_version}...')
+				return true
+			}
 		}
 
 		if opt.verbosity > 0 {
@@ -313,11 +316,14 @@ fn install_opt(opt InstallOptions) ?bool {
 		}
 		return true
 	} else if opt.dep == .build_tools {
-		sv := semver.from(opt.version) or { panic(err) }
-		comp_sv := semver.from(sdk.min_supported_build_tools_version) or { panic(err) }
-		if sv.lt(comp_sv) {
-			eprintln('Notice: Skipping install. build-tools $opt.version is lower than supported ${sdk.min_supported_build_tools_version}...')
-			return true
+		version_check := version.all_after(';')
+		if version_check != '' {
+			sv_check := semver.from(version_check) or { panic(err) }
+			comp_sv := semver.from(sdk.min_supported_build_tools_version) or { panic(err) }
+			if sv_check.lt(comp_sv) {
+				eprintln('Notice: Skipping install. build-tools $opt.version is lower than supported ${sdk.min_supported_build_tools_version}...')
+				return true
+			}
 		}
 
 		cmd := [
@@ -333,7 +339,7 @@ fn install_opt(opt InstallOptions) ?bool {
 		}
 		return true
 	} else if opt.dep == .platforms {
-		v := opt.version.all_after('-')
+		v := version.all_after('-')
 		if v.i16() < sdk.min_supported_api_level.i16() {
 			eprintln('Notice: Skipping install. platform $version is lower than supported android-${sdk.min_supported_api_level}...')
 			return true

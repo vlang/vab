@@ -118,12 +118,12 @@ pub fn min_version() string {
 		version = '0.0.0'
 	}
 	if uos == 'macos' {
-		// version = '21.3.6528147'
-		version = '21.3.0'
+		version = '21.3.6528147'
+		// version = '21.3.0'
 	}
 	if uos == 'linux' {
-		// version = '21.1.6352462'
-		version = '21.1.0'
+		version = '21.1.6352462'
+		// version = '21.1.0'
 	}
 	return version
 }
