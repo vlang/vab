@@ -391,6 +391,9 @@ fn ensure_sdkmanager(verbosity int) ?bool {
 			os.chmod(os.join_path(dst_check, 'sdkmanager'), 0o755)
 		}
 		if os.is_executable(os.join_path(dst_check, 'sdkmanager')) {
+			if verbosity > 1 {
+				println('`sdkmanager` installed in "$dst" SDK root in "$sdk.root()"')
+			}
 			return true
 		}
 		return error(@MOD + '.' + @FN + ' ' + 'failed to install commandline tools to "$dst_check".')
