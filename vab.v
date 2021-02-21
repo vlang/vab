@@ -497,14 +497,14 @@ fn resolve_options(mut opt Options, exit_on_error bool) {
 	}
 	if api_level == '' {
 		eprintln('Android API level "$opt.api_level" is not available in SDK.')
-		eprintln('It can be installed with `$exe_name install "platform;android-<API LEVEL>"`')
+		eprintln('It can be installed with `$exe_name install "platforms;android-<API LEVEL>"`')
 		if exit_on_error {
 			exit(1)
 		}
 	}
 	if api_level.i16() < sdk.min_supported_api_level.i16() {
 		eprintln('Android API level "$api_level" is less than the supported level ($sdk.min_supported_api_level).')
-		eprintln('It can be installed with `$exe_name install "platform;android-$sdk.min_supported_api_level"`')
+		eprintln('A vab compatible version can be installed with `$exe_name install "platforms;android-$sdk.min_supported_api_level"`')
 		if exit_on_error {
 			exit(1)
 		}
@@ -526,7 +526,7 @@ fn resolve_options(mut opt Options, exit_on_error bool) {
 	}
 	if build_tools_version == '' {
 		eprintln('Android build-tools version $opt.build_tools is not available in SDK.')
-		eprintln('(It can be installed with `$exe_name install "build-tools;$opt.build_tools"`)')
+		eprintln('(A vab compatible version can be installed with `$exe_name install "build-tools;$sdk.min_supported_build_tools_version"`)')
 		if exit_on_error {
 			exit(1)
 		}

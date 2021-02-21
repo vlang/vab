@@ -10,9 +10,8 @@ import android.util
 import semver
 
 pub const (
-	accepted_components = ['auto', 'cmdline-tools', 'sdk', 'ndk', 'platform', 'build-tools', 'bundletool',
-		'aapt2',
-	]
+	accepted_components = ['auto', 'cmdline-tools', 'platform-tools', 'ndk', 'platforms', 'build-tools',
+		'bundletool', 'aapt2']
 	// 6858069 = cmdline-tools;3.0 <- zip structure changes *sigh*
 	// 6609375 = cmdline-tools;2.1 <- latest that support `sdkmanager --version` *sigh*
 	// cmdline-tools-bootstrap-url - Replace {XXX} with linux/mac/win
@@ -22,33 +21,33 @@ pub const (
 	// platform - Google Play minimum
 	// build-tools - Version where apksigner is included from
 	default_components  = map{
-		'cmdline-tools': map{
+		'cmdline-tools':  map{
 			'name':          'cmdline-tools'
 			'version':       '2.1'
 			'bootstrap_url': 'https://dl.google.com/android/repository/commandlinetools-{XXX}-6609375_latest.zip'
 		}
-		'sdk':           map{
+		'platform-tools': map{
 			'name':    'platform-tools'
 			'version': ''
 		}
-		'ndk':           map{
+		'ndk':            map{
 			'name':    'ndk'
 			'version': ndk.min_supported_version
 		}
-		'platform':      map{
-			'name':    'platform'
+		'platforms':      map{
+			'name':    'platforms'
 			'version': 'android-' + sdk.min_supported_api_level
 		}
-		'build-tools':   map{
+		'build-tools':    map{
 			'name':    'build-tools'
 			'version': sdk.min_supported_build_tools_version
 		}
-		'bundletool':    map{
+		'bundletool':     map{
 			'name':          'bundletool'
 			'version':       '1.5.0'
 			'bootstrap_url': 'https://github.com/google/bundletool/releases/download/1.5.0/bundletool-all-1.5.0.jar'
 		}
-		'aapt2':         map{
+		'aapt2':          map{
 			'name':          'aapt2'
 			'version':       '7.0.0'
 			'bootstrap_url': 'https://dl.google.com/android/maven2/com/android/tools/build/aapt2/7.0.0-alpha07-7087017/aapt2-7.0.0-alpha07-7087017-{XXX}.jar'
@@ -68,9 +67,9 @@ const (
 )
 
 pub enum Dependency {
-	sdk
+	platform_tools
 	ndk
-	platform
+	platforms
 	build_tools
 	cmdline_tools
 	bundletool
@@ -160,20 +159,29 @@ pub fn install(components string, verbosity int) int {
 
 		match component {
 			'auto' {
+				cmdline_tools_comp := env.default_components['cmdline-tools']['name'] + ';' +
+					env.default_components['cmdline-tools']['version']
+				platform_tools_comp := env.default_components['platform-tools']['name'] //+ ';' + env.default_components['platform-tools']['version']
+				ndk_comp := env.default_components['ndk']['name'] + ';' +
+					env.default_components['ndk']['version']
+				build_tools_comp := env.default_components['build-tools']['name'] + ';' +
+					env.default_components['build-tools']['version']
+				platforms_comp := env.default_components['platforms']['name'] + ';' +
+					env.default_components['platforms']['version']
 				ios = [
-					InstallOptions{.cmdline_tools, env.default_components['cmdline-tools']['name'], verbosity},
-					InstallOptions{.sdk, env.default_components['sdk']['name'], verbosity},
-					InstallOptions{.ndk, env.default_components['ndk']['name'], verbosity},
-					InstallOptions{.build_tools, env.default_components['build-tools']['name'], verbosity},
-					InstallOptions{.platform, env.default_components['platform']['name'], verbosity},
+					InstallOptions{.cmdline_tools, cmdline_tools_comp, verbosity},
+					InstallOptions{.platform_tools, platform_tools_comp, verbosity},
+					InstallOptions{.ndk, ndk_comp, verbosity},
+					InstallOptions{.build_tools, build_tools_comp, verbosity},
+					InstallOptions{.platforms, platforms_comp, verbosity},
 				]
 				break
 			}
 			'cmdline-tools' {
 				ios << InstallOptions{.cmdline_tools, version, verbosity}
 			}
-			'sdk' {
-				ios << InstallOptions{.sdk, version, verbosity}
+			'platform-tools' {
+				ios << InstallOptions{.platform_tools, version, verbosity}
 			}
 			'ndk' {
 				ios << InstallOptions{.ndk, version, verbosity}
@@ -181,8 +189,8 @@ pub fn install(components string, verbosity int) int {
 			'build-tools' {
 				ios << InstallOptions{.build_tools, version, verbosity}
 			}
-			'platform' {
-				ios << InstallOptions{.platform, version, verbosity}
+			'platforms' {
+				ios << InstallOptions{.platforms, version, verbosity}
 			}
 			'bundletool' {
 				ensure_sdk = false
@@ -218,7 +226,7 @@ pub fn install(components string, verbosity int) int {
 fn install_opt(opt InstallOptions) ?bool {
 	loose := opt.dep == .bundletool || opt.dep == .aapt2
 
-	if !loose && opt.dep != .cmdline_tools && !managable() {
+	if !loose && !managable() {
 		if !os.is_writable(sdk.root()) {
 			return error(@MOD + '.' + @FN + ' ' +
 				'No permission to write in Android SDK root. Please install manually or ensure write access to "$sdk.root()".')
@@ -227,26 +235,28 @@ fn install_opt(opt InstallOptions) ?bool {
 				'The `sdkmanager` seems outdated or incompatible with the Java version used". Please fix your setup manually.')
 		}
 	}
+
+	version := opt.version
+
 	if opt.verbosity > 0 {
-		println(@MOD + '.' + @FN + ' installing $opt.dep ${opt.version}...')
+		println(@MOD + '.' + @FN + ' installing $opt.dep ${version}...')
 	}
 	if opt.dep == .bundletool {
 		return ensure_bundletool(opt.verbosity)
 	} else if opt.dep == .aapt2 {
 		return ensure_aapt2(opt.verbosity)
 	} else if opt.dep == .cmdline_tools {
+		/*
 		if opt.verbosity > 0 {
 			println(@MOD + '.' + @FN + ' ' +
 				'commandline tools is already installed in "$sdkmanager()".')
 		}
-		if opt.verbosity > 0 {
-			println('Installing "Commandline Tools $opt.version"...')
-		}
+		*/
 		cmd := [
 			'yes |' /* TODO Windows */,
 			sdkmanager(),
 			'--sdk_root="$sdk.root()"',
-			'"cmdline-tools;$opt.version"',
+			'"$version"',
 		]
 		util.verbosity_print_cmd(cmd, opt.verbosity)
 		cmd_res := util.run(cmd)
@@ -254,7 +264,8 @@ fn install_opt(opt InstallOptions) ?bool {
 			return error(cmd_res.output)
 		}
 		return true
-	} else if opt.dep == .sdk {
+	} else if opt.dep == .platform_tools {
+		/*
 		adb_tool := os.join_path(sdk.platform_tools_root(), 'adb')
 		if os.exists(adb_tool) {
 			eprintln('Notice: Skipping install. Platform Tools seem to be installed in "$sdk.platform_tools_root()"...')
@@ -262,14 +273,15 @@ fn install_opt(opt InstallOptions) ?bool {
 		}
 
 		if opt.verbosity > 0 {
-			println('Installing Platform Tools...')
+			println('Installing Platform Tools "$opt.version"...')
 		}
+		*/
 		// Ignore opt.version for now
 		cmd := [
 			'yes |' /* TODO Windows */,
 			sdkmanager(),
 			'--sdk_root="$sdk.root()"',
-			'"platform-tools"',
+			'"$version"',
 		]
 		util.verbosity_print_cmd(cmd, opt.verbosity)
 		cmd_res := util.run(cmd)
@@ -278,21 +290,24 @@ fn install_opt(opt InstallOptions) ?bool {
 		}
 		return true
 	} else if opt.dep == .ndk {
-		sv := semver.from(opt.version) or { panic(err) }
-		comp_sv := semver.from(ndk.min_supported_version) or { panic(err) }
-		if sv.lt(comp_sv) {
-			eprintln('Notice: Skipping install. NDK $opt.version is lower than supported ${ndk.min_supported_version}...')
-			return true
+		version_check := version.all_after(';')
+		if version_check != '' {
+			sv_check := semver.from(version_check) or { panic(err) }
+			comp_sv := semver.from(ndk.min_supported_version) or { panic(err) }
+			if sv_check.lt(comp_sv) {
+				eprintln('Notice: Skipping install. NDK $version is lower than supported ${ndk.min_supported_version}...')
+				return true
+			}
 		}
 
 		if opt.verbosity > 0 {
-			println('Installing "NDK (Side-by-side) $opt.version"...')
+			println('Installing NDK (Side-by-side) "$version"...')
 		}
 		cmd := [
 			'yes |' /* TODO Windows */,
 			sdkmanager(),
 			'--sdk_root="$sdk.root()"',
-			'"ndk;$opt.version"',
+			'"$version"',
 		]
 		util.verbosity_print_cmd(cmd, opt.verbosity)
 		cmd_res := util.run(cmd)
@@ -301,21 +316,21 @@ fn install_opt(opt InstallOptions) ?bool {
 		}
 		return true
 	} else if opt.dep == .build_tools {
-		sv := semver.from(opt.version) or { panic(err) }
-		comp_sv := semver.from(sdk.min_supported_build_tools_version) or { panic(err) }
-		if sv.lt(comp_sv) {
-			eprintln('Notice: Skipping install. build-tools $opt.version is lower than supported ${sdk.min_supported_build_tools_version}...')
-			return true
+		version_check := version.all_after(';')
+		if version_check != '' {
+			sv_check := semver.from(version_check) or { panic(err) }
+			comp_sv := semver.from(sdk.min_supported_build_tools_version) or { panic(err) }
+			if sv_check.lt(comp_sv) {
+				eprintln('Notice: Skipping install. build-tools $opt.version is lower than supported ${sdk.min_supported_build_tools_version}...')
+				return true
+			}
 		}
 
-		if opt.verbosity > 0 {
-			println('Installing "build-tools $opt.version"...')
-		}
 		cmd := [
 			'yes |' /* TODO Windows */,
 			sdkmanager(),
 			'--sdk_root="$sdk.root()"',
-			'"build-tools;$opt.version"',
+			'"$version"',
 		]
 		util.verbosity_print_cmd(cmd, opt.verbosity)
 		cmd_res := util.run(cmd)
@@ -323,21 +338,18 @@ fn install_opt(opt InstallOptions) ?bool {
 			return error(cmd_res.output)
 		}
 		return true
-	} else if opt.dep == .platform {
-		v := opt.version.all_after('-')
+	} else if opt.dep == .platforms {
+		v := version.all_after('-')
 		if v.i16() < sdk.min_supported_api_level.i16() {
-			eprintln('Notice: Skipping install. platform $opt.version is lower than supported android-${sdk.min_supported_api_level}...')
+			eprintln('Notice: Skipping install. platform $version is lower than supported android-${sdk.min_supported_api_level}...')
 			return true
 		}
 
-		if opt.verbosity > 0 {
-			println('Installing "$opt.version"...')
-		}
 		cmd := [
 			'yes |' /* TODO Windows */,
 			sdkmanager(),
 			'--sdk_root="$sdk.root()"',
-			'"platforms;$opt.version"',
+			'"$version"',
 		]
 		util.verbosity_print_cmd(cmd, opt.verbosity)
 		cmd_res := util.run(cmd)
@@ -383,6 +395,9 @@ fn ensure_sdkmanager(verbosity int) ?bool {
 			os.chmod(os.join_path(dst_check, 'sdkmanager'), 0o755)
 		}
 		if os.is_executable(os.join_path(dst_check, 'sdkmanager')) {
+			if verbosity > 1 {
+				println('`sdkmanager` installed in "$dst_check". SDK root reports "$sdk.root()"')
+			}
 			return true
 		}
 		return error(@MOD + '.' + @FN + ' ' + 'failed to install commandline tools to "$dst_check".')

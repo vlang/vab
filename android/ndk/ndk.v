@@ -38,7 +38,11 @@ const (
 // root will try to detect where the Android NDK is installed. Otherwise return blank
 pub fn root() string {
 	mut ndk_root := os.getenv('ANDROID_NDK_ROOT')
-	if ndk_root == '' {
+	if ndk_root != '' && !os.is_dir(ndk_root) {
+		// eprintln(@MOD + '.' + @FN + ' Warning: NDK found via ANDROID_NDK_ROOT "$ndk_root" is not a directory.')
+		ndk_root = ''
+	}
+	if ndk_root == '' && sdk.root() != '' {
 		mut dirs := []string{}
 
 		// Detect OS type at runtime - in case we're in some exotic environment
@@ -55,6 +59,9 @@ pub fn root() string {
 
 		for dir in dirs {
 			if os.exists(dir) && os.is_dir(dir) {
+				/*$if debug {
+					eprintln(@MOD + '.' + @FN + ' found NDK in hardcoded paths at "$dir"')
+				}*/
 				return dir
 			}
 		}
@@ -65,12 +72,23 @@ pub fn root() string {
 		if os.exists_in_system_path('ndk-which') {
 			ndk_which = os.find_abs_path_of_executable('ndk-which') or { return '' }
 			if ndk_which != '' {
-				// ndk-which reside in some ndk roots
-				ndk_root = os.real_path(os.dir(ndk_which))
+				if os.is_executable(ndk_which) {
+					// ndk-which reside in some ndk roots
+					ndk_root = os.real_path(os.dir(ndk_which))
+					if !os.is_dir(ndk_root) {
+						ndk_root = ''
+					}
+				}
 			}
 		}
 	}
-	return ndk_root
+	if !os.is_dir(ndk_root) {
+		/*$if debug {
+			eprintln(@MOD + '.' + @FN + ' Warning: "$ndk_root" is not a dir')
+		}*/
+		ndk_root = ''
+	}
+	return ndk_root.trim_right(r'\/')
 }
 
 pub fn root_version(version string) string {
@@ -116,9 +134,11 @@ pub fn min_version() string {
 	}
 	if uos == 'macos' {
 		version = '21.3.6528147'
+		// version = '21.3.0'
 	}
 	if uos == 'linux' {
 		version = '21.1.6352462'
+		// version = '21.1.0'
 	}
 	return version
 }

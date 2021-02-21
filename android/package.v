@@ -418,7 +418,6 @@ fn package_aab(opt PackageOptions) bool {
 	if opt.is_prod && os.file_name(keystore.path) == 'debug.keystore' {
 		eprintln('Warning: It looks like you are using the debug.keystore\nfile to sign your application build in production mode ("-prod").')
 	}
-
 	// jarsigner -verbose -keystore ~/.android/debug.keystore -storepass android -keypass android path/to/my.apk androiddebugkey
 	jarsigner_cmd := [
 		jarsigner,
