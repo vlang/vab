@@ -38,7 +38,7 @@ const (
 // root will try to detect where the Android NDK is installed. Otherwise return blank
 pub fn root() string {
 	mut ndk_root := os.getenv('ANDROID_NDK_ROOT')
-	if sdk_root != '' && !os.is_dir(ndk_root) {
+	if ndk_root != '' && !os.is_dir(ndk_root) {
 		// eprintln(@MOD + '.' + @FN + ' Warning: NDK found via ANDROID_NDK_ROOT "$ndk_root" is not a directory.')
 		ndk_root = ''
 	}
