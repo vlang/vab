@@ -160,12 +160,17 @@ pub fn install(components string, verbosity int) int {
 
 		match component {
 			'auto' {
+				cmdline_tools_comp := env.default_components['cmdline-tools']
+				sdk_comp := env.default_components['sdk']
+				ndk_comp := env.default_components['ndk']
+				build_tools_comp := env.default_components['build-tools']
+				platform_comp := env.default_components['platform']
 				ios = [
-					InstallOptions{.cmdline_tools, env.default_components['cmdline-tools']['name'], verbosity},
-					InstallOptions{.sdk, env.default_components['sdk']['name'], verbosity},
-					InstallOptions{.ndk, env.default_components['ndk']['name'], verbosity},
-					InstallOptions{.build_tools, env.default_components['build-tools']['name'], verbosity},
-					InstallOptions{.platform, env.default_components['platform']['name'], verbosity},
+					InstallOptions{.cmdline_tools, cmdline_tools_comp['name'], cmdline_tools_comp['version'], verbosity},
+					InstallOptions{.sdk, sdk_comp['name'], sdk_comp['version'], verbosity},
+					InstallOptions{.ndk, ndk_comp['name'], ndk_comp['version'], verbosity},
+					InstallOptions{.build_tools, build_tools_comp['name'], build_tools_comp['version'], verbosity},
+					InstallOptions{.platform, platform_comp['name'], platform_comp['version'], verbosity},
 				]
 				break
 			}

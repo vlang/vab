@@ -526,7 +526,7 @@ fn resolve_options(mut opt Options, exit_on_error bool) {
 	}
 	if build_tools_version == '' {
 		eprintln('Android build-tools version $opt.build_tools is not available in SDK.')
-		eprintln('(It can be installed with `$exe_name install "build-tools;$opt.build_tools"`)')
+		eprintln('(A vab compatible version can be installed with `$exe_name install "build-tools;$sdk.min_supported_build_tools_version"`)')
 		if exit_on_error {
 			exit(1)
 		}
