@@ -106,6 +106,9 @@ pub fn root() string {
 			}
 		}
 	}
+	if !os.is_dir(sdk_root) {
+		sdk_root = ''
+	}
 	return sdk_root.trim_right(r'\/')
 }
 
