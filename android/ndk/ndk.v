@@ -38,6 +38,10 @@ const (
 // root will try to detect where the Android NDK is installed. Otherwise return blank
 pub fn root() string {
 	mut ndk_root := os.getenv('ANDROID_NDK_ROOT')
+	if sdk_root != '' && !os.is_dir(ndk_root) {
+		// eprintln(@MOD + '.' + @FN + ' Warning: NDK found via ANDROID_NDK_ROOT "$ndk_root" is not a directory.')
+		ndk_root = ''
+	}
 	if ndk_root == '' && sdk.root() != '' {
 		mut dirs := []string{}
 
@@ -55,6 +59,9 @@ pub fn root() string {
 
 		for dir in dirs {
 			if os.exists(dir) && os.is_dir(dir) {
+				/*$if debug {
+					eprintln(@MOD + '.' + @FN + ' found NDK in hardcoded paths at "$dir"')
+				}*/
 				return dir
 			}
 		}
@@ -65,12 +72,20 @@ pub fn root() string {
 		if os.exists_in_system_path('ndk-which') {
 			ndk_which = os.find_abs_path_of_executable('ndk-which') or { return '' }
 			if ndk_which != '' {
-				// ndk-which reside in some ndk roots
-				ndk_root = os.real_path(os.dir(ndk_which))
+				if os.is_executable(ndk_which) {
+					// ndk-which reside in some ndk roots
+					ndk_root = os.real_path(os.dir(ndk_which))
+					if !os.is_dir(ndk_root) {
+						ndk_root = ''
+					}
+				}
 			}
 		}
 	}
 	if !os.is_dir(ndk_root) {
+		/*$if debug {
+			eprintln(@MOD + '.' + @FN + ' Warning: "$ndk_root" is not a dir')
+		}*/
 		ndk_root = ''
 	}
 	return ndk_root.trim_right(r'\/')
