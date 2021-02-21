@@ -114,8 +114,8 @@ fn main() {
 		//
 		app_name: fp.string('name', 0, android.default_app_name, 'Pretty app name')
 		package_id: fp.string('package-id', 0, android.default_package_id, 'App package ID (e.g. "org.company.app")')
+		package_format: fp.string('package', `p`, android.default_package_format, 'App package format. Any of $android.supported_package_formats')
 		activity_name: fp.string('activity-name', 0, '', 'The name of the main activity (e.g. "VActivity")')
-		package_format: fp.string('format', 0, android.default_package_format, 'App package format. Any of $android.supported_package_formats')
 		icon: fp.string('icon', 0, '', 'App icon')
 		version_code: fp.int('version-code', 0, 0, 'Build version code (android:versionCode)')
 		//
