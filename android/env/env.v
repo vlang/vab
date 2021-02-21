@@ -592,7 +592,8 @@ fn ensure_aapt2(verbosity int) ?bool {
 			println('No `aapt2` found. Bootstrapping...')
 		}
 		// Download
-		uos := os.user_os().replace('windows', 'win').replace('macos', 'mac')
+		// https://maven.google.com/web/index.html -> com.android.tools.build -> aapt2
+		uos := os.user_os().replace('windows', 'win').replace('macos', 'osx')
 		url := env.default_components['aapt2']['bootstrap_url'].replace('{XXX}', uos)
 		file := os.join_path(os.temp_dir(), 'aapt2.jar')
 		// file := os.join_path(dst, 'aapt2.jar')
