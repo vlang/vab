@@ -289,7 +289,7 @@ jobs:
       run: ./v -prod vab/vab.v
 
     - name: Build VAB
-      run: ./v -d debug_sdk -g vab/vab.v
+      run: ./v -g vab/vab.v
 
     - name: Run 'vab --help'
       run: vab/vab --help

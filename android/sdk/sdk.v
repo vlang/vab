@@ -68,7 +68,7 @@ pub fn root() string {
 
 		for dir in dirs {
 			if os.exists(dir) && os.is_dir(dir) {
-				$if debug_sdk {
+				$if debug {
 					eprintln(@MOD + '.' + @FN + ' found SDK in hardcoded paths at "$dir"')
 				}
 				return dir
@@ -87,7 +87,7 @@ pub fn root() string {
 					if !os.is_dir(sdk_root) {
 						sdk_root = ''
 					}
-					$if debug_sdk {
+					$if debug {
 						eprintln(@MOD + '.' + @FN + ' found by adb in "$sdk_root"')
 					}
 				}
@@ -107,7 +107,7 @@ pub fn root() string {
 		if !os.is_executable(sdkm_path) {
 			sdkm_path = os.join_path(cache_dir(), 'cmdline-tools', 'tools', 'bin', 'sdkmanager')
 			if os.is_executable(sdkm_path) {
-				$if debug_sdk {
+				$if debug {
 					eprintln(@MOD + '.' + @FN + ' found by sdkmanager in cache "$cache_dir()"')
 				}
 				return cache_dir()
@@ -133,12 +133,12 @@ pub fn root() string {
 		}
 	}
 	if !os.is_dir(sdk_root) {
-		$if debug_sdk {
+		$if debug {
 			eprintln(@MOD + '.' + @FN + ' Warning: "$sdk_root" is not a dir')
 		}
 		sdk_root = ''
 	} else {
-		$if debug_sdk {
+		$if debug {
 			eprintln(@MOD + '.' + @FN + ' found SDK in "$sdk_root"')
 		}
 	}
