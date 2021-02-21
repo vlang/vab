@@ -298,8 +298,6 @@ jobs:
       run: |
         sudo rm -fr /usr/local/lib/android
         ls -al /usr/local/lib/
-        export ANDROID_SDK_ROOT=""
-        export ANDROID_HOME=""
         #sudo chown -R $USER:$USER /usr/local/lib/android
 
     - name: Run 'vab doctor'
@@ -310,6 +308,8 @@ jobs:
     - name: Run 'vab install auto'
       run: |
         export VEXE=./v
+        export ANDROID_SDK_ROOT="" # These are set by in the CI by default
+        export ANDROID_HOME=""
         vab/vab -v 3 install auto
 
     - name: Run vab doctor
