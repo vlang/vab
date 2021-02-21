@@ -297,8 +297,6 @@ jobs:
     - name: Ruin Android environment on purpose
       run: |
         sudo rm -fr /usr/local/lib/android
-        ls -al /usr/local/lib/
-        #sudo chown -R $USER:$USER /usr/local/lib/android
 
     - name: Run 'vab doctor'
       run: |
