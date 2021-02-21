@@ -308,7 +308,7 @@ jobs:
     - name: Run 'vab install auto'
       run: |
         export VEXE=./v
-        vab/vab install auto
+        vab/vab -v 3 install auto
 
     - name: Run vab doctor
       run: |

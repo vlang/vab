@@ -38,7 +38,7 @@ const (
 // root will try to detect where the Android NDK is installed. Otherwise return blank
 pub fn root() string {
 	mut ndk_root := os.getenv('ANDROID_NDK_ROOT')
-	if ndk_root == '' {
+	if ndk_root == '' && sdk.root() != '' {
 		mut dirs := []string{}
 
 		// Detect OS type at runtime - in case we're in some exotic environment
@@ -70,7 +70,10 @@ pub fn root() string {
 			}
 		}
 	}
-	return ndk_root
+	if !os.is_dir(ndk_root) {
+		ndk_root = ''
+	}
+	return ndk_root.trim_right(r'\/')
 }
 
 pub fn root_version(version string) string {
