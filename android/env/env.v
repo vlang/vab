@@ -228,7 +228,7 @@ pub fn install(components string, verbosity int) int {
 fn install_opt(opt InstallOptions) ?bool {
 	loose := opt.dep == .bundletool || opt.dep == .aapt2
 
-	if !loose && opt.dep != .cmdline_tools && !managable() {
+	if !loose && !managable() {
 		if !os.is_writable(sdk.root()) {
 			return error(@MOD + '.' + @FN + ' ' +
 				'No permission to write in Android SDK root. Please install manually or ensure write access to "$sdk.root()".')
@@ -237,26 +237,28 @@ fn install_opt(opt InstallOptions) ?bool {
 				'The `sdkmanager` seems outdated or incompatible with the Java version used". Please fix your setup manually.')
 		}
 	}
+
+	version := opt.version
+
 	if opt.verbosity > 0 {
-		println(@MOD + '.' + @FN + ' installing $opt.dep ${opt.version}...')
+		println(@MOD + '.' + @FN + ' installing $opt.dep ${version}...')
 	}
 	if opt.dep == .bundletool {
 		return ensure_bundletool(opt.verbosity)
 	} else if opt.dep == .aapt2 {
 		return ensure_aapt2(opt.verbosity)
 	} else if opt.dep == .cmdline_tools {
+		/*
 		if opt.verbosity > 0 {
 			println(@MOD + '.' + @FN + ' ' +
 				'commandline tools is already installed in "$sdkmanager()".')
 		}
-		if opt.verbosity > 0 {
-			println('Installing "Commandline Tools $opt.version"...')
-		}
+		*/
 		cmd := [
 			'yes |' /* TODO Windows */,
 			sdkmanager(),
 			'--sdk_root="$sdk.root()"',
-			'"cmdline-tools;$opt.version"',
+			'"$version"',
 		]
 		util.verbosity_print_cmd(cmd, opt.verbosity)
 		cmd_res := util.run(cmd)
@@ -265,6 +267,7 @@ fn install_opt(opt InstallOptions) ?bool {
 		}
 		return true
 	} else if opt.dep == .sdk {
+		/*
 		adb_tool := os.join_path(sdk.platform_tools_root(), 'adb')
 		if os.exists(adb_tool) {
 			eprintln('Notice: Skipping install. Platform Tools seem to be installed in "$sdk.platform_tools_root()"...')
@@ -272,14 +275,15 @@ fn install_opt(opt InstallOptions) ?bool {
 		}
 
 		if opt.verbosity > 0 {
-			println('Installing Platform Tools...')
+			println('Installing Platform Tools "$opt.version"...')
 		}
+		*/
 		// Ignore opt.version for now
 		cmd := [
 			'yes |' /* TODO Windows */,
 			sdkmanager(),
 			'--sdk_root="$sdk.root()"',
-			'"platform-tools"',
+			'"$version"',
 		]
 		util.verbosity_print_cmd(cmd, opt.verbosity)
 		cmd_res := util.run(cmd)
@@ -296,13 +300,13 @@ fn install_opt(opt InstallOptions) ?bool {
 		}
 
 		if opt.verbosity > 0 {
-			println('Installing "NDK (Side-by-side) $opt.version"...')
+			println('Installing NDK (Side-by-side) "$version"...')
 		}
 		cmd := [
 			'yes |' /* TODO Windows */,
 			sdkmanager(),
 			'--sdk_root="$sdk.root()"',
-			'"ndk;$opt.version"',
+			'"$version"',
 		]
 		util.verbosity_print_cmd(cmd, opt.verbosity)
 		cmd_res := util.run(cmd)
@@ -318,14 +322,11 @@ fn install_opt(opt InstallOptions) ?bool {
 			return true
 		}
 
-		if opt.verbosity > 0 {
-			println('Installing "build-tools $opt.version"...')
-		}
 		cmd := [
 			'yes |' /* TODO Windows */,
 			sdkmanager(),
 			'--sdk_root="$sdk.root()"',
-			'"build-tools;$opt.version"',
+			'"$version"',
 		]
 		util.verbosity_print_cmd(cmd, opt.verbosity)
 		cmd_res := util.run(cmd)
@@ -336,18 +337,15 @@ fn install_opt(opt InstallOptions) ?bool {
 	} else if opt.dep == .platform {
 		v := opt.version.all_after('-')
 		if v.i16() < sdk.min_supported_api_level.i16() {
-			eprintln('Notice: Skipping install. platform $opt.version is lower than supported android-${sdk.min_supported_api_level}...')
+			eprintln('Notice: Skipping install. platform $version is lower than supported android-${sdk.min_supported_api_level}...')
 			return true
 		}
 
-		if opt.verbosity > 0 {
-			println('Installing "$opt.version"...')
-		}
 		cmd := [
 			'yes |' /* TODO Windows */,
 			sdkmanager(),
 			'--sdk_root="$sdk.root()"',
-			'"platforms;$opt.version"',
+			'"$version"',
 		]
 		util.verbosity_print_cmd(cmd, opt.verbosity)
 		cmd_res := util.run(cmd)
