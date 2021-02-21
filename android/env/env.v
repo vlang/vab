@@ -168,8 +168,7 @@ pub fn install(components string, verbosity int) int {
 					env.default_components['ndk']['version']
 				build_tools_comp := env.default_components['build-tools']['name'] + ';' +
 					env.default_components['build-tools']['version']
-				platform_comp := env.default_components['platform']['name'] + ';' +
-					env.default_components['platform']['version']
+				platform_comp := env.default_components['platform']['name'] //+ ';' + env.default_components['platform']['version']
 				ios = [
 					InstallOptions{.cmdline_tools, cmdline_tools_comp, verbosity},
 					InstallOptions{.sdk, sdk_comp, verbosity},
