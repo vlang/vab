@@ -63,7 +63,7 @@ Please make sure to adhere to all [guidelines](https://developer.android.com/stu
 ## AAB package format
 
 `vab` supports outputting [Android App Bundles](https://developer.android.com/guide/app-bundle) (AAB).
-To output an `.aab` file you can specify the package format with the `--package` format:
+To output an `.aab` file you can specify the package format with the `--package` flag:
 
 ```bash
 ./vab --package aab /path/to/v/source/file/or/dir
