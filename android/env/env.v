@@ -10,9 +10,8 @@ import android.util
 import semver
 
 pub const (
-	accepted_components = ['auto', 'cmdline-tools', 'platform-tools', 'ndk', 'platforms', 'build-tools', 'bundletool',
-		'aapt2',
-	]
+	accepted_components = ['auto', 'cmdline-tools', 'platform-tools', 'ndk', 'platforms', 'build-tools',
+		'bundletool', 'aapt2']
 	// 6858069 = cmdline-tools;3.0 <- zip structure changes *sigh*
 	// 6609375 = cmdline-tools;2.1 <- latest that support `sdkmanager --version` *sigh*
 	// cmdline-tools-bootstrap-url - Replace {XXX} with linux/mac/win
@@ -22,16 +21,16 @@ pub const (
 	// platform - Google Play minimum
 	// build-tools - Version where apksigner is included from
 	default_components  = map{
-		'cmdline-tools': map{
+		'cmdline-tools':  map{
 			'name':          'cmdline-tools'
 			'version':       '2.1'
 			'bootstrap_url': 'https://dl.google.com/android/repository/commandlinetools-{XXX}-6609375_latest.zip'
 		}
-		'platform-tools':           map{
+		'platform-tools': map{
 			'name':    'platform-tools'
 			'version': ''
 		}
-		'ndk':           map{
+		'ndk':            map{
 			'name':    'ndk'
 			'version': ndk.min_supported_version
 		}
@@ -39,16 +38,16 @@ pub const (
 			'name':    'platforms'
 			'version': 'android-' + sdk.min_supported_api_level
 		}
-		'build-tools':   map{
+		'build-tools':    map{
 			'name':    'build-tools'
 			'version': sdk.min_supported_build_tools_version
 		}
-		'bundletool':    map{
+		'bundletool':     map{
 			'name':          'bundletool'
 			'version':       '1.5.0'
 			'bootstrap_url': 'https://github.com/google/bundletool/releases/download/1.5.0/bundletool-all-1.5.0.jar'
 		}
-		'aapt2':         map{
+		'aapt2':          map{
 			'name':          'aapt2'
 			'version':       '7.0.0'
 			'bootstrap_url': 'https://dl.google.com/android/maven2/com/android/tools/build/aapt2/7.0.0-alpha07-7087017/aapt2-7.0.0-alpha07-7087017-{XXX}.jar'
@@ -167,7 +166,8 @@ pub fn install(components string, verbosity int) int {
 					env.default_components['ndk']['version']
 				build_tools_comp := env.default_components['build-tools']['name'] + ';' +
 					env.default_components['build-tools']['version']
-				platforms_comp := env.default_components['platforms']['name'] + ';' + env.default_components['platforms']['version']
+				platforms_comp := env.default_components['platforms']['name'] + ';' +
+					env.default_components['platforms']['version']
 				ios = [
 					InstallOptions{.cmdline_tools, cmdline_tools_comp, verbosity},
 					InstallOptions{.platform_tools, platform_tools_comp, verbosity},
