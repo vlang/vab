@@ -10,7 +10,7 @@ import android.util
 import semver
 
 pub const (
-	accepted_components = ['auto', 'cmdline-tools', 'sdk', 'ndk', 'platform', 'build-tools', 'bundletool',
+	accepted_components = ['auto', 'cmdline-tools', 'platform-tools', 'ndk', 'platforms', 'build-tools', 'bundletool',
 		'aapt2',
 	]
 	// 6858069 = cmdline-tools;3.0 <- zip structure changes *sigh*
@@ -27,7 +27,7 @@ pub const (
 			'version':       '2.1'
 			'bootstrap_url': 'https://dl.google.com/android/repository/commandlinetools-{XXX}-6609375_latest.zip'
 		}
-		'sdk':           map{
+		'platform-tools':           map{
 			'name':    'platform-tools'
 			'version': ''
 		}
@@ -35,8 +35,8 @@ pub const (
 			'name':    'ndk'
 			'version': ndk.min_supported_version
 		}
-		'platform':      map{
-			'name':    'platform'
+		'platforms':      map{
+			'name':    'platforms'
 			'version': 'android-' + sdk.min_supported_api_level
 		}
 		'build-tools':   map{
@@ -68,9 +68,9 @@ const (
 )
 
 pub enum Dependency {
-	sdk
+	platform_tools
 	ndk
-	platform
+	platforms
 	build_tools
 	cmdline_tools
 	bundletool
@@ -162,27 +162,26 @@ pub fn install(components string, verbosity int) int {
 			'auto' {
 				cmdline_tools_comp := env.default_components['cmdline-tools']['name'] + ';' +
 					env.default_components['cmdline-tools']['version']
-				sdk_comp := env.default_components['sdk']['name'] + ';' +
-					env.default_components['sdk']['version']
+				platform_tools_comp := env.default_components['platform-tools']['name'] //+ ';' + env.default_components['platform-tools']['version']
 				ndk_comp := env.default_components['ndk']['name'] + ';' +
 					env.default_components['ndk']['version']
 				build_tools_comp := env.default_components['build-tools']['name'] + ';' +
 					env.default_components['build-tools']['version']
-				platform_comp := env.default_components['platform']['name'] //+ ';' + env.default_components['platform']['version']
+				platforms_comp := env.default_components['platforms']['name'] + ';' + env.default_components['platforms']['version']
 				ios = [
 					InstallOptions{.cmdline_tools, cmdline_tools_comp, verbosity},
-					InstallOptions{.sdk, sdk_comp, verbosity},
+					InstallOptions{.platform_tools, platform_tools_comp, verbosity},
 					InstallOptions{.ndk, ndk_comp, verbosity},
 					InstallOptions{.build_tools, build_tools_comp, verbosity},
-					InstallOptions{.platform, platform_comp, verbosity},
+					InstallOptions{.platforms, platforms_comp, verbosity},
 				]
 				break
 			}
 			'cmdline-tools' {
 				ios << InstallOptions{.cmdline_tools, version, verbosity}
 			}
-			'sdk' {
-				ios << InstallOptions{.sdk, version, verbosity}
+			'platform-tools' {
+				ios << InstallOptions{.platform_tools, version, verbosity}
 			}
 			'ndk' {
 				ios << InstallOptions{.ndk, version, verbosity}
@@ -190,8 +189,8 @@ pub fn install(components string, verbosity int) int {
 			'build-tools' {
 				ios << InstallOptions{.build_tools, version, verbosity}
 			}
-			'platform' {
-				ios << InstallOptions{.platform, version, verbosity}
+			'platforms' {
+				ios << InstallOptions{.platforms, version, verbosity}
 			}
 			'bundletool' {
 				ensure_sdk = false
@@ -265,7 +264,7 @@ fn install_opt(opt InstallOptions) ?bool {
 			return error(cmd_res.output)
 		}
 		return true
-	} else if opt.dep == .sdk {
+	} else if opt.dep == .platform_tools {
 		/*
 		adb_tool := os.join_path(sdk.platform_tools_root(), 'adb')
 		if os.exists(adb_tool) {
@@ -294,7 +293,7 @@ fn install_opt(opt InstallOptions) ?bool {
 		sv := semver.from(opt.version) or { panic(err) }
 		comp_sv := semver.from(ndk.min_supported_version) or { panic(err) }
 		if sv.lt(comp_sv) {
-			eprintln('Notice: Skipping install. NDK $opt.version is lower than supported ${ndk.min_supported_version}...')
+			eprintln('Notice: Skipping install. NDK $version is lower than supported ${ndk.min_supported_version}...')
 			return true
 		}
 
@@ -333,7 +332,7 @@ fn install_opt(opt InstallOptions) ?bool {
 			return error(cmd_res.output)
 		}
 		return true
-	} else if opt.dep == .platform {
+	} else if opt.dep == .platforms {
 		v := opt.version.all_after('-')
 		if v.i16() < sdk.min_supported_api_level.i16() {
 			eprintln('Notice: Skipping install. platform $version is lower than supported android-${sdk.min_supported_api_level}...')
