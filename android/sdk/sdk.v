@@ -33,19 +33,6 @@ const (
 	]
 )
 
-// Possible locations of the `sdkmanager` tool
-// https://stackoverflow.com/a/61176718
-const (
-	possible_relative_to_sdk_sdkmanager_paths = [
-		os.join_path('cmdline-tools', 'latest', 'bin'),
-		os.join_path('tools', 'latest', 'bin'),
-		os.join_path('cmdline-tools', '2.1', 'bin'),
-		os.join_path('cmdline-tools', '3.0', 'bin'),
-		os.join_path('cmdline-tools', 'tools', 'bin'),
-		os.join_path('tools', 'bin'),
-	]
-)
-
 enum Component {
 	ndk
 	api_level
@@ -98,7 +85,7 @@ pub fn root() string {
 		}
 		// Check in cache
 		if !os.is_executable(path) {
-			path = os.join_path(util.cache_dir(), 'cmdline-tools', 'tools', 'bin', 'sdkmanager')
+			path = os.join_path(cache_dir(), 'cmdline-tools', 'tools', 'bin', 'sdkmanager')
 		}
 		if !os.is_executable(path) {
 			path = ''
@@ -126,55 +113,14 @@ pub fn found() bool {
 	return root() != ''
 }
 
-pub fn sdkmanager() string {
-	mut sdkmanager := os.getenv('SDKMANAGER')
-	// Check in cache
-	if !os.is_executable(sdkmanager) {
-		sdkmanager = os.join_path(util.cache_dir(), 'cmdline-tools', 'tools', 'bin', 'sdkmanager')
-	}
-	// Try the one in PATH
-	if !os.is_executable(sdkmanager) {
-		if os.exists_in_system_path('sdkmanager') {
-			sdkmanager = os.find_abs_path_of_executable('sdkmanager') or { '' }
+pub fn cache_dir() string {
+	cache_dir := os.join_path(util.cache_dir(), 'sdk')
+	if !os.exists(cache_dir) {
+		os.mkdir_all(cache_dir) or {
+			panic(@MOD + '.' + @FN + ' error making cache directory "$cache_dir". ' + err)
 		}
 	}
-	// Try detecting it in the SDK
-	if !os.is_executable(sdkmanager) && found() {
-		sdkmanager = os.join_path(tools_root(), 'bin', 'sdkmanager')
-		if !os.is_executable(sdkmanager) {
-			sdkmanager = os.join_path(root(), 'cmdline-tools', 'tools', 'bin', 'sdkmanager')
-		}
-		if !os.is_executable(sdkmanager) {
-			for relative_path in sdk.possible_relative_to_sdk_sdkmanager_paths {
-				sdkmanager = os.join_path(root(), relative_path, 'sdkmanager')
-				if os.is_executable(sdkmanager) {
-					break
-				}
-			}
-		}
-	}
-	// Give up
-	if !os.is_executable(sdkmanager) {
-		sdkmanager = ''
-	}
-	return sdkmanager
-}
-
-pub fn sdkmanager_version() string {
-	mut version := '0.0.0'
-	sdkm := sdkmanager()
-	if sdkm != '' {
-		cmd := [
-			sdkm,
-			'--version',
-		]
-		cmd_res := util.run(cmd)
-		if cmd_res.exit_code > 0 {
-			return version
-		}
-		version = cmd_res.output.trim(' \n\r')
-	}
-	return version
+	return cache_dir
 }
 
 pub fn tools_root() string {
@@ -281,10 +227,4 @@ pub fn default_platforms_dir() string {
 		return dirs.first()
 	}
 	return ''
-}
-
-pub fn setup(component Component, version string) {
-	// TODO
-	_ = component
-	_ = version
 }

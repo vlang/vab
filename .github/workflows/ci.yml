@@ -40,7 +40,7 @@ jobs:
         cd vab
         ../v run cmd/cleancode.v
 
-  ubuntu-18_04:
+  ubuntu-18_04-apk:
     runs-on: ubuntu-18.04
     timeout-minutes: 30
     steps:
@@ -67,7 +67,9 @@ jobs:
       run: vab/vab --help
 
     - name: Setup env
-      run: mkdir apks apks/java8 apks/java11 apks/java12
+      run: |
+        mkdir apks apks/java8 apks/java11 apks/java12
+        mkdir aabs aabs/java8 aabs/java11 aabs/java12
 
     - name: Run vab doctor
       run: |
@@ -102,7 +104,43 @@ jobs:
         export JAVA_HOME=$JAVA_HOME_12_X64
         vab/vab --nocache -v 3 examples/sokol/particles -o apks/java12/particles.apk
 
-  ubuntu-20_04:
+    # AAB Testing
+    - name: Install AAB dependencies
+      run: |
+        export VEXE=./v
+        vab/vab install bundletool
+        vab/vab install aapt2
+
+    - name: Build AAB with cache (Default) examples/sokol/particles
+      run: |
+        export VEXE=./v
+        vab/vab --format aab -v 3 examples/sokol/particles -o aabs/particles.aab
+
+    - name: Build AAB without cache (Default) examples/sokol/particles
+      run: |
+        export VEXE=./v
+        vab/vab --format aab --nocache -v 3 examples/sokol/particles -o aabs/particles.aab
+
+    - name: Build AAB (Java 8) examples/sokol/particles
+      run: |
+        export VEXE=./v
+        export JAVA_HOME=$JAVA_HOME_8_X64
+        vab/vab --format aab --nocache -v 3 examples/sokol/particles -o aabs/java8/particles.aab
+
+    - name: Build AAB (Java 11) examples/sokol/particles
+      run: |
+        export VEXE=./v
+        export JAVA_HOME=$JAVA_HOME_11_X64
+        vab/vab --format aab --nocache -v 3 examples/sokol/particles -o aabs/java11/particles.aab
+
+    - name: Build AAB (Java 12) examples/sokol/particles
+      run: |
+        export VEXE=./v
+        export JAVA_HOME=$JAVA_HOME_12_X64
+        vab/vab --format aab --nocache -v 3 examples/sokol/particles -o aabs/java12/particles.aab
+
+
+  ubuntu-20_04-apk:
     runs-on: ubuntu-20.04
     timeout-minutes: 30
     steps:
@@ -123,7 +161,7 @@ jobs:
 
     - name: Build VAB with -prod
       run: ./v -prod vab/vab.v
-      
+
     - name: Build VAB
       run: ./v -g vab/vab.v
 
@@ -160,6 +198,75 @@ jobs:
         export JAVA_HOME=$JAVA_HOME_11_X64
         vab/vab --nocache -v 3 examples/sokol/particles -o apks/java11/particles.apk
 
+
+  ubuntu-20_04-aab:
+    runs-on: ubuntu-20.04
+    timeout-minutes: 30
+    steps:
+    - name: Checkout V
+      uses: actions/checkout@v2
+      with:
+        repository: vlang/v
+
+    - uses: actions/checkout@v2
+      with:
+        path: vab
+
+    - name: Build local v
+      run: make -j4
+
+    - name: Run tests
+      run: ./v test vab
+
+    - name: Build VAB with -prod
+      run: ./v -prod vab/vab.v
+
+    - name: Build VAB
+      run: ./v -g vab/vab.v
+
+    - name: Run vab --help
+      run: vab/vab --help
+
+    - name: Setup env
+      run: |
+        mkdir apks apks/java8 apks/java11 apks/java12
+        mkdir aabs aabs/java8 aabs/java11 aabs/java12
+
+    - name: Run vab doctor
+      run: |
+        export VEXE=./v
+        vab/vab doctor
+
+    - name: Install AAB dependencies
+      run: |
+        export VEXE=./v
+        vab/vab install bundletool
+        vab/vab install aapt2
+
+    - name: Build AAB with cache (Default) examples/sokol/particles
+      run: |
+        export VEXE=./v
+        vab/vab --format aab -v 3 examples/sokol/particles -o aabs/particles.aab
+
+    - name: Build AAB without cache (Default) examples/sokol/particles
+      run: |
+        export VEXE=./v
+        vab/vab --format aab --nocache -v 3 examples/sokol/particles -o aabs/particles.aab
+
+    - name: Build AAB (Java 8) examples/sokol/particles
+      run: |
+        export VEXE=./v
+        export JAVA_HOME=$JAVA_HOME_8_X64
+        vab/vab --format aab --nocache -v 3 examples/sokol/particles -o aabs/java8/particles.aab
+
+    - name: Build AAB (Java 11) examples/sokol/particles
+      run: |
+        export VEXE=./v
+        export JAVA_HOME=$JAVA_HOME_11_X64
+        vab/vab --format aab --nocache -v 3 examples/sokol/particles -o aabs/java11/particles.aab
+
+
+
   macos-10_15:
     runs-on: macOS-10.15
     timeout-minutes: 30
@@ -188,14 +295,17 @@ jobs:
       run: vab/vab --help
 
     - name: Setup env
-      run: mkdir apks apks/java8 apks/java11 apks/java12 apks/java13 apks/java14
+      run: |
+        mkdir apks apks/java8 apks/java11 apks/java12 apks/java13 apks/java14
+        mkdir aabs aabs/java8 aabs/java11 aabs/java12 aabs/java13 aabs/java14
 
     - name: Run vab doctor
       run: |
         export VEXE=./v
         vab/vab doctor
 
-# The supported ndk version (21.x.x) resides in ndk-bundle
+    # The supported ndk version (21.x.x) resides in ndk-bundle
+
     - name: Build APK with cache (Default) examples/sokol/particles
       run: |
         export VEXE=./v
@@ -242,6 +352,63 @@ jobs:
         export ANDROID_NDK_ROOT="$HOME/Library/Android/sdk/ndk-bundle"
         export JAVA_HOME=$JAVA_HOME_14_X64
         vab/vab --nocache -v 3 examples/sokol/particles -o apks/java14/particles.apk
+
+    # AAB testing
+    - name: Install AAB dependencies
+      run: |
+        export VEXE=./v
+        export ANDROID_NDK_ROOT="$HOME/Library/Android/sdk/ndk-bundle"
+        vab/vab install bundletool
+        vab/vab install aapt2
+
+    - name: Build AAB with cache (Default) examples/sokol/particles
+      run: |
+        export VEXE=./v
+        export ANDROID_NDK_ROOT="$HOME/Library/Android/sdk/ndk-bundle"
+        vab/vab --format aab -v 3 examples/sokol/particles -o aabs/particles.aab
+
+    - name: Build AAB without cache (Default) examples/sokol/particles
+      run: |
+        export VEXE=./v
+        export ANDROID_NDK_ROOT="$HOME/Library/Android/sdk/ndk-bundle"
+        vab/vab --format aab --nocache -v 3 examples/sokol/particles -o aabs/particles.aab
+
+    - name: Build AAB (Java 8) examples/sokol/particles
+      run: |
+        export VEXE=./v
+        export ANDROID_NDK_ROOT="$HOME/Library/Android/sdk/ndk-bundle"
+        export JAVA_HOME=$JAVA_HOME_8_X64
+        vab/vab --format aab --nocache -v 3 examples/sokol/particles -o aabs/java8/particles.aab
+
+    - name: Build AAB (Java 11) examples/sokol/particles
+      run: |
+        export VEXE=./v
+        export ANDROID_NDK_ROOT="$HOME/Library/Android/sdk/ndk-bundle"
+        export JAVA_HOME=$JAVA_HOME_11_X64
+        vab/vab --format aab --nocache -v 3 examples/sokol/particles -o aabs/java11/particles.aab
+
+    - name: Build AAB (Java 12) examples/sokol/particles
+      run: |
+        export VEXE=./v
+        export ANDROID_NDK_ROOT="$HOME/Library/Android/sdk/ndk-bundle"
+        export JAVA_HOME=$JAVA_HOME_12_X64
+        vab/vab --format aab --nocache -v 3 examples/sokol/particles -o aabs/java12/particles.aab
+
+    - name: Build AAB (Java 13) examples/sokol/particles
+      run: |
+        export VEXE=./v
+        export ANDROID_NDK_ROOT="$HOME/Library/Android/sdk/ndk-bundle"
+        export JAVA_HOME=$JAVA_HOME_13_X64
+        vab/vab --format aab --nocache -v 3 examples/sokol/particles -o aabs/java13/particles.aab
+
+    - name: Build AAB (Java 14) examples/sokol/particles
+      run: |
+        export VEXE=./v
+        export ANDROID_NDK_ROOT="$HOME/Library/Android/sdk/ndk-bundle"
+        export JAVA_HOME=$JAVA_HOME_14_X64
+        vab/vab --format aab --nocache -v 3 examples/sokol/particles -o aabs/java14/particles.aab
+
+
 
   macos-latest-run-v-examples:
     runs-on: macOS-latest
@@ -316,25 +483,67 @@ jobs:
         #export ADB_TAGS="$ADB_TAGS V_ANDROID:D v_test_app:D"
         # Compile for x86_64 only to speed up an already too slow process
         export JAVA_HOME=$JAVA_HOME_11_X64 # Use Java 11 for kicks
-        vab/vab -v 3 --device auto --archs 'x86_64' --package-id "io.v.ci.examples.sokol.particles" run examples/sokol/particles
-        vab/vab -v 3 --device auto --archs 'x86_64' --package-id "io.v.ci.examples.game2048" run examples/2048
-        vab/vab -v 3 --device auto --archs 'x86_64' --package-id "io.v.ci.examples.fireworks" run examples/fireworks
-        vab/vab -v 3 --device auto --archs 'x86_64' --package-id "io.v.ci.examples.gg.raven_text_rendering" run examples/gg/raven_text_rendering.v
-        vab/vab -v 3 --device auto --archs 'x86_64' --package-id "io.v.ci.examples.gg.rectangles" run examples/gg/rectangles.v
+        vab/vab -v 3 --device auto --archs 'x86_64' --package-id "io.v.ci.vab.apk.examples.sokol.particles" run examples/sokol/particles
+        vab/vab -v 3 --device auto --archs 'x86_64' --package-id "io.v.ci.vab.apk.examples.game2048" run examples/2048
+        vab/vab -v 3 --device auto --archs 'x86_64' --package-id "io.v.ci.vab.apk.examples.fireworks" run examples/fireworks
+        vab/vab -v 3 --device auto --archs 'x86_64' --package-id "io.v.ci.vab.apk.examples.gg.raven_text_rendering" run examples/gg/raven_text_rendering.v
+        vab/vab -v 3 --device auto --archs 'x86_64' --package-id "io.v.ci.vab.apk.examples.gg.rectangles" run examples/gg/rectangles.v
         # Output test
         adb -e logcat -c
-        vab/vab -cg -v 3 --device auto --archs 'x86_64' --package-id "io.v.ci.examples.tetris" run examples/tetris
+        vab/vab -cg -v 3 --device auto --archs 'x86_64' --package-id "io.v.ci.vab.apk.examples.tetris" run examples/tetris
         sleep 2
         adb -e logcat -d > /tmp/logcat.dump.txt
         cat /tmp/logcat.dump.txt | grep -q 'SOKOL_APP: ... ok'; if [ ! $? -eq 0 ]; then cat /tmp/logcat.dump.txt; fi
         # Remove if cache is run
-        echo "Removing particles" && adb uninstall io.v.ci.examples.sokol.particles
-        echo "Removing 2048" && adb uninstall io.v.ci.examples.game2048
-        echo "Removing tetris" && adb uninstall io.v.ci.examples.tetris
-        echo "Removing fireworks" && adb uninstall io.v.ci.examples.fireworks
-        echo "Removing gg.raven_text_rendering" && adb uninstall io.v.ci.examples.gg.raven_text_rendering
-        echo "Removing gg.rectangles" && adb uninstall io.v.ci.examples.gg.rectangles
+        echo "Removing particles" && adb uninstall io.v.ci.vab.apk.examples.sokol.particles
+        echo "Removing 2048" && adb uninstall io.v.ci.vab.apk.examples.game2048
+        echo "Removing tetris" && adb uninstall io.v.ci.vab.apk.examples.tetris
+        echo "Removing fireworks" && adb uninstall io.v.ci.vab.apk.examples.fireworks
+        echo "Removing gg.raven_text_rendering" && adb uninstall io.v.ci.vab.apk.examples.gg.raven_text_rendering
+        echo "Removing gg.rectangles" && adb uninstall io.v.ci.vab.apk.examples.gg.rectangles
         adb -s emulator-5554 emu kill
+
+
+    - name: Install and run example AAB (Default)
+      run: |
+        export VEXE=./v
+        export ANDROID_SDK_ROOT="$HOME/Library/Android/sdk"
+        export ANDROID_NDK_ROOT="$ANDROID_SDK_ROOT/ndk-bundle"
+        # Don't set Java > 8 here! #export JAVA_HOME=$JAVA_HOME_11_X64
+        #pgrep emulator >/dev/null 2>&1 ||
+        $ANDROID_SDK_ROOT/emulator/emulator -avd test -no-snapshot -no-window -no-boot-anim -camera-back emulated -camera-front emulated -gpu swiftshader_indirect &
+        adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed) ]]; do sleep 1; done;'
+        # Remove if cache is run, and emulator failed
+        #echo "Removing particles" && adb uninstall org.v.test.ci.examples.sokol.particles
+        #echo "Removing 2048" && adb uninstall org.v.test.ci.examples.game2048
+        #echo "Removing tetris" && adb uninstall org.v.test.ci.examples.tetris
+        # Debugging
+        #export ADB_TAGS="SOKOL_APP:D"
+        #export ADB_TAGS="$ADB_TAGS V_ANDROID:D v_test_app:D"
+        # Compile for x86_64 only to speed up an already too slow process
+        export JAVA_HOME=$JAVA_HOME_11_X64 # Use Java 11 for kicks
+        vab/vab -v 3 install bundletool
+        vab/vab -v 3 install aapt2
+        vab/vab --format aab -v 3 --device auto --archs 'x86_64' --package-id "io.v.ci.vab.aab.examples.sokol.particles" run examples/sokol/particles
+        vab/vab --format aab -v 3 --device auto --archs 'x86_64' --package-id "io.v.ci.vab.aab.examples.game2048" run examples/2048
+        vab/vab --format aab -v 3 --device auto --archs 'x86_64' --package-id "io.v.ci.vab.aab.examples.fireworks" run examples/fireworks
+        vab/vab --format aab -v 3 --device auto --archs 'x86_64' --package-id "io.v.ci.vab.aab.examples.gg.raven_text_rendering" run examples/gg/raven_text_rendering.v
+        vab/vab --format aab -v 3 --device auto --archs 'x86_64' --package-id "io.v.ci.vab.aab.examples.gg.rectangles" run examples/gg/rectangles.v
+        # Output test
+        adb -e logcat -c
+        vab/vab -cg -v 3 --device auto --archs 'x86_64' --package-id "io.v.ci.vab.aab.examples.tetris" run examples/tetris
+        sleep 2
+        adb -e logcat -d > /tmp/logcat.dump.txt
+        cat /tmp/logcat.dump.txt | grep -q 'SOKOL_APP: ... ok'; if [ ! $? -eq 0 ]; then cat /tmp/logcat.dump.txt; fi
+        # Remove if cache is run
+        echo "Removing particles" && adb uninstall io.v.ci.vab.aab.examples.sokol.particles
+        echo "Removing 2048" && adb uninstall io.v.ci.vab.aab.examples.game2048
+        echo "Removing tetris" && adb uninstall io.v.ci.vab.aab.examples.tetris
+        echo "Removing fireworks" && adb uninstall io.v.ci.vab.aab.examples.fireworks
+        echo "Removing gg.raven_text_rendering" && adb uninstall io.v.ci.vab.aab.examples.gg.raven_text_rendering
+        echo "Removing gg.rectangles" && adb uninstall io.v.ci.vab.aab.examples.gg.rectangles
+        adb -s emulator-5554 emu kill
+
 
     - name: Checkout V UI
       uses: actions/checkout@v2

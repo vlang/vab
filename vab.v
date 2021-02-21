@@ -46,10 +46,11 @@ mut:
 	input  string
 	output string
 	// App essentials
-	app_name      string
-	icon          string
-	package_id    string
-	activity_name string
+	app_name       string
+	icon           string
+	package_id     string
+	activity_name  string
+	package_format string
 	// Build and packaging
 	v_flags                 []string // flags passed to the V compiler
 	lib_name                string
@@ -98,8 +99,8 @@ fn main() {
 		assets_extra: fp.string_multi('assets', `a`, 'Asset dir(s) to include in build')
 		v_flags: fp.string_multi('flag', `f`, 'Additional flags for the V compiler')
 		c_flags: fp.string_multi('cflag', `c`, 'Additional flags for the C compiler')
-		archs: fp.string('archs', 0, '', 'Comma separated string with any of "$android.default_archs"').split(',')
-		gles_version: fp.int('gles', 0, android.default_gles_version, 'GLES version to use from any of "$android.supported_gles_versions"')
+		archs: fp.string('archs', 0, '', 'Comma separated string with any of $android.default_archs').split(',')
+		gles_version: fp.int('gles', 0, android.default_gles_version, 'GLES version to use from any of $android.supported_gles_versions')
 		//
 		device_id: fp.string('device', `d`, '', 'Deploy to device <id>. Use "auto" to use first available.')
 		run: 'run' in cmd_flags // fp.bool('run', `r`, false, 'Run the app on the device after successful deployment.')
@@ -114,6 +115,7 @@ fn main() {
 		app_name: fp.string('name', 0, android.default_app_name, 'Pretty app name')
 		package_id: fp.string('package-id', 0, android.default_package_id, 'App package ID (e.g. "org.company.app")')
 		activity_name: fp.string('activity-name', 0, '', 'The name of the main activity (e.g. "VActivity")')
+		package_format: fp.string('format', 0, android.default_package_format, 'App package format. Any of $android.supported_package_formats')
 		icon: fp.string('icon', 0, '', 'App icon')
 		version_code: fp.int('version-code', 0, 0, 'Build version code (android:versionCode)')
 		//
@@ -200,6 +202,7 @@ fn main() {
 	// Merge flags captured before FlagParser
 	v_flags << opt.v_flags
 	opt.v_flags = v_flags
+
 	// Call the doctor at this point
 	if additional_args.len > 0 {
 		if additional_args[0] == 'doctor' {
@@ -213,8 +216,6 @@ fn main() {
 	// Validate environment
 	check_essentials(true)
 	resolve_options(mut opt, true)
-	// Validate environment after options has been resolved
-	validate_env(opt)
 
 	input := fp.args[fp.args.len - 1]
 
@@ -231,6 +232,9 @@ fn main() {
 	extend_from_dot_vab(mut opt)
 
 	kill_adb := os.getenv('VAB_KILL_ADB') != ''
+
+	// Validate environment after options and input has been resolved
+	validate_env(opt)
 
 	mut run := ''
 	mut package_id := opt.package_id
@@ -255,10 +259,35 @@ fn main() {
 			println('Using device "$device_id" from ANDROID_SERIAL env')
 		}
 	}
+	// Package format apk/aab
+	format := match opt.package_format {
+		'aab' {
+			android.PackageFormat.aab
+		}
+		else {
+			android.PackageFormat.apk
+		}
+	}
+
+	// Keystore file
+	mut keystore := android.Keystore{opt.keystore, opt.keystore_alias, opt.keystore_password, opt.keystore_alias_password}
+	if !os.is_file(keystore.path) {
+		if keystore.path != '' {
+			println('Couldn\'t locate "$keystore.path"')
+		}
+		keystore.path = ''
+	}
+	if keystore.path == '' {
+		keystore.path = os.join_path(exe_dir, 'debug.keystore')
+	}
+	keystore = android.resolve_keystore(keystore, opt.verbosity)
 
 	log_tag := opt.lib_name
 	deploy_opt := android.DeployOptions{
 		verbosity: opt.verbosity
+		format: format
+		keystore: keystore
+		work_dir: opt.work_dir
 		v_flags: opt.v_flags
 		device_id: device_id
 		deploy_file: opt.output
@@ -302,17 +331,7 @@ fn main() {
 		eprintln("$exe_name compiling didn\'t succeed")
 		exit(1)
 	}
-	// Keystore file
-	mut keystore := opt.keystore
-	if !os.is_file(keystore) {
-		if keystore != '' {
-			println('Couldn\'t locate "$keystore"')
-		}
-		keystore = ''
-	}
-	if keystore == '' {
-		keystore = os.join_path(exe_dir, 'debug.keystore')
-	}
+
 	pck_opt := android.PackageOptions{
 		verbosity: opt.verbosity
 		work_dir: opt.work_dir
@@ -322,6 +341,7 @@ fn main() {
 		app_name: opt.app_name
 		lib_name: opt.lib_name
 		package_id: package_id
+		format: format
 		activity_name: activity_name
 		icon: opt.icon
 		version_code: opt.version_code
@@ -330,9 +350,6 @@ fn main() {
 		assets_extra: opt.assets_extra
 		output_file: opt.output
 		keystore: keystore
-		keystore_alias: opt.keystore_alias
-		keystore_password: opt.keystore_password
-		keystore_alias_password: opt.keystore_alias_password
 		base_files: os.join_path(exe_dir, 'platforms', 'android')
 	}
 	if !android.package(pck_opt) {
@@ -448,6 +465,22 @@ fn validate_env(opt Options) {
 	if opt.api_level.i16() < sdk.default_api_level.i16() {
 		eprintln('Notice: Android API level $opt.api_level is less than the recomended level ($sdk.default_api_level).')
 	}
+	// AAB format
+	has_bundletool := env.has_bundletool()
+	has_aapt2 := env.has_aapt2()
+	if opt.package_format == 'aab' && !(has_bundletool && has_aapt2) {
+		if !has_bundletool {
+			eprintln('The tool `bundletool` is needed for AAB package building and deployment.')
+			eprintln('Please install bundletool manually and provide a path to it via BUNDLETOOL')
+			eprintln('or run `$exe_name install bundletool`')
+		}
+		if !has_aapt2 {
+			eprintln('The tool `aapt2` is needed for AAB package building.')
+			eprintln('Please install aapt2 manually and provide a path to it via AAPT2')
+			eprintln('or run `$exe_name install aapt2`')
+		}
+		exit(1)
+	}
 }
 
 fn resolve_options(mut opt Options, exit_on_error bool) {
@@ -523,7 +556,7 @@ fn resolve_options(mut opt Options, exit_on_error bool) {
 
 	opt.ndk_version = ndk_version
 
-	// Output specific
+	// Resolve output
 	default_file_name := opt.app_name.replace(os.path_separator.str(), '').replace(' ',
 		'_').to_lower()
 
@@ -538,7 +571,11 @@ fn resolve_options(mut opt Options, exit_on_error bool) {
 	} else {
 		output_file = default_file_name
 	}
-	output_file += '.apk'
+	if opt.package_format == 'aab' {
+		output_file += '.aab'
+	} else {
+		output_file += '.apk'
+	}
 	opt.output = output_file
 
 	// Java package ids/names are integrated hard into the eco-system
@@ -620,7 +657,7 @@ fn vab_commit_hash() string {
 }
 
 fn doctor(opt Options) {
-	sdkm := sdk.sdkmanager()
+	sdkm := env.sdkmanager()
 	env_managable := env.managable()
 
 	// Validate Android `sdkmanager` tool
@@ -648,20 +685,23 @@ fn doctor(opt Options) {
 			}
 		}
 	}
+
 	// vab section
 	println('$exe_name
 	Version $exe_version $exe_git_hash
 	Path "$exe_dir"')
+
 	// Java section
 	println('Java
 	JDK
 		Version $java.jdk_version()
 		Path "$java.jdk_root()"')
+
 	// Android section
 	println('Android
 	ENV
 		sdkmanager "$sdkm"
-		sdkmanager.version "$sdk.sdkmanager_version()"
+		sdkmanager.version "$env.sdkmanager_version()"
 		Managable: $env_managable
 	SDK
 		Path "$sdk.root()"
@@ -672,7 +712,17 @@ fn doctor(opt Options) {
 		Side-by-side $ndk.is_side_by_side()
 	Build
 		API $opt.api_level
-		Build-tools $opt.build_tools')
+		Build-tools $opt.build_tools
+	Packaging
+		Format $opt.package_format')
+
+	if env.has_bundletool() {
+		println('\t\tBundletool "$env.bundletool()"')
+	}
+	if env.has_aapt2() {
+		println('\t\tAAPT2 "$env.aapt2()"')
+	}
+
 	if opt.keystore != '' || opt.keystore_alias != '' {
 		println('\tKeystore')
 		println('\t\tFile $opt.keystore')
@@ -681,8 +731,9 @@ fn doctor(opt Options) {
 	// Product section
 	println('Product
 	Name "$opt.app_name"
-	Package "$opt.package_id"
+	Package ID "$opt.package_id"
 	Output "$opt.output"')
+
 	// V section
 	println('V
 	Version $vxt.version() $vxt.version_commit_hash()
