@@ -318,6 +318,10 @@ jobs:
         export VEXE=./v
         vab/vab doctor
 
+    - name: Setup env
+      run: |
+        mkdir apks
+
     - name: Build APK (Default) examples/sokol/particles
       run: |
         export VEXE=./v
