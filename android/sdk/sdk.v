@@ -42,9 +42,19 @@ enum Component {
 // root will try to detect where the Android SDK is installed. Otherwise return an empty string
 pub fn root() string {
 	mut sdk_root := os.getenv('ANDROID_SDK_ROOT')
+	if !os.is_dir(sdk_root) {
+		eprintln(@MOD + '.' + @FN +
+			' Warning: SDK found via ANDROID_SDK_ROOT "$sdk_root" is not a directory.')
+		sdk_root = ''
+	}
 
 	if sdk_root == '' {
 		sdk_root = os.getenv('ANDROID_HOME')
+		if !os.is_dir(sdk_root) {
+			eprintln(@MOD + '.' + @FN +
+				' Warning: SDK found via ANDROID_HOME "$sdk_root" is not a directory.')
+			sdk_root = ''
+		}
 	}
 
 	if sdk_root == '' {
@@ -58,7 +68,7 @@ pub fn root() string {
 
 		for dir in dirs {
 			if os.exists(dir) && os.is_dir(dir) {
-				$if debug {
+				$if debug_sdk {
 					eprintln(@MOD + '.' + @FN + ' found SDK in hardcoded paths at "$dir"')
 				}
 				return dir
@@ -77,7 +87,7 @@ pub fn root() string {
 					if !os.is_dir(sdk_root) {
 						sdk_root = ''
 					}
-					$if debug {
+					$if debug_sdk {
 						eprintln(@MOD + '.' + @FN + ' found by adb in "$sdk_root"')
 					}
 				}
@@ -97,7 +107,7 @@ pub fn root() string {
 		if !os.is_executable(sdkm_path) {
 			sdkm_path = os.join_path(cache_dir(), 'cmdline-tools', 'tools', 'bin', 'sdkmanager')
 			if os.is_executable(sdkm_path) {
-				$if debug {
+				$if debug_sdk {
 					eprintln(@MOD + '.' + @FN + ' found by sdkmanager in cache "$cache_dir()"')
 				}
 				return cache_dir()
@@ -123,12 +133,12 @@ pub fn root() string {
 		}
 	}
 	if !os.is_dir(sdk_root) {
-		$if debug {
+		$if debug_sdk {
 			eprintln(@MOD + '.' + @FN + ' Warning: "$sdk_root" is not a dir')
 		}
 		sdk_root = ''
 	} else {
-		$if debug {
+		$if debug_sdk {
 			eprintln(@MOD + '.' + @FN + ' found SDK in "$sdk_root"')
 		}
 	}

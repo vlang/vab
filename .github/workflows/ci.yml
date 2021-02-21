@@ -289,7 +289,7 @@ jobs:
       run: ./v -prod vab/vab.v
 
     - name: Build VAB
-      run: ./v -g vab/vab.v
+      run: ./v -d debug_sdk -g vab/vab.v
 
     - name: Run 'vab --help'
       run: vab/vab --help
@@ -298,6 +298,8 @@ jobs:
       run: |
         sudo rm -fr /usr/local/lib/android
         ls -al /usr/local/lib/
+        export ANDROID_SDK_ROOT=""
+        export ANDROID_HOME=""
         #sudo chown -R $USER:$USER /usr/local/lib/android
 
     - name: Run 'vab doctor'
