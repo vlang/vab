@@ -59,7 +59,7 @@ pub fn root() string {
 		for dir in dirs {
 			if os.exists(dir) && os.is_dir(dir) {
 				$if debug {
-					eprintln(@MOD + '.' + @FN + ' found SDK in "$dir"')
+					eprintln(@MOD + '.' + @FN + ' found SDK in hardcoded paths at "$dir"')
 				}
 				return dir
 			}
@@ -68,39 +68,46 @@ pub fn root() string {
 	// Try and detect by getting path to 'adb'
 	if sdk_root == '' {
 		mut adb_path := ''
-
 		if os.exists_in_system_path('adb') {
 			adb_path = os.find_abs_path_of_executable('adb') or { '' }
 			if adb_path != '' {
-				// adb normally reside in 'path/to/sdk_root/platform-tools/'
-				sdk_root = os.real_path(os.join_path(os.dir(adb_path), '..'))
+				if os.is_executable(adb_path) {
+					// adb normally reside in 'path/to/sdk_root/platform-tools/'
+					sdk_root = os.real_path(os.join_path(os.dir(adb_path), '..'))
+					if !os.is_dir(sdk_root) {
+						sdk_root = ''
+					}
+					$if debug {
+						eprintln(@MOD + '.' + @FN + ' found by adb in "$sdk_root"')
+					}
+				}
 			}
 		}
 	}
 	// Try and detect by getting path to 'sdkmanager'
 	if sdk_root == '' {
-		// mut path := sdkmanager() <- Don't do this recursion
-		mut path := ''
+		// mut sdkm_path := sdkmanager() <- Don't do this recursion
+		mut sdkm_path := ''
 		if os.exists_in_system_path('sdkmanager') {
 			if os.exists_in_system_path('sdkmanager') {
-				path = os.find_abs_path_of_executable('sdkmanager') or { '' }
+				sdkm_path = os.find_abs_path_of_executable('sdkmanager') or { '' }
 			}
 		}
 		// Check in cache
-		if !os.is_executable(path) {
-			path = os.join_path(cache_dir(), 'cmdline-tools', 'tools', 'bin', 'sdkmanager')
-			if os.is_executable(path) {
+		if !os.is_executable(sdkm_path) {
+			sdkm_path = os.join_path(cache_dir(), 'cmdline-tools', 'tools', 'bin', 'sdkmanager')
+			if os.is_executable(sdkm_path) {
 				$if debug {
-					eprintln(@MOD + '.' + @FN + ' Warning: "$sdk_root" is not a dir')
+					eprintln(@MOD + '.' + @FN + ' found by sdkmanager in cache "$cache_dir()"')
 				}
 				return cache_dir()
 			}
 		}
-		if !os.is_executable(path) {
-			path = ''
+		if !os.is_executable(sdkm_path) {
+			sdkm_path = ''
 		}
 
-		if path != '' {
+		if sdkm_path != '' {
 			// sdkmanager used to reside in 'path/to/sdk_root/cmdline-tools/tools/bin'
 			// but in older setups it coould reside in 'path/to/sdk_root/tools/bin'
 			// and newer setups in 'path/to/sdk_root/cmdline-tools/latest/bin' or
@@ -108,10 +115,10 @@ pub fn root() string {
 			// ... Android development is a complete mess. *sigh* ...
 			// For help and updates, please see
 			// https://stackoverflow.com/a/61176718
-			if path.contains('cmdline-tools') {
-				sdk_root = os.real_path(os.join_path(os.dir(path), '..', '..', '..'))
+			if sdkm_path.contains('cmdline-tools') {
+				sdk_root = os.real_path(os.join_path(os.dir(sdkm_path), '..', '..', '..'))
 			} else {
-				sdk_root = os.real_path(os.join_path(os.dir(path), '..', '..'))
+				sdk_root = os.real_path(os.join_path(os.dir(sdkm_path), '..', '..'))
 			}
 		}
 	}
