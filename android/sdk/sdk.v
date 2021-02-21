@@ -42,7 +42,7 @@ enum Component {
 // root will try to detect where the Android SDK is installed. Otherwise return an empty string
 pub fn root() string {
 	mut sdk_root := os.getenv('ANDROID_SDK_ROOT')
-	if !os.is_dir(sdk_root) {
+	if sdk_root != '' && !os.is_dir(sdk_root) {
 		eprintln(@MOD + '.' + @FN +
 			' Warning: SDK found via ANDROID_SDK_ROOT "$sdk_root" is not a directory.')
 		sdk_root = ''
@@ -50,7 +50,7 @@ pub fn root() string {
 
 	if sdk_root == '' {
 		sdk_root = os.getenv('ANDROID_HOME')
-		if !os.is_dir(sdk_root) {
+		if sdk_root != '' && !os.is_dir(sdk_root) {
 			eprintln(@MOD + '.' + @FN +
 				' Warning: SDK found via ANDROID_HOME "$sdk_root" is not a directory.')
 			sdk_root = ''
