@@ -392,7 +392,7 @@ fn ensure_sdkmanager(verbosity int) ?bool {
 		}
 		if os.is_executable(os.join_path(dst_check, 'sdkmanager')) {
 			if verbosity > 1 {
-				println('`sdkmanager` installed in "$dst" SDK root in "$sdk.root()"')
+				println('`sdkmanager` installed in "$dst_check". SDK root reports "$sdk.root()"')
 			}
 			return true
 		}

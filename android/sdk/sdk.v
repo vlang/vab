@@ -58,6 +58,9 @@ pub fn root() string {
 
 		for dir in dirs {
 			if os.exists(dir) && os.is_dir(dir) {
+				$if debug {
+					eprintln(@MOD + '.' + @FN + ' found SDK in "$dir"')
+				}
 				return dir
 			}
 		}
@@ -86,6 +89,12 @@ pub fn root() string {
 		// Check in cache
 		if !os.is_executable(path) {
 			path = os.join_path(cache_dir(), 'cmdline-tools', 'tools', 'bin', 'sdkmanager')
+			if os.is_executable(path) {
+				$if debug {
+					eprintln(@MOD + '.' + @FN + ' Warning: "$sdk_root" is not a dir')
+				}
+				return cache_dir()
+			}
 		}
 		if !os.is_executable(path) {
 			path = ''
@@ -107,7 +116,14 @@ pub fn root() string {
 		}
 	}
 	if !os.is_dir(sdk_root) {
+		$if debug {
+			eprintln(@MOD + '.' + @FN + ' Warning: "$sdk_root" is not a dir')
+		}
 		sdk_root = ''
+	} else {
+		$if debug {
+			eprintln(@MOD + '.' + @FN + ' found SDK in "$sdk_root"')
+		}
 	}
 	return sdk_root.trim_right(r'\/')
 }
