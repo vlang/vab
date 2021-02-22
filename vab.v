@@ -806,10 +806,13 @@ fn launch_cmd(args []string) int {
 			}
 			if res.exit_code == 0 {
 				os.write_file(hash_file, exe_git_hash) or { }
+			} else {
+				eprintln(res.output)
+				return 1
 			}
 		}
 	}
-	exec := exe + ' ' + cmd_args.join(' ').trim_right(' ')
+	exec := (exe + ' ' + cmd_args.join(' ')).trim_right(' ')
 	if os.is_executable(exe) {
 		res := os.exec(exec) or { os.Result{1, @MOD + '.' + @FN + ' could not execute "$exec"'} }
 		if res.exit_code == 0 {
@@ -822,7 +825,7 @@ fn launch_cmd(args []string) int {
 			return 1
 		}
 	}
-	v_message := if !os.is_executable(v) { '(v was not found)' } else { '' }
-	eprintln(@MOD + '.' + @FN + ' failed executing "$exec" $v_message')
+	v_message := if !os.is_executable(v) { ' (v was not found)' } else { '' }
+	eprintln(@MOD + '.' + @FN + ' failed executing "$exec"$v_message')
 	return 1
 }
