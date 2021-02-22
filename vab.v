@@ -837,7 +837,8 @@ fn version() string {
 	vmod := @VMOD_FILE
 	if vmod.len > 0 {
 		if vmod.contains('version:') {
-			v = vmod.all_after('version:').all_before('\n').replace("'", '').replace('"','').trim(' ')
+			v = vmod.all_after('version:').all_before('\n').replace("'", '').replace('"',
+				'').trim(' ')
 		}
 	}
 	return v
