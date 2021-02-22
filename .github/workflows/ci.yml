@@ -328,7 +328,7 @@ jobs:
 
   macos-latest-bootstrap:
     runs-on: macOS-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
     steps:
     - name: Checkout V
       uses: actions/checkout@v2
