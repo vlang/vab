@@ -13,7 +13,7 @@ import android.ndk
 import android.env
 
 const (
-	exe_version  = '0.2.1'
+	exe_version  = version()
 	exe_name     = os.file_name(os.executable())
 	exe_dir      = os.dir(os.real_path(os.executable()))
 	exe_git_hash = vab_commit_hash()
@@ -837,4 +837,16 @@ fn launch_cmd(args []string) int {
 	v_message := if !os.is_executable(v) { ' (v was not found)' } else { '' }
 	eprintln(@MOD + '.' + @FN + ' failed executing "$exec"$v_message')
 	return 1
+}
+
+fn version() string {
+	mut v := '0.0.0'
+	vmod := @VMOD_FILE
+	if vmod.len > 0 {
+		if vmod.contains('version:') {
+			v = vmod.all_after('version:').all_before('\n').replace("'", '').replace('"',
+				'').trim(' ')
+		}
+	}
+	return v
 }
