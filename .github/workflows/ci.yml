@@ -266,8 +266,8 @@ jobs:
         vab/vab --package aab --nocache -v 3 examples/sokol/particles -o aabs/java11/particles.aab
 
 
-  ubuntu-20_04-bootstrap:
-    runs-on: ubuntu-20.04
+  ubuntu-latest-bootstrap:
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
     - name: Checkout V
@@ -324,6 +324,66 @@ jobs:
       run: |
         export VEXE=./v
         vab/vab -v 3 examples/sokol/particles -o apks/particles.apk
+
+
+  macos-latest-bootstrap:
+    runs-on: macOS-latest
+    timeout-minutes: 10
+    steps:
+    - name: Checkout V
+      uses: actions/checkout@v2
+      with:
+        repository: vlang/v
+
+    - uses: actions/checkout@v2
+      with:
+        path: vab
+
+    - name: Build local v
+      run: make -j4
+
+    - name: Run tests
+      run: ./v test vab
+
+    - name: Build vab with -prod
+      run: ./v -prod vab/vab.v
+
+    - name: Build vab
+      run: ./v -g vab/vab.v
+
+    - name: Run 'vab --help'
+      run: vab/vab --help
+
+    - name: Ruin Android environment on purpose
+      run: |
+        sudo rm -fr "$HOME/Library/Android"
+
+    - name: Run 'vab doctor'
+      run: |
+        export VEXE=./v
+        vab/vab doctor
+
+    - name: Run 'vab install auto'
+      run: |
+        export ANDROID_SDK_ROOT="" # These are set in the CI by default
+        export ANDROID_HOME=""
+        export ANDROID_NDK_ROOT=""
+        export VEXE=./v
+        #vab/vab -v 3 install auto
+
+    - name: Run vab doctor
+      run: |
+        export VEXE=./v
+        vab/vab doctor
+
+    - name: Setup env
+      run: |
+        mkdir apks
+
+    - name: Build APK (Default) examples/sokol/particles
+      run: |
+        export VEXE=./v
+        #vab/vab -v 3 examples/sokol/particles -o apks/particles.apk
 
 
   macos-10_15:

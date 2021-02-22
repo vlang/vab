@@ -383,12 +383,18 @@ fn ensure_sdkmanager(verbosity int) ?bool {
 			uos)
 		file := os.join_path(os.temp_dir(), 'v-android-sdk-cmdltools.tmp.zip')
 		if !os.exists(file) {
+			if verbosity > 1 {
+				println('Downloading `sdkmanager` from "$url"...')
+			}
 			http.download_file(url, file) or {
 				return error(@MOD + '.' + @FN + ' ' +
 					'failed to download commandline tools needed for bootstrapping: $err')
 			}
 		}
 		// Install
+		if verbosity > 1 {
+			println('Installing `sdkmanager` to "$dst"...')
+		}
 		os.mkdir_all(dst) or { panic(err) }
 		dst_check := os.join_path(dst, 'tools', 'bin')
 		if util.unzip(file, dst) {
@@ -415,17 +421,23 @@ fn ensure_bundletool(verbosity int) ?bool {
 		url := env.default_components['bundletool']['bootstrap_url']
 		file := os.join_path(dst, 'bundletool.jar')
 		if !os.exists(file) {
+			if verbosity > 1 {
+				println('Downloading `bundletool` from "$url"...')
+			}
 			http.download_file(url, file) or {
 				return error(@MOD + '.' + @FN + ' ' +
-					'failed to download bundletool needed for aab support: $err')
+					'failed to download `bundletool` needed for aab support: $err')
 			}
 		}
 		// Install
 		dst_check := os.join_path(dst, 'bundletool.jar')
 		if os.exists(dst_check) {
+			if verbosity > 1 {
+				println('`bundletool` installed in "$dst_check"')
+			}
 			return true
 		}
-		return error(@MOD + '.' + @FN + ' ' + 'failed to install bundletool to "$dst_check".')
+		return error(@MOD + '.' + @FN + ' ' + 'failed to install `bundletool` to "$dst_check"')
 	}
 	return false
 }
@@ -613,16 +625,19 @@ fn ensure_aapt2(verbosity int) ?bool {
 		file := os.join_path(os.temp_dir(), 'aapt2.jar')
 		// file := os.join_path(dst, 'aapt2.jar')
 		if !os.exists(file) {
+			if verbosity > 1 {
+				println('Downloading `aapt2` from "$url"...')
+			}
 			http.download_file(url, file) or {
 				return error(@MOD + '.' + @FN + ' ' +
-					'failed to download aapt2 needed for aab support: $err')
+					'failed to download `aapt2` needed for aab support: $err')
 			}
 		}
 		// Unpack
 		unpack_path := os.join_path(os.temp_dir(), 'vab-aapt2')
 		os.rmdir_all(unpack_path) or { }
 		os.mkdir_all(unpack_path) or {
-			return error(@MOD + '.' + @FN + ' ' + 'failed to install aapt2: $err')
+			return error(@MOD + '.' + @FN + ' ' + 'failed to install `aapt2`: $err')
 		}
 		util.unzip(file, unpack_path)
 		// Install
@@ -630,12 +645,15 @@ fn ensure_aapt2(verbosity int) ?bool {
 		dst_check := os.join_path(dst, 'aapt2')
 		os.rm(dst_check) or { }
 		os.cp(aapt2_file, dst_check) or {
-			return error(@MOD + '.' + @FN + ' ' + 'failed to install aapt2: $err')
+			return error(@MOD + '.' + @FN + ' ' + 'failed to install `aapt2`: $err')
 		}
 		if os.exists(dst_check) {
+			if verbosity > 1 {
+				println('`aapt2` installed in "$dst_check"')
+			}
 			return true
 		}
-		return error(@MOD + '.' + @FN + ' ' + 'failed to install aapt2 to "$dst_check".')
+		return error(@MOD + '.' + @FN + ' ' + 'failed to install `aapt2` to "$dst_check".')
 	}
 	return false
 }
