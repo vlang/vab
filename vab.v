@@ -52,6 +52,7 @@ mut:
 	activity_name  string
 	package_format string
 	// Build and packaging
+	is_prod                 bool
 	v_flags                 []string // flags passed to the V compiler
 	lib_name                string
 	assets_extra            []string
@@ -199,8 +200,13 @@ fn main() {
 			exit(res)
 		}
 	}
-	// Merge flags captured before FlagParser
+
+	// Merge v flags captured before FlagParser
 	v_flags << opt.v_flags
+	if '-prod' in v_flags {
+		opt.is_prod = true
+		v_flags.delete(v_flags.index('-prod'))
+	}
 	opt.v_flags = v_flags
 
 	// Call the doctor at this point
@@ -317,6 +323,7 @@ fn main() {
 		verbosity: opt.verbosity
 		cache: opt.cache
 		cache_key: compile_cache_key
+		is_prod: opt.is_prod
 		gles_version: opt.gles_version
 		v_flags: opt.v_flags
 		c_flags: opt.c_flags
@@ -335,7 +342,7 @@ fn main() {
 	pck_opt := android.PackageOptions{
 		verbosity: opt.verbosity
 		work_dir: opt.work_dir
-		is_prod: '-prod' in opt.v_flags
+		is_prod: opt.is_prod
 		api_level: opt.api_level
 		build_tools: opt.build_tools
 		app_name: opt.app_name

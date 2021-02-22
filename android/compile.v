@@ -22,6 +22,7 @@ pub struct CompileOptions {
 	work_dir string // temporary work directory
 	input    string
 	//
+	is_prod      bool
 	gles_version int = android.default_gles_version
 	archs        []string // compile for these CPU architectures
 	v_flags      []string // flags to pass to the v compiler
@@ -161,7 +162,7 @@ pub fn compile(opt CompileOptions) bool {
 	}
 
 	// ... still a bit of a mess
-	if '-prod' in opt.v_flags {
+	if opt.is_prod {
 		cflags << ['-Os']
 	} else {
 		cflags << ['-O0']
