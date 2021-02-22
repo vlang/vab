@@ -369,7 +369,7 @@ jobs:
         export ANDROID_HOME=""
         export ANDROID_NDK_ROOT=""
         export VEXE=./v
-        vab/vab -v 3 install auto
+        #vab/vab -v 3 install auto
 
     - name: Run vab doctor
       run: |
@@ -383,7 +383,7 @@ jobs:
     - name: Build APK (Default) examples/sokol/particles
       run: |
         export VEXE=./v
-        vab/vab -v 3 examples/sokol/particles -o apks/particles.apk
+        #vab/vab -v 3 examples/sokol/particles -o apks/particles.apk
 
 
   macos-10_15:
