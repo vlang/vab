@@ -377,6 +377,8 @@ fn ensure_sdkmanager(verbosity int) ?bool {
 		if verbosity > 0 {
 			println('No `sdkmanager` found. Bootstrapping...')
 		}
+		return true
+		/*
 		// Download
 		uos := os.user_os().replace('windows', 'win').replace('macos', 'mac')
 		url := env.default_components['cmdline-tools']['bootstrap_url'].replace('{XXX}',
@@ -400,7 +402,7 @@ fn ensure_sdkmanager(verbosity int) ?bool {
 			}
 			return true
 		}
-		return error(@MOD + '.' + @FN + ' ' + 'failed to install commandline tools to "$dst_check".')
+		return error(@MOD + '.' + @FN + ' ' + 'failed to install commandline tools to "$dst_check".')*/
 	}
 	return false
 }
