@@ -15,11 +15,11 @@ pub const (
 	min_supported_version = min_version()
 )
 
-// ANDROID_SDK_ROOT and ANDROID_HOME are official ENV variables to get the SDK
+// ANDROID_SDK_ROOT and ANDROID_HOME is official ENV variables to get the SDK root
 // but no such conventions exists for getting the NDK.
 // However ANDROID_NDK_ROOT is widely used and the `sdkmanager` has support
 // for installing the NDK - and it will do so in a sub-folder (/ndk) of the SDK root.
-// This is also referred to as a "Side by side" install
+// This is also referred to as a "Side by side" install.
 const (
 	possible_ndk_paths_windows = [
 		os.join_path(sdk.root(), 'ndk'),
@@ -134,11 +134,9 @@ pub fn min_version() string {
 	}
 	if uos == 'macos' {
 		version = '21.3.6528147'
-		// version = '21.3.0'
 	}
 	if uos == 'linux' {
 		version = '21.1.6352462'
-		// version = '21.1.0'
 	}
 	return version
 }
