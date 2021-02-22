@@ -37,8 +37,8 @@ jobs:
 
     - name: run 'vab test-cleancode'
       run: |
-        export VEXE=./v
         cd vab
+        export VEXE=../v
         ./vab test-cleancode
 
   ubuntu-18_04-apk:

@@ -822,6 +822,7 @@ fn launch_cmd(args []string) int {
 			return 1
 		}
 	}
-	eprintln(@MOD + '.' + @FN + ' failed executing "$exec"')
+	v_message := if !os.is_executable(v) { '(v was not found)' } else { '' }
+	eprintln(@MOD + '.' + @FN + ' failed executing "$exec" $v_message')
 	return 1
 }
