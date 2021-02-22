@@ -373,24 +373,28 @@ fn ensure_sdkmanager(verbosity int) ?bool {
 	// https://stackoverflow.com/a/61176718
 	if sdkmanager() == '' {
 		// Let just cross fingers that it ends up where we want it.
-		//dst := os.join_path(sdk.cache_dir(), 'cmdline-tools')
+		dst := os.join_path(sdk.cache_dir(), 'cmdline-tools')
 		if verbosity > 0 {
 			println('No `sdkmanager` found. Bootstrapping...')
 		}
-		return true
-		/*
 		// Download
 		uos := os.user_os().replace('windows', 'win').replace('macos', 'mac')
 		url := env.default_components['cmdline-tools']['bootstrap_url'].replace('{XXX}',
 			uos)
 		file := os.join_path(os.temp_dir(), 'v-android-sdk-cmdltools.tmp.zip')
 		if !os.exists(file) {
+			if verbosity > 1 {
+				println('Downloading `sdkmanager` from "$url"...')
+			}
 			http.download_file(url, file) or {
 				return error(@MOD + '.' + @FN + ' ' +
 					'failed to download commandline tools needed for bootstrapping: $err')
 			}
 		}
 		// Install
+		if verbosity > 1 {
+			println('Installing `sdkmanager` to "$dst"...')
+		}
 		os.mkdir_all(dst) or { panic(err) }
 		dst_check := os.join_path(dst, 'tools', 'bin')
 		if util.unzip(file, dst) {
@@ -402,7 +406,7 @@ fn ensure_sdkmanager(verbosity int) ?bool {
 			}
 			return true
 		}
-		return error(@MOD + '.' + @FN + ' ' + 'failed to install commandline tools to "$dst_check".')*/
+		return error(@MOD + '.' + @FN + ' ' + 'failed to install commandline tools to "$dst_check".')
 	}
 	return false
 }

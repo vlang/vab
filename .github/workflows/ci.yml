@@ -369,9 +369,7 @@ jobs:
         export ANDROID_HOME=""
         export ANDROID_NDK_ROOT=""
         export VEXE=./v
-        vab/vab -v 3 install cmdline-tools;2.1
-        vab/vab -v 3 install platform-tools
-        vab/vab -v 3 install build-tools;24.0.3
+        vab/vab -v 3 install auto
 
     - name: Run vab doctor
       run: |
