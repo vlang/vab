@@ -368,6 +368,7 @@ jobs:
         export ANDROID_SDK_ROOT="" # These are set in the CI by default
         export ANDROID_HOME=""
         export ANDROID_NDK_ROOT=""
+        export JAVA_HOME=$JAVA_HOME_11_X64
         export VEXE=./v
         vab/vab -v 3 install cmdline-tools;2.1
         vab/vab -v 3 install platform-tools
