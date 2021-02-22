@@ -807,6 +807,8 @@ fn launch_cmd(args []string) int {
 			if res.exit_code == 0 {
 				os.write_file(hash_file, exe_git_hash) or { }
 			} else {
+				vcmd := v_cmd.join(' ')
+				eprintln(@MOD + '.' + @FN + ' "$vcmd" failed.')
 				eprintln(res.output)
 				return 1
 			}
