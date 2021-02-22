@@ -27,15 +27,15 @@ jobs:
     - name: Build local v
       run: make -j4
 
-    - name: v test-fmt
+    - name: Test code formatting
       run: |
         cd vab
         ../v test-fmt
 
-    - name: Build VAB
+    - name: Build vab
       run: ./v -g vab/vab.v
 
-    - name: run 'vab test-cleancode'
+    - name: Test clean vab code
       run: |
         export VEXE=./v
         vab/vab test-cleancode vab
@@ -57,10 +57,10 @@ jobs:
     - name: Run tests
       run: ./v test vab
 
-    - name: Build VAB with -prod
+    - name: Build vab with -prod
       run: ./v -prod -g vab/vab.v
 
-    - name: Build VAB
+    - name: Build vab
       run: ./v -g vab/vab.v
 
     - name: Run vab --help
@@ -159,10 +159,10 @@ jobs:
     - name: Run tests
       run: ./v test vab
 
-    - name: Build VAB with -prod
+    - name: Build vab with -prod
       run: ./v -prod vab/vab.v
 
-    - name: Build VAB
+    - name: Build vab
       run: ./v -g vab/vab.v
 
     - name: Run vab --help
@@ -218,10 +218,10 @@ jobs:
     - name: Run tests
       run: ./v test vab
 
-    - name: Build VAB with -prod
+    - name: Build vab with -prod
       run: ./v -prod vab/vab.v
 
-    - name: Build VAB
+    - name: Build vab
       run: ./v -g vab/vab.v
 
     - name: Run vab --help
@@ -285,10 +285,10 @@ jobs:
     - name: Run tests
       run: ./v test vab
 
-    - name: Build VAB with -prod
+    - name: Build vab with -prod
       run: ./v -prod vab/vab.v
 
-    - name: Build VAB
+    - name: Build vab
       run: ./v -g vab/vab.v
 
     - name: Run 'vab --help'
@@ -344,10 +344,10 @@ jobs:
     - name: Run tests
       run: ./v test vab
 
-    - name: Build VAB with -prod
+    - name: Build vab with -prod
       run: ./v -prod vab/vab.v
 
-    - name: Build VAB
+    - name: Build vab
       run: ./v -g vab/vab.v
 
     - name: Run vab --help
@@ -489,10 +489,10 @@ jobs:
     - name: Run tests
       run: ./v test vab
 
-    - name: Build VAB with -prod
+    - name: Build vab with -prod
       run: ./v -prod vab/vab.v
 
-    - name: Build VAB
+    - name: Build vab
       run: ./v -g vab/vab.v
 
     - name: Run vab --help
