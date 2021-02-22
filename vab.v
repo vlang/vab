@@ -18,6 +18,7 @@ const (
 	exe_dir      = os.dir(os.real_path(os.executable()))
 	exe_git_hash = vab_commit_hash()
 	rip_vflags   = ['-autofree', '-g', '-cg', '-prod', 'run']
+	subcmds      = ['test-cleancode']
 )
 
 struct Options {
@@ -65,9 +66,17 @@ mut:
 
 fn main() {
 	mut args := os.args.clone()
+
+	// Indentify sub-commands.
+	for subcmd in subcmds {
+		if subcmd in args {
+			// First encountered known sub-command is executed on the spot.
+			exit(launch_cmd(args[args.index(subcmd)..]))
+		}
+	}
+
 	mut v_flags := []string{}
 	mut cmd_flags := []string{}
-
 	// Indentify special flags in args before FlagParser ruin them.
 	// E.g. the -autofree flag will result in dump_env being called for some weird reason???
 	for special_flag in rip_vflags {
@@ -768,4 +777,57 @@ pub fn dot_vab_path(file_or_dir_path string) string {
 		}
 	}
 	return ''
+}
+
+fn launch_cmd(args []string) int {
+	mut cmd := args[0]
+	cmd_args := args[1..]
+	if cmd.starts_with('test-') {
+		cmd = cmd.all_after('test-')
+	}
+	v := vxt.vexe()
+	exe := os.join_path(exe_dir, 'cmd', cmd)
+	if os.is_executable(v) {
+		hash_file := os.join_path(exe_dir, 'cmd', '.' + cmd + '.hash')
+
+		mut hash := ''
+		if os.is_file(hash_file) {
+			hash = os.read_file(hash_file) or { '' }
+		}
+		if hash != exe_git_hash {
+			v_cmd := [
+				v,
+				exe + '.v',
+				'-o',
+				exe,
+			]
+			res := os.exec(v_cmd.join(' ')) or {
+				panic(@MOD + '.' + @FN + ' failed compiling "$cmd": $err')
+			}
+			if res.exit_code == 0 {
+				os.write_file(hash_file, exe_git_hash) or { }
+			} else {
+				vcmd := v_cmd.join(' ')
+				eprintln(@MOD + '.' + @FN + ' "$vcmd" failed.')
+				eprintln(res.output)
+				return 1
+			}
+		}
+	}
+	exec := (exe + ' ' + cmd_args.join(' ')).trim_right(' ')
+	if os.is_executable(exe) {
+		res := os.exec(exec) or { os.Result{1, @MOD + '.' + @FN + ' could not execute "$exec"'} }
+		if res.exit_code == 0 {
+			print(res.output)
+			os.flush()
+			return 0
+		}
+		if res.exit_code > 0 {
+			eprintln(res.output)
+			return 1
+		}
+	}
+	v_message := if !os.is_executable(v) { ' (v was not found)' } else { '' }
+	eprintln(@MOD + '.' + @FN + ' failed executing "$exec"$v_message')
+	return 1
 }
