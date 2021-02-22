@@ -1,5 +1,47 @@
-vab
-vab.exe
+# ignore all build binaries
+*
+!*/
+!*.*
+*.exe
+*.o
+*.so
+.*.c
+*.tmp.c
+*.obj
+*.exp
+*.ilk
+*.pdb
+*.dll
+*.lib
+*.bak
+a.out
+
+# ignore Android / Java files
 *.apk
 *.aab
 *.keystore
+cmd/*.hash
+
+# ignore editor files
+.idea
+.project
+.classpath
+.c9
+*.launch
+.settings/
+*.sublime-workspace
+.vscode/
+*.code-workspace
+*~
+*.swp
+*.swo
+*.swn
+.env
+
+# ignore system files
+.directory
+.DS_Store
+._*
+thumbs.db
+/.symlink
+/.bin
