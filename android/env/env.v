@@ -373,7 +373,7 @@ fn ensure_sdkmanager(verbosity int) ?bool {
 	// https://stackoverflow.com/a/61176718
 	if sdkmanager() == '' {
 		// Let just cross fingers that it ends up where we want it.
-		dst := os.join_path(sdk.cache_dir(), 'cmdline-tools')
+		//dst := os.join_path(sdk.cache_dir(), 'cmdline-tools')
 		if verbosity > 0 {
 			println('No `sdkmanager` found. Bootstrapping...')
 		}
