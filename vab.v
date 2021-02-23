@@ -36,8 +36,9 @@ struct Options {
 	c_flags      []string // flags passed to the C compiler(s)
 	archs        []string
 	// Deploy specifics
-	run        bool
-	device_log bool
+	run            bool
+	device_log     bool
+	device_log_raw bool
 	// Detected environment
 	dump_usage       bool
 	list_ndks        bool
@@ -115,6 +116,7 @@ fn main() {
 		device_id: fp.string('device', `d`, '', 'Deploy to device <id>. Use "auto" to use first available.')
 		run: 'run' in cmd_flags // fp.bool('run', `r`, false, 'Run the app on the device after successful deployment.')
 		device_log: fp.bool('log', 0, false, 'Enable device logging after deployment.')
+		device_log_raw: fp.bool('log-raw', 0, false, 'Enable unfiltered, full device logging after deployment.')
 		//
 		keystore: fp.string('keystore', 0, '', 'Use this keystore file to sign the package')
 		keystore_alias: fp.string('keystore-alias', 0, '', 'Use this keystore alias from the keystore file to sign the package')
@@ -307,7 +309,8 @@ fn main() {
 		device_id: device_id
 		deploy_file: opt.output
 		kill_adb: kill_adb
-		device_log: opt.device_log
+		device_log: opt.device_log || opt.device_log_raw
+		log_mode: if opt.device_log_raw { android.LogMode.raw } else { android.LogMode.filtered }
 		log_tag: log_tag
 		run: run
 	}

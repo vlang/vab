@@ -15,10 +15,16 @@ pub struct DeployOptions {
 	work_dir    string
 	device_id   string
 	device_log  bool
+	log_mode    LogMode = .filtered
 	deploy_file string
 	log_tag     string
 	run         string // Full id 'com.package.name/com.package.name.ActivityName'
 	kill_adb    bool   // Kill ADB after use.
+}
+
+pub enum LogMode {
+	filtered
+	raw
 }
 
 pub fn device_list() []string {
@@ -144,19 +150,22 @@ pub fn deploy_apk(opt DeployOptions) bool {
 				'$device_id',
 				'logcat',
 			]
-			// Sokol
-			is_debug := '-cg' in opt.v_flags || '-g' in opt.v_flags
-			if is_debug {
-				adb_logcat_cmd << 'SOKOL_APP:D'
+
+			// Only filter output in "normal" log mode
+			if opt.log_mode == .filtered {
+				// Sokol
+				is_debug := '-cg' in opt.v_flags || '-g' in opt.v_flags
+				if is_debug {
+					adb_logcat_cmd << 'SOKOL_APP:D'
+				}
+				adb_logcat_cmd << [
+					'V_ANDROID:D',
+					'$opt.log_tag:D',
+					'System.err:D',
+				]
+				// if !is_debug {
+				adb_logcat_cmd << '*:S'
 			}
-			adb_logcat_cmd << [
-				'V_ANDROID:D',
-				'$opt.log_tag:D',
-				'System.err:D',
-			]
-			// if !is_debug {
-			adb_logcat_cmd << '*:S'
-			//}
 
 			// log_cmd := adb_logcat_cmd.join(' ')
 			// println('Use "$log_cmd" to view logs...')
