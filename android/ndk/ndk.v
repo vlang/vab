@@ -39,7 +39,10 @@ const (
 pub fn root() string {
 	mut ndk_root := os.getenv('ANDROID_NDK_ROOT')
 	if ndk_root != '' && !os.is_dir(ndk_root) {
-		// eprintln(@MOD + '.' + @FN + ' Warning: NDK found via ANDROID_NDK_ROOT "$ndk_root" is not a directory.')
+		$if debug_ndk ? {
+			eprintln(@MOD + '.' + @FN +
+				' Warning: NDK found via ANDROID_NDK_ROOT "$ndk_root" is not a directory.')
+		}
 		ndk_root = ''
 	}
 	if ndk_root == '' && sdk.root() != '' {
@@ -59,9 +62,9 @@ pub fn root() string {
 
 		for dir in dirs {
 			if os.exists(dir) && os.is_dir(dir) {
-				/*$if debug {
+				$if debug_ndk ? {
 					eprintln(@MOD + '.' + @FN + ' found NDK in hardcoded paths at "$dir"')
-				}*/
+				}
 				return dir
 			}
 		}
@@ -76,6 +79,10 @@ pub fn root() string {
 					// ndk-which reside in some ndk roots
 					ndk_root = os.real_path(os.dir(ndk_which))
 					if !os.is_dir(ndk_root) {
+						$if debug_ndk ? {
+							eprintln(@MOD + '.' + @FN +
+								' ndk-which was in PATH but containing dir is no more "$ndk_root"')
+						}
 						ndk_root = ''
 					}
 				}
@@ -83,9 +90,9 @@ pub fn root() string {
 		}
 	}
 	if !os.is_dir(ndk_root) {
-		/*$if debug {
+		$if debug_ndk ? {
 			eprintln(@MOD + '.' + @FN + ' Warning: "$ndk_root" is not a dir')
-		}*/
+		}
 		ndk_root = ''
 	}
 	return ndk_root.trim_right(r'\/')
