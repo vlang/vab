@@ -208,12 +208,13 @@ pub fn platforms_available() []string {
 	// Currently we don't support non-standard API levels like "android-S" (Android 12 developer preview)
 	available = available.filter(fn (a string) bool {
 		bytes := a.all_after('-').bytes()
+		is_digits := false
 		for b in bytes {
 			if !b.is_digit() {
-				return false
+				return true
 			}
 		}
-		return true
+		return is_digits
 	})
 	return available
 }
