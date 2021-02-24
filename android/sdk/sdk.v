@@ -204,9 +204,9 @@ pub fn platforms_available() []string {
 		return available
 	}
 	available = util.ls_sorted(platforms_root())
-	available.filter(it.starts_with('android-'))
+	available = available.filter(it.starts_with('android-'))
 	// Currently we don't support non-standard API levels like "android-S" (Android 12 developer preview)
-	available.filter(fn (a string) bool {
+	available = available.filter(fn (a string) bool {
 		bytes := a.all_after('-').bytes()
 		for b in bytes {
 			if !b.is_digit() {
