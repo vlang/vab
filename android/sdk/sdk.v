@@ -208,13 +208,12 @@ pub fn platforms_available() []string {
 	// Currently we don't support non-standard API levels like "android-S" (Android 12 developer preview)
 	available = available.filter(fn (a string) bool {
 		bytes := a.all_after('-').bytes()
-		is_digits := false
 		for b in bytes {
 			if !b.is_digit() {
-				return true
+				return false
 			}
 		}
-		return is_digits
+		return true
 	})
 	return available
 }
@@ -226,10 +225,23 @@ pub fn platforms_dir() []string {
 */
 
 pub fn api_dirs() []string {
+	mut available := []string{}
 	if !found() {
-		return []string{}
+		return available
 	}
-	return util.ls_sorted(platforms_root())
+	available = util.ls_sorted(platforms_root())
+	available = available.filter(it.starts_with('android-'))
+	// Currently we don't support non-standard API levels like "android-S" (Android 12 developer preview)
+	available = available.filter(fn (a string) bool {
+		bytes := a.all_after('-').bytes()
+		for b in bytes {
+			if !b.is_digit() {
+				return false
+			}
+		}
+		return true
+	})
+	return available
 }
 
 pub fn apis_available() []string {
