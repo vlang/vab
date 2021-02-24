@@ -75,6 +75,7 @@ jobs:
       run: |
         export VEXE=./v
         vab/vab doctor
+        ls /usr/local/lib/android/sdk/platforms
 
     - name: Build APK with cache (Default) examples/sokol/particles
       run: |
