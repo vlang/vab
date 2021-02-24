@@ -78,7 +78,7 @@ pub enum Dependency {
 
 pub struct InstallOptions {
 	dep       Dependency
-	version   string
+	item      string
 	verbosity int
 }
 
@@ -157,6 +157,8 @@ pub fn install(components string, verbosity int) int {
 			return 1
 		}
 
+		item := if version != '' { component + ';' + version } else { component }
+
 		match component {
 			'auto' {
 				cmdline_tools_comp := env.default_components['cmdline-tools']['name'] + ';' +
@@ -178,27 +180,27 @@ pub fn install(components string, verbosity int) int {
 				break
 			}
 			'cmdline-tools' {
-				ios << InstallOptions{.cmdline_tools, version, verbosity}
+				ios << InstallOptions{.cmdline_tools, item, verbosity}
 			}
 			'platform-tools' {
-				ios << InstallOptions{.platform_tools, version, verbosity}
+				ios << InstallOptions{.platform_tools, item, verbosity}
 			}
 			'ndk' {
-				ios << InstallOptions{.ndk, version, verbosity}
+				ios << InstallOptions{.ndk, item, verbosity}
 			}
 			'build-tools' {
-				ios << InstallOptions{.build_tools, version, verbosity}
+				ios << InstallOptions{.build_tools, item, verbosity}
 			}
 			'platforms' {
-				ios << InstallOptions{.platforms, version, verbosity}
+				ios << InstallOptions{.platforms, item, verbosity}
 			}
 			'bundletool' {
 				ensure_sdk = false
-				ios << InstallOptions{.bundletool, version, verbosity}
+				ios << InstallOptions{.bundletool, item, verbosity}
 			}
 			'aapt2' {
 				ensure_sdk = false
-				ios << InstallOptions{.aapt2, version, verbosity}
+				ios << InstallOptions{.aapt2, item, verbosity}
 			}
 			else {
 				eprintln(@MOD + ' ' + @FN + ' unknown component "$component"')
@@ -236,10 +238,10 @@ fn install_opt(opt InstallOptions) ?bool {
 		}
 	}
 
-	version := opt.version
+	item := opt.item
 
 	if opt.verbosity > 0 {
-		println(@MOD + '.' + @FN + ' installing $opt.dep ${version}...')
+		println(@MOD + '.' + @FN + ' installing $opt.dep: "$item"...')
 	}
 	if opt.dep == .bundletool {
 		return ensure_bundletool(opt.verbosity)
@@ -256,7 +258,7 @@ fn install_opt(opt InstallOptions) ?bool {
 			'yes |' /* TODO Windows */,
 			sdkmanager(),
 			'--sdk_root="$sdk.root()"',
-			'"$version"',
+			'"$item"',
 		]
 		util.verbosity_print_cmd(cmd, opt.verbosity)
 		cmd_res := util.run(cmd)
@@ -273,15 +275,15 @@ fn install_opt(opt InstallOptions) ?bool {
 		}
 
 		if opt.verbosity > 0 {
-			println('Installing Platform Tools "$opt.version"...')
+			println('Installing Platform Tools "$opt.item"...')
 		}
 		*/
-		// Ignore opt.version for now
+		// Ignore opt.item for now
 		cmd := [
 			'yes |' /* TODO Windows */,
 			sdkmanager(),
 			'--sdk_root="$sdk.root()"',
-			'"$version"',
+			'"$item"',
 		]
 		util.verbosity_print_cmd(cmd, opt.verbosity)
 		cmd_res := util.run(cmd)
@@ -290,24 +292,24 @@ fn install_opt(opt InstallOptions) ?bool {
 		}
 		return true
 	} else if opt.dep == .ndk {
-		version_check := version.all_after(';')
+		version_check := item.all_after(';')
 		if version_check != '' {
 			sv_check := semver.from(version_check) or { panic(err) }
 			comp_sv := semver.from(ndk.min_supported_version) or { panic(err) }
 			if sv_check.lt(comp_sv) {
-				eprintln('Notice: Skipping install. NDK $version is lower than supported ${ndk.min_supported_version}...')
+				eprintln('Notice: Skipping install. NDK $item is lower than supported ${ndk.min_supported_version}...')
 				return true
 			}
 		}
 
 		if opt.verbosity > 0 {
-			println('Installing NDK (Side-by-side) "$version"...')
+			println('Installing NDK (Side-by-side) "$item"...')
 		}
 		cmd := [
 			'yes |' /* TODO Windows */,
 			sdkmanager(),
 			'--sdk_root="$sdk.root()"',
-			'"$version"',
+			'"$item"',
 		]
 		util.verbosity_print_cmd(cmd, opt.verbosity)
 		cmd_res := util.run(cmd)
@@ -316,12 +318,12 @@ fn install_opt(opt InstallOptions) ?bool {
 		}
 		return true
 	} else if opt.dep == .build_tools {
-		version_check := version.all_after(';')
+		version_check := item.all_after(';')
 		if version_check != '' {
 			sv_check := semver.from(version_check) or { panic(err) }
 			comp_sv := semver.from(sdk.min_supported_build_tools_version) or { panic(err) }
 			if sv_check.lt(comp_sv) {
-				eprintln('Notice: Skipping install. build-tools $opt.version is lower than supported ${sdk.min_supported_build_tools_version}...')
+				eprintln('Notice: Skipping install. build-tools "$item" is lower than supported ${sdk.min_supported_build_tools_version}...')
 				return true
 			}
 		}
@@ -330,7 +332,7 @@ fn install_opt(opt InstallOptions) ?bool {
 			'yes |' /* TODO Windows */,
 			sdkmanager(),
 			'--sdk_root="$sdk.root()"',
-			'"$version"',
+			'"$item"',
 		]
 		util.verbosity_print_cmd(cmd, opt.verbosity)
 		cmd_res := util.run(cmd)
@@ -339,9 +341,9 @@ fn install_opt(opt InstallOptions) ?bool {
 		}
 		return true
 	} else if opt.dep == .platforms {
-		v := version.all_after('-')
+		v := item.all_after('-')
 		if v.i16() < sdk.min_supported_api_level.i16() {
-			eprintln('Notice: Skipping install. platform $version is lower than supported android-${sdk.min_supported_api_level}...')
+			eprintln('Notice: Skipping install. platform $item is lower than supported android-${sdk.min_supported_api_level}...')
 			return true
 		}
 
@@ -349,7 +351,7 @@ fn install_opt(opt InstallOptions) ?bool {
 			'yes |' /* TODO Windows */,
 			sdkmanager(),
 			'--sdk_root="$sdk.root()"',
-			'"$version"',
+			'"$item"',
 		]
 		util.verbosity_print_cmd(cmd, opt.verbosity)
 		cmd_res := util.run(cmd)
