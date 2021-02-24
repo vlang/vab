@@ -191,16 +191,11 @@ pub fn platforms_root() string {
 	return os.join_path(root(), 'platforms')
 }
 
-pub fn platforms_dir() []string {
-	mut available := []string{}
-	if !found() {
-		return []string{}
-	}
-	available = util.ls_sorted(platforms_root())
-	available = available.filter(it.starts_with('android-'))
+fn platforms_dir_filter(entries []string) []string {
+	mut list := entries.filter(os.file_name(it).starts_with('android-'))
 	// Currently we don't support non-standard API levels like "android-S" (Android 12 developer preview)
-	available = available.filter(fn (a string) bool {
-		bytes := a.all_after('-').bytes()
+	list = list.filter(fn (a string) bool {
+		bytes := os.file_name(a).all_after('-').bytes()
 		for b in bytes {
 			if !b.is_digit() {
 				return false
@@ -208,52 +203,31 @@ pub fn platforms_dir() []string {
 		}
 		return true
 	})
-	return available
+	return list
+}
+
+pub fn platforms_dir() []string {
+	if !found() {
+		return []string{}
+	}
+	return platforms_dir_filter(util.find_sorted(platforms_root()))
 }
 
 pub fn platforms_available() []string {
-	mut available := []string{}
 	if !found() {
 		return []string{}
 	}
-	available = util.ls_sorted(platforms_root())
-	available = available.filter(it.starts_with('android-'))
-	// Currently we don't support non-standard API levels like "android-S" (Android 12 developer preview)
-	available = available.filter(fn (a string) bool {
-		bytes := a.all_after('-').bytes()
-		for b in bytes {
-			if !b.is_digit() {
-				return false
-			}
-		}
-		return true
-	})
-	return available
+	return platforms_dir_filter(util.ls_sorted(platforms_root()))
 }
 
+[deprecated: 'Please use platforms_available() instead']
 pub fn api_dirs() []string {
-	mut available := []string{}
-	if !found() {
-		return available
-	}
-	available = util.ls_sorted(platforms_root())
-	available = available.filter(it.starts_with('android-'))
-	// Currently we don't support non-standard API levels like "android-S" (Android 12 developer preview)
-	available = available.filter(fn (a string) bool {
-		bytes := a.all_after('-').bytes()
-		for b in bytes {
-			if !b.is_digit() {
-				return false
-			}
-		}
-		return true
-	})
-	return available
+	return platforms_available()
 }
 
 pub fn apis_available() []string {
 	mut apis := []string{}
-	for api in api_dirs() {
+	for api in platforms_available() {
 		apis << api.all_after('android-')
 	}
 	return apis
