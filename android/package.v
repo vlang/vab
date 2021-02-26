@@ -320,7 +320,7 @@ fn package_aab(opt PackageOptions) bool {
 		'--manifest',
 		os.join_path(package_path, 'AndroidManifest.xml'),
 		'-R',
-		/* 'compiled_resources' */
+		//'compiled_resources'
 		os.join_path('compiled_resources', '*.flat'),
 		'-A',
 		assets_path,
@@ -345,9 +345,9 @@ fn package_aab(opt PackageOptions) bool {
 		javac,
 		'-source 1.7',
 		'-target 1.7',
-		/* '-bootclasspath ' + os.join_path(java.jre_root(),'lib','rt.jar') */
+		//'-bootclasspath ' + os.join_path(java.jre_root(),'lib','rt.jar')
 		'-bootclasspath ' + android_runtime,
-		/* '-classpath ' + android_runtime, */
+		//'-classpath ' + android_runtime,
 		'-d classes',
 		'-classpath .',
 	]
@@ -441,7 +441,7 @@ fn package_aab(opt PackageOptions) bool {
 		bundletool,
 		'validate',
 		'--bundle',
-		/* tmp_unsigned_product */
+		// tmp_unsigned_product
 		tmp_product,
 	]
 	util.verbosity_print_cmd(bundletool_validate_cmd, opt.verbosity)

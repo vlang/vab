@@ -753,6 +753,22 @@ fn doctor(opt Options) {
 	Package ID "$opt.package_id"
 	Output "$opt.output"')
 
+	// Shell environment
+	println('Shell ENV
+	ANDROID_HOME=' + os.getenv('ANDROID_HOME') + '
+	ANDROID_SDK_ROOT=' +
+		os.getenv('ANDROID_SDK_ROOT') + '
+	ANDROID_NDK_ROOT=' + os.getenv('ANDROID_NDK_ROOT') +
+		'
+	SDKMANAGER=' + os.getenv('SDKMANAGER') + '
+	ADB=' + os.getenv('ADB') + '
+	BUNDLETOOL=' +
+		os.getenv('BUNDLETOOL') + '
+	AAPT2=' + os.getenv('AAPT2') + '
+	JAVA_HOME=' +
+		os.getenv('JAVA_HOME') + '
+	VEXE=' + os.getenv('VEXE'))
+
 	// V section
 	println('V
 	Version $vxt.version() $vxt.version_commit_hash()
