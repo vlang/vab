@@ -441,7 +441,7 @@ fn validate_env(opt Options) {
 
 	jdk_semantic_version := semver.from(jdk_version) or {
 		panic(@MOD + '.' + @FN + ':' + @LINE +
-			' error converting jdk_version "$jdk_version" to semantic version.\nsemver: ' + err)
+			' error converting jdk_version "$jdk_version" to semantic version.\nsemver: $err')
 	}
 	if !jdk_semantic_version.ge(semver.build(1, 8, 0)) { // NOTE When did this break:.satisfies('1.8.*') ???
 		// Some Android tools like `sdkmanager` in cmdline-tools;1.0 only worked with Java 8 JDK (1.8.x).
@@ -453,8 +453,7 @@ fn validate_env(opt Options) {
 
 	build_tools_semantic_version := semver.from(sdk.default_build_tools_version) or {
 		panic(@MOD + '.' + @FN + ':' + @LINE +
-			' error converting build-tools version "$sdk.default_build_tools_version" to semantic version.\nsemver: ' +
-			err)
+			' error converting build-tools version "$sdk.default_build_tools_version" to semantic version.\nsemver: $err')
 	}
 
 	if !build_tools_semantic_version.ge(semver.build(24, 0, 3)) { // NOTE When did this break:.satisfies('>=24.0.3') ???
@@ -470,7 +469,7 @@ fn validate_env(opt Options) {
 	// Validate Android NDK requirements
 	if ndk.found() {
 		ndk_semantic_version := semver.from(opt.ndk_version) or {
-			panic(@MOD+'.'+@FN+':'+@LINE+' error converting "$opt.ndk_version" to semantic version.\nsemver: '+err)
+			panic(@MOD+'.'+@FN+':'+@LINE+' error converting "$opt.ndk_version" to semantic version.\nsemver: $err')
 		}
 		if ndk_semantic_version.lt(semver.build(21, 1, 0)) {
 			eprintln('Android NDK >= 21.1.0 is currently needed. "$opt.ndk_version" is too low.')

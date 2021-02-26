@@ -35,7 +35,7 @@ pub fn cache_dir() string {
 	cache_dir := os.join_path(os.cache_dir(), 'v', 'android')
 	if !os.exists(cache_dir) {
 		os.mkdir_all(cache_dir) or {
-			panic(@MOD + '.' + @FN + ' error making cache directory "$cache_dir". ' + err)
+			panic(@MOD + '.' + @FN + ' error making cache directory "$cache_dir". $err')
 		}
 	}
 	return cache_dir

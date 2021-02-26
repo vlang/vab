@@ -37,7 +37,7 @@ pub fn version() string {
 	if v != '' {
 		v_version := os.exec(v + ' -version') or { os.Result{1, ''} }
 		output := v_version.output
-		mut re := regex.regex_opt(r'.*(\d+\.?\d*\.?\d*)') or { panic(err) }
+		mut re := regex.regex_opt(r'.*(\d+\.?\d*\.?\d*)') or { panic(err.msg) }
 		start, _ := re.match_string(output)
 		if start >= 0 && re.groups.len > 0 {
 			version = output[re.groups[0]..re.groups[1]]
@@ -53,7 +53,7 @@ pub fn version_commit_hash() string {
 	if v != '' {
 		v_version := os.exec(v + ' -version') or { os.Result{1, ''} }
 		output := v_version.output
-		mut re := regex.regex_opt(r'.*\d+\.?\d*\.?\d* ([a-fA-F0-9]{7,})') or { panic(err) }
+		mut re := regex.regex_opt(r'.*\d+\.?\d*\.?\d* ([a-fA-F0-9]{7,})') or { panic(err.msg) }
 		start, _ := re.match_string(output)
 		if start >= 0 && re.groups.len > 0 {
 			hash = output[re.groups[0]..re.groups[1]]
