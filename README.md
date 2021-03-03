@@ -4,6 +4,8 @@ V Android Bootstrapper (`vab`) is the currently supported way
 to compile, package, sign and deploy V graphical apps on Android
 based devices.
 
+<img src="https://user-images.githubusercontent.com/768942/107622846-c13f3900-6c58-11eb-8a66-55db12979b73.png">
+
 # Install
 
 Currently Linux and macOS build hosts are supported.
