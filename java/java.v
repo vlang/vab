@@ -23,12 +23,14 @@ pub fn jre_version() string {
 	mut version := ''
 
 	// Fast - but not most reliable way
-	java_version := os.exec(java + ' -version') or { os.Result{1, ''} }
-	output := java_version.output
-	mut re := regex.regex_opt(r'.*(\d+\.?\d*\.?\d*)') or { panic(err.msg) }
-	start, _ := re.match_string(output)
-	if start >= 0 && re.groups.len > 0 {
-		version = output[re.groups[0]..re.groups[1]]
+	java_version := os.execute(java + ' -version')
+	if java_version.exit_code == 0 {
+		output := java_version.output
+		mut re := regex.regex_opt(r'.*(\d+\.?\d*\.?\d*)') or { panic(err.msg) }
+		start, _ := re.match_string(output)
+		if start >= 0 && re.groups.len > 0 {
+			version = output[re.groups[0]..re.groups[1]]
+		}
 	}
 	// Slow - but more reliable way, using Java itself
 	if version == '' && jdk_found() {
@@ -41,7 +43,10 @@ pub fn jre_version() string {
 		os.chdir(java_source_dir)
 		os.write_file(java_source_file, java_source) or { return '' }
 		if os.system(javac + ' $java_source_file') == 0 {
-			r := os.exec(java + ' $java_source_exe') or { return '' }
+			r := os.execute(java + ' $java_source_exe')
+			if r.exit_code != 0 {
+				return ''
+			}
 			version = r.output
 		}
 		os.chdir(pwd)
@@ -67,12 +72,11 @@ pub fn jdk_version() string {
 	mut version := ''
 
 	// Fast - but not most reliable way
-	java_version := os.exec(java + ' -version') or { os.Result{1, ''} }
-	output := java_version.output
-
+	java_version := os.execute(java + ' -version')
 	if java_version.exit_code != 0 {
 		return ''
 	}
+	output := java_version.output
 
 	mut re := regex.regex_opt(r'.*(\d+\.?\d*\.?\d*)') or { panic(err.msg) }
 	start, _ := re.match_string(output)
@@ -90,7 +94,10 @@ pub fn jdk_version() string {
 		os.chdir(java_source_dir)
 		os.write_file(java_source_file, java_source) or { return '' }
 		if os.system(javac + ' $java_source_file') == 0 {
-			r := os.exec(java + ' $java_source_exe') or { return '' }
+			r := os.execute(java + ' $java_source_exe')
+			if r.exit_code != 0 {
+				return ''
+			}
 			version = r.output
 		}
 		os.chdir(pwd)

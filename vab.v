@@ -666,7 +666,7 @@ fn vab_commit_hash() string {
 		$if windows {
 			git_cmd = 'git.exe -C "$exe_dir" rev-parse --short HEAD'
 		}
-		res := os.exec(git_cmd) or { os.Result{1, ''} }
+		res := os.execute(git_cmd)
 		if res.exit_code == 0 {
 			hash = res.output
 		}
@@ -782,7 +782,7 @@ fn doctor(opt Options) {
 			vxt.vexe(),
 			'doctor',
 		]
-		v_res := os.exec(v_cmd.join(' ')) or { os.Result{1, ''} }
+		v_res := os.execute(v_cmd.join(' '))
 		out_lines := v_res.output.split('\n')
 		for line in out_lines {
 			println('\t$line')
@@ -826,11 +826,12 @@ fn launch_cmd(args []string) int {
 				'-o',
 				exe,
 			]
-			res := os.exec(v_cmd.join(' ')) or {
-				panic(@MOD + '.' + @FN + ' failed compiling "$cmd": $err')
+			res := os.execute(v_cmd.join(' '))
+			if res.exit_code < 0 {
+				panic(@MOD + '.' + @FN + ' failed compiling "$cmd": $res.output')
 			}
 			if res.exit_code == 0 {
-				os.write_file(hash_file, exe_git_hash) or { }
+				os.write_file(hash_file, exe_git_hash) or {}
 			} else {
 				vcmd := v_cmd.join(' ')
 				eprintln(@MOD + '.' + @FN + ' "$vcmd" failed.')
@@ -841,13 +842,12 @@ fn launch_cmd(args []string) int {
 	}
 	exec := (exe + ' ' + cmd_args.join(' ')).trim_right(' ')
 	if os.is_executable(exe) {
-		res := os.exec(exec) or { os.Result{1, @MOD + '.' + @FN + ' could not execute "$exec"'} }
+		res := os.execute(exec)
 		if res.exit_code == 0 {
 			print(res.output)
 			os.flush()
 			return 0
-		}
-		if res.exit_code > 0 {
+		} else {
 			eprintln(res.output)
 			return 1
 		}
