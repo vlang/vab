@@ -637,7 +637,7 @@ fn ensure_aapt2(verbosity int) ?bool {
 		}
 		// Unpack
 		unpack_path := os.join_path(os.temp_dir(), 'vab-aapt2')
-		os.rmdir_all(unpack_path) or { }
+		os.rmdir_all(unpack_path) or {}
 		os.mkdir_all(unpack_path) or {
 			return error(@MOD + '.' + @FN + ' ' + 'failed to install `aapt2`: $err')
 		}
@@ -645,7 +645,7 @@ fn ensure_aapt2(verbosity int) ?bool {
 		// Install
 		aapt2_file := os.join_path(unpack_path, 'aapt2')
 		dst_check := os.join_path(dst, 'aapt2')
-		os.rm(dst_check) or { }
+		os.rm(dst_check) or {}
 		os.cp(aapt2_file, dst_check) or {
 			return error(@MOD + '.' + @FN + ' ' + 'failed to install `aapt2`: $err')
 		}

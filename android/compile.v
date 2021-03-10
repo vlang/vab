@@ -47,7 +47,7 @@ pub fn compile(opt CompileOptions) bool {
 
 	// Dump C flags
 	vcflags_file := os.join_path(opt.work_dir, 'v.cflags')
-	os.rm(vcflags_file) or { }
+	os.rm(vcflags_file) or {}
 	mut v_cmd := [vexe]
 	if !opt.cache {
 		v_cmd << '-nocache'
@@ -105,7 +105,7 @@ pub fn compile(opt CompileOptions) bool {
 		if opt.verbosity > 2 {
 			println('Writing new hash $hash')
 		}
-		os.rm(hash_file) or { }
+		os.rm(hash_file) or {}
 		mut hash_fh := os.open_file(hash_file, 'w+', 0o700) or {
 			panic('$err_sig: failed opening "$hash_file". $err')
 		}
@@ -114,7 +114,7 @@ pub fn compile(opt CompileOptions) bool {
 	}
 	// Remove any previous builds
 	if os.is_dir(build_dir) {
-		os.rmdir_all(build_dir) or { }
+		os.rmdir_all(build_dir) or {}
 	}
 	os.mkdir(build_dir) or { panic(err.msg) }
 
