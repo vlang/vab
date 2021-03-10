@@ -99,9 +99,9 @@ fn package_apk(opt PackageOptions) bool {
 	tmp_unsigned_product := os.join_path(opt.work_dir, '${output_fn}.unsigned.apk')
 	tmp_unaligned_product := os.join_path(opt.work_dir, '${output_fn}.unaligned.apk')
 
-	os.rm(tmp_product) or { }
-	os.rm(tmp_unsigned_product) or { }
-	os.rm(tmp_unaligned_product) or { }
+	os.rm(tmp_product) or {}
+	os.rm(tmp_unsigned_product) or {}
+	os.rm(tmp_unaligned_product) or {}
 
 	android_runtime := os.join_path(sdk.platforms_root(), 'android-' + opt.api_level,
 		'android.jar')
@@ -267,8 +267,8 @@ fn package_aab(opt PackageOptions) bool {
 	tmp_unsigned_product := os.join_path(opt.work_dir, '${output_fn}.unsigned.aab')
 	// tmp_unaligned_product := os.join_path(opt.work_dir, '${output_fn}.unaligned.apk')
 
-	os.rm(tmp_product) or { }
-	os.rm(tmp_unsigned_product) or { }
+	os.rm(tmp_product) or {}
+	os.rm(tmp_unsigned_product) or {}
 	// os.rm(tmp_unaligned_product) or { }
 
 	android_runtime := os.join_path(sdk.platforms_root(), 'android-' + opt.api_level,
@@ -281,7 +281,7 @@ fn package_aab(opt PackageOptions) bool {
 	os.mkdir_all(classes_path) or { panic(err.msg) }
 	staging_path := os.join_path(package_path, 'staging')
 	// os.mkdir_all(staging_path) or { panic(err.msg) }
-	os.rmdir(staging_path) or { }
+	os.rmdir(staging_path) or {}
 
 	os.chdir(package_path)
 
@@ -471,7 +471,7 @@ fn prepare_base(opt PackageOptions) (string, string) {
 	if opt.verbosity > 0 {
 		println('Removing previous package directory $package_path')
 	}
-	os.rmdir_all(package_path) or { }
+	os.rmdir_all(package_path) or {}
 	os.mkdir_all(package_path) or { panic(err.msg) }
 
 	base_files_path := opt.base_files
@@ -603,7 +603,9 @@ fn prepare_base(opt PackageOptions) (string, string) {
 		manifest_path := os.join_path(package_path, 'AndroidManifest.xml')
 		if os.is_file(manifest_path) {
 			mut manifest := os.read_file(manifest_path) or { panic(err.msg) }
-			mut re := regex.regex_opt(r'.*<manifest\s.*\spackage\s*=\s*"(.+)".*>') or { panic(err.msg) }
+			mut re := regex.regex_opt(r'.*<manifest\s.*\spackage\s*=\s*"(.+)".*>') or {
+				panic(err.msg)
+			}
 			mut start, _ := re.match_string(manifest)
 			// Set package ID if found
 			if start >= 0 && re.groups.len > 0 {

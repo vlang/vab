@@ -35,7 +35,10 @@ pub fn version() string {
 	mut version := ''
 	v := vexe()
 	if v != '' {
-		v_version := os.exec(v + ' -version') or { os.Result{1, ''} }
+		v_version := os.execute(v + ' -version')
+		if v_version.exit_code != 0 {
+			return version
+		}
 		output := v_version.output
 		mut re := regex.regex_opt(r'.*(\d+\.?\d*\.?\d*)') or { panic(err.msg) }
 		start, _ := re.match_string(output)
@@ -51,7 +54,10 @@ pub fn version_commit_hash() string {
 	mut hash := ''
 	v := vexe()
 	if v != '' {
-		v_version := os.exec(v + ' -version') or { os.Result{1, ''} }
+		v_version := os.execute(v + ' -version')
+		if v_version.exit_code != 0 {
+			return ''
+		}
 		output := v_version.output
 		mut re := regex.regex_opt(r'.*\d+\.?\d*\.?\d* ([a-fA-F0-9]{7,})') or { panic(err.msg) }
 		start, _ := re.match_string(output)

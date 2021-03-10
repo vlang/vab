@@ -259,7 +259,7 @@ pub fn deploy_aab(opt DeployOptions) bool {
 			os.file_name(opt.deploy_file).all_before_last('.') + '.apks')
 		keystore := resolve_keystore(opt.keystore, opt.verbosity)
 
-		os.rm(apks_path) or { }
+		os.rm(apks_path) or {}
 
 		// java -jar bundletool.jar build-apks --bundle=/MyApp/my_app.aab --output=/MyApp/my_app.apks --ks=/MyApp/keystore.jks --ks-pass=file:/MyApp/keystore.pwd --ks-key-alias=MyKeyAlias --key-pass=file:/MyApp/key.pwd
 		bundletool_apks_cmd := [

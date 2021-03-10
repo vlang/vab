@@ -67,7 +67,7 @@ pub fn verbosity_print_cmd(args []string, verbosity int) {
 
 pub fn run_or_exit(args []string) string {
 	res := run(args)
-	if res.exit_code > 0 {
+	if res.exit_code != 0 {
 		eprintln('${args[0]} failed with return code $res.exit_code')
 		eprintln(res.output)
 		exit(1)
@@ -76,7 +76,10 @@ pub fn run_or_exit(args []string) string {
 }
 
 pub fn run(args []string) os.Result {
-	res := os.exec(args.join(' ')) or { os.Result{1, ''} }
+	res := os.execute(args.join(' '))
+	if res.exit_code < 0 {
+		return os.Result{1, ''}
+	}
 	return res
 }
 
