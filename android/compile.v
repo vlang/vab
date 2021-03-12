@@ -147,7 +147,7 @@ pub fn compile(opt CompileOptions) bool {
 
 	// Read in the dumped cflags
 	vcflags := os.read_file(vcflags_file) or {
-		panic('$err_sig: failed writing C flags to "$vcflags_file". $err')
+		panic('$err_sig: failed reading C flags to "$vcflags_file". $err')
 	}
 	for line in vcflags.split('\n') {
 		if line.contains('.tmp.c') || line.ends_with('.o"') {
