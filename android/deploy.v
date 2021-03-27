@@ -360,6 +360,7 @@ pub fn deploy_aab(opt DeployOptions) bool {
 			adb_logcat_cmd << [
 				'V_ANDROID:D',
 				'$opt.log_tag:D',
+				'System.out:D',
 				'System.err:D',
 			]
 			// if !is_debug {

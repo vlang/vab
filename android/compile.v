@@ -167,15 +167,21 @@ pub fn compile(opt CompileOptions) bool {
 	} else {
 		cflags << ['-O0']
 	}
-	cflags << ['-fPIC', '-fvisibility=hidden', '-ffunction-sections', '-fdata-sections', '-ferror-limit=1']
+	cflags << ['-fPIC', '-fvisibility=hidden', '-ffunction-sections', '-fdata-sections',
+		'-ferror-limit=1',
+	]
 
-	cflags << ['-Wall', '-Wextra', '-Wno-unused-variable', '-Wno-unused-parameter', '-Wno-unused-result',
-		'-Wno-unused-function', '-Wno-missing-braces', '-Wno-unused-label', '-Werror=implicit-function-declaration']
+	cflags << ['-Wall', '-Wextra', '-Wno-unused-variable', '-Wno-unused-parameter',
+		'-Wno-unused-result', '-Wno-unused-function', '-Wno-missing-braces', '-Wno-unused-label',
+		'-Werror=implicit-function-declaration',
+	]
 
 	// TODO Here to make the compilers shut up :/
-	cflags << ['-Wno-braced-scalar-init', '-Wno-incompatible-pointer-types', '-Wno-implicitly-unsigned-literal',
-		'-Wno-pointer-sign', '-Wno-enum-conversion', '-Wno-int-conversion', '-Wno-int-to-pointer-cast',
-		'-Wno-sign-compare', '-Wno-return-type', '-Wno-extra-tokens']
+	cflags << ['-Wno-braced-scalar-init', '-Wno-incompatible-pointer-types',
+		'-Wno-implicitly-unsigned-literal', '-Wno-pointer-sign', '-Wno-enum-conversion',
+		'-Wno-int-conversion', '-Wno-int-to-pointer-cast', '-Wno-sign-compare', '-Wno-return-type',
+		'-Wno-extra-tokens',
+	]
 
 	defines << ['-DAPPNAME="$opt.lib_name"']
 	defines << ['-DANDROID', '-D__ANDROID__', '-DANDROIDVERSION=$opt.api_level']
@@ -248,8 +254,10 @@ pub fn compile(opt CompileOptions) bool {
 		}
 
 		build_cmd := [arch_cc[arch], cflags.join(' '), includes.join(' '),
-			defines.join(' '), sources.join(' '), arch_cflags[arch].join(' '), '-o "$arch_lib_dir/lib${opt.lib_name}.so"',
-			v_output_file, '-L"' + arch_libs[arch] + '"', ldflags.join(' ')]
+			defines.join(' '), sources.join(' '), arch_cflags[arch].join(' '),
+			'-o "$arch_lib_dir/lib${opt.lib_name}.so"', v_output_file, '-L"' + arch_libs[arch] + '"',
+			ldflags.join(' '),
+		]
 		util.verbosity_print_cmd(build_cmd, opt.verbosity)
 		comp_res := util.run_or_exit(build_cmd)
 
