@@ -304,6 +304,7 @@ fn main() {
 		verbosity: opt.verbosity
 		format: format
 		keystore: keystore
+		activity_name: activity_name
 		work_dir: opt.work_dir
 		v_flags: opt.v_flags
 		device_id: device_id

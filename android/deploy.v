@@ -8,18 +8,19 @@ import android.env
 import android.util
 
 pub struct DeployOptions {
-	verbosity   int
-	v_flags     []string
-	format      PackageFormat = .apk
-	keystore    Keystore
-	work_dir    string
-	device_id   string
-	device_log  bool
-	log_mode    LogMode = .filtered
-	deploy_file string
-	log_tag     string
-	run         string // Full id 'com.package.name/com.package.name.ActivityName'
-	kill_adb    bool   // Kill ADB after use.
+	verbosity     int
+	v_flags       []string
+	format        PackageFormat = .apk
+	keystore      Keystore
+	activity_name string
+	work_dir      string
+	device_id     string
+	device_log    bool
+	log_mode      LogMode = .filtered
+	deploy_file   string
+	log_tag       string
+	run           string // Full id 'com.package.name/com.package.name.ActivityName'
+	kill_adb      bool   // Kill ADB after use.
 }
 
 pub enum LogMode {
@@ -161,7 +162,9 @@ pub fn deploy_apk(opt DeployOptions) bool {
 				adb_logcat_cmd << [
 					'V_ANDROID:D',
 					'$opt.log_tag:D',
+					'System.out:D',
 					'System.err:D',
+					'$opt.activity_name:D',
 				]
 				// if !is_debug {
 				adb_logcat_cmd << '*:S'
@@ -362,6 +365,7 @@ pub fn deploy_aab(opt DeployOptions) bool {
 				'$opt.log_tag:D',
 				'System.out:D',
 				'System.err:D',
+				'$opt.activity_name:D',
 			]
 			// if !is_debug {
 			adb_logcat_cmd << '*:S'
