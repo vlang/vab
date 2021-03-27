@@ -10,8 +10,8 @@ import android.util
 import semver
 
 pub const (
-	accepted_components = ['auto', 'cmdline-tools', 'platform-tools', 'ndk', 'platforms', 'build-tools',
-		'bundletool', 'aapt2']
+	accepted_components = ['auto', 'cmdline-tools', 'platform-tools', 'ndk', 'platforms',
+		'build-tools', 'bundletool', 'aapt2']
 	// 6858069 = cmdline-tools;3.0 <- zip structure changes *sigh*
 	// 6609375 = cmdline-tools;2.1 <- latest that support `sdkmanager --version` *sigh*
 	// cmdline-tools-bootstrap-url - Replace {XXX} with linux/mac/win
