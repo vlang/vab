@@ -162,6 +162,7 @@ pub fn deploy_apk(opt DeployOptions) bool {
 				adb_logcat_cmd << [
 					'V_ANDROID:D',
 					'$opt.log_tag:D',
+					'System.out:D',
 					'System.err:D',
 					'$opt.activity_name:D',
 				]
