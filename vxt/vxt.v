@@ -7,11 +7,11 @@ import regex
 
 pub fn vexe() string {
 	mut exe := os.getenv('VEXE')
-	if exe != '' {
+	if os.is_executable(exe) {
 		return os.real_path(exe)
 	}
 	possible_symlink := os.find_abs_path_of_executable('v') or { '' }
-	if possible_symlink != '' {
+	if os.is_executable(possible_symlink) {
 		exe = os.real_path(possible_symlink)
 	}
 	return exe
@@ -25,7 +25,7 @@ pub fn home() string {
 	// credits to @spytheman:
 	// https://discord.com/channels/592103645835821068/592294828432424960/746040606358503484
 	exe := vexe()
-	if exe != '' {
+	if os.is_executable(exe) {
 		return os.dir(exe)
 	}
 	return ''
