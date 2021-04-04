@@ -27,7 +27,7 @@ If `vab` fail to detect your environment you can set ENV variables
 to help it:
 ```bash
 JAVA_HOME=/path/to/java-jdk
-SDKMANAGER=/path/to//sdkmanager
+SDKMANAGER=/path/to/sdkmanager
 ANDROID_SDK_ROOT=/path/to/android_sdk_linux
 ANDROID_NDK_ROOT=/path/to/android_ndk_linux
 VEXE=/path/to/custom/v/binary
