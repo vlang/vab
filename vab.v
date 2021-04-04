@@ -678,6 +678,7 @@ fn vab_commit_hash() string {
 fn doctor(opt Options) {
 	sdkm := env.sdkmanager()
 	env_managable := env.managable()
+	env_vars := os.environ()
 
 	// Validate Android `sdkmanager` tool
 	// Just warnings/notices as `sdkmanager` isn't used to in the build process.
@@ -709,6 +710,22 @@ fn doctor(opt Options) {
 	println('$exe_name
 	Version $exe_version $exe_git_hash
 	Path "$exe_dir"')
+
+	// Shell environment
+	print_var_if_set := fn (vars map[string]string, var_name string) {
+		if var_name in vars {
+			println('\t$var_name=' + os.getenv(var_name))
+		}
+	}
+	print_var_if_set(env_vars, 'ANDROID_HOME')
+	print_var_if_set(env_vars, 'ANDROID_SDK_ROOT')
+	print_var_if_set(env_vars, 'ANDROID_NDK_ROOT')
+	print_var_if_set(env_vars, 'SDKMANAGER')
+	print_var_if_set(env_vars, 'ADB')
+	print_var_if_set(env_vars, 'BUNDLETOOL')
+	print_var_if_set(env_vars, 'AAPT2')
+	print_var_if_set(env_vars, 'JAVA_HOME')
+	print_var_if_set(env_vars, 'VEXE')
 
 	// Java section
 	println('Java
@@ -752,22 +769,6 @@ fn doctor(opt Options) {
 	Name "$opt.app_name"
 	Package ID "$opt.package_id"
 	Output "$opt.output"')
-
-	// Shell environment
-	println('Shell ENV
-	ANDROID_HOME=' + os.getenv('ANDROID_HOME') + '
-	ANDROID_SDK_ROOT=' +
-		os.getenv('ANDROID_SDK_ROOT') + '
-	ANDROID_NDK_ROOT=' + os.getenv('ANDROID_NDK_ROOT') +
-		'
-	SDKMANAGER=' + os.getenv('SDKMANAGER') + '
-	ADB=' + os.getenv('ADB') + '
-	BUNDLETOOL=' +
-		os.getenv('BUNDLETOOL') + '
-	AAPT2=' + os.getenv('AAPT2') + '
-	JAVA_HOME=' +
-		os.getenv('JAVA_HOME') + '
-	VEXE=' + os.getenv('VEXE'))
 
 	// V section
 	println('V
