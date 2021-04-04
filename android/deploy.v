@@ -258,7 +258,7 @@ pub fn deploy_aab(opt DeployOptions) bool {
 			println('Building APKs from "$opt.deploy_file"')
 		}
 
-		apks_path := os.join_path(opt.work_dir, 
+		apks_path := os.join_path(opt.work_dir,
 			os.file_name(opt.deploy_file).all_before_last('.') + '.apks')
 		keystore := resolve_keystore(opt.keystore, opt.verbosity)
 
