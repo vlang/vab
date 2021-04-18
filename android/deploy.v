@@ -163,7 +163,7 @@ pub fn deploy_apk(opt DeployOptions) bool {
 					'V_ANDROID:D',
 					'$opt.log_tag:D',
 					// 'System.out:D', // Used by many other Android libs - so it's noisy
-					'System.err:D',
+					// 'System.err:D',
 					'$opt.activity_name:D',
 				]
 				// if !is_debug {
@@ -364,7 +364,7 @@ pub fn deploy_aab(opt DeployOptions) bool {
 				'V_ANDROID:D',
 				'$opt.log_tag:D',
 				// 'System.out:D', // Used by many other Android libs - so it's noisy
-				'System.err:D',
+				// 'System.err:D',
 				'$opt.activity_name:D',
 			]
 			// if !is_debug {
