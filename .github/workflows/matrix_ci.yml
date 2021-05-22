@@ -13,17 +13,17 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, ubuntu-18.04]
-        java-jdk: [8, 11, 12]
-        v-example: ['sokol/particles', '2048' 'fireworks']
         #os: [macos-latest, macOS-10.15, ubuntu-latest, ubuntu-18.04]
+        os: [ubuntu-latest, ubuntu-18.04]
+        node: [8, 11, 12]
+        v-example: ['sokol/particles', '2048', 'fireworks']
     timeout-minutes: 30
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-java@v2
         with:
           distribution: 'adopt'
-          java-version: ${{ matrix.java-jdk }}
+          java-version: ${{ matrix.java }}
 
     - name: Checkout V
       uses: actions/checkout@v2
@@ -49,18 +49,18 @@ jobs:
 
     - name: Setup env
       run: |
-        mkdir -p apks/java-${{ matrix.java-jdk }}/${{ matrix.v-example }}
-        mkdir -p aabs/java-${{ matrix.java-jdk }}/${{ matrix.v-example }}
+        mkdir -p apks/java-${{ matrix.java }}/${{ matrix.v-example }}
+        mkdir -p aabs/java-${{ matrix.java }}/${{ matrix.v-example }}
 
     - name: Run vab doctor
       run: |
         export VEXE=./v
         vab/vab doctor
 
-    - name: Build APK (Java ${{ matrix.java-jdk }}) ${{ matrix.v-example }}
+    - name: Build APK (Java ${{ matrix.java }}) ${{ matrix.v-example }}
       run: |
         export VEXE=./v
-        vab/vab -v 3 examples/${{ matrix.v-example }} -o apks/java-${{ matrix.java-jdk }}/${{ matrix.v-example }}/app-${{ matrix.v-example }}-package.apk
+        vab/vab -v 3 examples/${{ matrix.v-example }} -o apks/java-${{ matrix.java }}/${{ matrix.v-example }}/app-${{ matrix.v-example }}-package.apk
 
     # AAB Testing
     - name: Install AAB dependencies
@@ -69,7 +69,7 @@ jobs:
         vab/vab install bundletool
         vab/vab install aapt2
 
-    - name: Build AAB (Java ${{ matrix.java-jdk }}) ${{ matrix.v-example }}
+    - name: Build AAB (Java ${{ matrix.java }}) ${{ matrix.v-example }}
       run: |
         export VEXE=./v
-        vab/vab --package aab -v 3 examples/${{ matrix.v-example }} -o apks/java-${{ matrix.java-jdk }}/${{ matrix.v-example }}/app-${{ matrix.v-example }}-package.aab
+        vab/vab --package aab -v 3 examples/${{ matrix.v-example }} -o apks/java-${{ matrix.java }}/${{ matrix.v-example }}/app-${{ matrix.v-example }}-package.aab
