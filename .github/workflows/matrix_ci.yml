@@ -11,12 +11,12 @@ on:
 jobs:
   build-examples-as-apk-aab:
     runs-on: ${{ matrix.os }}
-      strategy:
-        matrix:
-          #os: [macos-latest, macOS-10.15, ubuntu-latest, ubuntu-18.04]
-          os: [ubuntu-latest, ubuntu-18.04]
-          java: [8, 11, 12]
-          v-example: ["sokol/particles", "2048" "fireworks"]
+    strategy:
+      matrix:
+        #os: [macos-latest, macOS-10.15, ubuntu-latest, ubuntu-18.04]
+        os: [ubuntu-latest, ubuntu-18.04]
+        java: [8, 11, 12]
+        v-example: ["sokol/particles", "2048" "fireworks"]
     timeout-minutes: 30
     steps:
     - uses: actions/checkout@v2
