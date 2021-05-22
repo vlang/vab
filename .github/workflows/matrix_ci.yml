@@ -76,3 +76,4 @@ jobs:
         export VEXE=./v
         export OUTPUT=$(echo "${{ matrix.v-example }}" | sed s%/|.%-% )
         vab/vab -v 3 --api ${{ matrix.android-api }} --package aab examples/${{ matrix.v-example }} -o apks/java-${{ matrix.java-version }}/${{ matrix.v-example }}/$OUTPUT.aab
+
