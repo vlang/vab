@@ -9,14 +9,18 @@ on:
       - "**.md"
 
 jobs:
-  build-examples-as-apk-aab:
+  build-v-examples-as-apk-and-aab:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        #os: [macos-latest, macOS-10.15, ubuntu-latest, ubuntu-18.04]
-        os: [ubuntu-latest, ubuntu-18.04]
+        os: [macOS-10.15, ubuntu-18.04, ubuntu-latest]
         java-version: [8, 11, 12]
-        v-example: ['sokol/particles', '2048', 'fireworks']
+        v-example: ['flappylearning', 'sokol/particles', 'sokol/drawing.v', 'sokol/freetype_raven.v', '2048', 'fireworks', 'tetris']
+        include:
+        # includes a new variable of npm with a value of 6
+        # for the matrix leg matching the os and version
+        - os: macos-latest
+            java-version: [13, 14]
     timeout-minutes: 30
     steps:
     - uses: actions/checkout@v2
