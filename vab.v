@@ -320,7 +320,7 @@ fn main() {
 	if input_ext in ['.apk', '.aab'] {
 		if opt.device_id != '' {
 			if !android.deploy(deploy_opt) {
-				eprintln("$exe_name deployment didn\'t succeed")
+				eprintln('$exe_name deployment didn\'t succeed')
 				exit(1)
 			} else {
 				if opt.verbosity > 0 {
@@ -348,7 +348,7 @@ fn main() {
 		api_level: opt.api_level
 	}
 	if !android.compile(comp_opt) {
-		eprintln("$exe_name compiling didn\'t succeed")
+		eprintln('$exe_name compiling didn\'t succeed')
 		exit(1)
 	}
 
