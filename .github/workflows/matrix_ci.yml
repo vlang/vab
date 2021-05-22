@@ -13,14 +13,12 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [macOS-10.15, ubuntu-18.04, ubuntu-latest]
+        os: [macOS-10.15, ubuntu-18.04, ubuntu-20.04]
         java-version: [8, 11, 12]
         v-example: ['flappylearning', 'sokol/particles', 'sokol/drawing.v', 'sokol/freetype_raven.v', '2048', 'fireworks', 'tetris']
         include:
-        # includes a new variable of npm with a value of 6
-        # for the matrix leg matching the os and version
-        - os: macos-latest
-            java-version: [13, 14]
+          - os: macOS-10.15
+              java-version: [13, 14]
     timeout-minutes: 30
     steps:
     - uses: actions/checkout@v2
