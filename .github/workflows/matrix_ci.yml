@@ -60,7 +60,8 @@ jobs:
     - name: Build APK (Java ${{ matrix.java-version }}) ${{ matrix.v-example }}
       run: |
         export VEXE=./v
-        vab/vab -v 3 examples/${{ matrix.v-example }} -o apks/java-${{ matrix.java-version }}/${{ matrix.v-example }}/app-${{ matrix.v-example }}-package.apk
+        export OUTPUT=$(echo "${{ matrix.v-example }}" | sed s%/%-%)
+        vab/vab -v 3 examples/${{ matrix.v-example }} -o apks/java-${{ matrix.java-version }}/${{ matrix.v-example }}/app-$OUTPUT-package.apk
 
     # AAB Testing
     - name: Install AAB dependencies
@@ -72,4 +73,5 @@ jobs:
     - name: Build AAB (Java ${{ matrix.java-version }}) ${{ matrix.v-example }}
       run: |
         export VEXE=./v
-        vab/vab --package aab -v 3 examples/${{ matrix.v-example }} -o apks/java-${{ matrix.java-version }}/${{ matrix.v-example }}/app-${{ matrix.v-example }}-package.aab
+        export OUTPUT=$(echo "${{ matrix.v-example }}" | sed s%/%-%)
+        vab/vab --package aab -v 3 examples/${{ matrix.v-example }} -o apks/java-${{ matrix.java-version }}/${{ matrix.v-example }}/app-$OUTPUT-package.aab
