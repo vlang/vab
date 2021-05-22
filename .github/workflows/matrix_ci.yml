@@ -15,12 +15,12 @@ jobs:
       matrix:
         os: [macOS-10.15, ubuntu-18.04, ubuntu-20.04]
         java-version: [8, 11, 12]
-        android-api: [21, 29, 30]
+        android-api: [27, 29, 30]
         v-example: ['flappylearning', 'sokol/particles', 'sokol/drawing.v', 'sokol/freetype_raven.v', '2048', 'fireworks', 'tetris']
         include:
           - os: macOS-10.15
             java-version: [8, 11, 12, 15]
-            android-api: [21, 29, 30]
+            android-api: [27, 29, 30]
             v-example: ['flappylearning', 'sokol/particles', 'sokol/drawing.v', 'sokol/freetype_raven.v', '2048', 'fireworks', 'tetris']
     timeout-minutes: 30
     steps:
