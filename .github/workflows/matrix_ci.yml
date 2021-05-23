@@ -13,10 +13,10 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [macOS-10.15, ubuntu-18.04, ubuntu-20.04]
-        java-version: [8, 11, 12, 15]
-        android-api: [27, 29, 30]
-        v-example: ['flappylearning', 'sokol/particles', 'sokol/drawing.v', 'sokol/freetype_raven.v', '2048', 'fireworks', 'tetris']
+        os: [macOS-10.15, ubuntu-20.04]
+        java-version: [8, 15]
+        android-api: [30]
+        v-example: ['flappylearning', '2048', 'fireworks', 'tetris', 'sokol/particles', 'sokol/drawing.v', 'sokol/freetype_raven.v', 'gg/polygons.v', 'gg/raven_text_rendering.v', 'gg/rectangles.v', 'gg/stars.v', 'gg/worker_thread.v' ]
 
     timeout-minutes: 30
     steps:
@@ -38,9 +38,6 @@ jobs:
     - name: Run tests
       run: ./v test vab
 
-    - name: Build vab with -prod
-      run: ./v -prod -g vab/vab.v
-
     - name: Build vab
       run: ./v -g vab/vab.v
 
@@ -49,8 +46,7 @@ jobs:
 
     - name: Setup env
       run: |
-        mkdir -p apks/java-${{ matrix.java-version }}/${{ matrix.v-example }}
-        mkdir -p aabs/java-${{ matrix.java-version }}/${{ matrix.v-example }}
+        mkdir -p java-${{ matrix.java-version }}/${{ matrix.v-example }}
 
     - name: Run vab doctor
       run: |
@@ -61,8 +57,8 @@ jobs:
     - name: Build APK (Java ${{ matrix.java-version }}) ${{ matrix.v-example }}
       run: |
         export VEXE=./v
-        export OUTPUT=$(echo "${{ matrix.v-example }}" | sed s%/%-% )
-        vab/vab -v 3 --api ${{ matrix.android-api }} examples/${{ matrix.v-example }} -o apks/java-${{ matrix.java-version }}/${{ matrix.v-example }}/$OUTPUT.apk
+        export OUTPUT=$(echo "${{ matrix.v-example }}" | sed 's%/%-%' | sed 's%\.%-%' )
+        vab/vab -v 3 --api ${{ matrix.android-api }} examples/${{ matrix.v-example }} -o java-${{ matrix.java-version }}/${{ matrix.v-example }}/$OUTPUT.apk
 
     # AAB
     - name: Install AAB dependencies
@@ -74,6 +70,6 @@ jobs:
     - name: Build AAB (Java ${{ matrix.java-version }}) ${{ matrix.v-example }}
       run: |
         export VEXE=./v
-        export OUTPUT=$(echo "${{ matrix.v-example }}" | sed s%/%-% )
-        vab/vab -v 3 --api ${{ matrix.android-api }} --package aab examples/${{ matrix.v-example }} -o apks/java-${{ matrix.java-version }}/${{ matrix.v-example }}/$OUTPUT.aab
+        export OUTPUT=$(echo "${{ matrix.v-example }}" | sed 's%/%-%' | sed 's%\.%-%' )
+        vab/vab -v 3 --api ${{ matrix.android-api }} --package aab examples/${{ matrix.v-example }} -o java-${{ matrix.java-version }}/${{ matrix.v-example }}/$OUTPUT.aab
 
