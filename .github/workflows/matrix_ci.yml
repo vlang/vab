@@ -16,6 +16,7 @@ jobs:
         os: [macOS-10.15, ubuntu-20.04]
         java-version: [8, 15]
         android-api: [30]
+        android-build-tools: '30.0.0'
         v-example: ['flappylearning', '2048', 'fireworks', 'tetris', 'sokol/particles', 'sokol/drawing.v', 'sokol/freetype_raven.v', 'gg/polygons.v', 'gg/raven_text_rendering.v', 'gg/rectangles.v', 'gg/stars.v', 'gg/worker_thread.v' ]
 
     timeout-minutes: 30
@@ -58,7 +59,7 @@ jobs:
       run: |
         export VEXE=./v
         export OUTPUT=$(echo "${{ matrix.v-example }}" | sed 's%/%-%' | sed 's%\.%-%' )
-        vab/vab -v 3 --api ${{ matrix.android-api }} examples/${{ matrix.v-example }} -o java-${{ matrix.java-version }}/${{ matrix.v-example }}/$OUTPUT.apk
+        vab/vab -v 3 --build-tools '${{ matrix.android-build-tools }}' --api ${{ matrix.android-api }} examples/${{ matrix.v-example }} -o java-${{ matrix.java-version }}/${{ matrix.v-example }}/$OUTPUT.apk
 
     # AAB
     - name: Install AAB dependencies
@@ -71,5 +72,5 @@ jobs:
       run: |
         export VEXE=./v
         export OUTPUT=$(echo "${{ matrix.v-example }}" | sed 's%/%-%' | sed 's%\.%-%' )
-        vab/vab -v 3 --api ${{ matrix.android-api }} --package aab examples/${{ matrix.v-example }} -o java-${{ matrix.java-version }}/${{ matrix.v-example }}/$OUTPUT.aab
+        vab/vab -v 3 --build-tools '${{ matrix.android-build-tools }}' --api ${{ matrix.android-api }} --package aab examples/${{ matrix.v-example }} -o java-${{ matrix.java-version }}/${{ matrix.v-example }}/$OUTPUT.aab
 
