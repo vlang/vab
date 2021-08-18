@@ -11,7 +11,7 @@ const (
 )
 
 pub fn run(args []string) os.Result {
-	res := os.exec(args.join(' ')) or { os.Result{1, ''} }
+	res := os.execute(args.join(' ')) or { os.Result{1, ''} }
 	return res
 }
 
