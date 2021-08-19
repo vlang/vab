@@ -58,7 +58,7 @@ jobs:
       run: |
         export VEXE=./v
         export OUTPUT=$(echo "${{ matrix.v-example }}" | sed 's%/%-%' | sed 's%\.%-%' )
-        vab/vab -v 3 --api ${{ matrix.android-api }} examples/${{ matrix.v-example }} -o java-${{ matrix.java-version }}/${{ matrix.v-example }}/$OUTPUT.apk
+        vab/vab -v 3 --build-tools '29.0.0' --api ${{ matrix.android-api }} examples/${{ matrix.v-example }} -o java-${{ matrix.java-version }}/${{ matrix.v-example }}/$OUTPUT.apk
 
     # AAB
     - name: Install AAB dependencies
@@ -71,5 +71,5 @@ jobs:
       run: |
         export VEXE=./v
         export OUTPUT=$(echo "${{ matrix.v-example }}" | sed 's%/%-%' | sed 's%\.%-%' )
-        vab/vab -v 3 --api ${{ matrix.android-api }} --package aab examples/${{ matrix.v-example }} -o java-${{ matrix.java-version }}/${{ matrix.v-example }}/$OUTPUT.aab
+        vab/vab -v 3 --build-tools '29.0.0' --api ${{ matrix.android-api }} --package aab examples/${{ matrix.v-example }} -o java-${{ matrix.java-version }}/${{ matrix.v-example }}/$OUTPUT.aab
 

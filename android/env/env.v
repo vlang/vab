@@ -20,34 +20,34 @@ pub const (
 	// ndk - Works with android.compile(...)
 	// platform - Google Play minimum
 	// build-tools - Version where apksigner is included from
-	default_components  = map{
-		'cmdline-tools':  map{
+	default_components  = {
+		'cmdline-tools':  {
 			'name':          'cmdline-tools'
 			'version':       '2.1'
 			'bootstrap_url': 'https://dl.google.com/android/repository/commandlinetools-{XXX}-6609375_latest.zip'
 		}
-		'platform-tools': map{
+		'platform-tools': {
 			'name':    'platform-tools'
 			'version': ''
 		}
-		'ndk':            map{
+		'ndk':            {
 			'name':    'ndk'
 			'version': ndk.min_supported_version
 		}
-		'platforms':      map{
+		'platforms':      {
 			'name':    'platforms'
 			'version': 'android-' + sdk.min_supported_api_level
 		}
-		'build-tools':    map{
+		'build-tools':    {
 			'name':    'build-tools'
 			'version': sdk.min_supported_build_tools_version
 		}
-		'bundletool':     map{
+		'bundletool':     {
 			'name':          'bundletool'
 			'version':       '1.5.0'
 			'bootstrap_url': 'https://github.com/google/bundletool/releases/download/1.5.0/bundletool-all-1.5.0.jar'
 		}
-		'aapt2':          map{
+		'aapt2':          {
 			'name':          'aapt2'
 			'version':       '7.0.0'
 			'bootstrap_url': 'https://dl.google.com/android/maven2/com/android/tools/build/aapt2/7.0.0-alpha07-7087017/aapt2-7.0.0-alpha07-7087017-{XXX}.jar'
