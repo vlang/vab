@@ -320,7 +320,7 @@ jobs:
 
         # Output test
         adb -e logcat -c
-        vab/vab -cg -v 3 --device auto --archs 'x86_64' --package-id "io.v.ci.vab.apk.examples.tetris" run examples/tetris
+        vab/vab -cg -v 3 --api 30 --device auto --archs 'x86_64' --package-id "io.v.ci.vab.apk.examples.tetris" run examples/tetris
         sleep 2
         adb -e logcat -d > /tmp/logcat.dump.txt
         cat /tmp/logcat.dump.txt | grep -q 'SOKOL_APP: ... ok'; if [ ! $? -eq 0 ]; then cat /tmp/logcat.dump.txt; fi
