@@ -84,9 +84,9 @@ fn main() {
 	for special_flag in rip_vflags {
 		if special_flag in args {
 			if special_flag == '-gc' {
-				gc_type := args[(args.index(special_flag))+1]
-				v_flags << special_flag+' $gc_type'
-				args.delete(args.index(special_flag)+1)
+				gc_type := args[(args.index(special_flag)) + 1]
+				v_flags << special_flag + ' $gc_type'
+				args.delete(args.index(special_flag) + 1)
 			} else if special_flag.starts_with('-') {
 				v_flags << special_flag
 			} else {
