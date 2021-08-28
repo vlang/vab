@@ -400,7 +400,7 @@ fn ensure_sdkmanager(verbosity int) ?bool {
 		os.mkdir_all(dst) or { panic(err.msg) }
 		dst_check := os.join_path(dst, 'tools', 'bin')
 		if util.unzip(file, dst) {
-			os.chmod(os.join_path(dst_check, 'sdkmanager'), 0o755)
+			os.chmod(os.join_path(dst_check, 'sdkmanager'), 0o755) or { panic(err) }
 		}
 		if os.is_executable(os.join_path(dst_check, 'sdkmanager')) {
 			if verbosity > 1 {

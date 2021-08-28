@@ -40,7 +40,7 @@ pub fn jre_version() string {
 		java_source_exe := 'JavaVersion'
 		java_source_file := java_source_exe + '.java'
 		pwd := os.getwd()
-		os.chdir(java_source_dir)
+		os.chdir(java_source_dir) or {}
 		os.write_file(java_source_file, java_source) or { return '' }
 		if os.system(javac + ' $java_source_file') == 0 {
 			r := os.execute(java + ' $java_source_exe')
@@ -49,7 +49,7 @@ pub fn jre_version() string {
 			}
 			version = r.output
 		}
-		os.chdir(pwd)
+		os.chdir(pwd) or {}
 	}
 
 	return version
@@ -91,7 +91,7 @@ pub fn jdk_version() string {
 		java_source_exe := 'JavaVersion'
 		java_source_file := java_source_exe + '.java'
 		pwd := os.getwd()
-		os.chdir(java_source_dir)
+		os.chdir(java_source_dir) or {}
 		os.write_file(java_source_file, java_source) or { return '' }
 		if os.system(javac + ' $java_source_file') == 0 {
 			r := os.execute(java + ' $java_source_exe')
@@ -100,7 +100,7 @@ pub fn jdk_version() string {
 			}
 			version = r.output
 		}
-		os.chdir(pwd)
+		os.chdir(pwd) or {}
 	}
 
 	if version.count('.') <= 1 {

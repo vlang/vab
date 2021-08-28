@@ -129,7 +129,7 @@ fn package_apk(opt PackageOptions) bool {
 	util.verbosity_print_cmd(aapt_cmd, opt.verbosity)
 	util.run_or_exit(aapt_cmd)
 
-	os.chdir(package_path)
+	os.chdir(package_path) or {}
 
 	// Compile java sources
 	if opt.verbosity > 1 {
@@ -178,7 +178,7 @@ fn package_apk(opt PackageOptions) bool {
 	util.verbosity_print_cmd(aapt_cmd, opt.verbosity)
 	util.run_or_exit(aapt_cmd)
 
-	os.chdir(build_path)
+	os.chdir(build_path) or {}
 
 	collected_libs := os.walk_ext(os.join_path(build_path, 'lib'), '.so')
 
@@ -195,7 +195,7 @@ fn package_apk(opt PackageOptions) bool {
 		util.run_or_exit(aapt_cmd)
 	}
 
-	os.chdir(pwd)
+	os.chdir(pwd) or {}
 
 	zipalign_cmd := [
 		zipalign,
@@ -283,7 +283,7 @@ fn package_aab(opt PackageOptions) bool {
 	// os.mkdir_all(staging_path) or { panic(err.msg) }
 	os.rmdir(staging_path) or {}
 
-	os.chdir(package_path)
+	os.chdir(package_path) or {}
 
 	if opt.verbosity > 1 {
 		println('Compiling resources')
@@ -371,7 +371,7 @@ fn package_aab(opt PackageOptions) bool {
 		os.mkdir_all(os.join_path(staging_path, os.dir(lib_base))) or { panic(err.msg) }
 		os.cp_all(lib, os.join_path(staging_path, lib_base), true) or { panic(err.msg) }
 	}
-	// os.chdir(pwd)
+	// os.chdir(pwd) or {}
 
 	os.mkdir_all(os.join_path(staging_path, 'dex')) or { panic(err.msg) }
 	// dx --dex --output=staging/dex/classes.dex classes/
@@ -386,7 +386,7 @@ fn package_aab(opt PackageOptions) bool {
 	util.run_or_exit(dx_cmd)
 
 	// cd staging; zip -r ../base.zip *
-	os.chdir(staging_path)
+	os.chdir(staging_path) or {}
 	zip_cmd := [
 		'zip',
 		'-r',
@@ -395,7 +395,7 @@ fn package_aab(opt PackageOptions) bool {
 	]
 	util.verbosity_print_cmd(zip_cmd, opt.verbosity)
 	util.run_or_exit(zip_cmd)
-	os.chdir(package_path)
+	os.chdir(package_path) or {}
 
 	// java -jar bundletool build-bundle --modules=base.zip --output=bundle.aab
 	bundletool_cmd := [
@@ -448,7 +448,7 @@ fn package_aab(opt PackageOptions) bool {
 	// println(util.run(bundletool_validate_cmd).output)
 	util.run_or_exit(bundletool_validate_cmd)
 
-	os.chdir(pwd)
+	os.chdir(pwd) or {}
 
 	if opt.verbosity > 1 {
 		println('Moving product from "$tmp_product" to "$opt.output_file"')
