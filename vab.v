@@ -48,11 +48,12 @@ mut:
 	input  string
 	output string
 	// App essentials
-	app_name       string
-	icon           string
-	package_id     string
-	activity_name  string
-	package_format string
+	app_name               string
+	icon                   string
+	package_id             string
+	activity_name          string
+	package_format         string
+	package_overrides_path string
 	// Build and packaging
 	is_prod                 bool
 	v_flags                 []string // flags passed to the V compiler
@@ -130,6 +131,7 @@ fn main() {
 		//
 		app_name: fp.string('name', 0, android.default_app_name, 'Pretty app name')
 		package_id: fp.string('package-id', 0, android.default_package_id, 'App package ID (e.g. "org.company.app")')
+		package_overrides_path: fp.string('package-overrides', 0, '', 'Package file overrides path (e.g. "/tmp/java")')
 		package_format: fp.string('package', `p`, android.default_package_format, 'App package format. Any of $android.supported_package_formats')
 		activity_name: fp.string('activity-name', 0, '', 'The name of the main activity (e.g. "VActivity")')
 		icon: fp.string('icon', 0, '', 'App icon')
@@ -250,7 +252,7 @@ fn main() {
 	}
 	opt.input = input
 
-	extend_from_dot_vab(mut opt)
+	extend_options_from_dot_vab(mut opt)
 
 	kill_adb := os.getenv('VAB_KILL_ADB') != ''
 
@@ -612,10 +614,11 @@ fn resolve_options(mut opt Options, exit_on_error bool) {
 	}
 }
 
-fn extend_from_dot_vab(mut opt Options) {
+fn extend_options_from_dot_vab(mut opt Options) {
 	// Look up values in input .vab file next to input if no flags or defaults was set
 	if opt.package_id == android.default_package_id || opt.activity_name == ''
-		|| opt.app_name == android.default_app_name || opt.icon == '' {
+		|| opt.app_name == android.default_app_name || opt.icon == ''
+		|| opt.package_overrides_path == '' {
 		dot_vab_file := dot_vab_path(opt.input)
 		dot_vab := os.read_file(dot_vab_file) or { '' }
 		if dot_vab.len > 0 {
@@ -647,6 +650,16 @@ fn extend_from_dot_vab(mut opt Options) {
 						println('Using package id "$vab_package_id" from .vab file "$dot_vab_file"')
 					}
 					opt.package_id = vab_package_id
+				}
+			}
+			if opt.package_overrides_path == '' && dot_vab.contains('package_overrides:') {
+				vab_package_overrides_path := dot_vab.all_after('package_overrides:').all_before('\n').replace("'",
+					'').replace('"', '').trim(' ')
+				if vab_package_overrides_path != '' {
+					if opt.verbosity > 1 {
+						println('Using package overrides in "$vab_package_overrides_path" from .vab file "$dot_vab_file"')
+					}
+					opt.package_overrides_path = vab_package_overrides_path
 				}
 			}
 			if opt.activity_name == '' && dot_vab.contains('activity_name:') {

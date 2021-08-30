@@ -25,24 +25,25 @@ pub enum PackageFormat {
 
 // PackageOptions represents an Android package configuration
 pub struct PackageOptions {
-	verbosity     int
-	work_dir      string
-	is_prod       bool
-	api_level     string
-	build_tools   string
-	format        PackageFormat = .apk
-	app_name      string
-	lib_name      string
-	package_id    string
-	activity_name string
-	icon          string
-	version_code  int
-	v_flags       []string
-	input         string
-	assets_extra  []string
-	output_file   string
-	keystore      Keystore
-	base_files    string
+	verbosity              int
+	work_dir               string
+	is_prod                bool
+	api_level              string
+	build_tools            string
+	format                 PackageFormat = .apk
+	app_name               string
+	lib_name               string
+	package_id             string
+	activity_name          string
+	icon                   string
+	version_code           int
+	v_flags                []string
+	input                  string
+	assets_extra           []string
+	output_file            string
+	keystore               Keystore
+	base_files             string
+	package_overrides_path string // Path to user provided files that will override `base_files`. `java` (and later `kotlin`) subdirs are recognized
 }
 
 // package ouputs one of the supported Android package formats based on
@@ -487,29 +488,31 @@ fn prepare_base(opt PackageOptions) (string, string) {
 		os.cp_all(base_files_path, package_path, true) or { panic(err.msg) }
 	}
 
-	mut user_files_path := ''
-	if os.is_dir(opt.input) {
-		if os.is_dir(os.join_path(opt.input, 'java')) {
-			user_files_path = os.join_path(opt.input, 'java')
-		}
-	} else {
-		if os.is_dir(os.join_path(os.dir(opt.input), 'java')) {
-			user_files_path = os.join_path(os.dir(opt.input), 'java')
+	mut package_overrides_path := opt.package_overrides_path
+	if package_overrides_path == '' {
+		if os.is_dir(opt.input) {
+			if os.is_dir(os.join_path(opt.input, 'java')) {
+				package_overrides_path = os.join_path(opt.input, 'java')
+			}
+		} else {
+			if os.is_dir(os.join_path(os.dir(opt.input), 'java')) {
+				package_overrides_path = os.join_path(os.dir(opt.input), 'java')
+			}
 		}
 	}
 
-	mut is_custom := false
-	if os.is_dir(user_files_path) {
+	mut is_override := false
+	if os.is_dir(package_overrides_path) {
 		if opt.verbosity > 0 {
-			println('Copying base files from $user_files_path to $package_path')
+			println('Copying base file overrides from "$package_overrides_path" to "$package_path"')
 			if opt.verbosity > 2 {
-				os.walk(user_files_path, fn (entry string) {
+				os.walk(package_overrides_path, fn (entry string) {
 					println(entry)
 				})
 			}
 		}
-		os.cp_all(user_files_path, package_path, true) or { panic(err.msg) }
-		is_custom = true
+		os.cp_all(package_overrides_path, package_path, true) or { panic(err.msg) }
+		is_override = true
 	}
 
 	if opt.verbosity > 0 {
@@ -543,7 +546,7 @@ fn prepare_base(opt PackageOptions) (string, string) {
 		}
 		mut java_src := os.read_file(native_activity_file) or { panic(err.msg) }
 
-		if !is_custom {
+		if !is_override {
 			// Change package id in template
 			// r'.*package\s+(io.v.android).*'
 			mut re := regex.regex_opt(r'.*package\s+(' + android.default_package_id + r');') or {
@@ -599,7 +602,7 @@ fn prepare_base(opt PackageOptions) (string, string) {
 		}
 	}
 	// Replace in AndroidManifest.xml
-	if !is_custom {
+	if !is_override {
 		manifest_path := os.join_path(package_path, 'AndroidManifest.xml')
 		if os.is_file(manifest_path) {
 			mut manifest := os.read_file(manifest_path) or { panic(err.msg) }
