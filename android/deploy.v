@@ -88,7 +88,7 @@ pub fn deploy_apk(opt DeployOptions) bool {
 	}
 	// Deploy
 	if device_id != '' {
-		if !(device_id in devices) {
+		if device_id !in devices {
 			eprintln('Couldn\'t connect to device "$device_id".')
 			return false
 		}
@@ -280,7 +280,7 @@ pub fn deploy_aab(opt DeployOptions) bool {
 		util.verbosity_print_cmd(bundletool_apks_cmd, opt.verbosity)
 		util.run_or_exit(bundletool_apks_cmd)
 
-		if !(device_id in devices) {
+		if device_id !in devices {
 			eprintln('Couldn\'t connect to device "$device_id".')
 			return false
 		}

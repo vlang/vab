@@ -146,7 +146,7 @@ pub fn install(components string, verbosity int) int {
 			}
 		}
 
-		if !(component in env.accepted_components) {
+		if component !in env.accepted_components {
 			eprintln(@MOD + ' ' + @FN + ' component "$component" not recognized.')
 			eprintln('Available components ${env.accepted_components}.')
 			return 1
