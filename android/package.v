@@ -25,25 +25,25 @@ pub enum PackageFormat {
 
 // PackageOptions represents an Android package configuration
 pub struct PackageOptions {
-	verbosity              int
-	work_dir               string
-	is_prod                bool
-	api_level              string
-	build_tools            string
-	format                 PackageFormat = .apk
-	app_name               string
-	lib_name               string
-	package_id             string
-	activity_name          string
-	icon                   string
-	version_code           int
-	v_flags                []string
-	input                  string
-	assets_extra           []string
-	output_file            string
-	keystore               Keystore
-	base_files             string
-	package_overrides_path string // Path to user provided files that will override `base_files`. `java` (and later `kotlin`) subdirs are recognized
+	verbosity      int
+	work_dir       string
+	is_prod        bool
+	api_level      string
+	build_tools    string
+	format         PackageFormat = .apk
+	app_name       string
+	lib_name       string
+	package_id     string
+	activity_name  string
+	icon           string
+	version_code   int
+	v_flags        []string
+	input          string
+	assets_extra   []string
+	output_file    string
+	keystore       Keystore
+	base_files     string
+	overrides_path string // Path to user provided files that will override `base_files`. `java` (and later `kotlin` TODO) subdirs are recognized
 }
 
 // package ouputs one of the supported Android package formats based on
@@ -488,30 +488,30 @@ fn prepare_base(opt PackageOptions) (string, string) {
 		os.cp_all(base_files_path, package_path, true) or { panic(err.msg) }
 	}
 
-	mut package_overrides_path := opt.package_overrides_path
-	if package_overrides_path == '' {
+	mut overrides_path := opt.overrides_path
+	if overrides_path == '' {
 		if os.is_dir(opt.input) {
 			if os.is_dir(os.join_path(opt.input, 'java')) {
-				package_overrides_path = os.join_path(opt.input, 'java')
+				overrides_path = os.join_path(opt.input, 'java')
 			}
 		} else {
 			if os.is_dir(os.join_path(os.dir(opt.input), 'java')) {
-				package_overrides_path = os.join_path(os.dir(opt.input), 'java')
+				overrides_path = os.join_path(os.dir(opt.input), 'java')
 			}
 		}
 	}
 
 	mut is_override := false
-	if os.is_dir(package_overrides_path) {
+	if os.is_dir(overrides_path) {
 		if opt.verbosity > 0 {
-			println('Copying base file overrides from "$package_overrides_path" to "$package_path"')
+			println('Copying base file overrides from "$overrides_path" to "$package_path"')
 			if opt.verbosity > 2 {
-				os.walk(package_overrides_path, fn (entry string) {
+				os.walk(overrides_path, fn (entry string) {
 					println(entry)
 				})
 			}
 		}
-		os.cp_all(package_overrides_path, package_path, true) or { panic(err.msg) }
+		os.cp_all(overrides_path, package_path, true) or { panic(err.msg) }
 		is_override = true
 	}
 

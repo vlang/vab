@@ -377,6 +377,7 @@ fn main() {
 		output_file: opt.output
 		keystore: keystore
 		base_files: os.join_path(exe_dir, 'platforms', 'android')
+		overrides_path: opt.package_overrides_path
 	}
 	if !android.package(pck_opt) {
 		eprintln("Packaging didn't succeed")
