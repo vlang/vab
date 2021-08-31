@@ -470,7 +470,7 @@ fn prepare_base(opt PackageOptions) (string, string) {
 	}
 	package_path := os.join_path(opt.work_dir, 'package', format)
 	if opt.verbosity > 0 {
-		println('Removing previous package directory $package_path')
+		println('Removing previous package directory "$package_path"')
 	}
 	os.rmdir_all(package_path) or {}
 	os.mkdir_all(package_path) or { panic(err.msg) }
@@ -478,7 +478,7 @@ fn prepare_base(opt PackageOptions) (string, string) {
 	base_files_path := opt.base_files
 	if os.is_dir(base_files_path) {
 		if opt.verbosity > 0 {
-			println('Copying base files from $base_files_path to $package_path')
+			println('Copying base files from "$base_files_path" to "$package_path"')
 			if opt.verbosity > 2 {
 				os.walk(base_files_path, fn (entry string) {
 					println(entry)
@@ -488,6 +488,8 @@ fn prepare_base(opt PackageOptions) (string, string) {
 		os.cp_all(base_files_path, package_path, true) or { panic(err.msg) }
 	}
 
+	// Figure out path overrides
+	// TODO overrides is currently based on heuristics - this should probably change to avoid accidental copying of huge data amounts
 	mut overrides_path := opt.overrides_path
 	if overrides_path == '' {
 		if os.is_dir(opt.input) {
@@ -513,6 +515,10 @@ fn prepare_base(opt PackageOptions) (string, string) {
 		}
 		os.cp_all(overrides_path, package_path, true) or { panic(err.msg) }
 		is_override = true
+	} else {
+		if opt.verbosity > 2 {
+			println('No overrides found in "$overrides_path"')
+		}
 	}
 
 	if opt.verbosity > 0 {

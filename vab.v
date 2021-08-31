@@ -654,9 +654,27 @@ fn extend_options_from_dot_vab(mut opt Options) {
 				}
 			}
 			if opt.package_overrides_path == '' && dot_vab.contains('package_overrides:') {
-				vab_package_overrides_path := dot_vab.all_after('package_overrides:').all_before('\n').replace("'",
+				mut vab_package_overrides_path := dot_vab.all_after('package_overrides:').all_before('\n').replace("'",
 					'').replace('"', '').trim(' ')
 				if vab_package_overrides_path != '' {
+					if vab_package_overrides_path in ['.', '..']
+						|| vab_package_overrides_path.starts_with('.' + os.path_separator)
+						|| vab_package_overrides_path.starts_with('..' + os.path_separator) {
+						dot_vab_file_dir := os.dir(dot_vab_file)
+						if vab_package_overrides_path == '.' {
+							vab_package_overrides_path = dot_vab_file_dir
+						} else if vab_package_overrides_path == '..' {
+							vab_package_overrides_path = os.dir(dot_vab_file_dir)
+						} else if vab_package_overrides_path.starts_with('.' + os.path_separator) {
+							vab_package_overrides_path = vab_package_overrides_path.replace_once(
+								'.' + os.path_separator, dot_vab_file_dir + os.path_separator)
+						} else {
+							// vab_package_overrides_path.starts_with('..'+os.path_separator)
+							vab_package_overrides_path = vab_package_overrides_path.replace_once(
+								'..' + os.path_separator, os.dir(dot_vab_file_dir) +
+								os.path_separator)
+						}
+					}
 					if opt.verbosity > 1 {
 						println('Using package overrides in "$vab_package_overrides_path" from .vab file "$dot_vab_file"')
 					}
@@ -668,7 +686,7 @@ fn extend_options_from_dot_vab(mut opt Options) {
 					'').replace('"', '').trim(' ')
 				if vab_activity != '' {
 					if opt.verbosity > 1 {
-						println('Using package id "$vab_activity" from .vab file "$dot_vab_file"')
+						println('Using activity name "$vab_activity" from .vab file "$dot_vab_file"')
 					}
 					opt.activity_name = vab_activity
 				}
