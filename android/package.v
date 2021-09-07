@@ -736,7 +736,10 @@ fn prepare_base(opt PackageOptions) (string, string) {
 	assets_path := os.join_path(package_path, 'assets')
 	os.mkdir_all(assets_path) or { panic(err.msg) }
 
+	mut included_asset_paths := []string{}
+
 	/*
+	NOTE kept for debugging purposes
 	test_asset := os.join_path(assets_path, 'test.txt')
 	os.rm(test_asset)
 	mut fh := open_file(test_asset, 'w+', 0o755) or { panic(err.msg) }
@@ -745,7 +748,7 @@ fn prepare_base(opt PackageOptions) (string, string) {
 	*/
 
 	mut assets_by_side_path := opt.input
-	if !os.is_dir(opt.input) {
+	if os.is_file(opt.input) {
 		assets_by_side_path = os.dir(opt.input)
 	}
 	// Look for "assets" dir in same location as input
@@ -755,36 +758,60 @@ fn prepare_base(opt PackageOptions) (string, string) {
 			println('Including assets from "$assets_by_side"')
 		}
 		os.cp_all(assets_by_side, assets_path, false) or { panic(err.msg) }
+		included_asset_paths << os.real_path(assets_by_side)
 	}
 	// Look for "assets" in dir above input dir.
 	// This is mostly an exception for the shared example assets in V examples.
 	if os.real_path(assets_by_side_path).contains(os.join_path('v', 'examples')) {
 		assets_above := os.real_path(os.join_path(assets_by_side_path, '..', 'assets'))
 		if os.is_dir(assets_above) {
-			if opt.verbosity > 0 {
-				println('Including assets from "$assets_above"')
+			if os.real_path(assets_above) in included_asset_paths {
+				if opt.verbosity > 1 {
+					println('Skipping "$assets_above" since it\'s already included')
+				}
+			} else {
+				if opt.verbosity > 0 {
+					println('Including assets from "$assets_above"')
+				}
+				os.cp_all(assets_above, assets_path, false) or { panic(err.msg) }
+				included_asset_paths << os.real_path(assets_by_side)
 			}
-			os.cp_all(assets_above, assets_path, false) or { panic(err.msg) }
 		}
 	}
 	// Look for "assets" dir in current dir
 	assets_in_dir := 'assets'
 	if os.is_dir(assets_in_dir) {
-		if opt.verbosity > 0 {
-			println('Including assets from "$assets_in_dir"')
+		assets_in_dir_resolved := os.real_path(os.join_path(os.getwd(), assets_in_dir))
+		if assets_in_dir_resolved in included_asset_paths {
+			if opt.verbosity > 1 {
+				println('Skipping "$assets_in_dir" since it\'s already included')
+			}
+		} else {
+			if opt.verbosity > 0 {
+				println('Including assets from "$assets_in_dir"')
+			}
+			os.cp_all(assets_in_dir, assets_path, false) or { panic(err.msg) }
+			included_asset_paths << assets_in_dir_resolved
 		}
-		os.cp_all(assets_in_dir, assets_path, false) or { panic(err.msg) }
 	}
 	// Look in user provided dir
 	for user_asset in opt.assets_extra {
 		if os.is_dir(user_asset) {
-			if opt.verbosity > 0 {
-				println('Including assets from "$user_asset"')
+			user_asset_resolved := os.real_path(user_asset)
+			if user_asset_resolved in included_asset_paths {
+				if opt.verbosity > 1 {
+					println('Skipping "$user_asset" since it\'s already included')
+				}
+			} else {
+				if opt.verbosity > 0 {
+					println('Including assets from "$user_asset"')
+				}
+				os.cp_all(user_asset, assets_path, false) or { panic(err.msg) }
+				included_asset_paths << user_asset_resolved
 			}
-			os.cp_all(user_asset, assets_path, false) or { panic(err.msg) }
 		} else {
 			os.cp(user_asset, assets_path) or {
-				eprintln('Skipping invalid asset file "$user_asset"')
+				eprintln('Skipping invalid or non-existent asset file "$user_asset"')
 			}
 		}
 	}
