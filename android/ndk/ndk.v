@@ -38,8 +38,7 @@ const (
 
 // root will try to detect where the Android NDK is installed. Otherwise return blank
 pub fn root() string {
-	mut ndk_root := ''
-	ndk_root = cache.get_string(@MOD+'.'+@FN)
+	mut ndk_root := cache.get_string(@MOD+'.'+@FN)
 	if ndk_root != '' {
 		return ndk_root
 	}

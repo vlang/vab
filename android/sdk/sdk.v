@@ -42,8 +42,7 @@ enum Component {
 
 // root will try to detect where the Android SDK is installed. Otherwise return an empty string
 pub fn root() string {
-	mut sdk_root := ''
-	sdk_root = cache.get_string(@MOD+'.'+@FN)
+	mut sdk_root := cache.get_string(@MOD+'.'+@FN)
 	if sdk_root != '' {
 		return sdk_root
 	}
