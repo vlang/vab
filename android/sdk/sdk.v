@@ -42,7 +42,7 @@ enum Component {
 
 // root will try to detect where the Android SDK is installed. Otherwise return an empty string
 pub fn root() string {
-	mut sdk_root := cache.get_string(@MOD+'.'+@FN)
+	mut sdk_root := cache.get_string(@MOD + '.' + @FN)
 	if sdk_root != '' {
 		return sdk_root
 	}
@@ -81,7 +81,7 @@ pub fn root() string {
 					eprintln(@MOD + '.' + @FN + ' found SDK in hardcoded paths at "$dir"')
 				}
 				sdk_root = dir
-				cache.set_string(@MOD+'.'+@FN, sdk_root)
+				cache.set_string(@MOD + '.' + @FN, sdk_root)
 				return dir
 			}
 		}
@@ -122,7 +122,7 @@ pub fn root() string {
 					eprintln(@MOD + '.' + @FN + ' found by sdkmanager in cache "$cache_dir()"')
 				}
 				sdk_root = cache_dir()
-				cache.set_string(@MOD+'.'+@FN, sdk_root)
+				cache.set_string(@MOD + '.' + @FN, sdk_root)
 				return sdk_root
 			}
 		}
@@ -156,7 +156,7 @@ pub fn root() string {
 		}
 	}
 	sdk_root = sdk_root.trim_right(r'\/')
-	cache.set_string(@MOD+'.'+@FN, sdk_root)
+	cache.set_string(@MOD + '.' + @FN, sdk_root)
 	return sdk_root
 }
 

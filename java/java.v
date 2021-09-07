@@ -133,7 +133,7 @@ pub fn jre_found() bool {
 }
 
 pub fn jdk_root() string {
-	mut java_home := cache.get_string(@MOD+'.'+@FN)
+	mut java_home := cache.get_string(@MOD + '.' + @FN)
 	if java_home != '' {
 		return java_home
 	}
@@ -145,7 +145,7 @@ pub fn jdk_root() string {
 	possible_symlink := os.find_abs_path_of_executable('javac') or { return '' }
 	java_home = os.real_path(os.join_path(os.dir(possible_symlink), '..'))
 	java_home = java_home.trim_right(os.path_separator)
-	cache.set_string(@MOD+'.'+@FN, java_home)
+	cache.set_string(@MOD + '.' + @FN, java_home)
 	return java_home
 }
 

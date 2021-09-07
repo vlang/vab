@@ -34,7 +34,7 @@ pub fn ls_sorted(path string) []string {
 
 pub fn cache_dir() string {
 	mut cache_dir := ''
-	cache_dir = cache.get_string(@MOD+'.'+@FN)
+	cache_dir = cache.get_string(@MOD + '.' + @FN)
 	if cache_dir != '' {
 		return cache_dir
 	}
@@ -44,7 +44,7 @@ pub fn cache_dir() string {
 			panic(@MOD + '.' + @FN + ' error making cache directory "$cache_dir". $err')
 		}
 	}
-	cache.set_string(@MOD+'.'+@FN, cache_dir)
+	cache.set_string(@MOD + '.' + @FN, cache_dir)
 	return cache_dir
 }
 

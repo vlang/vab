@@ -38,7 +38,7 @@ const (
 
 // root will try to detect where the Android NDK is installed. Otherwise return blank
 pub fn root() string {
-	mut ndk_root := cache.get_string(@MOD+'.'+@FN)
+	mut ndk_root := cache.get_string(@MOD + '.' + @FN)
 	if ndk_root != '' {
 		return ndk_root
 	}
@@ -72,7 +72,7 @@ pub fn root() string {
 					eprintln(@MOD + '.' + @FN + ' found NDK in hardcoded paths at "$dir"')
 				}
 				ndk_root = dir
-				cache.set_string(@MOD+'.'+@FN, ndk_root)
+				cache.set_string(@MOD + '.' + @FN, ndk_root)
 				return ndk_root
 			}
 		}
@@ -104,7 +104,7 @@ pub fn root() string {
 		ndk_root = ''
 	}
 	ndk_root = ndk_root.trim_right(r'\/')
-	cache.set_string(@MOD+'.'+@FN, ndk_root)
+	cache.set_string(@MOD + '.' + @FN, ndk_root)
 	return ndk_root
 }
 

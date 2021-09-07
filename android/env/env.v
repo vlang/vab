@@ -10,7 +10,6 @@ import android.sdk
 import android.ndk
 import android.util
 
-
 pub const (
 	accepted_components = ['auto', 'cmdline-tools', 'platform-tools', 'ndk', 'platforms',
 		'build-tools', 'bundletool', 'aapt2']
@@ -452,7 +451,7 @@ pub fn has_sdkmanager() bool {
 
 pub fn sdkmanager() string {
 	mut sdkmanager := ''
-	sdkmanager = cache.get_string(@MOD+'.'+@FN)
+	sdkmanager = cache.get_string(@MOD + '.' + @FN)
 	if sdkmanager != '' {
 		return sdkmanager
 	}
@@ -513,7 +512,7 @@ pub fn sdkmanager() string {
 	if !os.is_executable(sdkmanager) {
 		sdkmanager = ''
 	}
-	cache.set_string(@MOD+'.'+@FN, sdkmanager)
+	cache.set_string(@MOD + '.' + @FN, sdkmanager)
 	return sdkmanager
 }
 
