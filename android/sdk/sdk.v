@@ -247,7 +247,10 @@ pub fn build_tools_available() []string {
 		return available
 	}
 	available = util.ls_sorted(build_tools_root())
-	available.filter(semver.is_valid(it))
+	// NOTE don't filter out exotic entries like "debian", instead place them last.
+	exotic := available.filter(!semver.is_valid(it))
+	available = available.filter(semver.is_valid(it))
+	available << exotic
 	return available
 }
 

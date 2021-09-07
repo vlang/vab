@@ -13,12 +13,13 @@ import android.ndk
 import android.env
 
 const (
-	exe_version  = version()
-	exe_name     = os.file_name(os.executable())
-	exe_dir      = os.dir(os.real_path(os.executable()))
-	exe_git_hash = vab_commit_hash()
-	rip_vflags   = ['-autofree', '-gc', '-g', '-cg', '-prod', 'run']
-	subcmds      = ['test-cleancode']
+	exe_version          = version()
+	exe_name             = os.file_name(os.executable())
+	exe_dir              = os.dir(os.real_path(os.executable()))
+	exe_git_hash         = vab_commit_hash()
+	rip_vflags           = ['-autofree', '-gc', '-g', '-cg', '-prod', 'run']
+	subcmds              = ['test-cleancode']
+	accepted_input_files = ['.v', '.apk', '.aab']
 )
 
 struct Options {
@@ -243,7 +244,6 @@ fn main() {
 	input := fp.args[fp.args.len - 1]
 
 	input_ext := os.file_ext(input)
-	accepted_input_files := ['.v', '.apk', '.aab']
 
 	if !(os.is_dir(input) || input_ext in accepted_input_files) {
 		println(fp.usage())
@@ -440,6 +440,7 @@ fn check_essentials(exit_on_error bool) {
 }
 
 fn validate_env(opt Options) {
+	// Validate JDK
 	jdk_version := java.jdk_version()
 	if jdk_version == '' {
 		eprintln('No Java JDK install(s) could be detected')
@@ -459,19 +460,33 @@ fn validate_env(opt Options) {
 		exit(1)
 	}
 
-	build_tools_semantic_version := semver.from(sdk.default_build_tools_version) or {
-		panic(@MOD + '.' + @FN + ':' + @LINE +
-			' error converting build-tools version "$sdk.default_build_tools_version" to semantic version.\nsemver: $err')
+	// Validate build-tools
+	if sdk.default_build_tools_version == '' {
+		eprintln('No known Android build-tools version(s) could be detected in the SDK.')
+		eprintln('(A vab compatible version can be installed with `$exe_name install "build-tools;$sdk.min_supported_build_tools_version"`)')
+		exit(1)
+	} else if semver.is_valid(sdk.default_build_tools_version) {
+		build_tools_semantic_version := semver.from(sdk.default_build_tools_version) or {
+			panic(@MOD + '.' + @FN + ':' + @LINE +
+				' error converting build-tools version "$sdk.default_build_tools_version" to semantic version.\nsemver: $err')
+		}
+
+		if !build_tools_semantic_version.satisfies('>=$sdk.min_supported_build_tools_version') {
+			// Some Android tools we need like `apksigner` is currently only available with build-tools >= 24.0.3.
+			// (Absolute mess, yes)
+			eprintln('Android build-tools version "$sdk.default_build_tools_version" is not supported by ${exe_name}.')
+			eprintln('Please install a build-tools version >= $sdk.min_supported_build_tools_version (run `$exe_name install build-tools` to install the default version).')
+			eprintln('You can see available build-tools with `$exe_name --list-build-tools`.')
+			eprintln('To use a specific version you can use `$exe_name --build-tools "<version>"`.')
+			exit(1)
+		}
+	} else {
+		// Not blank but not a recognized format (x.y.z)
+		// NOTE It *might* be a SDK managed by the system package manager (apt, pacman etc.) - so we warn about it and go on...
+		eprintln('Notice: Android build-tools version "$sdk.default_build_tools_version" is unknown to $exe_name, things might not work as expected.')
 	}
 
-	if !build_tools_semantic_version.ge(semver.build(24, 0, 3)) { // NOTE When did this break:.satisfies('>=24.0.3') ???
-		// Some Android tools we need like `apksigner` is currently only available with build-tools >= 24.0.3.
-		// (Absolute mess, yes)
-		eprintln('Android build-tools version $sdk.default_build_tools_version is not supported')
-		eprintln('Please install build-tools version >= 24.0.3')
-		eprintln('or run `$exe_name install build-tools`')
-		exit(1)
-	}
+	// Validate NDK
 	/*
 	Currently not possible as version is sniffed from the directory it resides in (which can be anything)
 	// Validate Android NDK requirements
@@ -489,7 +504,7 @@ fn validate_env(opt Options) {
 	*/
 	// API level
 	if opt.api_level.i16() < sdk.default_api_level.i16() {
-		eprintln('Notice: Android API level $opt.api_level is less than the recomended level ($sdk.default_api_level).')
+		eprintln('Notice: Android API level $opt.api_level is less than the default level ($sdk.default_api_level).')
 	}
 	// AAB format
 	has_bundletool := env.has_bundletool()
@@ -545,13 +560,13 @@ fn resolve_options(mut opt Options, exit_on_error bool) {
 			build_tools_version = opt.build_tools
 		} else {
 			// TODO FIX Warnings
-			eprintln('Android build-tools version $opt.build_tools is not available in SDK.')
+			eprintln('Android build-tools version "$opt.build_tools" is not available in SDK.')
 			eprintln('(It can be installed with `$exe_name install "build-tools;$opt.build_tools"`)')
 			eprintln('Falling back to default $build_tools_version')
 		}
 	}
 	if build_tools_version == '' {
-		eprintln('Android build-tools version $opt.build_tools is not available in SDK.')
+		eprintln('No known Android build-tools version(s) could be detected in the SDK.')
 		eprintln('(A vab compatible version can be installed with `$exe_name install "build-tools;$sdk.min_supported_build_tools_version"`)')
 		if exit_on_error {
 			exit(1)
