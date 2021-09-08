@@ -23,6 +23,14 @@ cd vab
 v vab.v
 ```
 
+## Symlink (optional)
+You can symlink `vab` to your `$PATH` so it works as a global shell command.
+```bash
+sudo ln -s /path/to/vab /usr/local/bin/vab
+```
+
+# Usage
+
 If `vab` fail to detect your environment you can set ENV variables
 to help it:
 ```bash
@@ -32,8 +40,6 @@ ANDROID_SDK_ROOT=/path/to/android_sdk_linux
 ANDROID_NDK_ROOT=/path/to/android_ndk_linux
 VEXE=/path/to/custom/v/binary
 ```
-
-# Usage
 
 ## Development (debug builds)
 
