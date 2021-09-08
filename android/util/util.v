@@ -3,6 +3,7 @@
 module util
 
 import os
+import cache
 
 // Utility functions
 pub fn find_sorted(path string) []string {
@@ -32,12 +33,17 @@ pub fn ls_sorted(path string) []string {
 }
 
 pub fn cache_dir() string {
-	cache_dir := os.join_path(os.cache_dir(), 'v', 'android')
+	mut cache_dir := cache.get_string(@MOD + '.' + @FN)
+	if cache_dir != '' {
+		return cache_dir
+	}
+	cache_dir = os.join_path(os.cache_dir(), 'v', 'android')
 	if !os.exists(cache_dir) {
 		os.mkdir_all(cache_dir) or {
 			panic(@MOD + '.' + @FN + ' error making cache directory "$cache_dir". $err')
 		}
 	}
+	cache.set_string(@MOD + '.' + @FN, cache_dir)
 	return cache_dir
 }
 

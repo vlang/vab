@@ -3,11 +3,12 @@
 module env
 
 import os
+import semver
 import net.http
+import cache
 import android.sdk
 import android.ndk
 import android.util
-import semver
 
 pub const (
 	accepted_components = ['auto', 'cmdline-tools', 'platform-tools', 'ndk', 'platforms',
@@ -449,7 +450,12 @@ pub fn has_sdkmanager() bool {
 }
 
 pub fn sdkmanager() string {
-	mut sdkmanager := os.getenv('SDKMANAGER')
+	mut sdkmanager := cache.get_string(@MOD + '.' + @FN)
+	if sdkmanager != '' {
+		return sdkmanager
+	}
+
+	sdkmanager = os.getenv('SDKMANAGER')
 	// Check in cache
 	if !os.is_executable(sdkmanager) {
 		sdkmanager = os.join_path(util.cache_dir(), 'sdkmanager')
@@ -505,6 +511,7 @@ pub fn sdkmanager() string {
 	if !os.is_executable(sdkmanager) {
 		sdkmanager = ''
 	}
+	cache.set_string(@MOD + '.' + @FN, sdkmanager)
 	return sdkmanager
 }
 

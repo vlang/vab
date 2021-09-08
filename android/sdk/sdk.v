@@ -4,6 +4,7 @@ module sdk
 
 import os
 import semver
+import cache
 import android.util
 
 const (
@@ -41,7 +42,11 @@ enum Component {
 
 // root will try to detect where the Android SDK is installed. Otherwise return an empty string
 pub fn root() string {
-	mut sdk_root := os.getenv('ANDROID_SDK_ROOT')
+	mut sdk_root := cache.get_string(@MOD + '.' + @FN)
+	if sdk_root != '' {
+		return sdk_root
+	}
+	sdk_root = os.getenv('ANDROID_SDK_ROOT')
 	if sdk_root != '' && !os.is_dir(sdk_root) {
 		$if debug_sdk ? {
 			eprintln(@MOD + '.' + @FN +
@@ -75,6 +80,8 @@ pub fn root() string {
 				$if debug_sdk ? {
 					eprintln(@MOD + '.' + @FN + ' found SDK in hardcoded paths at "$dir"')
 				}
+				sdk_root = dir
+				cache.set_string(@MOD + '.' + @FN, sdk_root)
 				return dir
 			}
 		}
@@ -114,7 +121,9 @@ pub fn root() string {
 				$if debug_sdk ? {
 					eprintln(@MOD + '.' + @FN + ' found by sdkmanager in cache "$cache_dir()"')
 				}
-				return cache_dir()
+				sdk_root = cache_dir()
+				cache.set_string(@MOD + '.' + @FN, sdk_root)
+				return sdk_root
 			}
 		}
 		if !os.is_executable(sdkm_path) {
@@ -146,7 +155,9 @@ pub fn root() string {
 			eprintln(@MOD + '.' + @FN + ' found SDK in "$sdk_root"')
 		}
 	}
-	return sdk_root.trim_right(r'\/')
+	sdk_root = sdk_root.trim_right(r'\/')
+	cache.set_string(@MOD + '.' + @FN, sdk_root)
+	return sdk_root
 }
 
 pub fn found() bool {

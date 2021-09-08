@@ -3,6 +3,7 @@
 module ndk
 
 import os
+import cache
 import android.sdk
 import android.util
 
@@ -37,7 +38,12 @@ const (
 
 // root will try to detect where the Android NDK is installed. Otherwise return blank
 pub fn root() string {
-	mut ndk_root := os.getenv('ANDROID_NDK_ROOT')
+	mut ndk_root := cache.get_string(@MOD + '.' + @FN)
+	if ndk_root != '' {
+		return ndk_root
+	}
+
+	ndk_root = os.getenv('ANDROID_NDK_ROOT')
 	if ndk_root != '' && !os.is_dir(ndk_root) {
 		$if debug_ndk ? {
 			eprintln(@MOD + '.' + @FN +
@@ -65,7 +71,9 @@ pub fn root() string {
 				$if debug_ndk ? {
 					eprintln(@MOD + '.' + @FN + ' found NDK in hardcoded paths at "$dir"')
 				}
-				return dir
+				ndk_root = dir
+				cache.set_string(@MOD + '.' + @FN, ndk_root)
+				return ndk_root
 			}
 		}
 	}
@@ -95,7 +103,9 @@ pub fn root() string {
 		}
 		ndk_root = ''
 	}
-	return ndk_root.trim_right(r'\/')
+	ndk_root = ndk_root.trim_right(r'\/')
+	cache.set_string(@MOD + '.' + @FN, ndk_root)
+	return ndk_root
 }
 
 pub fn root_version(version string) string {
