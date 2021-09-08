@@ -450,8 +450,7 @@ pub fn has_sdkmanager() bool {
 }
 
 pub fn sdkmanager() string {
-	mut sdkmanager := ''
-	sdkmanager = cache.get_string(@MOD + '.' + @FN)
+	mut sdkmanager := cache.get_string(@MOD + '.' + @FN)
 	if sdkmanager != '' {
 		return sdkmanager
 	}

@@ -33,8 +33,7 @@ pub fn ls_sorted(path string) []string {
 }
 
 pub fn cache_dir() string {
-	mut cache_dir := ''
-	cache_dir = cache.get_string(@MOD + '.' + @FN)
+	mut cache_dir := cache.get_string(@MOD + '.' + @FN)
 	if cache_dir != '' {
 		return cache_dir
 	}
