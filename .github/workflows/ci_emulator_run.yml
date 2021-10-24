@@ -9,9 +9,15 @@ on:
       - "**.md"
 
 jobs:
+  no-scheduling:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delay scheduling of jobs
+        run: sleep 10
 
   macos-latest-run-v-examples:
     runs-on: macOS-latest
+    needs: no-scheduling
     timeout-minutes: 30
     steps:
     - uses: actions/setup-java@v2
