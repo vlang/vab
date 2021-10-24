@@ -33,9 +33,10 @@ struct Options {
 	keystore       string
 	keystore_alias string
 	// Build specifics
-	gles_version int
-	c_flags      []string // flags passed to the C compiler(s)
-	archs        []string
+	gles_version     int
+	c_flags          []string // flags passed to the C compiler(s)
+	no_printf_hijack bool     // Do not let V redefine printf for log output aka. V_ANDROID_LOG_PRINT
+	archs            []string
 	// Deploy specifics
 	run            bool
 	device_log     bool
@@ -115,6 +116,8 @@ fn main() {
 	mut opt := Options{
 		assets_extra: fp.string_multi('assets', `a`, 'Asset dir(s) to include in build')
 		v_flags: fp.string_multi('flag', `f`, 'Additional flags for the V compiler')
+		//
+		no_printf_hijack: fp.bool('no-printf-hijack', 0, false, 'Do not let V redefine printf for log output (aka. do not define V_ANDROID_LOG_PRINT)')
 		c_flags: fp.string_multi('cflag', `c`, 'Additional flags for the C compiler')
 		archs: fp.string('archs', 0, '', 'Comma separated string with any of $android.default_archs').split(',')
 		gles_version: fp.int('gles', 0, android.default_gles_version, 'GLES version to use from any of $android.supported_gles_versions')
@@ -344,6 +347,7 @@ fn main() {
 		cache_key: compile_cache_key
 		is_prod: opt.is_prod
 		gles_version: opt.gles_version
+		no_printf_hijack: opt.no_printf_hijack
 		v_flags: opt.v_flags
 		c_flags: opt.c_flags
 		archs: opt.archs.filter(it.trim(' ') != '')
