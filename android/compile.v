@@ -22,14 +22,15 @@ pub struct CompileOptions {
 	work_dir string // temporary work directory
 	input    string
 	//
-	is_prod      bool
-	gles_version int = android.default_gles_version
-	archs        []string // compile for these CPU architectures
-	v_flags      []string // flags to pass to the v compiler
-	c_flags      []string // flags to pass to the C compiler(s)
-	ndk_version  string   // version of the Android NDK to compile against
-	lib_name     string   // filename of the resulting .so ('${lib_name}.so')
-	api_level    string   // Android API level to use when compiling
+	is_prod          bool
+	gles_version     int = android.default_gles_version
+	no_printf_hijack bool     // Do not let V redefine printf for log output aka. V_ANDROID_LOG_PRINT
+	archs            []string // compile for these CPU architectures
+	v_flags          []string // flags to pass to the v compiler
+	c_flags          []string // flags to pass to the C compiler(s)
+	ndk_version      string   // version of the Android NDK to compile against
+	lib_name         string   // filename of the resulting .so ('${lib_name}.so')
+	api_level        string   // Android API level to use when compiling
 }
 
 pub fn compile(opt CompileOptions) bool {
@@ -168,26 +169,32 @@ pub fn compile(opt CompileOptions) bool {
 		cflags << ['-O0']
 	}
 	cflags << ['-fPIC', '-fvisibility=hidden', '-ffunction-sections', '-fdata-sections',
-		'-ferror-limit=1',
-	]
+		'-ferror-limit=1']
 
 	cflags << ['-Wall', '-Wextra', '-Wno-unused-variable', '-Wno-unused-parameter',
 		'-Wno-unused-result', '-Wno-unused-function', '-Wno-missing-braces', '-Wno-unused-label',
-		'-Werror=implicit-function-declaration',
-	]
+		'-Werror=implicit-function-declaration']
 
 	// TODO Here to make the compilers shut up :/
 	cflags << ['-Wno-braced-scalar-init', '-Wno-incompatible-pointer-types',
 		'-Wno-implicitly-unsigned-literal', '-Wno-pointer-sign', '-Wno-enum-conversion',
 		'-Wno-int-conversion', '-Wno-int-to-pointer-cast', '-Wno-sign-compare', '-Wno-return-type',
-		'-Wno-extra-tokens',
-	]
+		'-Wno-extra-tokens']
 
-	defines << ['-DAPPNAME="$opt.lib_name"']
+	// NOTE This define allows V to redefine C's printf() - to let logging via println() etc. go
+	// through Android device's system log (that adb logcat reads).
+	if !opt.no_printf_hijack {
+		if opt.verbosity > 1 {
+			println('Define V_ANDROID_LOG_PRINT - (f)printf will be redefined...')
+		}
+		defines << '-DV_ANDROID_LOG_PRINT'
+	}
+
+	defines << '-DAPPNAME="$opt.lib_name"'
 	defines << ['-DANDROID', '-D__ANDROID__', '-DANDROIDVERSION=$opt.api_level']
 
 	// TODO if full_screen
-	defines << ['-DANDROID_FULLSCREEN']
+	defines << '-DANDROID_FULLSCREEN'
 
 	ndk_root := ndk.root_version(opt.ndk_version)
 	// NDK headers
@@ -256,8 +263,7 @@ pub fn compile(opt CompileOptions) bool {
 		build_cmd := [arch_cc[arch], cflags.join(' '), includes.join(' '),
 			defines.join(' '), sources.join(' '), arch_cflags[arch].join(' '),
 			'-o "$arch_lib_dir/lib${opt.lib_name}.so"', v_output_file, '-L"' + arch_libs[arch] + '"',
-			ldflags.join(' '),
-		]
+			ldflags.join(' ')]
 		util.verbosity_print_cmd(build_cmd, opt.verbosity)
 		comp_res := util.run_or_exit(build_cmd)
 
