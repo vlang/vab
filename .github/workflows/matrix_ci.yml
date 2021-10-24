@@ -50,10 +50,6 @@ jobs:
     - name: Run vab --help
       run: vab/vab --help
 
-    - name: Setup env
-      run: |
-        mkdir -p java-${{ matrix.java-version }}/${{ matrix.v-example }}
-
     - name: Run vab doctor
       run: |
         export VEXE=./v
@@ -75,6 +71,9 @@ jobs:
         for example in "${v_examples[@]}"; do
           package_id=$( echo "$example" | sed 's%/%%' | sed 's%\.%%' )
           package_id=$( echo "v$package_id" )
+
+          # Setup env
+          mkdir -p java-${{ matrix.java-version }}/$example
 
           # APK
           vab/vab -v 3 --build-tools '29.0.0' --package-id "io.v.apk.$package_id" --api ${{ matrix.android-api }} examples/$example -o java-${{ matrix.java-version }}/$example/$package_id.apk
