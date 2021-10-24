@@ -15,4 +15,4 @@ jobs:
       if: ${{ github.event.workflow_run.head_repository.full_name != 'vlang/vab' || github.event.workflow_run.head_branch != 'master' }}
       with:
         # workflow ids for `Code CI` (from https://api.github.com/repos/vlang/vab/actions/workflows):
-        workflow_id: 4580346,9298031
+        workflow_id: 4580346,9298031,14524291
