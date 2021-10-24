@@ -23,7 +23,6 @@ jobs:
         os: [ubuntu-18.04, ubuntu-20.04]
         java-version: [8, 15]
         android-api: [21, 30]
-        v-example: ['flappylearning', '2048', 'fireworks', 'tetris', 'sokol/particles', 'sokol/drawing.v', 'sokol/freetype_raven.v', 'gg/polygons.v', 'gg/raven_text_rendering.v', 'gg/rectangles.v', 'gg/stars.v', 'gg/worker_thread.v' ]
 
     timeout-minutes: 30
     steps:
@@ -60,13 +59,6 @@ jobs:
         export VEXE=./v
         vab/vab doctor
 
-    # APK
-    - name: Build APK (Java ${{ matrix.java-version }}) ${{ matrix.v-example }}
-      run: |
-        export VEXE=./v
-        export OUTPUT=$(echo "${{ matrix.v-example }}" | sed 's%/%-%' | sed 's%\.%-%' )
-        vab/vab -v 3 --build-tools '29.0.0' --api ${{ matrix.android-api }} examples/${{ matrix.v-example }} -o java-${{ matrix.java-version }}/${{ matrix.v-example }}/$OUTPUT.apk
-
     # AAB
     - name: Install AAB dependencies
       run: |
@@ -74,9 +66,19 @@ jobs:
         vab/vab install bundletool
         vab/vab install aapt2
 
-    - name: Build AAB (Java ${{ matrix.java-version }}) ${{ matrix.v-example }}
+    - name: Build examples as APK + AAB (Java ${{ matrix.java-version }}) ${{ matrix.android-api }}
       run: |
         export VEXE=./v
-        export OUTPUT=$(echo "${{ matrix.v-example }}" | sed 's%/%-%' | sed 's%\.%-%' )
-        vab/vab -v 3 --build-tools '29.0.0' --api ${{ matrix.android-api }} --package aab examples/${{ matrix.v-example }} -o java-${{ matrix.java-version }}/${{ matrix.v-example }}/$OUTPUT.aab
 
+        declare -a v_examples=('flappylearning' '2048' 'fireworks' 'tetris' 'sokol/particles' 'sokol/drawing.v' 'sokol/freetype_raven.v' 'gg/polygons.v' 'gg/raven_text_rendering.v' 'gg/rectangles.v' 'gg/stars.v' 'gg/worker_thread.v')
+
+        for example in "${v_examples[@]}"; do
+          package_id=$( echo "$example" | sed 's%/%%' | sed 's%\.%%' )
+          package_id=$( echo "v$package_id" )
+
+          # APK
+          vab/vab -v 3 --build-tools '29.0.0' --package-id "io.v.apk.$package_id" --api ${{ matrix.android-api }} examples/$example -o java-${{ matrix.java-version }}/$example/$package_id.apk
+
+          # AAB
+          vab/vab -v 3 --build-tools '29.0.0' --package aab --package-id "io.v.aab.$package_id" --api ${{ matrix.android-api }} examples/$example -o java-${{ matrix.java-version }}/$example/$package_id.aab
+        done
