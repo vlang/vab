@@ -22,7 +22,7 @@ jobs:
       matrix:
         os: [ubuntu-18.04, ubuntu-20.04]
         java-version: [8, 15]
-        android-api: [21, 30]
+        android-api: [27, 30]
 
     timeout-minutes: 30
     steps:
@@ -61,6 +61,7 @@ jobs:
         export VEXE=./v
         vab/vab install bundletool
         vab/vab install aapt2
+        vab/vab -v 3 install "platforms;android-21"
 
     - name: Build examples as APK + AAB (Java ${{ matrix.java-version }}) ${{ matrix.android-api }}
       run: |
