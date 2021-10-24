@@ -3,6 +3,7 @@
 - [`vab` can't find my device when deploying?](#vab-cant-find-my-device-when-deploying)
 - [The app force closes/crashes when I start it?](#the-app-force-closescrashes-when-i-start-it)
 - [`vab` can't find my SDK/NDK/JAVA_HOME?](#vab-cant-find-my-SDKNDKJAVA_HOME)
+- [I can't redirect (f)printf output to a file?](#i-cant-redirect-fprintf-output-to-a-file)
 
 ## `vab` can't find my device when deploying?
 
@@ -27,3 +28,10 @@ So entries like these won't work:
 Instead please use full paths in env variables:
 * `ANDROID_SDK_HOME="/Users/joe/Library/Android/Sdk"`
 * `JAVA_HOME="/home/joe/dev/java"`
+
+## I can't redirect (f)printf output to a file?
+
+Per default `vab` will [enable `println()` and `eprintln()` output](https://github.com/vlang/v/blob/242b99340dec16ca8edb9f4392c873033162c242/thirdparty/sokol/sokol_v.pre.h#L1) to go to your device's system log
+for easy access via `adb logcat` - this is done, for simplicity, by redefining the C functions `printf` and `fprintf`.
+
+To disable this behavior you can pass the `--no-printf-hijack` to `vab`.
