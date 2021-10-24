@@ -22,7 +22,7 @@ jobs:
       matrix:
         os: [ubuntu-18.04, ubuntu-20.04]
         java-version: [8, 15]
-        android-api: [30]
+        android-api: [21, 30]
         v-example: ['flappylearning', '2048', 'fireworks', 'tetris', 'sokol/particles', 'sokol/drawing.v', 'sokol/freetype_raven.v', 'gg/polygons.v', 'gg/raven_text_rendering.v', 'gg/rectangles.v', 'gg/stars.v', 'gg/worker_thread.v' ]
 
     timeout-minutes: 30
