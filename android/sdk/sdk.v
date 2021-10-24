@@ -11,13 +11,6 @@ const (
 	home = os.home_dir()
 )
 
-pub const (
-	default_api_level                 = os.file_name(default_platforms_dir()).all_after('android-')
-	default_build_tools_version       = os.file_name(default_build_tools_dir())
-	min_supported_api_level           = '21'
-	min_supported_build_tools_version = '24.0.3'
-)
-
 // Possible default locations of the SDK
 // https://stackoverflow.com/a/47630714/1904615
 const (
@@ -32,6 +25,13 @@ const (
 		os.join_path(home, 'Android/Sdk'),
 		'/usr/local/lib/android/sdk',
 	]
+)
+
+pub const (
+	default_api_level                 = os.file_name(default_platforms_dir()).all_after('android-')
+	default_build_tools_version       = os.file_name(default_build_tools_dir())
+	min_supported_api_level           = '21'
+	min_supported_build_tools_version = '24.0.3'
 )
 
 enum Component {
