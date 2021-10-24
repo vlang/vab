@@ -1,0 +1,154 @@
+name: Emulator Run CI
+
+on:
+  push:
+    paths-ignore:
+      - "**.md"
+  pull_request:
+    paths-ignore:
+      - "**.md"
+
+jobs:
+
+  macos-latest-run-v-examples:
+    runs-on: macOS-latest
+    timeout-minutes: 30
+    steps:
+    - uses: actions/setup-java@v2
+      with:
+        distribution: 'adopt'
+        java-version: 8
+
+    - name: Checkout V
+      uses: actions/checkout@v2
+      with:
+        repository: vlang/v
+
+    - name: Checkout vab
+      uses: actions/checkout@v2
+      with:
+        path: vab
+
+    - name: Build local v
+      run: make -j4
+
+    - name: Run tests
+      run: ./v test vab
+
+    - name: Build vab with -prod
+      run: ./v -prod vab/vab.v
+
+    - name: Build vab
+      run: ./v -g vab/vab.v
+
+    - name: Run vab --help
+      run: vab/vab --help
+
+    - name: Install AAB dependencies
+      run: |
+        export VEXE=./v
+        vab/vab install bundletool
+        vab/vab install aapt2
+
+    - name: Run vab doctor
+      run: |
+        export VEXE=./v
+        vab/vab doctor
+
+#    - name: Checkout V UI
+#      uses: actions/checkout@v2
+#      with:
+#        repository: vlang/ui
+#        path: $HOME/.vmodules/ui
+
+    - name: Cache emulator
+      id: cache-emulator
+      uses: actions/cache@v2
+      with:
+        path: |
+          /Users/runner/.android/avd
+          /Users/runner/Library/Android/sdk/system-images/android-30
+        key: ${{ runner.os }}-android-emulator-${{ hashFiles('/Users/runner/.android/avd') }}
+
+    - name: Prepare emulator
+      if: steps.cache-emulator.outputs.cache-hit != 'true'
+      run: |
+        export ANDROID_SDK_ROOT="$HOME/Library/Android/sdk"
+        echo yes | $ANDROID_SDK_ROOT/tools/bin/sdkmanager 'system-images;android-30;google_apis;x86_64'
+        echo no | $ANDROID_SDK_ROOT/tools/bin/avdmanager create avd --force --name test --abi google_apis/x86_64 --package 'system-images;android-30;google_apis;x86_64'
+
+    - name: Install and run V + V UI examples as APK and AAB
+      run: |
+        export VEXE=./v
+        export ANDROID_SDK_ROOT="$HOME/Library/Android/sdk"
+        export ANDROID_NDK_ROOT="$ANDROID_SDK_ROOT/ndk-bundle"
+        # Don't set Java > 8 here (emulator can't be started otherwise, lol) #export JAVA_HOME=$JAVA_HOME_11_X64
+        #pgrep emulator >/dev/null 2>&1 ||
+        $ANDROID_SDK_ROOT/emulator/emulator -avd test -no-snapshot -no-window -no-boot-anim -camera-back emulated -camera-front emulated -gpu swiftshader_indirect &
+        adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed) ]]; do sleep 1; done;'
+        # Remove packages here if cache is run, and emulator failed
+
+        # Debugging
+        #export ADB_TAGS="SOKOL_APP:D"
+        #export ADB_TAGS="$ADB_TAGS V_ANDROID:D v_test_app:D"
+
+        declare -a v_examples=('flappylearning' '2048' 'fireworks' 'tetris' 'sokol/particles' 'sokol/drawing.v' 'sokol/freetype_raven.v' 'gg/polygons.v' 'gg/raven_text_rendering.v' 'gg/rectangles.v' 'gg/stars.v' 'gg/worker_thread.v')
+
+        export VEXE=./v
+        for example in "${v_examples[@]}"; do
+          #path_safe_name=$( echo "$example" | sed 's%/%-%' | sed 's%\.%-%' )
+          package_id=$( echo "$example" | sed 's%/%%' | sed 's%\.%%' )
+          package_id=$( echo "v$package_id" )
+
+          # APK
+          vab/vab -v 3 --api 30 --build-tools '29.0.0' --device auto --archs 'x86_64' --package-id "io.v.apk.$package_id" run examples/$example
+
+          # AAB
+          vab/vab -v 3 --api 30 --build-tools '29.0.0' --package aab --device auto --archs 'x86_64' --package-id "io.v.aab.$package_id" run examples/$example
+
+          # Remove if cache is run
+          adb uninstall "io.v.apk.$package_id"
+          adb uninstall "io.v.aab.$package_id"
+        done
+
+        # Output test
+        adb -e logcat -c
+        vab/vab -cg -v 3 --api 30 --build-tools '29.0.0' --device auto --archs 'x86_64' --package-id "io.v.ci.vab.apk.examples.tetris" run examples/tetris
+        sleep 2
+        adb -e logcat -d > /tmp/logcat.dump.txt
+        cat /tmp/logcat.dump.txt | grep -q 'SOKOL_APP: ... ok'; if [ ! $? -eq 0 ]; then cat /tmp/logcat.dump.txt; fi
+        # Remove if cache is run
+        adb uninstall io.v.ci.vab.apk.examples.tetris
+
+        # V UI
+        git clone --depth 1 https://github.com/vlang/ui
+        cd ui ; mkdir -p ~/.vmodules ; ln -s $(pwd) ~/.vmodules/ui ; cd ..
+
+        declare -a v_ui_examples=('rectangles.v' 'calculator.v')
+
+        for example in "${v_ui_examples[@]}"; do
+          package_id=$( echo "$example" | sed 's%/%%' | sed 's%\.%%' )
+          package_id=$( echo "v$package_id" )
+
+          # APK
+          vab/vab -cg -v 3 --api 30 --build-tools '29.0.0' --device auto --archs 'x86_64' --package-id "io.v.apk.ui.$package_id" run ui/examples/$example
+
+          # AAB
+          vab/vab -cg -v 3 --api 30 --build-tools '29.0.0' --package aab --device auto --archs 'x86_64' --package-id "io.v.aab.ui.$package_id" run ui/examples/$example
+
+          # Remove if cache is run
+          adb uninstall "io.v.apk.ui.$package_id"
+          adb uninstall "io.v.aab.ui.$package_id"
+        done
+
+        # Output test
+        adb -e logcat -c
+        vab/vab -cg -v 3 --api 30 --build-tools '29.0.0' --device auto --archs 'x86_64' --package-id "io.v.ui.ci.examples.calculator" run ui/examples/calculator.v
+        sleep 2
+        adb -e logcat -d > /tmp/logcat.dump.txt
+        cat /tmp/logcat.dump.txt | grep -q 'SOKOL_APP: ... ok'; if [ ! $? -eq 0 ]; then cat /tmp/logcat.dump.txt; fi
+
+        # Remove if cache is run
+        adb uninstall io.v.ui.ci.examples.calculator
+
+        adb -s emulator-5554 emu kill
