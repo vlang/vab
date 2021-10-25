@@ -19,6 +19,8 @@ jobs:
     runs-on: macOS-latest
     needs: no-scheduling
     timeout-minutes: 30
+    env:
+      VAB_FLAGS: -v 3 --api 30 --build-tools 29.0.0 --device auto --archs x86_64
     steps:
     - uses: actions/setup-java@v2
       with:
@@ -101,10 +103,10 @@ jobs:
           package_id=$( echo "v$package_id" )
 
           # APK
-          vab/vab -v 3 --api 30 --build-tools '29.0.0' --device auto --archs 'x86_64' --package-id "io.v.apk.$package_id" run examples/$example
+          vab/vab --package-id "io.v.apk.$package_id" run examples/$example
 
           # AAB
-          vab/vab -v 3 --api 30 --build-tools '29.0.0' --package aab --device auto --archs 'x86_64' --package-id "io.v.aab.$package_id" run examples/$example
+          vab/vab --package aab --package-id "io.v.aab.$package_id" run examples/$example
 
           # Remove if cache is run
           adb uninstall "io.v.apk.$package_id"
@@ -113,7 +115,7 @@ jobs:
 
         # Output test
         adb -e logcat -c
-        vab/vab -cg -v 3 --api 30 --build-tools '29.0.0' --device auto --archs 'x86_64' --package-id "io.v.ci.vab.apk.examples.tetris" run examples/tetris
+        vab/vab -cg --package-id "io.v.ci.vab.apk.examples.tetris" run examples/tetris
         sleep 2
         adb -e logcat -d > /tmp/logcat.dump.txt
         cat /tmp/logcat.dump.txt | grep -q 'SOKOL_APP: ... ok'; if [ ! $? -eq 0 ]; then cat /tmp/logcat.dump.txt; fi
@@ -131,10 +133,10 @@ jobs:
           package_id=$( echo "v$package_id" )
 
           # APK
-          vab/vab -cg -v 3 --api 30 --build-tools '29.0.0' --device auto --archs 'x86_64' --package-id "io.v.apk.ui.$package_id" run ui/examples/$example
+          vab/vab -cg --package-id "io.v.apk.ui.$package_id" run ui/examples/$example
 
           # AAB
-          vab/vab -cg -v 3 --api 30 --build-tools '29.0.0' --package aab --device auto --archs 'x86_64' --package-id "io.v.aab.ui.$package_id" run ui/examples/$example
+          vab/vab -cg --package aab --package-id "io.v.aab.ui.$package_id" run ui/examples/$example
 
           # Remove if cache is run
           adb uninstall "io.v.apk.ui.$package_id"
@@ -143,7 +145,7 @@ jobs:
 
         # Output test
         adb -e logcat -c
-        vab/vab -cg -v 3 --api 30 --build-tools '29.0.0' --device auto --archs 'x86_64' --package-id "io.v.ui.ci.examples.calculator" run ui/examples/calculator.v
+        vab/vab -cg --package-id "io.v.ui.ci.examples.calculator" run ui/examples/calculator.v
         sleep 2
         adb -e logcat -d > /tmp/logcat.dump.txt
         cat /tmp/logcat.dump.txt | grep -q 'SOKOL_APP: ... ok'; if [ ! $? -eq 0 ]; then cat /tmp/logcat.dump.txt; fi
