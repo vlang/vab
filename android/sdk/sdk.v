@@ -132,7 +132,7 @@ pub fn root() string {
 
 		if sdkm_path != '' {
 			// sdkmanager used to reside in 'path/to/sdk_root/cmdline-tools/tools/bin'
-			// but in older setups it coould reside in 'path/to/sdk_root/tools/bin'
+			// but in older setups it could reside in 'path/to/sdk_root/tools/bin'
 			// and newer setups in 'path/to/sdk_root/cmdline-tools/latest/bin' or
 			// supposedly 'path/to/sdk_root/cmdline-tools/<version>/bin'
 			// ... Android development is a complete mess. *sigh* ...
@@ -232,6 +232,7 @@ pub fn platforms_available() []string {
 }
 
 [deprecated: 'Please use platforms_available() instead']
+[deprecated_after: '2022-01-01']
 pub fn api_dirs() []string {
 	return platforms_available()
 }
