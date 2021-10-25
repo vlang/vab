@@ -975,7 +975,9 @@ fn string_to_args(input string) ?[]string {
 			}
 			in_string = !in_string && ch == delim
 			if !in_string {
-				args << buf
+				if buf != '' && buf != ' ' {
+					args << buf
+				}
 				buf = ''
 				delim = ` `
 			}
@@ -983,7 +985,7 @@ fn string_to_args(input string) ?[]string {
 		}
 		buf += ch.ascii_str()
 		if !in_string && ch == ` ` {
-			if buf != ' ' {
+			if buf != '' && buf != ' ' {
 				args << buf[..buf.len - 1]
 			}
 			buf = ''
