@@ -102,6 +102,13 @@ ADB                      # Absolute path to the adb to use
 VAB_KILL_ADB             # Set to let vab kill adb after use. This is useful on some hosts.
 ```
 
+```bash
+VAB_FLAGS                # Set to let vab parse it's contents as flags
+```
+
+Please note that `VAB_FLAGS` currently doesn't support parsing string flags like:
+`VAB_FLAGS='--name "V example name"` these must be passed as commandline flags.
+
 See all options:
 ```bash
 ./vab -h

@@ -17,6 +17,7 @@ const (
 	exe_name             = os.file_name(os.executable())
 	exe_dir              = os.dir(os.real_path(os.executable()))
 	exe_git_hash         = vab_commit_hash()
+	work_directory       = os.join_path(os.temp_dir(), exe_name.replace(' ', '_').to_lower())
 	rip_vflags           = ['-autofree', '-gc', '-g', '-cg', '-prod', 'run']
 	subcmds              = ['test-cleancode']
 	accepted_input_files = ['.v', '.apk', '.aab']
@@ -25,7 +26,7 @@ const (
 struct Options {
 	// Internals
 	verbosity int
-	work_dir  string
+	work_dir  string = work_directory
 	// Build, packaging and deployment
 	cache          bool
 	version_code   int
@@ -33,7 +34,7 @@ struct Options {
 	keystore       string
 	keystore_alias string
 	// Build specifics
-	gles_version     int
+	gles_version     int = android.default_gles_version
 	c_flags          []string // flags passed to the C compiler(s)
 	no_printf_hijack bool     // Do not let V redefine printf for log output aka. V_ANDROID_LOG_PRINT
 	archs            []string
@@ -47,14 +48,16 @@ struct Options {
 	list_apis        bool
 	list_build_tools bool
 mut:
+	additional_args []string
+	//
 	input  string
 	output string
 	// App essentials
-	app_name               string
+	app_name               string = android.default_app_name
 	icon                   string
-	package_id             string
+	package_id             string = android.default_package_id
 	activity_name          string
-	package_format         string
+	package_format         string = android.default_package_format
 	package_overrides_path string
 	// Build and packaging
 	is_prod                 bool
@@ -70,97 +73,33 @@ mut:
 }
 
 fn main() {
-	mut args := os.args.clone()
+	// Collect user flags in an extended manner.
+	// Start with defaults -> overwrite by VAB_FLAGS -> overwrite by commandline flags -> extend by .vab file entries.
+	mut opt := Options{}
+	mut fp := &flag.FlagParser(0)
 
-	// Indentify sub-commands.
-	for subcmd in subcmds {
-		if subcmd in args {
-			// First encountered known sub-command is executed on the spot.
-			exit(launch_cmd(args[args.index(subcmd)..]))
+	env_vab_flags := os.getenv('VAB_FLAGS')
+	if env_vab_flags != '' {
+		mut vab_flags := [os.args[0]]
+		// TODO Support strings in shell vars? E.g: VAB_FLAGS='--name "V KB"'
+		vab_flags << env_vab_flags.split(' ')
+		opt, fp = args_to_options(vab_flags, opt) or {
+			println(fp.usage())
+			eprintln('Error while parsing `VAB_FLAGS`: $err')
+			exit(1)
 		}
 	}
 
-	mut v_flags := []string{}
-	mut cmd_flags := []string{}
-	// Indentify special flags in args before FlagParser ruin them.
-	// E.g. the -autofree flag will result in dump_usage being called for some weird reason???
-	for special_flag in rip_vflags {
-		if special_flag in args {
-			if special_flag == '-gc' {
-				gc_type := args[(args.index(special_flag)) + 1]
-				v_flags << special_flag + ' $gc_type'
-				args.delete(args.index(special_flag) + 1)
-			} else if special_flag.starts_with('-') {
-				v_flags << special_flag
-			} else {
-				cmd_flags << special_flag
-			}
-			args.delete(args.index(special_flag))
-		}
-	}
-
-	mut fp := flag.new_flag_parser(args)
-	fp.application(exe_name)
-	fp.version('0.2.0')
-	fp.description('V Android Bootstrapper.\nCompile, package and deploy graphical V apps for Android.')
-	fp.arguments_description('input')
-
-	fp.skip_executable()
-
-	mut verbosity := fp.int_opt('verbosity', `v`, 'Verbosity level 1-3') or { 0 }
-	// TODO implement FlagParser 'is_sat(name string) bool' or something in vlib for this usecase?
-	if ('-v' in os.args || 'verbosity' in os.args) && verbosity == 0 {
-		verbosity = 1
-	}
-
-	mut opt := Options{
-		assets_extra: fp.string_multi('assets', `a`, 'Asset dir(s) to include in build')
-		v_flags: fp.string_multi('flag', `f`, 'Additional flags for the V compiler')
-		//
-		no_printf_hijack: fp.bool('no-printf-hijack', 0, false, 'Do not let V redefine printf for log output (aka. do not define V_ANDROID_LOG_PRINT)')
-		c_flags: fp.string_multi('cflag', `c`, 'Additional flags for the C compiler')
-		archs: fp.string('archs', 0, '', 'Comma separated string with any of $android.default_archs').split(',')
-		gles_version: fp.int('gles', 0, android.default_gles_version, 'GLES version to use from any of $android.supported_gles_versions')
-		//
-		device_id: fp.string('device', `d`, '', 'Deploy to device <id>. Use "auto" to use first available.')
-		run: 'run' in cmd_flags // fp.bool('run', `r`, false, 'Run the app on the device after successful deployment.')
-		device_log: fp.bool('log', 0, false, 'Enable device logging after deployment.')
-		device_log_raw: fp.bool('log-raw', 0, false, 'Enable unfiltered, full device logging after deployment.')
-		//
-		keystore: fp.string('keystore', 0, '', 'Use this keystore file to sign the package')
-		keystore_alias: fp.string('keystore-alias', 0, '', 'Use this keystore alias from the keystore file to sign the package')
-		//
-		dump_usage: fp.bool('help', `h`, false, 'Show this help message and exit')
-		cache: !fp.bool('nocache', 0, false, 'Do not use build cache')
-		//
-		app_name: fp.string('name', 0, android.default_app_name, 'Pretty app name')
-		package_id: fp.string('package-id', 0, android.default_package_id, 'App package ID (e.g. "org.company.app")')
-		package_overrides_path: fp.string('package-overrides', 0, '', 'Package file overrides path (e.g. "/tmp/java")')
-		package_format: fp.string('package', `p`, android.default_package_format, 'App package format. Any of $android.supported_package_formats')
-		activity_name: fp.string('activity-name', 0, '', 'The name of the main activity (e.g. "VActivity")')
-		icon: fp.string('icon', 0, '', 'App icon')
-		version_code: fp.int('version-code', 0, 0, 'Build version code (android:versionCode)')
-		//
-		output: fp.string('output', `o`, '', 'Path to output (dir/file)')
-		//
-		verbosity: verbosity
-		//
-		build_tools: fp.string('build-tools', 0, '', 'Version of build-tools to use (--list-build-tools)')
-		api_level: fp.string('api', 0, '', 'Android API level to use (--list-apis)')
-		//
-		ndk_version: fp.string('ndk-version', 0, '', 'Android NDK version to use (--list-ndks)')
-		//
-		work_dir: os.join_path(os.temp_dir(), exe_name.replace(' ', '_').to_lower())
-		//
-		list_ndks: fp.bool('list-ndks', 0, false, 'List available NDK versions')
-		list_apis: fp.bool('list-apis', 0, false, 'List available API levels')
-		list_build_tools: fp.bool('list-build-tools', 0, false, 'List available Build-tools versions')
-	}
-
-	additional_args := fp.finalize() or {
+	opt, fp = args_to_options(os.args, opt) or {
 		println(fp.usage())
-		eprintln(err)
+		eprintln('Error while parsing `os.args`: $err')
 		exit(1)
+	}
+
+	$if vab_debug_options ? {
+		eprintln(opt)
+		eprintln(vab_flags)
+		eprintln(os.args)
 	}
 
 	if opt.dump_usage {
@@ -207,9 +146,9 @@ fn main() {
 		exit(1)
 	}
 
-	if additional_args.len > 1 {
-		if additional_args[0] == 'install' {
-			install_arg := additional_args[1]
+	if opt.additional_args.len > 1 {
+		if opt.additional_args[0] == 'install' {
+			install_arg := opt.additional_args[1]
 			res := env.install(install_arg, opt.verbosity)
 			if res == 0 && opt.verbosity > 0 {
 				if install_arg != 'auto' {
@@ -222,17 +161,9 @@ fn main() {
 		}
 	}
 
-	// Merge v flags captured before FlagParser
-	v_flags << opt.v_flags
-	if '-prod' in v_flags {
-		opt.is_prod = true
-		v_flags.delete(v_flags.index('-prod'))
-	}
-	opt.v_flags = v_flags
-
 	// Call the doctor at this point
-	if additional_args.len > 0 {
-		if additional_args[0] == 'doctor' {
+	if opt.additional_args.len > 0 {
+		if opt.additional_args[0] == 'doctor' {
 			// Validate environment
 			check_essentials(false)
 			resolve_options(mut opt, false)
@@ -244,7 +175,7 @@ fn main() {
 	check_essentials(true)
 	resolve_options(mut opt, true)
 
-	input := fp.args[fp.args.len - 1]
+	input := os.args[os.args.len - 1]
 
 	input_ext := os.file_ext(input)
 
@@ -403,6 +334,108 @@ fn main() {
 			println('Use `$exe_name --device <id> ${os.real_path(opt.output)}` to deploy package')
 		}
 	}
+}
+
+fn args_to_options(arguments []string, defaults Options) ?(Options, &flag.FlagParser) {
+	mut args := arguments.clone()
+
+	// Indentify sub-commands.
+	for subcmd in subcmds {
+		if subcmd in args {
+			// First encountered known sub-command is executed on the spot.
+			exit(launch_cmd(args[args.index(subcmd)..]))
+		}
+	}
+
+	mut v_flags := []string{}
+	mut cmd_flags := []string{}
+	// Indentify special flags in args before FlagParser ruin them.
+	// E.g. the -autofree flag will result in dump_usage being called for some weird reason???
+	for special_flag in rip_vflags {
+		if special_flag in args {
+			if special_flag == '-gc' {
+				gc_type := args[(args.index(special_flag)) + 1]
+				v_flags << special_flag + ' $gc_type'
+				args.delete(args.index(special_flag) + 1)
+			} else if special_flag.starts_with('-') {
+				v_flags << special_flag
+			} else {
+				cmd_flags << special_flag
+			}
+			args.delete(args.index(special_flag))
+		}
+	}
+
+	mut fp := flag.new_flag_parser(args)
+	fp.application(exe_name)
+	fp.version(exe_version)
+	fp.description('V Android Bootstrapper.\nCompile, package and deploy graphical V apps for Android.')
+	fp.arguments_description('input')
+
+	fp.skip_executable()
+
+	mut verbosity := fp.int_opt('verbosity', `v`, 'Verbosity level 1-3') or { defaults.verbosity }
+	// TODO implement FlagParser 'is_sat(name string) bool' or something in vlib for this usecase?
+	if ('-v' in args || 'verbosity' in args) && verbosity == 0 {
+		verbosity = 1
+	}
+
+	mut opt := Options{
+		assets_extra: fp.string_multi('assets', `a`, 'Asset dir(s) to include in build')
+		v_flags: fp.string_multi('flag', `f`, 'Additional flags for the V compiler')
+		//
+		no_printf_hijack: fp.bool('no-printf-hijack', 0, defaults.no_printf_hijack, 'Do not let V redefine printf for log output (aka. do not define V_ANDROID_LOG_PRINT)')
+		c_flags: fp.string_multi('cflag', `c`, 'Additional flags for the C compiler')
+		archs: fp.string('archs', 0, defaults.archs.join(','), 'Comma separated string with any of $android.default_archs').split(',')
+		gles_version: fp.int('gles', 0, defaults.gles_version, 'GLES version to use from any of $android.supported_gles_versions')
+		//
+		device_id: fp.string('device', `d`, defaults.device_id, 'Deploy to device <id>. Use "auto" to use first available.')
+		run: 'run' in cmd_flags // fp.bool('run', `r`, false, 'Run the app on the device after successful deployment.')
+		device_log: fp.bool('log', 0, defaults.device_log, 'Enable device logging after deployment.')
+		device_log_raw: fp.bool('log-raw', 0, defaults.device_log_raw, 'Enable unfiltered, full device logging after deployment.')
+		//
+		keystore: fp.string('keystore', 0, defaults.keystore, 'Use this keystore file to sign the package')
+		keystore_alias: fp.string('keystore-alias', 0, defaults.keystore_alias, 'Use this keystore alias from the keystore file to sign the package')
+		//
+		dump_usage: fp.bool('help', `h`, defaults.dump_usage, 'Show this help message and exit')
+		cache: !fp.bool('nocache', 0, defaults.cache, 'Do not use build cache')
+		//
+		app_name: fp.string('name', 0, defaults.app_name, 'Pretty app name')
+		package_id: fp.string('package-id', 0, defaults.package_id, 'App package ID (e.g. "org.company.app")')
+		package_overrides_path: fp.string('package-overrides', 0, defaults.package_overrides_path,
+			'Package file overrides path (e.g. "/tmp/java")')
+		package_format: fp.string('package', `p`, defaults.package_format, 'App package format. Any of $android.supported_package_formats')
+		activity_name: fp.string('activity-name', 0, defaults.activity_name, 'The name of the main activity (e.g. "VActivity")')
+		icon: fp.string('icon', 0, defaults.icon, 'App icon')
+		version_code: fp.int('version-code', 0, defaults.version_code, 'Build version code (android:versionCode)')
+		//
+		output: fp.string('output', `o`, defaults.output, 'Path to output (dir/file)')
+		//
+		verbosity: verbosity
+		//
+		build_tools: fp.string('build-tools', 0, defaults.build_tools, 'Version of build-tools to use (--list-build-tools)')
+		api_level: fp.string('api', 0, defaults.api_level, 'Android API level to use (--list-apis)')
+		//
+		ndk_version: fp.string('ndk-version', 0, defaults.ndk_version, 'Android NDK version to use (--list-ndks)')
+		//
+		work_dir: defaults.work_dir
+		//
+		list_ndks: fp.bool('list-ndks', 0, defaults.list_ndks, 'List available NDK versions')
+		list_apis: fp.bool('list-apis', 0, defaults.list_apis, 'List available API levels')
+		list_build_tools: fp.bool('list-build-tools', 0, defaults.list_build_tools, 'List available Build-tools versions')
+	}
+
+	opt.additional_args = fp.finalize() ?
+
+	// Merge v flags captured before FlagParser
+	v_flags << opt.v_flags
+	if '-prod' in v_flags {
+		opt.is_prod = true
+		v_flags.delete(v_flags.index('-prod'))
+	}
+	opt.v_flags = v_flags
+
+	return opt, fp
 }
 
 fn check_essentials(exit_on_error bool) {
