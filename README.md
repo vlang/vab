@@ -99,12 +99,12 @@ ADB                      # Absolute path to the adb to use
 ```
 
 ```bash
+VAB_FLAGS                # Use to pass flags to vab. Command-line flags overwrites any flags/values set via VAB_FLAGS.
 VAB_KILL_ADB             # Set to let vab kill adb after use. This is useful on some hosts.
 ```
 
-```bash
-VAB_FLAGS                # Set to let vab parse it's contents as flags
-```
+## `VAB_FLAGS` example:
+`VAB_FLAGS="-v 3 --name 'V App' --api 30 --build-tools 29.0.0" vab /path/to/v/source/file/or/dir`
 
 See all options:
 ```bash
