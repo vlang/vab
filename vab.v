@@ -16,6 +16,7 @@ const (
 	exe_version          = version()
 	exe_name             = os.file_name(os.executable())
 	exe_dir              = os.dir(os.real_path(os.executable()))
+	exe_description      = 'V Android Bootstrapper.\nCompile, package and deploy graphical V apps for Android.'
 	exe_git_hash         = vab_commit_hash()
 	work_directory       = os.join_path(os.temp_dir(), exe_name.replace(' ', '_').to_lower())
 	rip_vflags           = ['-autofree', '-gc', '-g', '-cg', '-prod', 'run']
@@ -81,10 +82,13 @@ fn main() {
 	env_vab_flags := os.getenv('VAB_FLAGS')
 	if env_vab_flags != '' {
 		mut vab_flags := [os.args[0]]
-		// TODO Support strings in shell vars? E.g: VAB_FLAGS='--name "V KB"'
-		vab_flags << env_vab_flags.split(' ')
+		vab_flags << string_to_args(env_vab_flags) or {
+			// println(fp.usage()) // NOTE careful fp is null here
+			eprintln('Error while parsing `VAB_FLAGS`: $err')
+			exit(1)
+		}
 		opt, fp = args_to_options(vab_flags, opt) or {
-			println(fp.usage())
+			// println(fp.usage()) // NOTE careful fp is null here
 			eprintln('Error while parsing `VAB_FLAGS`: $err')
 			exit(1)
 		}
@@ -375,7 +379,7 @@ fn args_to_options(arguments []string, defaults Options) ?(Options, &flag.FlagPa
 	mut fp := flag.new_flag_parser(args)
 	fp.application(exe_name)
 	fp.version(exe_version)
-	fp.description('V Android Bootstrapper.\nCompile, package and deploy graphical V apps for Android.')
+	fp.description(exe_description)
 	fp.arguments_description('input')
 
 	fp.skip_executable()
@@ -955,4 +959,45 @@ fn version() string {
 		}
 	}
 	return v
+}
+
+// string_to_args converts `input` string to an `os.args`-like array.
+// string_to_args preserves strings delimited by both `"` and `'`.
+fn string_to_args(input string) ?[]string {
+	mut args := []string{}
+	mut buf := ''
+	mut in_string := false
+	mut delim := byte(` `)
+	for ch in input {
+		if ch in [`"`, `'`] {
+			if !in_string {
+				delim = ch
+			}
+			in_string = !in_string && ch == delim
+			if !in_string {
+				if buf != '' && buf != ' ' {
+					args << buf
+				}
+				buf = ''
+				delim = ` `
+			}
+			continue
+		}
+		buf += ch.ascii_str()
+		if !in_string && ch == ` ` {
+			if buf != '' && buf != ' ' {
+				args << buf[..buf.len - 1]
+			}
+			buf = ''
+			continue
+		}
+	}
+	if buf != '' && buf != ' ' {
+		args << buf
+	}
+	if in_string {
+		return error(@FN +
+			': could not parse input, missing closing string delimiter `$delim.ascii_str()`')
+	}
+	return args
 }

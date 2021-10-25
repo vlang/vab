@@ -23,8 +23,9 @@ jobs:
         os: [ubuntu-20.04]
         java-version: [8, 15]
         android-api: [27, 30]
-
     timeout-minutes: 30
+    env:
+      VAB_FLAGS: -v 3 --build-tools 29.0.0
     steps:
     - uses: actions/setup-java@v2
       with:
@@ -61,7 +62,6 @@ jobs:
         export VEXE=./v
         vab/vab install bundletool
         vab/vab install aapt2
-        vab/vab -v 3 install "platforms;android-21"
 
     - name: Build examples as APK + AAB (Java ${{ matrix.java-version }}) ${{ matrix.android-api }}
       run: |
@@ -77,8 +77,8 @@ jobs:
           mkdir -p java-${{ matrix.java-version }}/$example
 
           # APK
-          vab/vab -v 3 --build-tools '29.0.0' --package-id "io.v.apk.$package_id" --api ${{ matrix.android-api }} examples/$example -o java-${{ matrix.java-version }}/$example/$package_id.apk
+          vab/vab --package-id "io.v.apk.$package_id" --api ${{ matrix.android-api }} examples/$example -o java-${{ matrix.java-version }}/$example/$package_id.apk
 
           # AAB
-          vab/vab -v 3 --build-tools '29.0.0' --package aab --package-id "io.v.aab.$package_id" --api ${{ matrix.android-api }} examples/$example -o java-${{ matrix.java-version }}/$example/$package_id.aab
+          vab/vab --package aab --package-id "io.v.aab.$package_id" --api ${{ matrix.android-api }} examples/$example -o java-${{ matrix.java-version }}/$example/$package_id.aab
         done
