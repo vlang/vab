@@ -175,7 +175,7 @@ fn main() {
 	check_essentials(true)
 	resolve_options(mut opt, true)
 
-	input := os.args[os.args.len - 1]
+	input := fp.args[fp.args.len - 1]
 
 	input_ext := os.file_ext(input)
 
