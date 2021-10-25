@@ -969,7 +969,6 @@ fn string_to_args(input string) ?[]string {
 	mut in_string := false
 	mut delim := byte(` `)
 	for ch in input {
-		print(ch.ascii_str())
 		if ch in [`"`, `'`] {
 			if !in_string {
 				delim = ch
@@ -984,12 +983,16 @@ fn string_to_args(input string) ?[]string {
 		}
 		buf += ch.ascii_str()
 		if !in_string && ch == ` ` {
-			args << buf[..buf.len - 1]
+			if buf != ' ' {
+				args << buf[..buf.len - 1]
+			}
 			buf = ''
 			continue
 		}
 	}
-	println('')
+	if buf != '' && buf != ' ' {
+		args << buf
+	}
 	if in_string {
 		return error(@FN +
 			': could not parse input, missing closing string delimiter `$delim.ascii_str()`')

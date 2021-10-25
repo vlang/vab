@@ -20,7 +20,7 @@ jobs:
     needs: no-scheduling
     timeout-minutes: 30
     env:
-      VAB_FLAGS: -v 3 --api 30 --build-tools '29.0.0' --device auto --archs x86_64
+      VAB_FLAGS: -v 3 --api 30 --build-tools 29.0.0 --device auto --archs x86_64
     steps:
     - uses: actions/setup-java@v2
       with:

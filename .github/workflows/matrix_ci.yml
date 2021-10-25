@@ -25,7 +25,7 @@ jobs:
         android-api: [27, 30]
     timeout-minutes: 30
     env:
-      VAB_FLAGS: -v 3 --build-tools '29.0.0'
+      VAB_FLAGS: -v 3 --build-tools 29.0.0
     steps:
     - uses: actions/setup-java@v2
       with:
