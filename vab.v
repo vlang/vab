@@ -161,6 +161,12 @@ fn main() {
 		}
 	}
 
+	// Convert v flags captured to option field
+	if '-prod' in opt.v_flags {
+		opt.is_prod = true
+		opt.v_flags.delete(opt.v_flags.index('-prod'))
+	}
+
 	// Call the doctor at this point
 	if opt.additional_args.len > 0 {
 		if opt.additional_args[0] == 'doctor' {
@@ -426,14 +432,6 @@ fn args_to_options(arguments []string, defaults Options) ?(Options, &flag.FlagPa
 	}
 
 	opt.additional_args = fp.finalize() ?
-
-	// Merge v flags captured before FlagParser
-	v_flags << opt.v_flags
-	if '-prod' in v_flags {
-		opt.is_prod = true
-		v_flags.delete(v_flags.index('-prod'))
-	}
-	opt.v_flags = v_flags
 
 	return opt, fp
 }
