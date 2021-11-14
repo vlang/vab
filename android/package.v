@@ -592,7 +592,7 @@ fn prepare_base(opt PackageOptions) (string, string) {
 		// Remove left-overs from vab's copied skeleton
 		if opt.package_id != android.default_package_id {
 			os.rm(native_activity_file) or { panic(err.msg) }
-			v_default_package_id := default_pkg_id_split.clone()
+			mut v_default_package_id := default_pkg_id_split.clone()
 			for i := v_default_package_id.len - 1; i >= 0; i-- {
 				if os.is_dir_empty(os.join_path(package_path, 'src', v_default_package_id.join(os.path_separator))) {
 					if opt.verbosity > 1 {
