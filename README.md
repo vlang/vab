@@ -14,6 +14,7 @@ Dependencies:
  * Java (JDK) >= 8
  * Android SDK
  * Android NDK
+ * libssl / OpenSSL
 
 (**no** Android Studio required)
 
