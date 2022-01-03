@@ -256,8 +256,23 @@ pub fn libs_path(ndk_version string, arch string, api_level string) ?string {
 	*/
 	if !os.is_dir(libs_path) {
 		return error(@MOD + '.' + @FN +
-			' couldn\'t locate libraries path "$libs_path". You could try with a newer ndk version.')
+			' couldn\'t locate libraries path "$libs_path". You could try with a newer NDK version.')
 	}
 
 	return libs_path
+}
+
+[inline]
+pub fn sysroot_path(ndk_version string) ?string {
+	mut host_architecture := host_arch()
+
+	mut sysroot_path := os.join_path(root_version(ndk_version), 'toolchains', 'llvm',
+		'prebuilt', host_architecture, 'sysroot')
+
+	if !os.is_dir(sysroot_path) {
+		return error(@MOD + '.' + @FN +
+			' couldn\'t locate sysroot at "$sysroot_path". You could try with a newer NDK version (>= r19).')
+	}
+
+	return sysroot_path
 }
