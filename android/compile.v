@@ -239,8 +239,8 @@ pub fn compile(opt CompileOptions) bool {
 
 	mut cflags_arm64 := ['-m64']
 	mut cflags_arm32 := ['-mfloat-abi=softfp', '-m32']
-	mut cflags_x86 := ['-march=i686', '-mtune=intel', '-mssse3', '-mfpmath=sse', '-m32']
-	mut cflags_x86_64 := ['-march=x86-64', '-msse4.2', '-mpopcnt', '-m64', '-mtune=intel']
+	mut cflags_x86 := ['-march=i686', '-mssse3', '-mfpmath=sse', '-m32']
+	mut cflags_x86_64 := ['-march=x86-64', '-msse4.2', '-mpopcnt', '-m64']
 
 	mut arch_cc := map[string]string{}
 	mut arch_libs := map[string]string{}

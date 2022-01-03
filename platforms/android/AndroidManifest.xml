@@ -20,6 +20,7 @@
 		<activity android:name="io.v.android.VActivity"
 			android:configChanges="orientation|screenSize|keyboard|keyboardHidden"
 			android:launchMode="singleTask"
+			android:exported="true"
 			>
 			<meta-data android:name="android.app.lib_name" android:value="@string/v_lib_name"/>
 			<intent-filter>
