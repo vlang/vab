@@ -221,7 +221,11 @@ pub fn compile(opt CompileOptions) bool {
 
 	// stb_image
 	// includes << ['-I"$v_home/thirdparty/stb_image"']
-	sources << ['"$v_home/thirdparty/stb_image/stbi.c"']
+	sources << ['"' + os.join_path(v_home, 'thirdparty', 'stb_image', 'stbi.c') + '"']
+
+	// cJson / `json` module
+	includes << ['-I"' + os.join_path(v_home, 'thirdparty', 'cJSON') + '"']
+	sources << ['"' + os.join_path(v_home, 'thirdparty', 'cJSON', 'cJSON.c') + '"']
 
 	// misc
 	ldflags << ['-llog', '-landroid', '-lEGL', '-lGLESv2', '-lm']
