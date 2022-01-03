@@ -196,9 +196,14 @@ pub fn compile(opt CompileOptions) bool {
 	// TODO if full_screen
 	defines << '-DANDROID_FULLSCREEN'
 
-	ndk_root := ndk.root_version(opt.ndk_version)
-	// NDK headers
-	includes << ['-I"$ndk_root/sysroot/usr/include"', '-I"$ndk_root/sysroot/usr/include/android"']
+	// Include NDK headers
+	// NOTE "$ndk_root/sysroot/usr/include" was deprecated since NDK r19
+	ndk_sysroot := ndk.sysroot_path(opt.ndk_version) or {
+		panic('$err_sig: getting NDK sysroot path. $err')
+	}
+	includes << ['-I"' + os.join_path(ndk_sysroot, 'usr', 'include') + '"',
+		'-I"' +
+		os.join_path(ndk_sysroot, 'usr', 'include', 'android') + '"']
 
 	// Sokol
 	if '-cg' in opt.v_flags || '-g' in opt.v_flags {
