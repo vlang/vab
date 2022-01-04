@@ -8,16 +8,13 @@ on:
     paths-ignore:
       - "**.md"
 
-jobs:
-  no-scheduling:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Delay scheduling of jobs
-        run: sleep 10
+concurrency:
+  group: build-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
 
+jobs:
   build-v-examples-as-apk-and-aab:
     runs-on: ${{ matrix.os }}
-    needs: no-scheduling
     strategy:
       matrix:
         os: [ubuntu-20.04]
