@@ -9,7 +9,7 @@ on:
       - "**.md"
 
 concurrency:
-  group: general-${{ github.event.pull_request.number || github.sha }}
+  group: build-${{ github.event.pull_request.number || github.sha }}
   cancel-in-progress: true
 
 jobs:
