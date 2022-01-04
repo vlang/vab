@@ -175,11 +175,11 @@ pub fn compile(opt CompileOptions) bool {
 		'-Wno-unused-result', '-Wno-unused-function', '-Wno-missing-braces', '-Wno-unused-label',
 		'-Werror=implicit-function-declaration']
 
-	// TODO Here to make the compilers shut up :/
+	// TODO Here to make the compiler(s) shut up :/
 	cflags << ['-Wno-braced-scalar-init', '-Wno-incompatible-pointer-types',
 		'-Wno-implicitly-unsigned-literal', '-Wno-pointer-sign', '-Wno-enum-conversion',
 		'-Wno-int-conversion', '-Wno-int-to-pointer-cast', '-Wno-sign-compare', '-Wno-return-type',
-		'-Wno-extra-tokens']
+		'-Wno-extra-tokens', '-Wno-unused-value']
 
 	// NOTE This define allows V to redefine C's printf() - to let logging via println() etc. go
 	// through Android device's system log (that adb logcat reads).
