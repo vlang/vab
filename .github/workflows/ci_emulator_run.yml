@@ -8,16 +8,13 @@ on:
     paths-ignore:
       - "**.md"
 
-jobs:
-  no-scheduling:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Delay scheduling of jobs
-        run: sleep 10
+concurrency:
+  group: build-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
 
+jobs:
   macos-latest-run-v-examples:
     runs-on: macOS-latest
-    needs: no-scheduling
     timeout-minutes: 30
     env:
       VAB_FLAGS: -v 3 --api 30 --build-tools 29.0.0 --device auto --archs x86_64

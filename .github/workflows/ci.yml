@@ -8,16 +8,13 @@ on:
     paths-ignore:
       - "**.md"
 
-jobs:
-  no-scheduling:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Delay scheduling of jobs
-        run: sleep 10
+concurrency:
+  group: build-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
 
+jobs:
   code-formatting:
     runs-on: ubuntu-20.04
-    needs: no-scheduling
     timeout-minutes: 30
     env:
       VFLAGS: -cc tcc
@@ -49,7 +46,6 @@ jobs:
 
   ubuntu-latest-bootstrap:
     runs-on: ubuntu-latest
-    needs: no-scheduling
     timeout-minutes: 30
     env:
       VAB_FLAGS: -v 3 --api 30 --build-tools 29.0.0
@@ -112,7 +108,6 @@ jobs:
 
   ubuntu-latest-install:
     runs-on: ubuntu-latest
-    needs: no-scheduling
     timeout-minutes: 30
     env:
       VAB_FLAGS: -v 3 --api 30 --build-tools 29.0.0
@@ -173,7 +168,6 @@ jobs:
 
   #macos-latest-bootstrap:
     #runs-on: macOS-latest
-    #needs: no-scheduling
     #timeout-minutes: 10
     #steps:
     #- name: Checkout V
