@@ -117,7 +117,7 @@ pub fn compile(opt CompileOptions) bool {
 	if os.is_dir(build_dir) {
 		os.rmdir_all(build_dir) or {}
 	}
-	os.mkdir(build_dir) or { panic(err.msg) }
+	os.mkdir(build_dir) or { panic(err) }
 
 	v_home := vxt.home()
 

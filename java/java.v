@@ -27,7 +27,7 @@ pub fn jre_version() string {
 	java_version := os.execute(java + ' -version')
 	if java_version.exit_code == 0 {
 		output := java_version.output
-		mut re := regex.regex_opt(r'.*(\d+\.?\d*\.?\d*)') or { panic(err.msg) }
+		mut re := regex.regex_opt(r'.*(\d+\.?\d*\.?\d*)') or { panic(err) }
 		start, _ := re.match_string(output)
 		if start >= 0 && re.groups.len > 0 {
 			version = output[re.groups[0]..re.groups[1]]
@@ -79,7 +79,7 @@ pub fn jdk_version() string {
 	}
 	output := java_version.output
 
-	mut re := regex.regex_opt(r'.*(\d+\.?\d*\.?\d*)') or { panic(err.msg) }
+	mut re := regex.regex_opt(r'.*(\d+\.?\d*\.?\d*)') or { panic(err) }
 	start, _ := re.match_string(output)
 	if start >= 0 && re.groups.len > 0 {
 		version = output[re.groups[0]..re.groups[1]]

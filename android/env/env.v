@@ -295,8 +295,8 @@ fn install_opt(opt InstallOptions) ?bool {
 	} else if opt.dep == .ndk {
 		version_check := item.all_after(';')
 		if version_check != '' {
-			sv_check := semver.from(version_check) or { panic(err.msg) }
-			comp_sv := semver.from(ndk.min_supported_version) or { panic(err.msg) }
+			sv_check := semver.from(version_check) or { panic(err) }
+			comp_sv := semver.from(ndk.min_supported_version) or { panic(err) }
 			if sv_check.lt(comp_sv) {
 				eprintln('Notice: Skipping install. NDK $item is lower than supported ${ndk.min_supported_version}...')
 				return true
@@ -321,8 +321,8 @@ fn install_opt(opt InstallOptions) ?bool {
 	} else if opt.dep == .build_tools {
 		version_check := item.all_after(';')
 		if version_check != '' {
-			sv_check := semver.from(version_check) or { panic(err.msg) }
-			comp_sv := semver.from(sdk.min_supported_build_tools_version) or { panic(err.msg) }
+			sv_check := semver.from(version_check) or { panic(err) }
+			comp_sv := semver.from(sdk.min_supported_build_tools_version) or { panic(err) }
 			if sv_check.lt(comp_sv) {
 				eprintln('Notice: Skipping install. build-tools "$item" is lower than supported ${sdk.min_supported_build_tools_version}...')
 				return true
@@ -398,7 +398,7 @@ fn ensure_sdkmanager(verbosity int) ?bool {
 		if verbosity > 1 {
 			println('Installing `sdkmanager` to "$dst"...')
 		}
-		os.mkdir_all(dst) or { panic(err.msg) }
+		os.mkdir_all(dst) or { panic(err) }
 		dst_check := os.join_path(dst, 'tools', 'bin')
 		if util.unzip(file, dst) {
 			os.chmod(os.join_path(dst_check, 'sdkmanager'), 0o755) or { panic(err) }
