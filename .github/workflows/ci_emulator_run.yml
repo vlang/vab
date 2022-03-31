@@ -24,40 +24,35 @@ jobs:
         distribution: 'adopt'
         java-version: 8
 
-    - name: Checkout V
-      uses: actions/checkout@v2
+    - name: Install V
+      uses: vlang/setup-v@v1
       with:
-        repository: vlang/v
+        check-latest: true
 
     - name: Checkout vab
       uses: actions/checkout@v2
       with:
         path: vab
 
-    - name: Build local v
-      run: make -j4
-
     - name: Run tests
-      run: ./v test vab
+      run: v test vab
 
     - name: Build vab with -prod
-      run: ./v -prod vab/vab.v
+      run: v -prod vab/vab.v
 
     - name: Build vab
-      run: ./v -g vab/vab.v
+      run: v -g vab/vab.v
 
     - name: Run vab --help
       run: vab/vab --help
 
     - name: Install AAB dependencies
       run: |
-        export VEXE=./v
         vab/vab install bundletool
         vab/vab install aapt2
 
     - name: Run vab doctor
       run: |
-        export VEXE=./v
         vab/vab doctor
 
     - name: Cache emulator
@@ -78,7 +73,6 @@ jobs:
 
     - name: Install and run V + V UI examples as APK and AAB
       run: |
-        export VEXE=./v
         export ANDROID_SDK_ROOT="$HOME/Library/Android/sdk"
         export ANDROID_NDK_ROOT="$ANDROID_SDK_ROOT/ndk-bundle"
         # Don't set Java > 8 here (emulator can't be started otherwise, lol) #export JAVA_HOME=$JAVA_HOME_11_X64
@@ -93,7 +87,6 @@ jobs:
 
         declare -a v_examples=('flappylearning' '2048' 'fireworks' 'tetris' 'sokol/particles' 'sokol/drawing.v' 'sokol/freetype_raven.v' 'gg/polygons.v' 'gg/raven_text_rendering.v' 'gg/rectangles.v' 'gg/stars.v' 'gg/worker_thread.v')
 
-        export VEXE=./v
         for example in "${v_examples[@]}"; do
           #path_safe_name=$( echo "$example" | sed 's%/%-%' | sed 's%\.%-%' )
           package_id=$( echo "$example" | sed 's%/%%' | sed 's%\.%%' )
@@ -116,6 +109,7 @@ jobs:
         sleep 2
         adb -e logcat -d > /tmp/logcat.dump.txt
         cat /tmp/logcat.dump.txt | grep -q 'SOKOL_APP: ... ok'; if [ ! $? -eq 0 ]; then cat /tmp/logcat.dump.txt; fi
+
         # Remove if cache is run
         adb uninstall io.v.ci.vab.apk.examples.tetris
 
