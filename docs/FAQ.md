@@ -4,6 +4,7 @@
 - [The app force closes/crashes when I start it?](#the-app-force-closescrashes-when-i-start-it)
 - [`vab` can't find my SDK/NDK/JAVA_HOME?](#vab-cant-find-my-SDKNDKJAVA_HOME)
 - [I can't redirect (f)printf output to a file?](#i-cant-redirect-fprintf-output-to-a-file)
+- [How do I load bundled assets from the APK/AAB `assets` folder?](#how-do-i-load-bundled-assets-from-the'APKAAB-assets-folder)
 
 ## `vab` can't find my device when deploying?
 
@@ -35,3 +36,10 @@ Per default `vab` will [enable `println()` and `eprintln()` output](https://gith
 for easy access via `adb logcat` - this is done, for simplicity, by redefining the C functions `printf` and `fprintf`.
 
 To disable this behavior you can pass the `--no-printf-hijack` to `vab`.
+
+## How do I load bundled assets from the APK/AAB `assets` folder?
+
+Use `os.read_apk_asset('relative/path/to/assets/file') or { panic(err) }`
+
+If you have a file `logo.png` in `assets/` - to load it, you need to call
+`os.read_apk_asset('logo.png') or { panic(err) }`
