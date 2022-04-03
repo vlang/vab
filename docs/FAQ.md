@@ -4,7 +4,7 @@
 - [The app force closes/crashes when I start it?](#the-app-force-closescrashes-when-i-start-it)
 - [`vab` can't find my SDK/NDK/JAVA_HOME?](#vab-cant-find-my-SDKNDKJAVA_HOME)
 - [I can't redirect (f)printf output to a file?](#i-cant-redirect-fprintf-output-to-a-file)
-- [How do I load bundled assets from the APK/AAB `assets` folder?](#how-do-i-load-bundled-assets-from-the'APKAAB-assets-folder)
+- [How do I load bundled assets from the APK/AAB `assets` folder?](#how-do-i-load-bundled-assets-from-the-apkaab-assets-folder)
 
 ## `vab` can't find my device when deploying?
 
