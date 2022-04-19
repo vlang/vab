@@ -423,8 +423,7 @@ fn package_aab(opt PackageOptions) bool {
 	jarsigner_cmd := [
 		jarsigner,
 		'-verbose',
-		'-keystore',
-		keystore.path,
+		'-keystore "' + keystore.path + '"',
 		'-storepass',
 		keystore.password,
 		'-keypass',

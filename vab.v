@@ -242,7 +242,12 @@ fn main() {
 	}
 
 	// Keystore file
-	mut keystore := android.Keystore{opt.keystore, opt.keystore_alias, opt.keystore_password, opt.keystore_alias_password}
+	mut keystore := android.Keystore{
+		path: opt.keystore
+		password: opt.keystore_password
+		alias: opt.keystore_alias
+		alias_password: opt.keystore_alias_password
+	}
 	if !os.is_file(keystore.path) {
 		if keystore.path != '' {
 			println('Couldn\'t locate "$keystore.path"')
