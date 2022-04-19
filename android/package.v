@@ -212,7 +212,7 @@ fn package_apk(opt PackageOptions) bool {
 	keystore := resolve_keystore(opt.keystore, opt.verbosity)
 
 	if opt.is_prod && os.file_name(keystore.path) == 'debug.keystore' {
-		eprintln('Warning: It looks like you are using the debug.keystore\nfile to sign your application build in production mode ("-prod").')
+		eprintln('Warning: It looks like you are using the debug.keystore file to sign your application built in production mode ("-prod").')
 	}
 
 	mut apksigner_cmd := [

@@ -42,6 +42,9 @@ pub fn compile(opt CompileOptions) bool {
 
 	if opt.verbosity > 0 {
 		println('Compiling V to C')
+		if opt.v_flags.len > 0 {
+			println('V flags: `$opt.v_flags`')
+		}
 	}
 	vexe := vxt.vexe()
 	v_output_file := os.join_path(opt.work_dir, 'v_android.c')
@@ -78,6 +81,7 @@ pub fn compile(opt CompileOptions) bool {
 	v_cmd << opt.input
 	util.verbosity_print_cmd(v_cmd, opt.verbosity)
 	v_comp_res := util.run_or_exit(v_cmd)
+
 	if opt.verbosity > 1 {
 		println(v_comp_res)
 	}
@@ -154,10 +158,19 @@ pub fn compile(opt CompileOptions) bool {
 		if line.contains('.tmp.c') || line.ends_with('.o"') {
 			continue
 		}
+		if line.starts_with('-D') {
+			defines << line
+		}
 		if line.starts_with('-I') {
+			if line.contains('/usr/') {
+				continue
+			}
 			includes << line
 		}
 		if line.starts_with('-l') {
+			if line.contains('-lgc') {
+				continue
+			}
 			ldflags << line
 		}
 	}
@@ -205,12 +218,39 @@ pub fn compile(opt CompileOptions) bool {
 		'-I"' +
 		os.join_path(ndk_sysroot, 'usr', 'include', 'android') + '"']
 
+	is_debug_build := '-cg' in opt.v_flags || '-g' in opt.v_flags
+
+	// Boehm-Demers-Weiser Garbage Collector (bdwgc / libgc)
+	mut uses_gc := false
+	for v_flag in opt.v_flags {
+		if v_flag.starts_with('-gc') {
+			if opt.verbosity > 1 {
+				println('Using garbage collecting via "$v_flag"')
+			}
+			uses_gc = true
+			break
+		}
+	}
+
+	if uses_gc {
+		includes << [
+			'-I"' + os.join_path(v_home, 'thirdparty', 'libgc', 'include') + '"',
+		]
+		sources << ['"' + os.join_path(v_home, 'thirdparty', 'libgc', 'gc.c') + '"']
+		if is_debug_build {
+			defines << '-DGC_ASSERTIONS'
+			defines << '-DGC_ANDROID_LOG'
+		}
+		defines << '-D_REENTRANT'
+		defines << '-DUSE_MMAP' // Will otherwise crash with a message with a path to the lib in GC_unix_mmap_get_mem+528
+	}
+
 	// Sokol
-	if '-cg' in opt.v_flags || '-g' in opt.v_flags {
+	if is_debug_build {
 		if opt.verbosity > 1 {
 			println('Define SOKOL_DEBUG')
 		}
-		defines << ['-DSOKOL_DEBUG']
+		defines << '-DSOKOL_DEBUG'
 	}
 
 	if opt.verbosity > 1 {
@@ -273,7 +313,11 @@ pub fn compile(opt CompileOptions) bool {
 			defines.join(' '), sources.join(' '), arch_cflags[arch].join(' '),
 			'-o "$arch_lib_dir/lib${opt.lib_name}.so"', v_output_file, '-L"' + arch_libs[arch] + '"',
 			ldflags.join(' ')]
-		util.verbosity_print_cmd(build_cmd, opt.verbosity)
+		if '-showcc' in opt.v_flags {
+			util.verbosity_print_cmd(build_cmd, 3)
+		} else {
+			util.verbosity_print_cmd(build_cmd, opt.verbosity)
+		}
 		comp_res := util.run_or_exit(build_cmd)
 
 		if opt.verbosity > 1 {

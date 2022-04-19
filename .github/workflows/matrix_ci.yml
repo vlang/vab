@@ -79,3 +79,62 @@ jobs:
           # AAB
           vab/vab --package aab --package-id "io.v.aab.$package_id" --api ${{ matrix.android-api }} examples/$example -o java-${{ matrix.java-version }}/$example/$package_id.aab
         done
+
+  build-v-examples-with-gc-enabled:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-20.04]
+        java-version: [8, 15]
+        android-api: [27, 30]
+    timeout-minutes: 30
+    env:
+      VAB_FLAGS: -v 3 --build-tools 29.0.0
+    steps:
+    - uses: actions/setup-java@v2
+      with:
+        distribution: 'adopt'
+        java-version: ${{ matrix.java-version }}
+
+    - name: Checkout V
+      uses: actions/checkout@v2
+      with:
+        repository: vlang/v
+    - uses: actions/checkout@v2
+      with:
+        path: vab
+
+    - name: Build local v
+      run: make -j2
+
+    - name: Run tests
+      run: ./v test vab
+
+    - name: Build vab
+      run: ./v -g vab/vab.v
+
+    - name: Run vab --help
+      run: vab/vab --help
+
+    - name: Run vab doctor
+      run: |
+        export VEXE=./v
+        vab/vab doctor
+
+    - name: Build examples with garbage collector (Java ${{ matrix.java-version }}) ${{ matrix.android-api }}
+      run: |
+        export VEXE=./v
+
+        declare -a v_examples=('flappylearning' '2048' 'fireworks' 'tetris' 'sokol/particles' 'sokol/drawing.v' 'sokol/freetype_raven.v' 'gg/polygons.v' 'gg/raven_text_rendering.v' 'gg/rectangles.v' 'gg/stars.v' 'gg/worker_thread.v')
+
+        for example in "${v_examples[@]}"; do
+          package_id=$( echo "$example" | sed 's%/%%' | sed 's%\.%%' )
+          package_id=$( echo "vgc$package_id" )
+
+          # Setup env
+          mkdir -p gc-java-${{ matrix.java-version }}/$example
+
+          # APK
+          vab/vab -gc boehm --package-id "io.v.apk.$package_id" --api ${{ matrix.android-api }} examples/$example -o gc-java-${{ matrix.java-version }}/$example/$package_id.apk
+
+        done

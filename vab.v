@@ -13,13 +13,18 @@ import android.ndk
 import android.env
 
 const (
-	exe_version          = version()
-	exe_name             = os.file_name(os.executable())
-	exe_dir              = os.dir(os.real_path(os.executable()))
-	exe_description      = 'V Android Bootstrapper.\nCompile, package and deploy graphical V apps for Android.'
+	exe_version     = version()
+	exe_name        = os.file_name(os.executable())
+	exe_dir         = os.dir(os.real_path(os.executable()))
+	exe_description = 'V Android Bootstrapper.
+Compile, package and deploy graphical V apps for Android.
+
+The following flags does the same as if they were passed to the "v" compiler:
+
+-autofree, -gc <type>, -g, -cg, -prod, -showcc'
 	exe_git_hash         = vab_commit_hash()
 	work_directory       = os.join_path(os.temp_dir(), exe_name.replace(' ', '_').to_lower())
-	rip_vflags           = ['-autofree', '-gc', '-g', '-cg', '-prod', 'run']
+	rip_vflags           = ['-autofree', '-gc', '-g', '-cg', '-prod', 'run', '-showcc']
 	subcmds              = ['test-cleancode']
 	accepted_input_files = ['.v', '.apk', '.aab']
 )
@@ -437,6 +442,8 @@ fn args_to_options(arguments []string, defaults Options) ?(Options, &flag.FlagPa
 
 	opt.additional_args = fp.finalize() ?
 
+	v_flags << opt.v_flags
+	opt.v_flags = v_flags
 	return opt, fp
 }
 
@@ -865,7 +872,7 @@ fn doctor(opt Options) {
 	Version $vxt.version() $vxt.version_commit_hash()
 	Path "$vxt.home()"')
 	if opt.v_flags.len > 0 {
-		println('\tFlags $opt.v_flags')
+		println('\tV flags: $opt.v_flags')
 	}
 	// Print output of `v doctor` if v is found
 	if vxt.found() {
