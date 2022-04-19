@@ -89,7 +89,7 @@ jobs:
         android-api: [27, 30]
     timeout-minutes: 30
     env:
-      VAB_FLAGS: -gc boehm -v 3 --build-tools 29.0.0
+      VAB_FLAGS: -v 3 --build-tools 29.0.0
     steps:
     - uses: actions/setup-java@v2
       with:
@@ -103,6 +103,7 @@ jobs:
     - uses: actions/checkout@v2
       with:
         path: vab
+
     - name: Build local v
       run: make -j2
 
@@ -134,6 +135,6 @@ jobs:
           mkdir -p gc-java-${{ matrix.java-version }}/$example
 
           # APK
-          vab/vab --package-id "io.v.apk.$package_id" --api ${{ matrix.android-api }} examples/$example -o gc-java-${{ matrix.java-version }}/$example/$package_id.apk
+          vab/vab -gc boehm --package-id "io.v.apk.$package_id" --api ${{ matrix.android-api }} examples/$example -o gc-java-${{ matrix.java-version }}/$example/$package_id.apk
 
         done
