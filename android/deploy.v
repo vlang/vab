@@ -154,10 +154,12 @@ pub fn deploy_apk(opt DeployOptions) bool {
 
 			// Only filter output in "normal" log mode
 			if opt.log_mode == .filtered {
-				// Sokol
-				is_debug := '-cg' in opt.v_flags || '-g' in opt.v_flags
-				if is_debug {
+				is_debug_build := '-cg' in opt.v_flags || '-g' in opt.v_flags
+				if is_debug_build {
+					// Sokol
 					adb_logcat_cmd << 'SOKOL_APP:D'
+					// Boehm-Demers-Weiser Garbage Collector (bdwgc / libgc)
+					adb_logcat_cmd << 'BDWGC:D'
 				}
 				adb_logcat_cmd << [
 					'V_ANDROID:D',
@@ -166,7 +168,7 @@ pub fn deploy_apk(opt DeployOptions) bool {
 					// 'System.err:D',
 					'$opt.activity_name:D',
 				]
-				// if !is_debug {
+				// if !is_debug_build {
 				adb_logcat_cmd << '*:S'
 			}
 
@@ -355,10 +357,12 @@ pub fn deploy_aab(opt DeployOptions) bool {
 				'$device_id',
 				'logcat',
 			]
-			// Sokol
-			is_debug := '-cg' in opt.v_flags || '-g' in opt.v_flags
-			if is_debug {
+			is_debug_build := '-cg' in opt.v_flags || '-g' in opt.v_flags
+			if is_debug_build {
+				// Sokol
 				adb_logcat_cmd << 'SOKOL_APP:D'
+				// Boehm-Demers-Weiser Garbage Collector (bdwgc / libgc)
+				adb_logcat_cmd << 'BDWGC:D'
 			}
 			adb_logcat_cmd << [
 				'V_ANDROID:D',
@@ -367,7 +371,7 @@ pub fn deploy_aab(opt DeployOptions) bool {
 				// 'System.err:D',
 				'$opt.activity_name:D',
 			]
-			// if !is_debug {
+			// if !is_debug_build {
 			adb_logcat_cmd << '*:S'
 			//}
 
