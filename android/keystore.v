@@ -50,5 +50,10 @@ pub fn resolve_keystore(default_ks Keystore, verbosity int) Keystore {
 		alias_password = default_ks.alias_password
 	}
 
-	return Keystore{file, password, alias, alias_password}
+	return Keystore{
+		path: file
+		password: password
+		alias: alias
+		alias_password: alias_password
+	}
 }
