@@ -205,30 +205,35 @@ fn main() {
 
 	kill_adb := os.getenv('VAB_KILL_ADB') != ''
 
+	// If no package id or activity name has been set at this point,
+	// use the defaults
+	mut package_id := opt.package_id
+	mut activity_name := opt.activity_name
+	if package_id == '' {
+		package_id = android.default_package_id
+	}
+	if activity_name == '' {
+		activity_name = android.default_activity_name
+	}
+
 	// Validate environment after options and input has been resolved
 	validate_env(opt)
 
 	mut run := ''
-	mut package_id := opt.package_id
-	mut activity_name := opt.activity_name
 	if opt.run {
-		if package_id == '' {
-			package_id = android.default_package_id
-		}
-		if activity_name == '' {
-			activity_name = android.default_activity_name
-		}
 		run = '$package_id/${package_id}.$activity_name'
 		if opt.verbosity > 1 {
 			println('Should run "$package_id/${package_id}.$activity_name"')
 		}
 	}
 
+	// If no device id has been set at this point,
+	// check for ENV vars
 	mut device_id := opt.device_id
 	if device_id == '' {
 		device_id = os.getenv('ANDROID_SERIAL')
 		if opt.verbosity > 1 && device_id != '' {
-			println('Using device "$device_id" from ANDROID_SERIAL env')
+			println('Using device "$device_id" from ANDROID_SERIAL env variable')
 		}
 	}
 	// Package format apk/aab
