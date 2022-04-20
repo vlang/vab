@@ -39,8 +39,8 @@ struct Options {
 	device_id      string
 	keystore       string
 	keystore_alias string
+	gles_version   int = android.default_gles_version
 	// Build specifics
-	gles_version     int = android.default_gles_version
 	c_flags          []string // flags passed to the C compiler(s)
 	no_printf_hijack bool     // Do not let V redefine printf for log output aka. V_ANDROID_LOG_PRINT
 	archs            []string
@@ -73,9 +73,10 @@ mut:
 	keystore_password       string
 	keystore_alias_password string
 	// Build specifics
-	build_tools string
-	api_level   string
-	ndk_version string
+	build_tools     string
+	api_level       string
+	ndk_version     string
+	min_sdk_version int = android.default_min_sdk_version
 }
 
 fn main() {
@@ -323,6 +324,8 @@ fn main() {
 		work_dir: opt.work_dir
 		is_prod: opt.is_prod
 		api_level: opt.api_level
+		min_sdk_version: opt.min_sdk_version
+		gles_version: opt.gles_version
 		build_tools: opt.build_tools
 		app_name: opt.app_name
 		lib_name: opt.lib_name
@@ -440,6 +443,7 @@ fn args_to_options(arguments []string, defaults Options) ?(Options, &flag.FlagPa
 		//
 		build_tools: fp.string('build-tools', 0, defaults.build_tools, 'Version of build-tools to use (--list-build-tools)')
 		api_level: fp.string('api', 0, defaults.api_level, 'Android API level to use (--list-apis)')
+		min_sdk_version: fp.int('min-sdk-version', 0, defaults.min_sdk_version, 'Minimum SDK version version code (android:minSdkVersion)')
 		//
 		ndk_version: fp.string('ndk-version', 0, defaults.ndk_version, 'Android NDK version to use (--list-ndks)')
 		//
@@ -722,6 +726,17 @@ fn extend_options_from_dot_vab(mut opt Options) {
 						println('Using package id "$vab_package_id" from .vab file "$dot_vab_file"')
 					}
 					opt.package_id = vab_package_id
+				}
+			}
+			if opt.min_sdk_version == android.default_min_sdk_version
+				&& dot_vab.contains('min_sdk_version:') {
+				vab_min_sdk_version := dot_vab.all_after('min_sdk_version:').all_before('\n').replace("'",
+					'').replace('"', '').trim(' ')
+				if vab_min_sdk_version != '' {
+					if opt.verbosity > 1 {
+						println('Using minimum SDK version "$vab_min_sdk_version" from .vab file "$dot_vab_file"')
+					}
+					opt.min_sdk_version = vab_min_sdk_version.int()
 				}
 			}
 			if opt.package_overrides_path == '' && dot_vab.contains('package_overrides:') {

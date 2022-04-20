@@ -6,7 +6,8 @@
 	android:installLocation="auto"
 	package="io.v.android">
 
-	<uses-sdk android:minSdkVersion="21" />
+	<uses-sdk android:minSdkVersion="21" android:targetSdkVersion="21" />
+	<uses-feature android:glEsVersion="0x00020000" android:required="true" />
 
     <application
 		android:debuggable="true"

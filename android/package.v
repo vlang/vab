@@ -14,6 +14,7 @@ pub const (
 	default_package_id        = 'io.v.android'
 	default_activity_name     = 'VActivity'
 	default_package_format    = 'apk'
+	default_min_sdk_version   = 21
 	supported_package_formats = ['apk', 'aab']
 )
 
@@ -25,28 +26,30 @@ pub enum PackageFormat {
 
 // PackageOptions represents an Android package configuration
 pub struct PackageOptions {
-	verbosity      int
-	work_dir       string
-	is_prod        bool
-	api_level      string
-	build_tools    string
-	format         PackageFormat = .apk
-	app_name       string
-	lib_name       string
-	package_id     string
-	activity_name  string
-	icon           string
-	version_code   int
-	v_flags        []string
-	input          string
-	assets_extra   []string
-	output_file    string
-	keystore       Keystore
-	base_files     string
-	overrides_path string // Path to user provided files that will override `base_files`. `java` (and later `kotlin` TODO) subdirs are recognized
+	verbosity       int
+	work_dir        string
+	is_prod         bool
+	api_level       string
+	min_sdk_version int = android.default_min_sdk_version
+	gles_version    int
+	build_tools     string
+	format          PackageFormat = .apk
+	app_name        string
+	lib_name        string
+	package_id      string
+	activity_name   string
+	icon            string
+	version_code    int
+	v_flags         []string
+	input           string
+	assets_extra    []string
+	output_file     string
+	keystore        Keystore
+	base_files      string
+	overrides_path  string // Path to user provided files that will override `base_files`. `java` (and later `kotlin` TODO) subdirs are recognized
 }
 
-// package ouputs one of the supported Android package formats based on
+// package outputs one of the supported Android package formats based on
 // `PackageOptions`
 pub fn package(opt PackageOptions) bool {
 	if opt.verbosity > 0 {
@@ -656,15 +659,44 @@ fn prepare_base(opt PackageOptions) (string, string) {
 
 			re = regex.regex_opt(r'.*\s+android:minSdkVersion\s*=\s*"(.*)".*') or { panic(err) }
 			start, _ = re.match_string(manifest)
-			// When building with Android native it's recommended (even quite necessary) that minSdkVersion is equal to compiled sdk version :(
+			// TODO figure out this absolute mess.
+			// When building with Android native it's recommended (even, sometimes, quite necessary) that minSdkVersion is equal to compiled sdk version :(
 			// Otherwise you have all kinds of cryptic errors when the app is started.
 			// Google Play, at the time of writing, requires to build against level 29 as a minimum (App will be rejected otherwise).
+			// OTOH According to e.g. http://android-doc.github.io/ndk/guides/stable_apis.html it *should* be safe
+			// that we specify 21 as a minimum API level and then live happily ever after...
+			// What a complete mess :(
 			if start >= 0 && re.groups.len > 0 {
 				if opt.verbosity > 1 {
 					r := manifest[re.groups[0]..re.groups[1]]
-					println('Replacing api level "$r" with "$opt.api_level"')
+					println('Replacing minimum SDK version "$r" with "$opt.min_sdk_version"')
+				}
+				manifest = manifest[0..re.groups[0]] + opt.min_sdk_version.str() +
+					manifest[re.groups[1]..manifest.len]
+			}
+
+			re = regex.regex_opt(r'.*\s+android:targetSdkVersion\s*=\s*"(.*)".*') or { panic(err) }
+			start, _ = re.match_string(manifest)
+			if start >= 0 && re.groups.len > 0 {
+				if opt.verbosity > 1 {
+					r := manifest[re.groups[0]..re.groups[1]]
+					println('Replacing target SDK version "$r" with "$opt.api_level"')
 				}
 				manifest = manifest[0..re.groups[0]] + opt.api_level +
+					manifest[re.groups[1]..manifest.len]
+			}
+
+			re = regex.regex_opt(r'.*uses-feature android:glEsVersion\s*=\s*"(.*)".*') or {
+				panic(err)
+			}
+			start, _ = re.match_string(manifest)
+			if start >= 0 && re.groups.len > 0 {
+				gles_version_hex := '0x000' + opt.gles_version.str() + '0000'
+				if opt.verbosity > 1 {
+					r := manifest[re.groups[0]..re.groups[1]]
+					println('Replacing declaration of OpenGL ES version "$r" with "$gles_version_hex"')
+				}
+				manifest = manifest[0..re.groups[0]] + gles_version_hex +
 					manifest[re.groups[1]..manifest.len]
 			}
 
