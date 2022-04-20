@@ -610,6 +610,9 @@ fn prepare_base(opt PackageOptions) (string, string) {
 	if !is_override {
 		manifest_path := os.join_path(package_path, 'AndroidManifest.xml')
 		if os.is_file(manifest_path) {
+			if opt.verbosity > 1 {
+				println('Modifying manifest "$manifest_path"')
+			}
 			mut manifest := os.read_file(manifest_path) or { panic(err) }
 			mut re := regex.regex_opt(r'.*<manifest\s.*\spackage\s*=\s*"(.+)".*>') or { panic(err) }
 			mut start, _ := re.match_string(manifest)
@@ -665,20 +668,16 @@ fn prepare_base(opt PackageOptions) (string, string) {
 					manifest[re.groups[1]..manifest.len]
 			}
 
-			if opt.activity_name != '' {
-				re = regex.regex_opt(r'.*<activity\s.*android:name\s*=\s*"(.*)".*>') or {
-					panic(err)
+			re = regex.regex_opt(r'.*<activity\s.*android:name\s*=\s*"(.*)".*>') or { panic(err) }
+			start, _ = re.match_string(manifest)
+			if start >= 0 && re.groups.len > 0 {
+				fq_activity_name := opt.package_id + '.' + opt.activity_name
+				if opt.verbosity > 1 {
+					r := manifest[re.groups[0]..re.groups[1]]
+					println('Replacing activity name "$r" with "$fq_activity_name"')
 				}
-				start, _ = re.match_string(manifest)
-				if start >= 0 && re.groups.len > 0 {
-					fq_activity_name := opt.package_id + '.' + opt.activity_name
-					if opt.verbosity > 1 {
-						r := manifest[re.groups[0]..re.groups[1]]
-						println('Replacing activity name "$r" with "$fq_activity_name"')
-					}
-					manifest = manifest[0..re.groups[0]] + fq_activity_name +
-						manifest[re.groups[1]..manifest.len]
-				}
+				manifest = manifest[0..re.groups[0]] + fq_activity_name +
+					manifest[re.groups[1]..manifest.len]
 			}
 
 			os.write_file(manifest_path, manifest) or { panic(err) }
