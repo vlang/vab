@@ -498,10 +498,10 @@ fn sdkmanager_windows() string {
 	// Try detecting it in the SDK
 	if sdk.found() {
 		if !os.exists(sdkmanager) {
-			sdkmanager = os.join_path(sdk.tools_root(), 'bin', 'sdkmanager.bat')
+			sdkmanager = os.join_path(sdk.root(), 'cmdline-tools', 'tools', 'bin', 'sdkmanager.bat')
 		}
 		if !os.exists(sdkmanager) {
-			sdkmanager = os.join_path(sdk.root(), 'cmdline-tools', 'tools', 'bin', 'sdkmanager.bat')
+			sdkmanager = os.join_path(sdk.tools_root(), 'bin', 'sdkmanager.bat')
 		}
 		if !os.exists(sdkmanager) {
 			for relative_path in env.possible_relative_to_sdk_sdkmanager_paths {
@@ -567,10 +567,10 @@ pub fn sdkmanager() string {
 	// Try detecting it in the SDK
 	if sdk.found() {
 		if !os.is_executable(sdkmanager) {
-			sdkmanager = os.join_path(sdk.tools_root(), 'bin', 'sdkmanager')
+			sdkmanager = os.join_path(sdk.root(), 'cmdline-tools', 'tools', 'bin', 'sdkmanager')
 		}
 		if !os.is_executable(sdkmanager) {
-			sdkmanager = os.join_path(sdk.root(), 'cmdline-tools', 'tools', 'bin', 'sdkmanager')
+			sdkmanager = os.join_path(sdk.tools_root(), 'bin', 'sdkmanager')
 		}
 		if !os.is_executable(sdkmanager) {
 			for relative_path in env.possible_relative_to_sdk_sdkmanager_paths {
