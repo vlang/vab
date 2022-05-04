@@ -476,6 +476,7 @@ fn sdkmanager_windows() string {
 	if !os.exists(sdkmanager) {
 		if os.exists_in_system_path('sdkmanager') {
 			sdkmanager = os.find_abs_path_of_executable('sdkmanager') or { '' }
+			sdkmanager = sdkmanager.trim_string_right('.bat')+'.bat'
 		}
 	}
 	// Try detecting it in the SDK
@@ -516,6 +517,9 @@ fn sdkmanager_windows() string {
 }
 
 pub fn sdkmanager() string {
+	$if windows {
+		return sdkmanager_windows()
+	}
 	mut sdkmanager := cache.get_string(@MOD + '.' + @FN)
 	if sdkmanager != '' {
 		return sdkmanager
