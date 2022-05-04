@@ -246,6 +246,8 @@ fn install_opt(opt InstallOptions) ?bool {
 		yes_cmd = 'echo y' // Windows PowerShell
 	}
 
+	// TODO - right now, because of tricky shell escaping, Windows users need to manually
+	// run the install commands
 	if opt.verbosity > 0 {
 		println(@MOD + '.' + @FN + ' installing $opt.dep: "$item"...')
 	}
@@ -254,50 +256,42 @@ fn install_opt(opt InstallOptions) ?bool {
 	} else if opt.dep == .aapt2 {
 		return ensure_aapt2(opt.verbosity)
 	} else if opt.dep == .cmdline_tools {
-		/*
-		if opt.verbosity > 0 {
-			println(@MOD + '.' + @FN + ' ' +
-				'commandline tools is already installed in "$sdkmanager()".')
-		}
-		*/
-
 		cmd := [
-			yes_cmd+' |' /* TODO Windows */,
+			yes_cmd + ' |' /* TODO Windows */,
 			sdkmanager(),
 			'--sdk_root="$sdk.root()"',
 			'"$item"',
 		]
-		util.verbosity_print_cmd(cmd, opt.verbosity)
-		cmd_res := util.run(cmd)
-		if cmd_res.exit_code > 0 {
-			return error(cmd_res.output)
-		}
-		return true
-	} else if opt.dep == .platform_tools {
-		/*
-		adb_tool := os.join_path(sdk.platform_tools_root(), 'adb')
-		if os.exists(adb_tool) {
-			eprintln('Notice: Skipping install. Platform Tools seem to be installed in "$sdk.platform_tools_root()"...')
+		$if !windows {
+			util.verbosity_print_cmd(cmd, opt.verbosity)
+			cmd_res := util.run(cmd)
+			if cmd_res.exit_code > 0 {
+				return error(cmd_res.output)
+			}
 			return true
+		} $else {
+			return error('Run the following command in your shell to install "$item":\n' +
+				cmd.join(' '))
 		}
-
-		if opt.verbosity > 0 {
-			println('Installing Platform Tools "$opt.item"...')
-		}
-		*/
+	} else if opt.dep == .platform_tools {
 		// Ignore opt.item for now
 		cmd := [
-			yes_cmd+' |' /* TODO Windows */,
+			yes_cmd + ' |' /* TODO Windows */,
 			sdkmanager(),
 			'--sdk_root="$sdk.root()"',
 			'"$item"',
 		]
-		util.verbosity_print_cmd(cmd, opt.verbosity)
-		cmd_res := util.run(cmd)
-		if cmd_res.exit_code > 0 {
-			return error(cmd_res.output)
+		$if !windows {
+			util.verbosity_print_cmd(cmd, opt.verbosity)
+			cmd_res := util.run(cmd)
+			if cmd_res.exit_code > 0 {
+				return error(cmd_res.output)
+			}
+			return true
+		} $else {
+			return error('Run the following command in your shell to install "$item":\n' +
+				cmd.join(' '))
 		}
-		return true
 	} else if opt.dep == .ndk {
 		version_check := item.all_after(';')
 		if version_check != '' {
@@ -313,17 +307,22 @@ fn install_opt(opt InstallOptions) ?bool {
 			println('Installing NDK (Side-by-side) "$item"...')
 		}
 		cmd := [
-			yes_cmd+' |' /* TODO Windows */,
+			yes_cmd + ' |' /* TODO Windows */,
 			sdkmanager(),
 			'--sdk_root="$sdk.root()"',
 			'"$item"',
 		]
-		util.verbosity_print_cmd(cmd, opt.verbosity)
-		cmd_res := util.run(cmd)
-		if cmd_res.exit_code > 0 {
-			return error(cmd_res.output)
+		$if !windows {
+			util.verbosity_print_cmd(cmd, opt.verbosity)
+			cmd_res := util.run(cmd)
+			if cmd_res.exit_code > 0 {
+				return error(cmd_res.output)
+			}
+			return true
+		} $else {
+			return error('Run the following command in your shell to install "$item":\n' +
+				cmd.join(' '))
 		}
-		return true
 	} else if opt.dep == .build_tools {
 		version_check := item.all_after(';')
 		if version_check != '' {
@@ -336,17 +335,23 @@ fn install_opt(opt InstallOptions) ?bool {
 		}
 
 		cmd := [
-			yes_cmd+' |' /* TODO Windows */,
+			yes_cmd + ' |' /* TODO Windows */,
 			sdkmanager(),
 			'--sdk_root="$sdk.root()"',
 			'"$item"',
 		]
-		util.verbosity_print_cmd(cmd, opt.verbosity)
-		cmd_res := util.run(cmd)
-		if cmd_res.exit_code > 0 {
-			return error(cmd_res.output)
+
+		$if !windows {
+			util.verbosity_print_cmd(cmd, opt.verbosity)
+			cmd_res := util.run(cmd)
+			if cmd_res.exit_code > 0 {
+				return error(cmd_res.output)
+			}
+			return true
+		} $else {
+			return error('Run the following command in your shell to install "$item":\n' +
+				cmd.join(' '))
 		}
-		return true
 	} else if opt.dep == .platforms {
 		v := item.all_after('-')
 		if v.i16() < sdk.min_supported_api_level.i16() {
@@ -355,17 +360,22 @@ fn install_opt(opt InstallOptions) ?bool {
 		}
 
 		cmd := [
-			yes_cmd+' |' /* TODO Windows */,
+			yes_cmd + ' |' /* TODO Windows */,
 			sdkmanager(),
 			'--sdk_root="$sdk.root()"',
 			'"$item"',
 		]
-		util.verbosity_print_cmd(cmd, opt.verbosity)
-		cmd_res := util.run(cmd)
-		if cmd_res.exit_code > 0 {
-			return error(cmd_res.output)
+		$if !windows {
+			util.verbosity_print_cmd(cmd, opt.verbosity)
+			cmd_res := util.run(cmd)
+			if cmd_res.exit_code > 0 {
+				return error(cmd_res.output)
+			}
+			return true
+		} $else {
+			return error('Run the following command in your shell to install "$item":\n' +
+				cmd.join(' '))
 		}
-		return true
 	}
 	return error(@MOD + '.' + @FN + ' ' + 'unknown install type $opt.dep')
 }
@@ -482,7 +492,7 @@ fn sdkmanager_windows() string {
 	if !os.exists(sdkmanager) {
 		if os.exists_in_system_path('sdkmanager') {
 			sdkmanager = os.find_abs_path_of_executable('sdkmanager') or { '' }
-			sdkmanager = sdkmanager.trim_string_right('.bat')+'.bat'
+			sdkmanager = sdkmanager.trim_string_right('.bat') + '.bat'
 		}
 	}
 	// Try detecting it in the SDK
