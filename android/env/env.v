@@ -241,6 +241,11 @@ fn install_opt(opt InstallOptions) ?bool {
 
 	item := opt.item
 
+	mut yes_cmd := 'yes' // Linux / macOS
+	$if windows {
+		yes_cmd = 'echo y' // Windows PowerShell
+	}
+
 	if opt.verbosity > 0 {
 		println(@MOD + '.' + @FN + ' installing $opt.dep: "$item"...')
 	}
@@ -255,8 +260,9 @@ fn install_opt(opt InstallOptions) ?bool {
 				'commandline tools is already installed in "$sdkmanager()".')
 		}
 		*/
+
 		cmd := [
-			'yes |' /* TODO Windows */,
+			yes_cmd+' |' /* TODO Windows */,
 			sdkmanager(),
 			'--sdk_root="$sdk.root()"',
 			'"$item"',
@@ -281,7 +287,7 @@ fn install_opt(opt InstallOptions) ?bool {
 		*/
 		// Ignore opt.item for now
 		cmd := [
-			'yes |' /* TODO Windows */,
+			yes_cmd+' |' /* TODO Windows */,
 			sdkmanager(),
 			'--sdk_root="$sdk.root()"',
 			'"$item"',
@@ -307,7 +313,7 @@ fn install_opt(opt InstallOptions) ?bool {
 			println('Installing NDK (Side-by-side) "$item"...')
 		}
 		cmd := [
-			'yes |' /* TODO Windows */,
+			yes_cmd+' |' /* TODO Windows */,
 			sdkmanager(),
 			'--sdk_root="$sdk.root()"',
 			'"$item"',
@@ -330,7 +336,7 @@ fn install_opt(opt InstallOptions) ?bool {
 		}
 
 		cmd := [
-			'yes |' /* TODO Windows */,
+			yes_cmd+' |' /* TODO Windows */,
 			sdkmanager(),
 			'--sdk_root="$sdk.root()"',
 			'"$item"',
@@ -349,7 +355,7 @@ fn install_opt(opt InstallOptions) ?bool {
 		}
 
 		cmd := [
-			'yes |' /* TODO Windows */,
+			yes_cmd+' |' /* TODO Windows */,
 			sdkmanager(),
 			'--sdk_root="$sdk.root()"',
 			'"$item"',
