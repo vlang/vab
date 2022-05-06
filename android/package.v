@@ -166,7 +166,7 @@ fn package_apk(opt PackageOptions) bool {
 		dx,
 		'--verbose',
 		'--dex',
-		'--output="' + os.join_path('bin', 'classes.dex') + '"',
+		'--output=' + os.join_path('bin', 'classes.dex'),
 		'obj' /* obj_path, */,
 	]
 	util.verbosity_print_cmd(dx_cmd, opt.verbosity)
