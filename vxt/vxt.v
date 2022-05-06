@@ -44,8 +44,14 @@ pub fn home() string {
 	// credits to @spytheman:
 	// https://discord.com/channels/592103645835821068/592294828432424960/746040606358503484
 	exe := vexe()
-	if os.is_executable(exe) {
-		return os.dir(exe)
+	$if !windows {
+		if os.is_executable(exe) {
+			return os.dir(exe)
+		}
+	} $else {
+		if os.exists(exe) {
+			return os.dir(exe)
+		}
 	}
 	return ''
 }
