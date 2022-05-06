@@ -19,7 +19,7 @@ pub fn vexe() string {
 		if os.exists(exe) {
 			return os.real_path(exe)
 		}
-		system_path := os.find_abs_path_of_executable('v.bat') or { '' }
+		system_path := os.find_abs_path_of_executable('v') or { '' }
 		if os.exists(system_path) {
 			exe = os.real_path(system_path)
 		}
