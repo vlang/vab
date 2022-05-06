@@ -289,13 +289,8 @@ fn install_opt(opt InstallOptions) ?bool {
 			}
 			return true
 		} $else {
-			// return error('Run the following command in your shell to install "$item":\n' + cmd.join(' '))
-			util.verbosity_print_cmd(cmd, opt.verbosity)
-			cmd_res := util.run(cmd)
-			if cmd_res.exit_code > 0 {
-				return error(cmd_res.output)
-			}
-			return true
+			return error('Run the following command in your shell to install "$item":\n' +
+				cmd.join(' '))
 		}
 	} else if opt.dep == .ndk {
 		version_check := item.all_after(';')
@@ -378,8 +373,14 @@ fn install_opt(opt InstallOptions) ?bool {
 			}
 			return true
 		} $else {
-			return error('Run the following command in your shell to install "$item":\n' +
-				cmd.join(' '))
+			/*return error('Run the following command in your shell to install "$item":\n' +
+				cmd.join(' '))*/
+			util.verbosity_print_cmd(cmd, opt.verbosity)
+			cmd_res := util.run(cmd)
+			if cmd_res.exit_code > 0 {
+				return error(cmd_res.output)
+			}
+			return true
 		}
 	}
 	return error(@MOD + '.' + @FN + ' ' + 'unknown install type $opt.dep')
