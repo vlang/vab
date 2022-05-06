@@ -23,6 +23,13 @@ pub fn vexe() string {
 		if os.exists(system_path) {
 			exe = os.real_path(system_path)
 		}
+		if !os.exists(exe) {
+			res := os.execute('where.exe v')
+			if res.exit_code != 0 {
+				return ''
+			}
+			return os.real_path(res.output)
+		}
 	}
 	return exe
 }
