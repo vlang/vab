@@ -334,46 +334,21 @@ fn install_opt(opt InstallOptions) ?bool {
 			}
 		}
 
-		cmd := [
-			yes_cmd + ' |' /* TODO Windows */,
-			sdkmanager(),
-			'--sdk_root="$sdk.root()"',
-			'"$item"',
-		]
-
 		$if !windows {
+			cmd := [
+				yes_cmd,
+				'|',
+				sdkmanager(),
+				'--sdk_root="$sdk.root()"',
+				'"$item"',
+			]
 			util.verbosity_print_cmd(cmd, opt.verbosity)
 			cmd_res := util.run(cmd)
-			if cmd_res.exit_code > 0 {
+			if cmd_res.exit_code != 0 {
 				return error(cmd_res.output)
 			}
-			return true
 		} $else {
-			return error('Run the following command in your shell to install "$item":\n' +
-				cmd.join(' '))
-		}
-	} else if opt.dep == .platforms {
-		v := item.all_after('-')
-		if v.i16() < sdk.min_supported_api_level.i16() {
-			eprintln('Notice: Skipping install. platform $item is lower than supported android-${sdk.min_supported_api_level}...')
-			return true
-		}
-
-		cmd := [
-			yes_cmd + ' |' /* TODO Windows */,
-			sdkmanager(),
-			'--sdk_root="$sdk.root()"',
-			'"$item"',
-		]
-		$if !windows {
-			util.verbosity_print_cmd(cmd, opt.verbosity)
-			cmd_res := util.run(cmd)
-			if cmd_res.exit_code > 0 {
-				return error(cmd_res.output)
-			}
-			return true
-		} $else {
-			win_cmd := [
+			cmd := [
 				'cmd /c',
 				'"' + yes_cmd,
 				'|',
@@ -382,12 +357,47 @@ fn install_opt(opt InstallOptions) ?bool {
 				'"$item"' + '"',
 			]
 			util.verbosity_print_cmd(cmd, opt.verbosity)
-			cmd_res := util.run(win_cmd)
+			cmd_res := util.run(cmd)
 			if cmd_res.exit_code != 0 {
 				return error(cmd_res.output)
 			}
+		}
+		return true
+	} else if opt.dep == .platforms {
+		v := item.all_after('-')
+		if v.i16() < sdk.min_supported_api_level.i16() {
+			eprintln('Notice: Skipping install. platform $item is lower than supported android-${sdk.min_supported_api_level}...')
 			return true
 		}
+		$if !windows {
+			cmd := [
+				yes_cmd,
+				'|',
+				sdkmanager(),
+				'--sdk_root="$sdk.root()"',
+				'"$item"',
+			]
+			util.verbosity_print_cmd(cmd, opt.verbosity)
+			cmd_res := util.run(cmd)
+			if cmd_res.exit_code != 0 {
+				return error(cmd_res.output)
+			}
+		} $else {
+			cmd := [
+				'cmd /c',
+				'"' + yes_cmd,
+				'|',
+				sdkmanager(),
+				'--sdk_root="$sdk.root()"',
+				'"$item"' + '"',
+			]
+			util.verbosity_print_cmd(cmd, opt.verbosity)
+			cmd_res := util.run(cmd)
+			if cmd_res.exit_code != 0 {
+				return error(cmd_res.output)
+			}
+		}
+		return true
 	}
 	return error(@MOD + '.' + @FN + ' ' + 'unknown install type $opt.dep')
 }
