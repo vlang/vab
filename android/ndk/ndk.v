@@ -206,6 +206,9 @@ pub fn compiler(ndk_version string, arch string, api_level string) ?string {
 
 	mut compiler := os.join_path(root_version(ndk_version), 'toolchains', 'llvm', 'prebuilt',
 		host_architecture, 'bin', arch_is + '-linux-android$eabi$api_level-clang')
+	$if windows {
+		compiler += '.cmd'
+	}
 	// legacy ndk version setups
 	/*
 	if !os.is_file(compiler) {
