@@ -87,9 +87,15 @@ fn package_apk(opt PackageOptions) bool {
 
 	javac := os.join_path(java.jdk_bin_path(), 'javac')
 	aapt := os.join_path(build_tools_path, 'aapt')
-	dx := os.join_path(build_tools_path, 'dx')
+	mut dx := os.join_path(build_tools_path, 'dx')
+	$if windows {
+		dx += '.bat'
+	}
 	zipalign := os.join_path(build_tools_path, 'zipalign')
-	apksigner := os.join_path(build_tools_path, 'apksigner')
+	mut apksigner := os.join_path(build_tools_path, 'apksigner')
+	$if windows {
+		apksigner += '.bat'
+	}
 
 	// work_dir := opt.work_dir
 	// VAPK_OUT=${VAPK}/..
@@ -124,11 +130,11 @@ fn package_apk(opt PackageOptions) bool {
 		'-v',
 		'-f',
 		'-m',
-		'-M ' + os.join_path(package_path, 'AndroidManifest.xml'),
-		'-S ' + res_path,
-		'-J ' + src_path,
-		'-A ' + assets_path,
-		'-I ' + android_runtime /* '--target-sdk-version ${ANDROIDTARGET}' */,
+		'-M "' + os.join_path(package_path, 'AndroidManifest.xml') + '"',
+		'-S "' + res_path + '"',
+		'-J "' + src_path + '"',
+		'-A "' + assets_path + '"',
+		'-I "' + android_runtime + '"' /* '--target-sdk-version ${ANDROIDTARGET}' */,
 	]
 	util.verbosity_print_cmd(aapt_cmd, opt.verbosity)
 	util.run_or_exit(aapt_cmd)
@@ -148,7 +154,7 @@ fn package_apk(opt PackageOptions) bool {
 		'-target 1.7',
 		'-classpath .',
 		'-sourcepath src',
-		'-bootclasspath ' + android_runtime,
+		'-bootclasspath "' + android_runtime + '"',
 	]
 	javac_cmd << java_sources
 
@@ -160,7 +166,7 @@ fn package_apk(opt PackageOptions) bool {
 		dx,
 		'--verbose',
 		'--dex',
-		'--output=' + os.join_path('bin', 'classes.dex'),
+		'--output="' + os.join_path('bin', 'classes.dex') + '"',
 		'obj' /* obj_path, */,
 	]
 	util.verbosity_print_cmd(dx_cmd, opt.verbosity)
@@ -172,11 +178,11 @@ fn package_apk(opt PackageOptions) bool {
 		'package',
 		'-v',
 		'-f',
-		'-S ' + res_path,
-		'-M ' + os.join_path(package_path, 'AndroidManifest.xml'),
-		'-A ' + assets_path,
-		'-I ' + android_runtime,
-		'-F ' + tmp_unaligned_product,
+		'-S "' + res_path + '"',
+		'-M "' + os.join_path(package_path, 'AndroidManifest.xml') + '"',
+		'-A "' + assets_path + '"',
+		'-I "' + android_runtime + '"',
+		'-F "' + tmp_unaligned_product + '"',
 		'bin' /* bin_path */,
 	]
 	util.verbosity_print_cmd(aapt_cmd, opt.verbosity)
@@ -192,8 +198,8 @@ fn package_apk(opt PackageOptions) bool {
 			aapt,
 			'add',
 			'-v',
-			tmp_unaligned_product,
-			lib_s,
+			'"' + tmp_unaligned_product + '"',
+			'"' + lib_s + '"',
 		]
 		util.verbosity_print_cmd(aapt_cmd, opt.verbosity)
 		util.run_or_exit(aapt_cmd)
@@ -205,8 +211,8 @@ fn package_apk(opt PackageOptions) bool {
 		zipalign,
 		'-v',
 		'-f 4',
-		tmp_unaligned_product,
-		tmp_unsigned_product,
+		'"' + tmp_unaligned_product + '"',
+		'"' + tmp_unsigned_product + '"',
 	]
 	util.verbosity_print_cmd(zipalign_cmd, opt.verbosity)
 	util.run_or_exit(zipalign_cmd)
@@ -225,8 +231,8 @@ fn package_apk(opt PackageOptions) bool {
 		'--ks-pass pass:' + keystore.password,
 		'--ks-key-alias "' + keystore.alias + '"',
 		'--key-pass pass:' + keystore.alias_password,
-		'--out ' + tmp_product,
-		tmp_unsigned_product,
+		'--out "' + tmp_product + '"',
+		'"' + tmp_unsigned_product + '"',
 	]
 	util.verbosity_print_cmd(apksigner_cmd, opt.verbosity)
 	util.run_or_exit(apksigner_cmd)
@@ -235,7 +241,7 @@ fn package_apk(opt PackageOptions) bool {
 		apksigner,
 		'verify',
 		'-v',
-		tmp_product,
+		'"' + tmp_product + '"',
 	]
 	util.verbosity_print_cmd(apksigner_cmd, opt.verbosity)
 	util.run_or_exit(apksigner_cmd)
@@ -260,7 +266,10 @@ fn package_aab(opt PackageOptions) bool {
 	java_exe := os.join_path(java.jre_bin_path(), 'java')
 	javac := os.join_path(java.jdk_bin_path(), 'javac')
 	jarsigner := os.join_path(java.jdk_bin_path(), 'jarsigner')
-	dx := os.join_path(build_tools_path, 'dx')
+	mut dx := os.join_path(build_tools_path, 'dx')
+	$if windows {
+		dx += '.bat'
+	}
 	bundletool := env.bundletool() // Run with "java -jar ..."
 	aapt2 := env.aapt2()
 
