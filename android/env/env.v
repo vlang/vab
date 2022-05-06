@@ -377,13 +377,13 @@ fn install_opt(opt InstallOptions) ?bool {
 				'cmd /c',
 				'"' + yes_cmd,
 				'|',
-				'"' + sdkmanager() + '"',
+				sdkmanager(),
 				'--sdk_root="$sdk.root()"',
 				'"$item"' + '"',
 			]
 			util.verbosity_print_cmd(cmd, opt.verbosity)
 			cmd_res := util.run(win_cmd)
-			if cmd_res.exit_code > 0 {
+			if cmd_res.exit_code != 0 {
 				return error(cmd_res.output)
 			}
 			return true
