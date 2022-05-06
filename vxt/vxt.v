@@ -30,7 +30,7 @@ pub fn vexe() string {
 			if res.exit_code != 0 {
 				return ''
 			}
-			return res.output.trim('\n')
+			return res.output.trim('\n\r')
 		}
 	}
 	return exe
