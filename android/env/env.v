@@ -378,15 +378,15 @@ fn install_opt(opt InstallOptions) ?bool {
 
 			win_cmd := [
 				'cmd /c',
-				"'"+yes_cmd,
+				'"'+yes_cmd,
 				'|' /* TODO Windows */,
 				sdkmanager(),
 				'--sdk_root="$sdk.root()"',
-				'"$item"'+"'"
+				'"$item"'+'"'
 			]
 
 			//util.verbosity_print_cmd(cmd, opt.verbosity)
-			println(win_cmd)
+			println(win_cmd.join(' '))
 			cmd_res := util.run(win_cmd)
 			if cmd_res.exit_code > 0 {
 				return error(cmd_res.output)
