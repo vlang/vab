@@ -5,6 +5,8 @@ module vxt
 import os
 import regex
 
+// vexe returns the path to the `v` compiler if found
+// on the host platform, otherwise a blank `string`.
 pub fn vexe() string {
 	mut exe := os.getenv('VEXE')
 	$if !windows {
@@ -17,18 +19,18 @@ pub fn vexe() string {
 		}
 	} $else {
 		if os.exists(exe) {
-			return os.real_path(exe)
+			return exe
 		}
 		system_path := os.find_abs_path_of_executable('v') or { '' }
 		if os.exists(system_path) {
-			exe = os.real_path(system_path)
+			exe = system_path
 		}
 		if !os.exists(exe) {
 			res := os.execute('where.exe v')
 			if res.exit_code != 0 {
 				return ''
 			}
-			return os.real_path(res.output)
+			return res.output.trim('\n')
 		}
 	}
 	return exe
