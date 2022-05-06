@@ -373,20 +373,15 @@ fn install_opt(opt InstallOptions) ?bool {
 			}
 			return true
 		} $else {
-			/*return error('Run the following command in your shell to install "$item":\n' +
-				cmd.join(' '))*/
-
 			win_cmd := [
 				'cmd /c',
-				'"'+yes_cmd,
-				'|' /* TODO Windows */,
-				sdkmanager(),
+				'"' + yes_cmd,
+				'|',
+				'"' + sdkmanager() + '"',
 				'--sdk_root="$sdk.root()"',
-				'"$item"'+'"'
+				'"$item"' + '"',
 			]
-
-			//util.verbosity_print_cmd(cmd, opt.verbosity)
-			println(win_cmd.join(' '))
+			util.verbosity_print_cmd(cmd, opt.verbosity)
 			cmd_res := util.run(win_cmd)
 			if cmd_res.exit_code > 0 {
 				return error(cmd_res.output)

@@ -7,12 +7,22 @@ import regex
 
 pub fn vexe() string {
 	mut exe := os.getenv('VEXE')
-	if os.is_executable(exe) {
-		return os.real_path(exe)
-	}
-	possible_symlink := os.find_abs_path_of_executable('v') or { '' }
-	if os.is_executable(possible_symlink) {
-		exe = os.real_path(possible_symlink)
+	$if !windows {
+		if os.is_executable(exe) {
+			return os.real_path(exe)
+		}
+		possible_symlink := os.find_abs_path_of_executable('v') or { '' }
+		if os.is_executable(possible_symlink) {
+			exe = os.real_path(possible_symlink)
+		}
+	} $else {
+		if os.exists(exe) {
+			return os.real_path(exe)
+		}
+		system_path := os.find_abs_path_of_executable('v.bat') or { '' }
+		if os.exists(system_path) {
+			exe = os.real_path(system_path)
+		}
 	}
 	return exe
 }
