@@ -154,11 +154,13 @@ pub fn jdk_found() bool {
 }
 
 pub fn jdk_bin_path() string {
-	bin_dir := os.find_abs_path_of_executable('javac') or { os.join_path(jdk_root(), 'bin') }
+	bin_dir := os.find_abs_path_of_executable('javac') or {
+		os.join_path(jdk_root(), 'bin', 'javac')
+	}
 	return os.dir(bin_dir)
 }
 
 pub fn jre_bin_path() string {
-	bin_dir := os.find_abs_path_of_executable('java') or { os.join_path(jre_root(), 'bin') }
+	bin_dir := os.find_abs_path_of_executable('java') or { os.join_path(jre_root(), 'bin', 'java') }
 	return os.dir(bin_dir)
 }
