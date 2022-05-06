@@ -129,7 +129,7 @@ pub fn managable() bool {
 }
 
 pub fn install(components string, verbosity int) int {
-	mut ios := []InstallOptions{}
+	mut iopts := []InstallOptions{}
 	mut ensure_sdk := true
 	// Allows to specify a string list of things to install
 	components_array := components.split(',')
@@ -171,7 +171,7 @@ pub fn install(components string, verbosity int) int {
 					env.default_components['build-tools']['version']
 				platforms_comp := env.default_components['platforms']['name'] + ';' +
 					env.default_components['platforms']['version']
-				ios = [
+				iopts = [
 					InstallOptions{.cmdline_tools, cmdline_tools_comp, verbosity},
 					InstallOptions{.platform_tools, platform_tools_comp, verbosity},
 					InstallOptions{.ndk, ndk_comp, verbosity},
@@ -181,27 +181,27 @@ pub fn install(components string, verbosity int) int {
 				break
 			}
 			'cmdline-tools' {
-				ios << InstallOptions{.cmdline_tools, item, verbosity}
+				iopts << InstallOptions{.cmdline_tools, item, verbosity}
 			}
 			'platform-tools' {
-				ios << InstallOptions{.platform_tools, item, verbosity}
+				iopts << InstallOptions{.platform_tools, item, verbosity}
 			}
 			'ndk' {
-				ios << InstallOptions{.ndk, item, verbosity}
+				iopts << InstallOptions{.ndk, item, verbosity}
 			}
 			'build-tools' {
-				ios << InstallOptions{.build_tools, item, verbosity}
+				iopts << InstallOptions{.build_tools, item, verbosity}
 			}
 			'platforms' {
-				ios << InstallOptions{.platforms, item, verbosity}
+				iopts << InstallOptions{.platforms, item, verbosity}
 			}
 			'bundletool' {
 				ensure_sdk = false
-				ios << InstallOptions{.bundletool, item, verbosity}
+				iopts << InstallOptions{.bundletool, item, verbosity}
 			}
 			'aapt2' {
 				ensure_sdk = false
-				ios << InstallOptions{.aapt2, item, verbosity}
+				iopts << InstallOptions{.aapt2, item, verbosity}
 			}
 			else {
 				eprintln(@MOD + ' ' + @FN + ' unknown component "$component"')
@@ -217,8 +217,10 @@ pub fn install(components string, verbosity int) int {
 		}
 	}
 
-	for io in ios {
-		install_opt(io) or {
+	// TODO Windows: `call sdkmanager --licenses < file-y.txt`
+
+	for iopt in iopts {
+		install_opt(iopt) or {
 			eprintln(err)
 			return 1
 		}
@@ -246,8 +248,6 @@ fn install_opt(opt InstallOptions) ?bool {
 		yes_cmd = 'echo y' // Windows PowerShell
 	}
 
-	// TODO - right now, because of tricky shell escaping, Windows users need to manually
-	// run the install commands
 	if opt.verbosity > 0 {
 		println(@MOD + '.' + @FN + ' installing $opt.dep: "$item"...')
 	}
