@@ -50,7 +50,8 @@ pub fn home() string {
 		}
 	} $else {
 		if os.exists(exe) {
-			return os.dir(exe)
+			// Skip the `.bin/` dir
+			return os.dir(os.dir(exe))
 		}
 	}
 	return ''

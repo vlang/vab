@@ -221,6 +221,7 @@ pub fn compiler(ndk_version string, arch string, api_level string) ?string {
 		}
 	}
 	*/
+
 	if !os.is_file(compiler) {
 		return error(@MOD + '.' + @FN +
 			' couldn\'t locate compiler "$compiler". You could try with a newer ndk version.')
