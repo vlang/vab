@@ -256,42 +256,66 @@ fn install_opt(opt InstallOptions) ?bool {
 	} else if opt.dep == .aapt2 {
 		return ensure_aapt2(opt.verbosity)
 	} else if opt.dep == .cmdline_tools {
-		cmd := [
-			yes_cmd + ' |' /* TODO Windows */,
-			sdkmanager(),
-			'--sdk_root="$sdk.root()"',
-			'"$item"',
-		]
 		$if !windows {
+			cmd := [
+				yes_cmd,
+				'|',
+				sdkmanager(),
+				'--sdk_root="$sdk.root()"',
+				'"$item"',
+			]
 			util.verbosity_print_cmd(cmd, opt.verbosity)
 			cmd_res := util.run(cmd)
 			if cmd_res.exit_code > 0 {
 				return error(cmd_res.output)
 			}
-			return true
 		} $else {
-			return error('Run the following command in your shell to install "$item":\n' +
-				cmd.join(' '))
+			cmd := [
+				'cmd /c',
+				'"' + yes_cmd,
+				'|',
+				sdkmanager(),
+				'--sdk_root="$sdk.root()"',
+				'"$item"' + '"',
+			]
+			util.verbosity_print_cmd(cmd, opt.verbosity)
+			cmd_res := util.run(cmd)
+			if cmd_res.exit_code != 0 {
+				return error(cmd_res.output)
+			}
 		}
+		return true
 	} else if opt.dep == .platform_tools {
 		// Ignore opt.item for now
-		cmd := [
-			yes_cmd + ' |' /* TODO Windows */,
-			sdkmanager(),
-			'--sdk_root="$sdk.root()"',
-			'"$item"',
-		]
 		$if !windows {
+			cmd := [
+				yes_cmd,
+				'|',
+				sdkmanager(),
+				'--sdk_root="$sdk.root()"',
+				'"$item"',
+			]
 			util.verbosity_print_cmd(cmd, opt.verbosity)
 			cmd_res := util.run(cmd)
 			if cmd_res.exit_code > 0 {
 				return error(cmd_res.output)
 			}
-			return true
 		} $else {
-			return error('Run the following command in your shell to install "$item":\n' +
-				cmd.join(' '))
+			cmd := [
+				'cmd /c',
+				'"' + yes_cmd,
+				'|',
+				sdkmanager(),
+				'--sdk_root="$sdk.root()"',
+				'"$item"' + '"',
+			]
+			util.verbosity_print_cmd(cmd, opt.verbosity)
+			cmd_res := util.run(cmd)
+			if cmd_res.exit_code != 0 {
+				return error(cmd_res.output)
+			}
 		}
+		return true
 	} else if opt.dep == .ndk {
 		version_check := item.all_after(';')
 		if version_check != '' {
@@ -306,23 +330,36 @@ fn install_opt(opt InstallOptions) ?bool {
 		if opt.verbosity > 0 {
 			println('Installing NDK (Side-by-side) "$item"...')
 		}
-		cmd := [
-			yes_cmd + ' |' /* TODO Windows */,
-			sdkmanager(),
-			'--sdk_root="$sdk.root()"',
-			'"$item"',
-		]
+
 		$if !windows {
+			cmd := [
+				yes_cmd,
+				'|',
+				sdkmanager(),
+				'--sdk_root="$sdk.root()"',
+				'"$item"',
+			]
 			util.verbosity_print_cmd(cmd, opt.verbosity)
 			cmd_res := util.run(cmd)
 			if cmd_res.exit_code > 0 {
 				return error(cmd_res.output)
 			}
-			return true
 		} $else {
-			return error('Run the following command in your shell to install "$item":\n' +
-				cmd.join(' '))
+			cmd := [
+				'cmd /c',
+				'"' + yes_cmd,
+				'|',
+				sdkmanager(),
+				'--sdk_root="$sdk.root()"',
+				'"$item"' + '"',
+			]
+			util.verbosity_print_cmd(cmd, opt.verbosity)
+			cmd_res := util.run(cmd)
+			if cmd_res.exit_code != 0 {
+				return error(cmd_res.output)
+			}
 		}
+		return true
 	} else if opt.dep == .build_tools {
 		version_check := item.all_after(';')
 		if version_check != '' {
