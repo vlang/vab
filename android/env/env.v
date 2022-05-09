@@ -760,8 +760,14 @@ pub fn aapt2() string {
 	if !os.exists(aapt2) {
 		aapt2 = os.join_path(util.cache_dir(), 'aapt2')
 	}
-	if !os.is_executable(aapt2) {
-		aapt2 = ''
+	$if !windows {
+		if !os.is_executable(aapt2) {
+			aapt2 = ''
+		}
+	} $else {
+		if !os.exists(aapt2) {
+			aapt2 = ''
+		}
 	}
 	return aapt2
 }
