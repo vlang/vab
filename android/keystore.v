@@ -21,9 +21,9 @@ pub fn resolve_keystore(default_ks Keystore, verbosity int) Keystore {
 			println('Generating "$file"')
 		}
 		keytool := os.join_path(java.jdk_bin_path(), 'keytool')
-		mut dname_args := "'CN=,OU=,O=,L=,S=,C='"
+		mut dname_args := "'CN=Android Debug,OU=,O=Android,L=,S=,C=US'"
 		$if windows {
-			dname_args = '"CN=,OU=,O=,L=,S=,C="'
+			dname_args = '"' + dname_args.trim("'") + '"'
 		}
 		keytool_cmd := [
 			keytool,
