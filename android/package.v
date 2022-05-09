@@ -193,7 +193,11 @@ fn package_apk(opt PackageOptions) bool {
 	collected_libs := os.walk_ext(os.join_path(build_path, 'lib'), '.so')
 
 	for lib in collected_libs {
-		lib_s := lib.replace(build_path + os.path_separator, '')
+		mut lib_s := lib.replace(build_path + os.path_separator, '')
+		$if windows {
+			// NOTE This is necessary for paths to work when packaging up on Windows
+			lib_s = lib_s.replace(os.path_separator, '/')
+		}
 		aapt_cmd = [
 			aapt,
 			'add',
