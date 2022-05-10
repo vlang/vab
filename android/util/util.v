@@ -105,7 +105,7 @@ pub fn unzip(file string, dir string) ? {
 		dir,
 	]
 	run_or_exit(unzip_cmd)*/
-	return true
+	// return true
 }
 
 pub fn zip(dir string, file string) bool {
