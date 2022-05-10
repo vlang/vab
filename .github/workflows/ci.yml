@@ -90,6 +90,7 @@ jobs:
         export ANDROID_NDK_ROOT=""
         export VEXE=./v
         vab/vab install auto
+        /home/runner/.cache/v/android/sdk/cmdline-tools/tools/bin/sdkmanager --version
 
     - name: Run vab doctor
       run: |
