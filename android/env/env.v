@@ -237,7 +237,7 @@ fn install_opt(opt InstallOptions) ?bool {
 				'No permission to write in Android SDK root. Please install manually or ensure write access to "$sdk.root()".')
 		} else {
 			return error(@MOD + '.' + @FN + ' ' +
-				'The `sdkmanager` ($sdkmanager()) seems outdated or incompatible with the Java version used". Please fix your setup manually.')
+				'The `sdkmanager` seems outdated or incompatible with the Java version used". Please fix your setup manually.\nPath: "$sdkmanager()"\nVersion: $sdkmanager_version()')
 		}
 	}
 
