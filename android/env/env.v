@@ -801,7 +801,7 @@ fn ensure_aapt2(verbosity int) ?bool {
 		os.mkdir_all(unpack_path) or {
 			return error(@MOD + '.' + @FN + ' ' + 'failed to install `aapt2`: $err')
 		}
-		util.unzip(file, unpack_path)
+		util.unzip(file, unpack_path) ?
 		// Install
 		aapt2_file := os.join_path(unpack_path, 'aapt2')
 		dst_check := os.join_path(dst, 'aapt2')
