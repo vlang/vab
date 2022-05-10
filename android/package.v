@@ -333,11 +333,12 @@ fn package_aab(opt PackageOptions) bool {
 				'compile',
 				'"$file"',
 				'-o',
-				compiled_resources_path + '\\',
+				'compiled_resources.tmp.zip',
 			]
 			util.verbosity_print_cmd(aapt2_cmd, opt.verbosity)
 			util.run_or_exit(aapt2_cmd)
 		}
+		util.unzip('compiled_resources.tmp.zip', compiled_resources_path) or { panic(err) }
 	}
 
 	if opt.verbosity > 1 {
