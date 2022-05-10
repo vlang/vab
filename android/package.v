@@ -316,7 +316,7 @@ fn package_aab(opt PackageOptions) bool {
 	util.verbosity_print_cmd(aapt2_cmd, opt.verbosity)
 	util.run_or_exit(aapt2_cmd)
 
-	util.unzip('compiled_resources.tmp.zip', 'compiled_resources')
+	util.unzip('compiled_resources.tmp.zip', 'compiled_resources') or { panic(err) }
 
 	if opt.verbosity > 1 {
 		println('Preparing resources and assets')
@@ -332,15 +332,11 @@ fn package_aab(opt PackageOptions) bool {
 		'--proto-format',
 		'-o',
 		'temporary.apk',
-		'-I',
-		android_runtime,
-		'--manifest',
-		os.join_path(package_path, 'AndroidManifest.xml'),
+		'-I "' + android_runtime + '"',
+		'--manifest "' + os.join_path(package_path, 'AndroidManifest.xml') + '"',
 		'-R',
-		//'compiled_resources'
 		os.join_path('compiled_resources', '*.flat'),
-		'-A',
-		assets_path,
+		'-A "' + assets_path + '"',
 		'--auto-add-overlay --java gen',
 	]
 	util.verbosity_print_cmd(aapt2_link_cmd, opt.verbosity)
@@ -363,7 +359,7 @@ fn package_aab(opt PackageOptions) bool {
 		'-source 1.7',
 		'-target 1.7',
 		//'-bootclasspath ' + os.join_path(java.jre_root(),'lib','rt.jar')
-		'-bootclasspath ' + android_runtime,
+		'-bootclasspath "' + android_runtime + '"',
 		//'-classpath ' + android_runtime,
 		'-d classes',
 		'-classpath .',
@@ -375,7 +371,7 @@ fn package_aab(opt PackageOptions) bool {
 	util.run_or_exit(javac_cmd)
 
 	// unzip temporary.apk -d staging
-	util.unzip('temporary.apk', staging_path)
+	util.unzip('temporary.apk', staging_path) or { panic(err) }
 
 	os.mkdir_all(os.join_path(staging_path, 'manifest')) or { panic(err) }
 	os.mv(os.join_path(staging_path, 'AndroidManifest.xml'), os.join_path(staging_path,
@@ -444,7 +440,7 @@ fn package_aab(opt PackageOptions) bool {
 		keystore.password,
 		'-keypass',
 		keystore.alias_password,
-		tmp_product,
+		'"' + tmp_product + '"',
 		keystore.alias,
 	]
 	util.verbosity_print_cmd(jarsigner_cmd, opt.verbosity)
@@ -454,11 +450,11 @@ fn package_aab(opt PackageOptions) bool {
 	bundletool_validate_cmd := [
 		java_exe,
 		'-jar',
-		bundletool,
+		'"' + bundletool + '"',
 		'validate',
 		'--bundle',
 		// tmp_unsigned_product
-		tmp_product,
+		'"' + tmp_product + '"',
 	]
 	util.verbosity_print_cmd(bundletool_validate_cmd, opt.verbosity)
 	// println(util.run(bundletool_validate_cmd).output)

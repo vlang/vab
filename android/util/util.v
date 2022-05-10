@@ -3,6 +3,7 @@
 module util
 
 import os
+import szip
 import cache
 
 // Utility functions
@@ -89,14 +90,13 @@ pub fn run(args []string) os.Result {
 	return res
 }
 
-pub fn unzip(file string, dir string) bool {
-	/*
-	eprintln('Unzipping ${file} to ${dir}...')
-	mut zip := szip.open(file, 0, szip.m_ronly) or { return false }
-	zip.extract_entry(dir)
-	zip.close()
-	*/
+pub fn unzip(file string, dir string) ? {
+	if !os.is_dir(dir) {
+		os.mkdir_all(dir) ?
+	}
 
+	szip.extract_zip_to_dir(file, dir) ?
+	/*
 	// TODO unzip
 	unzip_cmd := [
 		'unzip',
@@ -104,7 +104,7 @@ pub fn unzip(file string, dir string) bool {
 		'-d',
 		dir,
 	]
-	run_or_exit(unzip_cmd)
+	run_or_exit(unzip_cmd)*/
 	return true
 }
 

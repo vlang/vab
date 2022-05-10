@@ -473,11 +473,13 @@ fn ensure_sdkmanager(verbosity int) ?bool {
 		if verbosity > 1 {
 			println('Installing `sdkmanager` to "$dst"...')
 		}
-		os.mkdir_all(dst) or { panic(err) }
+		os.mkdir_all(dst) ?
 		dst_check := os.join_path(dst, 'tools', 'bin')
-		if util.unzip(file, dst) {
-			os.chmod(os.join_path(dst_check, 'sdkmanager'), 0o755) or { panic(err) }
-		}
+
+		util.unzip(file, dst) ?
+
+		os.chmod(os.join_path(dst_check, 'sdkmanager'), 0o755) ?
+
 		if os.is_executable(os.join_path(dst_check, 'sdkmanager')) {
 			if verbosity > 1 {
 				println('`sdkmanager` installed in "$dst_check". SDK root reports "$sdk.root()"')
