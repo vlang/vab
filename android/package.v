@@ -306,6 +306,7 @@ fn package_aab(opt PackageOptions) bool {
 		println('Compiling resources')
 	}
 
+	compiled_resources_path := 'compiled_resources'
 	// https://developer.android.com/studio/command-line/aapt2#compile
 	// NOTE aapt2 compile project/app/src/main/res/**/* -o compiled_resources
 	// The above expansion of "*" does not work on all platforms - so on Windows we gather the files manually.
@@ -320,7 +321,7 @@ fn package_aab(opt PackageOptions) bool {
 		]
 		util.verbosity_print_cmd(aapt2_cmd, opt.verbosity)
 		util.run_or_exit(aapt2_cmd)
-		util.unzip('compiled_resources.tmp.zip', 'compiled_resources') or { panic(err) }
+		util.unzip('compiled_resources.tmp.zip', compiled_resources_path) or { panic(err) }
 	} $else {
 		mut files := []string{}
 		os.walk_with_context(res_path, &files, fn (mut files []string, path string) {
@@ -332,7 +333,7 @@ fn package_aab(opt PackageOptions) bool {
 				'compile',
 				'"$file"',
 				'-o',
-				'compiled_resources',
+				compiled_resources_path + '\\',
 			]
 			util.verbosity_print_cmd(aapt2_cmd, opt.verbosity)
 			util.run_or_exit(aapt2_cmd)
@@ -365,7 +366,7 @@ fn package_aab(opt PackageOptions) bool {
 		util.run_or_exit(aapt2_link_cmd)
 	} $else {
 		mut files := []string{}
-		os.walk_with_context(res_path, &files, fn (mut files []string, path string) {
+		os.walk_with_context(compiled_resources_path, &files, fn (mut files []string, path string) {
 			if path.ends_with('.flat') {
 				files << path
 			}
