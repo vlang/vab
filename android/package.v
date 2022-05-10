@@ -305,8 +305,12 @@ fn package_aab(opt PackageOptions) bool {
 	if opt.verbosity > 1 {
 		println('Compiling resources')
 	}
+
+	// https://developer.android.com/studio/command-line/aapt2#compile
+	// NOTE aapt2 compile project/app/src/main/res/**/* -o compiled_resources
+	// The above expansion of "*" does not work on all platforms - so on Windows we gather the files manually.
+	// On Unix we then save a lot of tool invokations.
 	$if !windows {
-		// aapt2 compile project/app/src/main/res/**/* -o compiled_resources
 		aapt2_cmd := [
 			aapt2,
 			'compile',
@@ -318,17 +322,15 @@ fn package_aab(opt PackageOptions) bool {
 		util.run_or_exit(aapt2_cmd)
 		util.unzip('compiled_resources.tmp.zip', 'compiled_resources') or { panic(err) }
 	} $else {
-		mut folders := []string{}
-		os.walk_with_context(res_path, &folders, fn (mut folders []string, path string) {
-			if os.is_dir(path) {
-				folders << path
-			}
+		mut files := []string{}
+		os.walk_with_context(res_path, &files, fn (mut files []string, path string) {
+			files << path
 		})
-		for folder in folders {
+		for file in files {
 			aapt2_cmd := [
 				aapt2,
 				'compile',
-				os.join_path(res_path, '**', '*'),
+				'"$file"',
 				'-o',
 				'compiled_resources',
 			]
@@ -345,21 +347,50 @@ fn package_aab(opt PackageOptions) bool {
 	//      --manifest project/app/src/main/AndroidManifest.xml \
 	//      -R compiled_resources/*.flat \
 	//      --auto-add-overlay --java gen
-	aapt2_link_cmd := [
-		aapt2,
-		'link',
-		'--proto-format',
-		'-o',
-		'temporary.apk',
-		'-I "' + android_runtime + '"',
-		'--manifest "' + os.join_path(package_path, 'AndroidManifest.xml') + '"',
-		'-R',
-		os.join_path('compiled_resources', '*.flat'),
-		'-A "' + assets_path + '"',
-		'--auto-add-overlay --java gen',
-	]
-	util.verbosity_print_cmd(aapt2_link_cmd, opt.verbosity)
-	util.run_or_exit(aapt2_link_cmd)
+	$if !windows {
+		aapt2_link_cmd := [
+			aapt2,
+			'link',
+			'--proto-format',
+			'-o',
+			'temporary.apk',
+			'-I "' + android_runtime + '"',
+			'--manifest "' + os.join_path(package_path, 'AndroidManifest.xml') + '"',
+			'-R',
+			os.join_path('compiled_resources', '*.flat'),
+			'-A "' + assets_path + '"',
+			'--auto-add-overlay --java gen',
+		]
+		util.verbosity_print_cmd(aapt2_link_cmd, opt.verbosity)
+		util.run_or_exit(aapt2_link_cmd)
+	} $else {
+		mut files := []string{}
+		os.walk_with_context(res_path, &files, fn (mut files []string, path string) {
+			if path.ends_with('.flat') {
+				files << path
+			}
+		})
+		mut file_args := ''
+		for file in files {
+			file_args += '"$file" '
+		}
+		file_args = file_args.trim(' ')
+		aapt2_link_cmd := [
+			aapt2,
+			'link',
+			'--proto-format',
+			'-o',
+			'temporary.apk',
+			'-I "' + android_runtime + '"',
+			'--manifest "' + os.join_path(package_path, 'AndroidManifest.xml') + '"',
+			'-R',
+			file_args,
+			'-A "' + assets_path + '"',
+			'--auto-add-overlay --java gen',
+		]
+		util.verbosity_print_cmd(aapt2_link_cmd, opt.verbosity)
+		util.run_or_exit(aapt2_link_cmd)
+	}
 
 	if opt.verbosity > 1 {
 		println('Compiling java sources')
