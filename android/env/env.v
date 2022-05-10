@@ -236,8 +236,14 @@ fn install_opt(opt InstallOptions) ?bool {
 			return error(@MOD + '.' + @FN + ' ' +
 				'No permission to write in Android SDK root. Please install manually or ensure write access to "$sdk.root()".')
 		} else {
+			cmd := [
+				sdkmanager(),
+				'--version',
+			]
+			cmd_res := util.run(cmd)
+
 			return error(@MOD + '.' + @FN + ' ' +
-				'The `sdkmanager` seems outdated or incompatible with the Java version used". Please fix your setup manually.\nPath: "$sdkmanager()"\nVersion: $sdkmanager_version()')
+				'The `sdkmanager` seems outdated or incompatible with the Java version used". Please fix your setup manually.\nPath: "$sdkmanager()"\nVersion: $sdkmanager_version()\nRaw version:\n$cmd_res')
 		}
 	}
 
@@ -671,7 +677,7 @@ pub fn sdkmanager_version() string {
 			'--version',
 		]
 		cmd_res := util.run(cmd)
-		if cmd_res.exit_code > 0 {
+		if cmd_res.exit_code != 0 {
 			return version
 		}
 		version = cmd_res.output.trim(' \n\r')
@@ -759,8 +765,12 @@ pub fn has_aapt2() bool {
 
 pub fn aapt2() string {
 	mut aapt2 := os.getenv('AAPT2')
+	mut dot_exe := ''
+	$if windows {
+		dot_exe = '.exe'
+	}
 	if !os.exists(aapt2) {
-		aapt2 = os.join_path(util.cache_dir(), 'aapt2')
+		aapt2 = os.join_path(util.cache_dir(), 'aapt2$dot_exe')
 	}
 	$if !windows {
 		if !os.is_executable(aapt2) {
@@ -803,15 +813,19 @@ fn ensure_aapt2(verbosity int) ?bool {
 		}
 		util.unzip(file, unpack_path) ?
 		// Install
-		aapt2_file := os.join_path(unpack_path, 'aapt2')
-		dst_check := os.join_path(dst, 'aapt2')
+		mut dot_exe := ''
+		$if windows {
+			dot_exe = '.exe'
+		}
+		aapt2_file := os.join_path(unpack_path, 'aapt2' + dot_exe)
+		dst_check := os.join_path(dst, 'aapt2' + dot_exe)
 		os.rm(dst_check) or {}
 		os.cp(aapt2_file, dst_check) or {
-			return error(@MOD + '.' + @FN + ' ' + 'failed to install `aapt2`: $err')
+			return error(@MOD + '.' + @FN + ' ' + 'failed to install `aapt2$dot_exe`: $err')
 		}
 		if os.exists(dst_check) {
 			if verbosity > 1 {
-				println('`aapt2` installed in "$dst_check"')
+				println('`aapt2` installed as "$dst_check"')
 			}
 			return true
 		}
