@@ -236,12 +236,6 @@ fn install_opt(opt InstallOptions) ?bool {
 			return error(@MOD + '.' + @FN + ' ' +
 				'No permission to write in Android SDK root. Please install manually or ensure write access to "$sdk.root()".')
 		} else {
-			cmd := [
-				sdkmanager(),
-				'--version',
-			]
-			cmd_res := util.run(cmd)
-
 			return error(@MOD + '.' + @FN + ' ' +
 				'The `sdkmanager` seems outdated or incompatible with the Java version used". Please fix your setup manually.\nPath: "$sdkmanager()"\nVersion: $sdkmanager_version()\nRaw version:\n$cmd_res')
 		}
@@ -455,6 +449,7 @@ fn ensure_sdkmanager(verbosity int) ?bool {
 	// For troubleshooting and info, please see
 	// https://stackoverflow.com/a/58652345
 	// https://stackoverflow.com/a/61176718
+	// https://stackoverflow.com/questions/60727326
 	if sdkmanager() == '' {
 		// Let just cross fingers that it ends up where we want it.
 		dst := os.join_path(sdk.cache_dir(), 'cmdline-tools')
@@ -487,6 +482,15 @@ fn ensure_sdkmanager(verbosity int) ?bool {
 		os.chmod(os.join_path(dst_check, 'sdkmanager'), 0o755) ?
 
 		if os.is_executable(os.join_path(dst_check, 'sdkmanager')) {
+			$if linux {
+				// Workaround BUG: Error: Could not find or load main class com.android.sdklib.tool.sdkmanager.SdkManagerCli
+				jarrs := os.walk_ext(dst, '.jarr')
+				for jarr in jarrs {
+					file_no_ext := jarr.all_before_last('.')
+					os.mv(jarr, file_no_ext + '.jar') or { panic(err) }
+				}
+			}
+			util.run([os.join_path(dst_check, 'sdkmanager')])
 			if verbosity > 1 {
 				println('`sdkmanager` installed in "$dst_check". SDK root reports "$sdk.root()"')
 			}
