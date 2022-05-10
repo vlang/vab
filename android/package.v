@@ -305,18 +305,37 @@ fn package_aab(opt PackageOptions) bool {
 	if opt.verbosity > 1 {
 		println('Compiling resources')
 	}
-	// aapt2 compile project/app/src/main/res/**/* -o compiled_resources
-	aapt2_cmd := [
-		aapt2,
-		'compile',
-		os.join_path(res_path, '**', '*'),
-		'-o',
-		'compiled_resources.tmp.zip',
-	]
-	util.verbosity_print_cmd(aapt2_cmd, opt.verbosity)
-	util.run_or_exit(aapt2_cmd)
-
-	util.unzip('compiled_resources.tmp.zip', 'compiled_resources') or { panic(err) }
+	$if !windows {
+		// aapt2 compile project/app/src/main/res/**/* -o compiled_resources
+		aapt2_cmd := [
+			aapt2,
+			'compile',
+			os.join_path(res_path, '**', '*'),
+			'-o',
+			'compiled_resources.tmp.zip',
+		]
+		util.verbosity_print_cmd(aapt2_cmd, opt.verbosity)
+		util.run_or_exit(aapt2_cmd)
+		util.unzip('compiled_resources.tmp.zip', 'compiled_resources') or { panic(err) }
+	} $else {
+		mut folders := []string{}
+		os.walk_with_context(res_path, &folders, fn (mut folders []string, path string) {
+			if os.is_dir(path) {
+				folders << path
+			}
+		})
+		for folder in folders {
+			aapt2_cmd := [
+				aapt2,
+				'compile',
+				os.join_path(res_path, '**', '*'),
+				'-o',
+				'compiled_resources',
+			]
+			util.verbosity_print_cmd(aapt2_cmd, opt.verbosity)
+			util.run_or_exit(aapt2_cmd)
+		}
+	}
 
 	if opt.verbosity > 1 {
 		println('Preparing resources and assets')
