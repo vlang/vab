@@ -461,7 +461,7 @@ fn package_aab(opt PackageOptions) bool {
 		'-l',
 		os.join_path(package_path, 'base.zip'),
 	]
-	util.verbosity_print_cmd(zip_cmd, opt.verbosity)
+	util.verbosity_print_cmd(list_zip_cmd, opt.verbosity)
 	println(util.run(list_zip_cmd))
 
 	os.chdir(package_path) or {}
