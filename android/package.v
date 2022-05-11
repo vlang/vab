@@ -453,7 +453,7 @@ fn package_aab(opt PackageOptions) bool {
 	// cd staging; zip -r ../base.zip *
 	os.chdir(staging_path) or {}
 
-	util.zip_files_in_dir(staging_path,os.join_path(package_path, 'base.zip')) or { panic(err) }
+	util.zip_folder(staging_path, os.join_path(package_path, 'base.zip')) or { panic(err) }
 
 	/*
 	zip_cmd := [
