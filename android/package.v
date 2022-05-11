@@ -466,7 +466,7 @@ fn package_aab(opt PackageOptions) bool {
 	// Caused by: java.util.zip.ZipException: invalid CEN header (bad signature)
 	jdk_semantic_version := semver.from(java.jdk_version()) or {
 		panic(@MOD + '.' + @FN + ':' + @LINE +
-			' error converting jdk_version "$jdk_version" to semantic version.\nsemver: $err')
+			' error converting jdk_version "$java.jdk_version()" to semantic version.\nsemver: $err')
 	}
 	if jdk_semantic_version.le(semver.build(1, 8, 0)) {
 		$if !windows {
