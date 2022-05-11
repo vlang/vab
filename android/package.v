@@ -455,6 +455,15 @@ fn package_aab(opt PackageOptions) bool {
 
 	util.zip_folder(staging_path, os.join_path(package_path, 'base.zip')) or { panic(err) }
 
+	// TODO temp CI investigation
+	list_zip_cmd := [
+		'unzip',
+		'-l',
+		os.join_path(package_path, 'base.zip'),
+	]
+	util.verbosity_print_cmd(zip_cmd, opt.verbosity)
+	println(util.run(zip_cmd))
+
 	os.chdir(package_path) or {}
 
 	// java -jar bundletool build-bundle --modules=base.zip --output=bundle.aab
