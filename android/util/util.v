@@ -94,18 +94,7 @@ pub fn unzip(file string, dir string) ? {
 	if !os.is_dir(dir) {
 		os.mkdir_all(dir) ?
 	}
-
 	szip.extract_zip_to_dir(file, dir) ?
-	/*
-	// TODO unzip
-	unzip_cmd := [
-		'unzip',
-		file,
-		'-d',
-		dir,
-	]
-	run_or_exit(unzip_cmd)*/
-	// return true
 }
 
 pub fn zip_folder(dir string, out_file string) ? {

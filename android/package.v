@@ -4,6 +4,7 @@ module android
 
 import os
 import regex
+import semver
 import java
 import android.env
 import android.sdk
@@ -453,16 +454,37 @@ fn package_aab(opt PackageOptions) bool {
 	// cd staging; zip -r ../base.zip *
 	os.chdir(staging_path) or {}
 
-	util.zip_folder(staging_path, os.join_path(package_path, 'base.zip')) or { panic(err) }
+	base_zip_file := os.join_path(package_path, 'base.zip')
 
-	// TODO temp CI investigation
-	list_zip_cmd := [
-		'unzip',
-		'-l',
-		os.join_path(package_path, 'base.zip'),
-	]
-	util.verbosity_print_cmd(list_zip_cmd, opt.verbosity)
-	println(util.run(list_zip_cmd))
+	util.zip_folder(staging_path, base_zip_file) or { panic(err) }
+
+	// TODO Workaround bundletool, Java <= 8 (1.8.0) and ZIP64 BUG - Android development. just. keeps. giving...
+	// NOTE This workaround probably won't work for zip files larger than 4GB...
+	// Error message:
+	// com.android.tools.build.bundletool.model.exceptions.CommandExecutionException: File 'base.zip' does not seem to be a valid ZIP file.
+	// ...
+	// Caused by: java.util.zip.ZipException: invalid CEN header (bad signature)
+	jdk_semantic_version := semver.from(java.jdk_version()) or {
+		panic(@MOD + '.' + @FN + ':' + @LINE +
+			' error converting jdk_version "$jdk_version" to semantic version.\nsemver: $err')
+	}
+	if jdk_semantic_version.le(semver.build(1, 8, 0)) {
+		$if !windows {
+			if opt.verbosity > 1 {
+				println('Working around Java/bundletool/ZIP64 BUG...')
+			}
+			os.rm(base_zip_file) or {}
+			zip_cmd := [
+				'zip',
+				'-r',
+				base_zip_file,
+				'*',
+			]
+			util.verbosity_print_cmd(zip_cmd, opt.verbosity)
+			util.run_or_exit(zip_cmd)
+		}
+	}
+	// Workaround END
 
 	os.chdir(package_path) or {}
 
