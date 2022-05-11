@@ -452,6 +452,10 @@ fn package_aab(opt PackageOptions) bool {
 
 	// cd staging; zip -r ../base.zip *
 	os.chdir(staging_path) or {}
+
+	util.zip_files_in_dir(staging_path,os.join_path(package_path, 'base.zip')) or { panic(err) }
+
+	/*
 	zip_cmd := [
 		'zip',
 		'-r',
@@ -460,6 +464,8 @@ fn package_aab(opt PackageOptions) bool {
 	]
 	util.verbosity_print_cmd(zip_cmd, opt.verbosity)
 	util.run_or_exit(zip_cmd)
+	*/
+
 	os.chdir(package_path) or {}
 
 	// java -jar bundletool build-bundle --modules=base.zip --output=bundle.aab

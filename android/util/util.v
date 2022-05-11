@@ -108,13 +108,26 @@ pub fn unzip(file string, dir string) ? {
 	// return true
 }
 
-pub fn zip(dir string, file string) bool {
+pub fn zip_files_in_dir(dir string, out_file string) ? {
+	path := dir.trim_right(os.path_separator)
+	mut files := []string{}
+	os.walk_with_context(path, &files, fn (mut files []string, path string) {
+		if os.is_file(path) {
+			files << path
+		}
+	})
+	for mut file in files {
+		file = file.replace(path + os.path_separator, '')
+	}
+
+	szip.zip_files(files, out_file) ?
 	/*
 	eprintln('Zipping ${file} to ${dir}...')
 	mut zip := szip.open(file, 0, szip.m_ronly) or { return false }
 	zip.close()
 	*/
 
+	/*
 	// TODO zip
 	zip_cmd := [
 		'zip',
@@ -123,5 +136,5 @@ pub fn zip(dir string, file string) bool {
 		dir,
 	]
 	run_or_exit(zip_cmd)
-	return true
+	return true*/
 }
