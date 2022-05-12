@@ -326,7 +326,9 @@ fn package_aab(opt PackageOptions) bool {
 	} $else {
 		mut files := []string{}
 		os.walk_with_context(res_path, &files, fn (mut files []string, path string) {
-			files << path
+			if os.is_file(path) {
+				files << path
+			}
 		})
 		os.mkdir(compiled_resources_path) or {}
 		for file in files {
