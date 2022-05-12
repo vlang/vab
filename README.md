@@ -8,7 +8,7 @@ based devices.
 
 # Install
 
-Currently Linux and macOS build hosts are supported.
+Linux, macOS and Windows build hosts are supported.
 
 ```bash
 git clone https://github.com/vlang/vab.git
@@ -16,10 +16,8 @@ cd vab
 v vab.v
 ```
 
-
 **Note** `vab` use V's `net.http` module which currently requires the development files for libssl / OpenSSL.
 These can be installed as [described](https://github.com/vlang/v#v-nethttp-netwebsocket-v-install) in V's own documentation.
-
 
 ## Symlink (optional)
 You can symlink `vab` to your `$PATH` so it works as a global shell command.
@@ -31,11 +29,11 @@ sudo ln -s /path/to/vab /usr/local/bin/vab
 
 Dependencies:
  * V
- * Java (JDK) >= 8
+ * Java (JDK) >= 8 (>= 9 on Windows)
  * Android SDK
  * Android NDK
 
-(**no** Android Studio required)
+(Android Studio is **NOT** required)
 
 If `vab` fail to detect your environment you can set ENV variables
 to help it:
@@ -126,6 +124,10 @@ If you have nerves to let it try and figure things out automatically simply do:
 
 ## Java
 
+### Windows
+
+OpenJDK can be installed via [https://adoptium.net/](https://adoptium.net/).
+
 ### macOS
 
 Installing Java JDK using homebrew
@@ -152,4 +154,6 @@ Installed API levels can be listed with `vab --list-apis`.
 
 # Troubleshooting
 
-Android is a complex ecosystem - please consult our [FAQ](docs/FAQ.md) for answers to frequently asked questions.
+Android is a complex ecosystem that has differences between
+build hosts and tool versions - please consult our [FAQ](docs/FAQ.md)
+for answers to frequently asked questions.
