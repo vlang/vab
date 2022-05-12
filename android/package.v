@@ -86,6 +86,12 @@ fn package_apk(opt PackageOptions) bool {
 	build_path := os.join_path(opt.work_dir, 'build')
 	build_tools_path := os.join_path(sdk.build_tools_root(), opt.build_tools)
 
+	// Used for various bug workarounds below
+	jdk_semantic_version := semver.from(java.jdk_version()) or {
+		panic(@MOD + '.' + @FN + ':' + @LINE +
+			' error converting jdk_version "$java.jdk_version()" to semantic version.\nsemver: $err')
+	}
+
 	javac := os.join_path(java.jdk_bin_path(), 'javac')
 	aapt := os.join_path(build_tools_path, 'aapt')
 	mut dx := os.join_path(build_tools_path, 'dx')
@@ -162,6 +168,30 @@ fn package_apk(opt PackageOptions) bool {
 	util.verbosity_print_cmd(javac_cmd, opt.verbosity)
 	util.run_or_exit(javac_cmd)
 
+	$if windows {
+		// TODO Workaround dx and Java > 8 (1.8.0) BUG
+		// Error message we are trying to prevent:
+		// -Djava.ext.dirs=C:<path>lib is not supported.  Use -classpath instead.
+		if jdk_semantic_version.gt(semver.build(1, 8, 0)) && os.exists(dx) {
+			mut patched_dx := os.join_path(os.dir(dx), os.file_name(dx).all_before_last('.') +
+				'_patched.bat')
+			if !os.exists(patched_dx) {
+				mut dx_contents := os.read_file(dx) or { '' }
+				if dx_contents != '' && dx_contents.contains('-Djava.ext.dirs=') {
+					dx_contents = dx_contents.replace_once('-Djava.ext.dirs=', '-classpath ')
+					os.write_file(patched_dx, dx_contents) or { patched_dx = dx }
+				} else {
+					patched_dx = dx
+				}
+				if opt.verbosity > 1 {
+					println('Using patched dx ($patched_dx)')
+				}
+			}
+			dx = patched_dx
+		}
+		// Workaround END
+	}
+
 	// Dex
 	dx_cmd := [
 		dx,
@@ -227,6 +257,32 @@ fn package_apk(opt PackageOptions) bool {
 
 	if opt.is_prod && os.file_name(keystore.path) == 'debug.keystore' {
 		eprintln('Warning: It looks like you are using the debug.keystore file to sign your application built in production mode ("-prod").')
+	}
+
+	$if windows {
+		// TODO Workaround apksigner and Java > 8 (1.8.0) BUG
+		// Error message we are trying to prevent:
+		// -Djava.ext.dirs=C:<path>lib is not supported.  Use -classpath instead.
+		if jdk_semantic_version.gt(semver.build(1, 8, 0)) && os.exists(apksigner) {
+			mut patched_apksigner := os.join_path(os.dir(apksigner),
+				os.file_name(apksigner).all_before_last('.') + '_patched.bat')
+			if !os.exists(patched_apksigner) {
+				mut contents := os.read_file(apksigner) or { '' }
+				if contents != '' && contents.contains('-Djava.ext.dirs=') {
+					contents = contents.replace_once('-Djava.ext.dirs=', '-classpath ')
+					os.write_file(patched_apksigner, dx_contents) or {
+						patched_apksigner = apksigner
+					}
+				} else {
+					patched_apksigner = apksigner
+				}
+				if opt.verbosity > 1 {
+					println('Using patched apksigner ($patched_apksigner)')
+				}
+			}
+			apksigner = patched_apksigner
+		}
+		// Workaround END
 	}
 
 	mut apksigner_cmd := [
