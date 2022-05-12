@@ -268,6 +268,12 @@ fn package_aab(opt PackageOptions) bool {
 	build_path := os.join_path(opt.work_dir, 'build')
 	build_tools_path := os.join_path(sdk.build_tools_root(), opt.build_tools)
 
+	// Used for various bug workarounds below
+	jdk_semantic_version := semver.from(java.jdk_version()) or {
+		panic(@MOD + '.' + @FN + ':' + @LINE +
+			' error converting jdk_version "$java.jdk_version()" to semantic version.\nsemver: $err')
+	}
+
 	java_exe := os.join_path(java.jre_bin_path(), 'java')
 	javac := os.join_path(java.jdk_bin_path(), 'javac')
 	jarsigner := os.join_path(java.jdk_bin_path(), 'jarsigner')
@@ -441,6 +447,29 @@ fn package_aab(opt PackageOptions) bool {
 	}
 	// os.chdir(pwd) or {}
 
+	$if windows {
+		// TODO Workaround dx and Java > 8 (1.8.0) BUG
+		// Error message we are trying to prevent:
+		// -Djava.ext.dirs=C:<path>lib is not supported.  Use -classpath instead.
+		if jdk_semantic_version.gt(semver.build(1, 8, 0)) && os.exists(dx) {
+			mut patched_dx := os.join_path(os.dir(dx), os.filename(dx).all_before_last('.') +
+				'_patched.bat')
+			if !os.exists(patched_dx) {
+				mut dx_contents := os.read_file(dx) or { '' }
+				if dx_contents != '' && dx_contents.contains('-Djava.ext.dirs=') {
+					dx_contents = dx_contents.replace_once('-Djava.ext.dirs=', '-classpath ')
+					os.write_file(patched_dx, dx_contents) or { patched_dx = dx }
+				} else {
+					patched_dx = dx
+				}
+				if opt.verbosity > 1 {
+					println('Using patched dx ($patched_dx)')
+				}
+			}
+			dx = patched_dx
+		}
+	}
+
 	os.mkdir_all(os.join_path(staging_path, 'dex')) or { panic(err) }
 	// dx --dex --output=staging/dex/classes.dex classes/
 	dx_cmd := [
@@ -462,14 +491,10 @@ fn package_aab(opt PackageOptions) bool {
 
 	// TODO Workaround bundletool, Java <= 8 (1.8.0) and ZIP64 BUG - Android development. just. keeps. giving...
 	// NOTE This workaround probably won't work for zip files larger than 4GB...
-	// Error message:
+	// Error message we are trying to prevent:
 	// com.android.tools.build.bundletool.model.exceptions.CommandExecutionException: File 'base.zip' does not seem to be a valid ZIP file.
 	// ...
 	// Caused by: java.util.zip.ZipException: invalid CEN header (bad signature)
-	jdk_semantic_version := semver.from(java.jdk_version()) or {
-		panic(@MOD + '.' + @FN + ':' + @LINE +
-			' error converting jdk_version "$java.jdk_version()" to semantic version.\nsemver: $err')
-	}
 	if jdk_semantic_version.le(semver.build(1, 8, 0)) {
 		$if !windows {
 			if opt.verbosity > 1 {
