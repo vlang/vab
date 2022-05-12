@@ -452,7 +452,7 @@ fn package_aab(opt PackageOptions) bool {
 		// Error message we are trying to prevent:
 		// -Djava.ext.dirs=C:<path>lib is not supported.  Use -classpath instead.
 		if jdk_semantic_version.gt(semver.build(1, 8, 0)) && os.exists(dx) {
-			mut patched_dx := os.join_path(os.dir(dx), os.filename(dx).all_before_last('.') +
+			mut patched_dx := os.join_path(os.dir(dx), os.file_name(dx).all_before_last('.') +
 				'_patched.bat')
 			if !os.exists(patched_dx) {
 				mut dx_contents := os.read_file(dx) or { '' }
