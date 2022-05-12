@@ -279,7 +279,7 @@ fn install_opt(opt InstallOptions) ?bool {
 				'"$item"' + '"',
 			]
 			util.verbosity_print_cmd(cmd, opt.verbosity)
-			cmd_res := util.run(cmd)
+			cmd_res := util.raw_run(cmd)
 			if cmd_res.exit_code != 0 {
 				return error(cmd_res.output)
 			}
@@ -310,7 +310,7 @@ fn install_opt(opt InstallOptions) ?bool {
 				'"$item"' + '"',
 			]
 			util.verbosity_print_cmd(cmd, opt.verbosity)
-			cmd_res := util.run(cmd)
+			cmd_res := util.raw_run(cmd)
 			if cmd_res.exit_code != 0 {
 				return error(cmd_res.output)
 			}
@@ -354,7 +354,7 @@ fn install_opt(opt InstallOptions) ?bool {
 				'"$item"' + '"',
 			]
 			util.verbosity_print_cmd(cmd, opt.verbosity)
-			cmd_res := util.run(cmd)
+			cmd_res := util.raw_run(cmd)
 			if cmd_res.exit_code != 0 {
 				return error(cmd_res.output)
 			}
@@ -394,7 +394,7 @@ fn install_opt(opt InstallOptions) ?bool {
 				'"$item"' + '"',
 			]
 			util.verbosity_print_cmd(cmd, opt.verbosity)
-			cmd_res := util.run(cmd)
+			cmd_res := util.raw_run(cmd)
 			if cmd_res.exit_code != 0 {
 				return error(cmd_res.output)
 			}
@@ -429,7 +429,7 @@ fn install_opt(opt InstallOptions) ?bool {
 				'"$item"' + '"',
 			]
 			util.verbosity_print_cmd(cmd, opt.verbosity)
-			cmd_res := util.run(cmd)
+			cmd_res := util.raw_run(cmd)
 			if cmd_res.exit_code != 0 {
 				return error(cmd_res.output)
 			}

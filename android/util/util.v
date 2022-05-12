@@ -90,6 +90,14 @@ pub fn run(args []string) os.Result {
 	return res
 }
 
+pub fn raw_run(args []string) os.Result {
+	res := os.raw_execute(args.join(' '))
+	if res.exit_code < 0 {
+		return os.Result{1, ''}
+	}
+	return res
+}
+
 pub fn unzip(file string, dir string) ? {
 	if !os.is_dir(dir) {
 		os.mkdir_all(dir) ?
