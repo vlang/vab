@@ -270,7 +270,7 @@ fn package_apk(opt PackageOptions) bool {
 				mut contents := os.read_file(apksigner) or { '' }
 				if contents != '' && contents.contains('-Djava.ext.dirs=') {
 					contents = contents.replace_once('-Djava.ext.dirs=', '-classpath ')
-					os.write_file(patched_apksigner, dx_contents) or {
+					os.write_file(patched_apksigner, contents) or {
 						patched_apksigner = apksigner
 					}
 				} else {
