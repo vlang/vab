@@ -454,7 +454,7 @@ fn args_to_options(arguments []string, defaults Options) ?(Options, &flag.FlagPa
 		list_build_tools: fp.bool('list-build-tools', 0, defaults.list_build_tools, 'List available Build-tools versions')
 	}
 
-	opt.additional_args = fp.finalize() ?
+	opt.additional_args = fp.finalize()?
 
 	v_flags << opt.v_flags
 	opt.v_flags = v_flags
