@@ -25,7 +25,7 @@ The following flags does the same as if they were passed to the "v" compiler:
 	exe_git_hash         = vab_commit_hash()
 	work_directory       = os.join_path(os.temp_dir(), exe_name.replace(' ', '_').to_lower())
 	rip_vflags           = ['-autofree', '-gc', '-g', '-cg', '-prod', 'run', '-showcc']
-	subcmds              = ['test-cleancode']
+	subcmds              = ['complete', 'test-cleancode']
 	accepted_input_files = ['.v', '.apk', '.aab']
 )
 
@@ -396,7 +396,7 @@ fn args_to_options(arguments []string, defaults Options) ?(Options, &flag.FlagPa
 
 	mut fp := flag.new_flag_parser(args)
 	fp.application(exe_name)
-	fp.version(exe_version)
+	fp.version(version_full())
 	fp.description(exe_description)
 	fp.arguments_description('input')
 
@@ -930,12 +930,12 @@ pub fn dot_vab_path(file_or_dir_path string) string {
 
 fn launch_cmd(args []string) int {
 	mut cmd := args[0]
-	cmd_args := args[1..]
+	tool_args := args[1..]
 	if cmd.starts_with('test-') {
 		cmd = cmd.all_after('test-')
 	}
 	v := vxt.vexe()
-	exe := os.join_path(exe_dir, 'cmd', cmd)
+	tool_exe := os.join_path(exe_dir, 'cmd', cmd)
 	if os.is_executable(v) {
 		hash_file := os.join_path(exe_dir, 'cmd', '.' + cmd + '.hash')
 
@@ -946,9 +946,9 @@ fn launch_cmd(args []string) int {
 		if hash != exe_git_hash {
 			v_cmd := [
 				v,
-				exe + '.v',
+				tool_exe + '.v',
 				'-o',
-				exe,
+				tool_exe,
 			]
 			res := os.execute(v_cmd.join(' '))
 			if res.exit_code < 0 {
@@ -964,21 +964,26 @@ fn launch_cmd(args []string) int {
 			}
 		}
 	}
-	exec := (exe + ' ' + cmd_args.join(' ')).trim_right(' ')
-	if os.is_executable(exe) {
-		res := os.execute(exec)
-		if res.exit_code == 0 {
-			print(res.output)
-			os.flush()
-			return 0
-		} else {
-			eprintln(res.output)
-			return 1
+	if os.is_executable(tool_exe) {
+		os.setenv('VAB_EXE', os.join_path(exe_dir, exe_name), true)
+		$if windows {
+			exit(os.system('${os.quoted_path(tool_exe)} $tool_args'))
+		} $else $if js {
+			// no way to implement os.execvp in JS backend
+			exit(os.system('$tool_exe $tool_args'))
+		} $else {
+			os.execvp(tool_exe, args) or { panic(err) }
 		}
+		exit(2)
 	}
+	exec := (tool_exe + ' ' + tool_args.join(' ')).trim_right(' ')
 	v_message := if !os.is_executable(v) { ' (v was not found)' } else { '' }
 	eprintln(@MOD + '.' + @FN + ' failed executing "$exec"$v_message')
 	return 1
+}
+
+fn version_full() string {
+	return '$exe_version $exe_git_hash'
 }
 
 fn version() string {
