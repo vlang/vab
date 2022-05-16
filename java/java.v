@@ -123,8 +123,17 @@ pub fn jre_root() string {
 	if java_home != '' {
 		return java_home.trim_right(os.path_separator)
 	}
-	possible_symlink := os.find_abs_path_of_executable('java') or { return '' }
-	java_home = os.real_path(os.join_path(os.dir(possible_symlink), '..'))
+	$if !windows {
+		possible_symlink := os.find_abs_path_of_executable('java') or { return '' }
+		java_home = os.real_path(os.join_path(os.dir(possible_symlink), '..'))
+	} $else {
+		res := os.execute('where.exe java')
+		if res.exit_code != 0 {
+			java_home = ''
+		} else {
+			java_home = os.dir(res.output.trim('\n\r'))
+		}
+	}
 	return java_home.trim_right(os.path_separator)
 }
 
@@ -142,8 +151,17 @@ pub fn jdk_root() string {
 	if java_home != '' {
 		return java_home.trim_right(os.path_separator)
 	}
-	possible_symlink := os.find_abs_path_of_executable('javac') or { return '' }
-	java_home = os.real_path(os.join_path(os.dir(possible_symlink), '..'))
+	$if !windows {
+		possible_symlink := os.find_abs_path_of_executable('javac') or { return '' }
+		java_home = os.real_path(os.join_path(os.dir(possible_symlink), '..'))
+	} $else {
+		res := os.execute('where.exe javac')
+		if res.exit_code != 0 {
+			java_home = ''
+		} else {
+			java_home = os.dir(res.output.trim('\n\r'))
+		}
+	}
 	java_home = java_home.trim_right(os.path_separator)
 	cache.set_string(@MOD + '.' + @FN, java_home)
 	return java_home
@@ -154,11 +172,13 @@ pub fn jdk_found() bool {
 }
 
 pub fn jdk_bin_path() string {
-	bin_dir := os.find_abs_path_of_executable('javac') or { os.join_path(jdk_root(), 'bin') }
+	bin_dir := os.find_abs_path_of_executable('javac') or {
+		os.join_path(jdk_root(), 'bin', 'javac')
+	}
 	return os.dir(bin_dir)
 }
 
 pub fn jre_bin_path() string {
-	bin_dir := os.find_abs_path_of_executable('java') or { os.join_path(jre_root(), 'bin') }
+	bin_dir := os.find_abs_path_of_executable('java') or { os.join_path(jre_root(), 'bin', 'java') }
 	return os.dir(bin_dir)
 }

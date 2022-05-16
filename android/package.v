@@ -4,6 +4,7 @@ module android
 
 import os
 import regex
+import semver
 import java
 import android.env
 import android.sdk
@@ -85,11 +86,23 @@ fn package_apk(opt PackageOptions) bool {
 	build_path := os.join_path(opt.work_dir, 'build')
 	build_tools_path := os.join_path(sdk.build_tools_root(), opt.build_tools)
 
+	// Used for various bug workarounds below
+	jdk_semantic_version := semver.from(java.jdk_version()) or {
+		panic(@MOD + '.' + @FN + ':' + @LINE +
+			' error converting jdk_version "$java.jdk_version()" to semantic version.\nsemver: $err')
+	}
+
 	javac := os.join_path(java.jdk_bin_path(), 'javac')
 	aapt := os.join_path(build_tools_path, 'aapt')
-	dx := os.join_path(build_tools_path, 'dx')
+	mut dx := os.join_path(build_tools_path, 'dx')
+	$if windows {
+		dx += '.bat'
+	}
 	zipalign := os.join_path(build_tools_path, 'zipalign')
-	apksigner := os.join_path(build_tools_path, 'apksigner')
+	mut apksigner := os.join_path(build_tools_path, 'apksigner')
+	$if windows {
+		apksigner += '.bat'
+	}
 
 	// work_dir := opt.work_dir
 	// VAPK_OUT=${VAPK}/..
@@ -124,11 +137,11 @@ fn package_apk(opt PackageOptions) bool {
 		'-v',
 		'-f',
 		'-m',
-		'-M ' + os.join_path(package_path, 'AndroidManifest.xml'),
-		'-S ' + res_path,
-		'-J ' + src_path,
-		'-A ' + assets_path,
-		'-I ' + android_runtime /* '--target-sdk-version ${ANDROIDTARGET}' */,
+		'-M "' + os.join_path(package_path, 'AndroidManifest.xml') + '"',
+		'-S "' + res_path + '"',
+		'-J "' + src_path + '"',
+		'-A "' + assets_path + '"',
+		'-I "' + android_runtime + '"' /* '--target-sdk-version ${ANDROIDTARGET}' */,
 	]
 	util.verbosity_print_cmd(aapt_cmd, opt.verbosity)
 	util.run_or_exit(aapt_cmd)
@@ -148,12 +161,36 @@ fn package_apk(opt PackageOptions) bool {
 		'-target 1.7',
 		'-classpath .',
 		'-sourcepath src',
-		'-bootclasspath ' + android_runtime,
+		'-bootclasspath "' + android_runtime + '"',
 	]
 	javac_cmd << java_sources
 
 	util.verbosity_print_cmd(javac_cmd, opt.verbosity)
 	util.run_or_exit(javac_cmd)
+
+	$if windows {
+		// TODO Workaround dx and Java > 8 (1.8.0) BUG
+		// Error message we are trying to prevent:
+		// -Djava.ext.dirs=C:<path>lib is not supported.  Use -classpath instead.
+		if jdk_semantic_version.gt(semver.build(1, 8, 0)) && os.exists(dx) {
+			mut patched_dx := os.join_path(os.dir(dx), os.file_name(dx).all_before_last('.') +
+				'_patched.bat')
+			if !os.exists(patched_dx) {
+				mut dx_contents := os.read_file(dx) or { '' }
+				if dx_contents != '' && dx_contents.contains('-Djava.ext.dirs=') {
+					dx_contents = dx_contents.replace_once('-Djava.ext.dirs=', '-classpath ')
+					os.write_file(patched_dx, dx_contents) or { patched_dx = dx }
+				} else {
+					patched_dx = dx
+				}
+				if opt.verbosity > 1 {
+					println('Using patched dx ($patched_dx)')
+				}
+			}
+			dx = patched_dx
+		}
+		// Workaround END
+	}
 
 	// Dex
 	dx_cmd := [
@@ -172,11 +209,11 @@ fn package_apk(opt PackageOptions) bool {
 		'package',
 		'-v',
 		'-f',
-		'-S ' + res_path,
-		'-M ' + os.join_path(package_path, 'AndroidManifest.xml'),
-		'-A ' + assets_path,
-		'-I ' + android_runtime,
-		'-F ' + tmp_unaligned_product,
+		'-S "' + res_path + '"',
+		'-M "' + os.join_path(package_path, 'AndroidManifest.xml') + '"',
+		'-A "' + assets_path + '"',
+		'-I "' + android_runtime + '"',
+		'-F "' + tmp_unaligned_product + '"',
 		'bin' /* bin_path */,
 	]
 	util.verbosity_print_cmd(aapt_cmd, opt.verbosity)
@@ -187,13 +224,17 @@ fn package_apk(opt PackageOptions) bool {
 	collected_libs := os.walk_ext(os.join_path(build_path, 'lib'), '.so')
 
 	for lib in collected_libs {
-		lib_s := lib.replace(build_path + os.path_separator, '')
+		mut lib_s := lib.replace(build_path + os.path_separator, '')
+		$if windows {
+			// NOTE This is necessary for paths to work when packaging up on Windows
+			lib_s = lib_s.replace(os.path_separator, '/')
+		}
 		aapt_cmd = [
 			aapt,
 			'add',
 			'-v',
-			tmp_unaligned_product,
-			lib_s,
+			'"' + tmp_unaligned_product + '"',
+			'"' + lib_s + '"',
 		]
 		util.verbosity_print_cmd(aapt_cmd, opt.verbosity)
 		util.run_or_exit(aapt_cmd)
@@ -205,8 +246,8 @@ fn package_apk(opt PackageOptions) bool {
 		zipalign,
 		'-v',
 		'-f 4',
-		tmp_unaligned_product,
-		tmp_unsigned_product,
+		'"' + tmp_unaligned_product + '"',
+		'"' + tmp_unsigned_product + '"',
 	]
 	util.verbosity_print_cmd(zipalign_cmd, opt.verbosity)
 	util.run_or_exit(zipalign_cmd)
@@ -218,6 +259,30 @@ fn package_apk(opt PackageOptions) bool {
 		eprintln('Warning: It looks like you are using the debug.keystore file to sign your application built in production mode ("-prod").')
 	}
 
+	$if windows {
+		// TODO Workaround apksigner and Java > 8 (1.8.0) BUG
+		// Error message we are trying to prevent:
+		// -Djava.ext.dirs=C:<path>lib is not supported.  Use -classpath instead.
+		if jdk_semantic_version.gt(semver.build(1, 8, 0)) && os.exists(apksigner) {
+			mut patched_apksigner := os.join_path(os.dir(apksigner),
+				os.file_name(apksigner).all_before_last('.') + '_patched.bat')
+			if !os.exists(patched_apksigner) {
+				mut contents := os.read_file(apksigner) or { '' }
+				if contents != '' && contents.contains('-Djava.ext.dirs=') {
+					contents = contents.replace_once('-Djava.ext.dirs=', '-classpath ')
+					os.write_file(patched_apksigner, contents) or { patched_apksigner = apksigner }
+				} else {
+					patched_apksigner = apksigner
+				}
+				if opt.verbosity > 1 {
+					println('Using patched apksigner ($patched_apksigner)')
+				}
+			}
+			apksigner = patched_apksigner
+		}
+		// Workaround END
+	}
+
 	mut apksigner_cmd := [
 		apksigner,
 		'sign',
@@ -225,8 +290,8 @@ fn package_apk(opt PackageOptions) bool {
 		'--ks-pass pass:' + keystore.password,
 		'--ks-key-alias "' + keystore.alias + '"',
 		'--key-pass pass:' + keystore.alias_password,
-		'--out ' + tmp_product,
-		tmp_unsigned_product,
+		'--out "' + tmp_product + '"',
+		'"' + tmp_unsigned_product + '"',
 	]
 	util.verbosity_print_cmd(apksigner_cmd, opt.verbosity)
 	util.run_or_exit(apksigner_cmd)
@@ -235,7 +300,7 @@ fn package_apk(opt PackageOptions) bool {
 		apksigner,
 		'verify',
 		'-v',
-		tmp_product,
+		'"' + tmp_product + '"',
 	]
 	util.verbosity_print_cmd(apksigner_cmd, opt.verbosity)
 	util.run_or_exit(apksigner_cmd)
@@ -257,10 +322,19 @@ fn package_aab(opt PackageOptions) bool {
 	build_path := os.join_path(opt.work_dir, 'build')
 	build_tools_path := os.join_path(sdk.build_tools_root(), opt.build_tools)
 
+	// Used for various bug workarounds below
+	jdk_semantic_version := semver.from(java.jdk_version()) or {
+		panic(@MOD + '.' + @FN + ':' + @LINE +
+			' error converting jdk_version "$java.jdk_version()" to semantic version.\nsemver: $err')
+	}
+
 	java_exe := os.join_path(java.jre_bin_path(), 'java')
 	javac := os.join_path(java.jdk_bin_path(), 'javac')
 	jarsigner := os.join_path(java.jdk_bin_path(), 'jarsigner')
-	dx := os.join_path(build_tools_path, 'dx')
+	mut dx := os.join_path(build_tools_path, 'dx')
+	$if windows {
+		dx += '.bat'
+	}
 	bundletool := env.bundletool() // Run with "java -jar ..."
 	aapt2 := env.aapt2()
 
@@ -292,18 +366,43 @@ fn package_aab(opt PackageOptions) bool {
 	if opt.verbosity > 1 {
 		println('Compiling resources')
 	}
-	// aapt2 compile project/app/src/main/res/**/* -o compiled_resources
-	aapt2_cmd := [
-		aapt2,
-		'compile',
-		os.join_path(res_path, '**', '*'),
-		'-o',
-		'compiled_resources.tmp.zip',
-	]
-	util.verbosity_print_cmd(aapt2_cmd, opt.verbosity)
-	util.run_or_exit(aapt2_cmd)
 
-	util.unzip('compiled_resources.tmp.zip', 'compiled_resources')
+	compiled_resources_path := 'compiled_resources'
+	// https://developer.android.com/studio/command-line/aapt2#compile
+	// NOTE aapt2 compile project/app/src/main/res/**/* -o compiled_resources
+	// The above expansion of "*" does not work on all platforms - so on Windows we gather the files manually.
+	// On Unix we then save a lot of tool invokations.
+	$if !windows {
+		aapt2_cmd := [
+			aapt2,
+			'compile',
+			os.join_path(res_path, '**', '*'),
+			'-o',
+			'compiled_resources.tmp.zip',
+		]
+		util.verbosity_print_cmd(aapt2_cmd, opt.verbosity)
+		util.run_or_exit(aapt2_cmd)
+		util.unzip('compiled_resources.tmp.zip', compiled_resources_path) or { panic(err) }
+	} $else {
+		mut files := []string{}
+		os.walk_with_context(res_path, &files, fn (mut files []string, path string) {
+			if os.is_file(path) {
+				files << path
+			}
+		})
+		os.mkdir(compiled_resources_path) or {}
+		for file in files {
+			aapt2_cmd := [
+				aapt2,
+				'compile',
+				'"$file"',
+				'-o',
+				compiled_resources_path,
+			]
+			util.verbosity_print_cmd(aapt2_cmd, opt.verbosity)
+			util.run_or_exit(aapt2_cmd)
+		}
+	}
 
 	if opt.verbosity > 1 {
 		println('Preparing resources and assets')
@@ -313,25 +412,50 @@ fn package_aab(opt PackageOptions) bool {
 	//      --manifest project/app/src/main/AndroidManifest.xml \
 	//      -R compiled_resources/*.flat \
 	//      --auto-add-overlay --java gen
-	aapt2_link_cmd := [
-		aapt2,
-		'link',
-		'--proto-format',
-		'-o',
-		'temporary.apk',
-		'-I',
-		android_runtime,
-		'--manifest',
-		os.join_path(package_path, 'AndroidManifest.xml'),
-		'-R',
-		//'compiled_resources'
-		os.join_path('compiled_resources', '*.flat'),
-		'-A',
-		assets_path,
-		'--auto-add-overlay --java gen',
-	]
-	util.verbosity_print_cmd(aapt2_link_cmd, opt.verbosity)
-	util.run_or_exit(aapt2_link_cmd)
+	$if !windows {
+		aapt2_link_cmd := [
+			aapt2,
+			'link',
+			'--proto-format',
+			'-o',
+			'temporary.apk',
+			'-I "' + android_runtime + '"',
+			'--manifest "' + os.join_path(package_path, 'AndroidManifest.xml') + '"',
+			'-R',
+			os.join_path('compiled_resources', '*.flat'),
+			'-A "' + assets_path + '"',
+			'--auto-add-overlay --java gen',
+		]
+		util.verbosity_print_cmd(aapt2_link_cmd, opt.verbosity)
+		util.run_or_exit(aapt2_link_cmd)
+	} $else {
+		mut files := []string{}
+		os.walk_with_context(compiled_resources_path, &files, fn (mut files []string, path string) {
+			if path.ends_with('.flat') {
+				files << path
+			}
+		})
+		mut file_args := ''
+		for file in files {
+			file_args += '"$file" '
+		}
+		file_args = file_args.trim(' ')
+		aapt2_link_cmd := [
+			aapt2,
+			'link',
+			'--proto-format',
+			'-o',
+			'temporary.apk',
+			'-I "' + android_runtime + '"',
+			'--manifest "' + os.join_path(package_path, 'AndroidManifest.xml') + '"',
+			'-R',
+			file_args,
+			'-A "' + assets_path + '"',
+			'--auto-add-overlay --java gen',
+		]
+		util.verbosity_print_cmd(aapt2_link_cmd, opt.verbosity)
+		util.run_or_exit(aapt2_link_cmd)
+	}
 
 	if opt.verbosity > 1 {
 		println('Compiling java sources')
@@ -350,7 +474,7 @@ fn package_aab(opt PackageOptions) bool {
 		'-source 1.7',
 		'-target 1.7',
 		//'-bootclasspath ' + os.join_path(java.jre_root(),'lib','rt.jar')
-		'-bootclasspath ' + android_runtime,
+		'-bootclasspath "' + android_runtime + '"',
 		//'-classpath ' + android_runtime,
 		'-d classes',
 		'-classpath .',
@@ -362,7 +486,7 @@ fn package_aab(opt PackageOptions) bool {
 	util.run_or_exit(javac_cmd)
 
 	// unzip temporary.apk -d staging
-	util.unzip('temporary.apk', staging_path)
+	util.unzip('temporary.apk', staging_path) or { panic(err) }
 
 	os.mkdir_all(os.join_path(staging_path, 'manifest')) or { panic(err) }
 	os.mv(os.join_path(staging_path, 'AndroidManifest.xml'), os.join_path(staging_path,
@@ -376,6 +500,29 @@ fn package_aab(opt PackageOptions) bool {
 		os.cp_all(lib, os.join_path(staging_path, lib_base), true) or { panic(err) }
 	}
 	// os.chdir(pwd) or {}
+
+	$if windows {
+		// TODO Workaround dx and Java > 8 (1.8.0) BUG
+		// Error message we are trying to prevent:
+		// -Djava.ext.dirs=C:<path>lib is not supported.  Use -classpath instead.
+		if jdk_semantic_version.gt(semver.build(1, 8, 0)) && os.exists(dx) {
+			mut patched_dx := os.join_path(os.dir(dx), os.file_name(dx).all_before_last('.') +
+				'_patched.bat')
+			if !os.exists(patched_dx) {
+				mut dx_contents := os.read_file(dx) or { '' }
+				if dx_contents != '' && dx_contents.contains('-Djava.ext.dirs=') {
+					dx_contents = dx_contents.replace_once('-Djava.ext.dirs=', '-classpath ')
+					os.write_file(patched_dx, dx_contents) or { patched_dx = dx }
+				} else {
+					patched_dx = dx
+				}
+				if opt.verbosity > 1 {
+					println('Using patched dx ($patched_dx)')
+				}
+			}
+			dx = patched_dx
+		}
+	}
 
 	os.mkdir_all(os.join_path(staging_path, 'dex')) or { panic(err) }
 	// dx --dex --output=staging/dex/classes.dex classes/
@@ -391,14 +538,35 @@ fn package_aab(opt PackageOptions) bool {
 
 	// cd staging; zip -r ../base.zip *
 	os.chdir(staging_path) or {}
-	zip_cmd := [
-		'zip',
-		'-r',
-		os.join_path(package_path, 'base.zip'),
-		'*',
-	]
-	util.verbosity_print_cmd(zip_cmd, opt.verbosity)
-	util.run_or_exit(zip_cmd)
+
+	base_zip_file := os.join_path(package_path, 'base.zip')
+
+	util.zip_folder(staging_path, base_zip_file) or { panic(err) }
+
+	// TODO Workaround bundletool, Java <= 8 (1.8.0) and ZIP64 BUG - Android development. just. keeps. giving...
+	// NOTE This workaround probably won't work for zip files larger than 4GB...
+	// Error message we are trying to prevent:
+	// com.android.tools.build.bundletool.model.exceptions.CommandExecutionException: File 'base.zip' does not seem to be a valid ZIP file.
+	// ...
+	// Caused by: java.util.zip.ZipException: invalid CEN header (bad signature)
+	if jdk_semantic_version.le(semver.build(1, 8, 0)) {
+		$if !windows {
+			if opt.verbosity > 1 {
+				println('Working around Java/bundletool/ZIP64 BUG...')
+			}
+			os.rm(base_zip_file) or {}
+			zip_cmd := [
+				'zip',
+				'-r',
+				base_zip_file,
+				'*',
+			]
+			util.verbosity_print_cmd(zip_cmd, opt.verbosity)
+			util.run_or_exit(zip_cmd)
+		}
+	}
+	// Workaround END
+
 	os.chdir(package_path) or {}
 
 	// java -jar bundletool build-bundle --modules=base.zip --output=bundle.aab
@@ -431,7 +599,7 @@ fn package_aab(opt PackageOptions) bool {
 		keystore.password,
 		'-keypass',
 		keystore.alias_password,
-		tmp_product,
+		'"' + tmp_product + '"',
 		keystore.alias,
 	]
 	util.verbosity_print_cmd(jarsigner_cmd, opt.verbosity)
@@ -441,11 +609,11 @@ fn package_aab(opt PackageOptions) bool {
 	bundletool_validate_cmd := [
 		java_exe,
 		'-jar',
-		bundletool,
+		'"' + bundletool + '"',
 		'validate',
 		'--bundle',
 		// tmp_unsigned_product
-		tmp_product,
+		'"' + tmp_product + '"',
 	]
 	util.verbosity_print_cmd(bundletool_validate_cmd, opt.verbosity)
 	// println(util.run(bundletool_validate_cmd).output)

@@ -5,14 +5,33 @@ module vxt
 import os
 import regex
 
+// vexe returns the path to the `v` compiler if found
+// on the host platform, otherwise a blank `string`.
 pub fn vexe() string {
 	mut exe := os.getenv('VEXE')
-	if os.is_executable(exe) {
-		return os.real_path(exe)
-	}
-	possible_symlink := os.find_abs_path_of_executable('v') or { '' }
-	if os.is_executable(possible_symlink) {
-		exe = os.real_path(possible_symlink)
+	$if !windows {
+		if os.is_executable(exe) {
+			return os.real_path(exe)
+		}
+		possible_symlink := os.find_abs_path_of_executable('v') or { '' }
+		if os.is_executable(possible_symlink) {
+			exe = os.real_path(possible_symlink)
+		}
+	} $else {
+		if os.exists(exe) {
+			return exe
+		}
+		system_path := os.find_abs_path_of_executable('v') or { '' }
+		if os.exists(system_path) {
+			exe = system_path
+		}
+		if !os.exists(exe) {
+			res := os.execute('where.exe v')
+			if res.exit_code != 0 {
+				return ''
+			}
+			return res.output.trim('\n\r')
+		}
 	}
 	return exe
 }
@@ -25,8 +44,15 @@ pub fn home() string {
 	// credits to @spytheman:
 	// https://discord.com/channels/592103645835821068/592294828432424960/746040606358503484
 	exe := vexe()
-	if os.is_executable(exe) {
-		return os.dir(exe)
+	$if !windows {
+		if os.is_executable(exe) {
+			return os.dir(exe)
+		}
+	} $else {
+		if os.exists(exe) {
+			// Skip the `.bin/` dir
+			return os.dir(os.dir(exe))
+		}
 	}
 	return ''
 }

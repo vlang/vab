@@ -215,8 +215,7 @@ pub fn compile(opt CompileOptions) bool {
 		panic('$err_sig: getting NDK sysroot path. $err')
 	}
 	includes << ['-I"' + os.join_path(ndk_sysroot, 'usr', 'include') + '"',
-		'-I"' +
-		os.join_path(ndk_sysroot, 'usr', 'include', 'android') + '"']
+		'-I"' + os.join_path(ndk_sysroot, 'usr', 'include', 'android') + '"']
 
 	is_debug_build := '-cg' in opt.v_flags || '-g' in opt.v_flags
 

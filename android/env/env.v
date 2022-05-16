@@ -129,7 +129,7 @@ pub fn managable() bool {
 }
 
 pub fn install(components string, verbosity int) int {
-	mut ios := []InstallOptions{}
+	mut iopts := []InstallOptions{}
 	mut ensure_sdk := true
 	// Allows to specify a string list of things to install
 	components_array := components.split(',')
@@ -171,7 +171,7 @@ pub fn install(components string, verbosity int) int {
 					env.default_components['build-tools']['version']
 				platforms_comp := env.default_components['platforms']['name'] + ';' +
 					env.default_components['platforms']['version']
-				ios = [
+				iopts = [
 					InstallOptions{.cmdline_tools, cmdline_tools_comp, verbosity},
 					InstallOptions{.platform_tools, platform_tools_comp, verbosity},
 					InstallOptions{.ndk, ndk_comp, verbosity},
@@ -181,27 +181,27 @@ pub fn install(components string, verbosity int) int {
 				break
 			}
 			'cmdline-tools' {
-				ios << InstallOptions{.cmdline_tools, item, verbosity}
+				iopts << InstallOptions{.cmdline_tools, item, verbosity}
 			}
 			'platform-tools' {
-				ios << InstallOptions{.platform_tools, item, verbosity}
+				iopts << InstallOptions{.platform_tools, item, verbosity}
 			}
 			'ndk' {
-				ios << InstallOptions{.ndk, item, verbosity}
+				iopts << InstallOptions{.ndk, item, verbosity}
 			}
 			'build-tools' {
-				ios << InstallOptions{.build_tools, item, verbosity}
+				iopts << InstallOptions{.build_tools, item, verbosity}
 			}
 			'platforms' {
-				ios << InstallOptions{.platforms, item, verbosity}
+				iopts << InstallOptions{.platforms, item, verbosity}
 			}
 			'bundletool' {
 				ensure_sdk = false
-				ios << InstallOptions{.bundletool, item, verbosity}
+				iopts << InstallOptions{.bundletool, item, verbosity}
 			}
 			'aapt2' {
 				ensure_sdk = false
-				ios << InstallOptions{.aapt2, item, verbosity}
+				iopts << InstallOptions{.aapt2, item, verbosity}
 			}
 			else {
 				eprintln(@MOD + ' ' + @FN + ' unknown component "$component"')
@@ -217,8 +217,10 @@ pub fn install(components string, verbosity int) int {
 		}
 	}
 
-	for io in ios {
-		install_opt(io) or {
+	// TODO Windows: `call sdkmanager --licenses < file-y.txt`
+
+	for iopt in iopts {
+		install_opt(iopt) or {
 			eprintln(err)
 			return 1
 		}
@@ -235,11 +237,16 @@ fn install_opt(opt InstallOptions) ?bool {
 				'No permission to write in Android SDK root. Please install manually or ensure write access to "$sdk.root()".')
 		} else {
 			return error(@MOD + '.' + @FN + ' ' +
-				'The `sdkmanager` seems outdated or incompatible with the Java version used". Please fix your setup manually.')
+				'The `sdkmanager` seems outdated or incompatible with the Java version used". Please fix your setup manually.\nPath: "$sdkmanager()"\nVersion: $sdkmanager_version()')
 		}
 	}
 
 	item := opt.item
+
+	mut yes_cmd := 'yes' // Linux / macOS
+	$if windows {
+		yes_cmd = 'echo y' // Windows PowerShell
+	}
 
 	if opt.verbosity > 0 {
 		println(@MOD + '.' + @FN + ' installing $opt.dep: "$item"...')
@@ -249,47 +256,64 @@ fn install_opt(opt InstallOptions) ?bool {
 	} else if opt.dep == .aapt2 {
 		return ensure_aapt2(opt.verbosity)
 	} else if opt.dep == .cmdline_tools {
-		/*
-		if opt.verbosity > 0 {
-			println(@MOD + '.' + @FN + ' ' +
-				'commandline tools is already installed in "$sdkmanager()".')
-		}
-		*/
-		cmd := [
-			'yes |' /* TODO Windows */,
-			sdkmanager(),
-			'--sdk_root="$sdk.root()"',
-			'"$item"',
-		]
-		util.verbosity_print_cmd(cmd, opt.verbosity)
-		cmd_res := util.run(cmd)
-		if cmd_res.exit_code > 0 {
-			return error(cmd_res.output)
+		$if !windows {
+			cmd := [
+				yes_cmd,
+				'|',
+				sdkmanager(),
+				'--sdk_root="$sdk.root()"',
+				'"$item"',
+			]
+			util.verbosity_print_cmd(cmd, opt.verbosity)
+			cmd_res := util.run(cmd)
+			if cmd_res.exit_code > 0 {
+				return error(cmd_res.output)
+			}
+		} $else {
+			cmd := [
+				'cmd /c',
+				'"' + yes_cmd,
+				'|',
+				sdkmanager(),
+				'--sdk_root="$sdk.root()"',
+				'"$item"' + '"',
+			]
+			util.verbosity_print_cmd(cmd, opt.verbosity)
+			cmd_res := util.raw_run(cmd)
+			if cmd_res.exit_code != 0 {
+				return error(cmd_res.output)
+			}
 		}
 		return true
 	} else if opt.dep == .platform_tools {
-		/*
-		adb_tool := os.join_path(sdk.platform_tools_root(), 'adb')
-		if os.exists(adb_tool) {
-			eprintln('Notice: Skipping install. Platform Tools seem to be installed in "$sdk.platform_tools_root()"...')
-			return true
-		}
-
-		if opt.verbosity > 0 {
-			println('Installing Platform Tools "$opt.item"...')
-		}
-		*/
 		// Ignore opt.item for now
-		cmd := [
-			'yes |' /* TODO Windows */,
-			sdkmanager(),
-			'--sdk_root="$sdk.root()"',
-			'"$item"',
-		]
-		util.verbosity_print_cmd(cmd, opt.verbosity)
-		cmd_res := util.run(cmd)
-		if cmd_res.exit_code > 0 {
-			return error(cmd_res.output)
+		$if !windows {
+			cmd := [
+				yes_cmd,
+				'|',
+				sdkmanager(),
+				'--sdk_root="$sdk.root()"',
+				'"$item"',
+			]
+			util.verbosity_print_cmd(cmd, opt.verbosity)
+			cmd_res := util.run(cmd)
+			if cmd_res.exit_code > 0 {
+				return error(cmd_res.output)
+			}
+		} $else {
+			cmd := [
+				'cmd /c',
+				'"' + yes_cmd,
+				'|',
+				sdkmanager(),
+				'--sdk_root="$sdk.root()"',
+				'"$item"' + '"',
+			]
+			util.verbosity_print_cmd(cmd, opt.verbosity)
+			cmd_res := util.raw_run(cmd)
+			if cmd_res.exit_code != 0 {
+				return error(cmd_res.output)
+			}
 		}
 		return true
 	} else if opt.dep == .ndk {
@@ -306,16 +330,34 @@ fn install_opt(opt InstallOptions) ?bool {
 		if opt.verbosity > 0 {
 			println('Installing NDK (Side-by-side) "$item"...')
 		}
-		cmd := [
-			'yes |' /* TODO Windows */,
-			sdkmanager(),
-			'--sdk_root="$sdk.root()"',
-			'"$item"',
-		]
-		util.verbosity_print_cmd(cmd, opt.verbosity)
-		cmd_res := util.run(cmd)
-		if cmd_res.exit_code > 0 {
-			return error(cmd_res.output)
+
+		$if !windows {
+			cmd := [
+				yes_cmd,
+				'|',
+				sdkmanager(),
+				'--sdk_root="$sdk.root()"',
+				'"$item"',
+			]
+			util.verbosity_print_cmd(cmd, opt.verbosity)
+			cmd_res := util.run(cmd)
+			if cmd_res.exit_code > 0 {
+				return error(cmd_res.output)
+			}
+		} $else {
+			cmd := [
+				'cmd /c',
+				'"' + yes_cmd,
+				'|',
+				sdkmanager(),
+				'--sdk_root="$sdk.root()"',
+				'"$item"' + '"',
+			]
+			util.verbosity_print_cmd(cmd, opt.verbosity)
+			cmd_res := util.raw_run(cmd)
+			if cmd_res.exit_code != 0 {
+				return error(cmd_res.output)
+			}
 		}
 		return true
 	} else if opt.dep == .build_tools {
@@ -329,16 +371,33 @@ fn install_opt(opt InstallOptions) ?bool {
 			}
 		}
 
-		cmd := [
-			'yes |' /* TODO Windows */,
-			sdkmanager(),
-			'--sdk_root="$sdk.root()"',
-			'"$item"',
-		]
-		util.verbosity_print_cmd(cmd, opt.verbosity)
-		cmd_res := util.run(cmd)
-		if cmd_res.exit_code > 0 {
-			return error(cmd_res.output)
+		$if !windows {
+			cmd := [
+				yes_cmd,
+				'|',
+				sdkmanager(),
+				'--sdk_root="$sdk.root()"',
+				'"$item"',
+			]
+			util.verbosity_print_cmd(cmd, opt.verbosity)
+			cmd_res := util.run(cmd)
+			if cmd_res.exit_code != 0 {
+				return error(cmd_res.output)
+			}
+		} $else {
+			cmd := [
+				'cmd /c',
+				'"' + yes_cmd,
+				'|',
+				sdkmanager(),
+				'--sdk_root="$sdk.root()"',
+				'"$item"' + '"',
+			]
+			util.verbosity_print_cmd(cmd, opt.verbosity)
+			cmd_res := util.raw_run(cmd)
+			if cmd_res.exit_code != 0 {
+				return error(cmd_res.output)
+			}
 		}
 		return true
 	} else if opt.dep == .platforms {
@@ -347,17 +406,33 @@ fn install_opt(opt InstallOptions) ?bool {
 			eprintln('Notice: Skipping install. platform $item is lower than supported android-${sdk.min_supported_api_level}...')
 			return true
 		}
-
-		cmd := [
-			'yes |' /* TODO Windows */,
-			sdkmanager(),
-			'--sdk_root="$sdk.root()"',
-			'"$item"',
-		]
-		util.verbosity_print_cmd(cmd, opt.verbosity)
-		cmd_res := util.run(cmd)
-		if cmd_res.exit_code > 0 {
-			return error(cmd_res.output)
+		$if !windows {
+			cmd := [
+				yes_cmd,
+				'|',
+				sdkmanager(),
+				'--sdk_root="$sdk.root()"',
+				'"$item"',
+			]
+			util.verbosity_print_cmd(cmd, opt.verbosity)
+			cmd_res := util.run(cmd)
+			if cmd_res.exit_code != 0 {
+				return error(cmd_res.output)
+			}
+		} $else {
+			cmd := [
+				'cmd /c',
+				'"' + yes_cmd,
+				'|',
+				sdkmanager(),
+				'--sdk_root="$sdk.root()"',
+				'"$item"' + '"',
+			]
+			util.verbosity_print_cmd(cmd, opt.verbosity)
+			cmd_res := util.raw_run(cmd)
+			if cmd_res.exit_code != 0 {
+				return error(cmd_res.output)
+			}
 		}
 		return true
 	}
@@ -374,6 +449,7 @@ fn ensure_sdkmanager(verbosity int) ?bool {
 	// For troubleshooting and info, please see
 	// https://stackoverflow.com/a/58652345
 	// https://stackoverflow.com/a/61176718
+	// https://stackoverflow.com/questions/60727326
 	if sdkmanager() == '' {
 		// Let just cross fingers that it ends up where we want it.
 		dst := os.join_path(sdk.cache_dir(), 'cmdline-tools')
@@ -398,12 +474,23 @@ fn ensure_sdkmanager(verbosity int) ?bool {
 		if verbosity > 1 {
 			println('Installing `sdkmanager` to "$dst"...')
 		}
-		os.mkdir_all(dst) or { panic(err) }
+		os.mkdir_all(dst) ?
 		dst_check := os.join_path(dst, 'tools', 'bin')
-		if util.unzip(file, dst) {
-			os.chmod(os.join_path(dst_check, 'sdkmanager'), 0o755) or { panic(err) }
-		}
+
+		util.unzip(file, dst) ?
+
+		os.chmod(os.join_path(dst_check, 'sdkmanager'), 0o755) ?
+
 		if os.is_executable(os.join_path(dst_check, 'sdkmanager')) {
+			$if linux {
+				// Workaround BUG: Error: Could not find or load main class com.android.sdklib.tool.sdkmanager.SdkManagerCli
+				jarrs := os.walk_ext(dst, '.jarr')
+				for jarr in jarrs {
+					file_no_ext := jarr.all_before_last('.')
+					os.mv(jarr, file_no_ext + '.jar') or { panic(err) }
+				}
+			}
+			util.run([os.join_path(dst_check, 'sdkmanager')])
 			if verbosity > 1 {
 				println('`sdkmanager` installed in "$dst_check". SDK root reports "$sdk.root()"')
 			}
@@ -449,7 +536,77 @@ pub fn has_sdkmanager() bool {
 	return sdkmanager() != ''
 }
 
+fn sdkmanager_windows() string {
+	mut sdkmanager := cache.get_string(@MOD + '.' + @FN)
+	if sdkmanager != '' {
+		return sdkmanager
+	}
+
+	sdkmanager = os.getenv('SDKMANAGER')
+	// Check in cache
+	if !os.exists(sdkmanager) {
+		sdkmanager = os.join_path(util.cache_dir(), 'sdkmanager.bat')
+		if !os.exists(sdkmanager) {
+			sdkmanager = os.join_path(sdk.cache_dir(), 'cmdline-tools', '3.0', 'bin',
+				'sdkmanager.bat')
+		}
+		if !os.exists(sdkmanager) {
+			sdkmanager = os.join_path(sdk.cache_dir(), 'cmdline-tools', '2.1', 'bin',
+				'sdkmanager.bat')
+		}
+		if !os.exists(sdkmanager) {
+			sdkmanager = os.join_path(sdk.cache_dir(), 'cmdline-tools', 'tools', 'bin',
+				'sdkmanager.bat')
+		}
+	}
+	// Try if one is in PATH
+	if !os.exists(sdkmanager) {
+		if os.exists_in_system_path('sdkmanager') {
+			sdkmanager = os.find_abs_path_of_executable('sdkmanager') or { '' }
+			sdkmanager = sdkmanager.trim_string_right('.bat') + '.bat'
+		}
+	}
+	// Try detecting it in the SDK
+	if sdk.found() {
+		if !os.exists(sdkmanager) {
+			sdkmanager = os.join_path(sdk.root(), 'cmdline-tools', 'tools', 'bin', 'sdkmanager.bat')
+		}
+		if !os.exists(sdkmanager) {
+			sdkmanager = os.join_path(sdk.tools_root(), 'bin', 'sdkmanager.bat')
+		}
+		if !os.exists(sdkmanager) {
+			for relative_path in env.possible_relative_to_sdk_sdkmanager_paths {
+				sdkmanager = os.join_path(sdk.root(), relative_path, 'sdkmanager.bat')
+				if os.exists(sdkmanager) {
+					break
+				}
+			}
+		}
+		if !os.exists(sdkmanager) {
+			version_dirs := util.ls_sorted(os.join_path(sdk.root(), 'cmdline-tools')).filter(fn (a string) bool {
+				return util.is_version(a)
+			})
+			for version_dir in version_dirs {
+				sdkmanager = os.join_path(sdk.root(), 'cmdline-tools', version_dir, 'bin',
+					'sdkmanager.bat')
+				if os.exists(sdkmanager) {
+					break
+				}
+			}
+		}
+	}
+	// Give up
+	if !os.exists(sdkmanager) {
+		sdkmanager = ''
+	}
+	cache.set_string(@MOD + '.' + @FN, sdkmanager)
+	return sdkmanager
+}
+
 pub fn sdkmanager() string {
+	$if windows {
+		return sdkmanager_windows()
+	}
 	mut sdkmanager := cache.get_string(@MOD + '.' + @FN)
 	if sdkmanager != '' {
 		return sdkmanager
@@ -481,10 +638,10 @@ pub fn sdkmanager() string {
 	// Try detecting it in the SDK
 	if sdk.found() {
 		if !os.is_executable(sdkmanager) {
-			sdkmanager = os.join_path(sdk.tools_root(), 'bin', 'sdkmanager')
+			sdkmanager = os.join_path(sdk.root(), 'cmdline-tools', 'tools', 'bin', 'sdkmanager')
 		}
 		if !os.is_executable(sdkmanager) {
-			sdkmanager = os.join_path(sdk.root(), 'cmdline-tools', 'tools', 'bin', 'sdkmanager')
+			sdkmanager = os.join_path(sdk.tools_root(), 'bin', 'sdkmanager')
 		}
 		if !os.is_executable(sdkmanager) {
 			for relative_path in env.possible_relative_to_sdk_sdkmanager_paths {
@@ -524,7 +681,7 @@ pub fn sdkmanager_version() string {
 			'--version',
 		]
 		cmd_res := util.run(cmd)
-		if cmd_res.exit_code > 0 {
+		if cmd_res.exit_code != 0 {
 			return version
 		}
 		version = cmd_res.output.trim(' \n\r')
@@ -612,11 +769,21 @@ pub fn has_aapt2() bool {
 
 pub fn aapt2() string {
 	mut aapt2 := os.getenv('AAPT2')
-	if !os.exists(aapt2) {
-		aapt2 = os.join_path(util.cache_dir(), 'aapt2')
+	mut dot_exe := ''
+	$if windows {
+		dot_exe = '.exe'
 	}
-	if !os.is_executable(aapt2) {
-		aapt2 = ''
+	if !os.exists(aapt2) {
+		aapt2 = os.join_path(util.cache_dir(), 'aapt2$dot_exe')
+	}
+	$if !windows {
+		if !os.is_executable(aapt2) {
+			aapt2 = ''
+		}
+	} $else {
+		if !os.exists(aapt2) {
+			aapt2 = ''
+		}
 	}
 	return aapt2
 }
@@ -629,7 +796,7 @@ fn ensure_aapt2(verbosity int) ?bool {
 		}
 		// Download
 		// https://maven.google.com/web/index.html -> com.android.tools.build -> aapt2
-		uos := os.user_os().replace('windows', 'win').replace('macos', 'osx')
+		uos := os.user_os().replace('macos', 'osx')
 		url := env.default_components['aapt2']['bootstrap_url'].replace('{XXX}', uos)
 		file := os.join_path(os.temp_dir(), 'aapt2.jar')
 		// file := os.join_path(dst, 'aapt2.jar')
@@ -648,17 +815,21 @@ fn ensure_aapt2(verbosity int) ?bool {
 		os.mkdir_all(unpack_path) or {
 			return error(@MOD + '.' + @FN + ' ' + 'failed to install `aapt2`: $err')
 		}
-		util.unzip(file, unpack_path)
+		util.unzip(file, unpack_path) ?
 		// Install
-		aapt2_file := os.join_path(unpack_path, 'aapt2')
-		dst_check := os.join_path(dst, 'aapt2')
+		mut dot_exe := ''
+		$if windows {
+			dot_exe = '.exe'
+		}
+		aapt2_file := os.join_path(unpack_path, 'aapt2' + dot_exe)
+		dst_check := os.join_path(dst, 'aapt2' + dot_exe)
 		os.rm(dst_check) or {}
 		os.cp(aapt2_file, dst_check) or {
-			return error(@MOD + '.' + @FN + ' ' + 'failed to install `aapt2`: $err')
+			return error(@MOD + '.' + @FN + ' ' + 'failed to install `aapt2$dot_exe`: $err')
 		}
 		if os.exists(dst_check) {
 			if verbosity > 1 {
-				println('`aapt2` installed in "$dst_check"')
+				println('`aapt2` installed as "$dst_check"')
 			}
 			return true
 		}

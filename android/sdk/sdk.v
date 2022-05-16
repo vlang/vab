@@ -31,7 +31,7 @@ pub const (
 	default_api_level                 = os.file_name(default_platforms_dir()).all_after('android-')
 	default_build_tools_version       = os.file_name(default_build_tools_dir())
 	min_supported_api_level           = '21'
-	min_supported_build_tools_version = '24.0.3'
+	min_supported_build_tools_version = '26.0.2'
 )
 
 enum Component {

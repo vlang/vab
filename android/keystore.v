@@ -21,6 +21,10 @@ pub fn resolve_keystore(default_ks Keystore, verbosity int) Keystore {
 			println('Generating "$file"')
 		}
 		keytool := os.join_path(java.jdk_bin_path(), 'keytool')
+		mut dname_args := "'CN=,OU=,O=,L=,S=,C=US'"
+		$if windows {
+			dname_args = '"' + dname_args.trim("'") + '"'
+		}
 		keytool_cmd := [
 			keytool,
 			'-genkeypair',
@@ -30,7 +34,8 @@ pub fn resolve_keystore(default_ks Keystore, verbosity int) Keystore {
 			'-keypass android',
 			'-keyalg RSA',
 			'-validity 10000',
-			"-dname 'CN=,OU=,O=,L=,S=,C='",
+			'-dname',
+			dname_args,
 		]
 		util.verbosity_print_cmd(keytool_cmd, verbosity)
 		util.run_or_exit(keytool_cmd)
