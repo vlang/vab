@@ -474,12 +474,12 @@ fn ensure_sdkmanager(verbosity int) ?bool {
 		if verbosity > 1 {
 			println('Installing `sdkmanager` to "$dst"...')
 		}
-		os.mkdir_all(dst) ?
+		os.mkdir_all(dst)?
 		dst_check := os.join_path(dst, 'tools', 'bin')
 
-		util.unzip(file, dst) ?
+		util.unzip(file, dst)?
 
-		os.chmod(os.join_path(dst_check, 'sdkmanager'), 0o755) ?
+		os.chmod(os.join_path(dst_check, 'sdkmanager'), 0o755)?
 
 		if os.is_executable(os.join_path(dst_check, 'sdkmanager')) {
 			$if linux {
@@ -815,7 +815,7 @@ fn ensure_aapt2(verbosity int) ?bool {
 		os.mkdir_all(unpack_path) or {
 			return error(@MOD + '.' + @FN + ' ' + 'failed to install `aapt2`: $err')
 		}
-		util.unzip(file, unpack_path) ?
+		util.unzip(file, unpack_path)?
 		// Install
 		mut dot_exe := ''
 		$if windows {

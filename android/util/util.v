@@ -100,11 +100,11 @@ pub fn raw_run(args []string) os.Result {
 
 pub fn unzip(file string, dir string) ? {
 	if !os.is_dir(dir) {
-		os.mkdir_all(dir) ?
+		os.mkdir_all(dir)?
 	}
-	szip.extract_zip_to_dir(file, dir) ?
+	szip.extract_zip_to_dir(file, dir)?
 }
 
 pub fn zip_folder(dir string, out_file string) ? {
-	szip.zip_folder(dir, out_file) ?
+	szip.zip_folder(dir, out_file)?
 }
