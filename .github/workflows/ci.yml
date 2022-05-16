@@ -96,6 +96,11 @@ jobs:
         export VEXE=./v
         vab/vab doctor
 
+    - name: Test vab complete
+      run: |
+        export VEXE=./v
+        [ "$(vab/vab complete bash vab com)" = "COMPREPLY+=('complet')" ]
+
     - name: Setup env
       run: |
         mkdir apks

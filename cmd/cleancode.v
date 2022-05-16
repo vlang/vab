@@ -15,9 +15,10 @@ pub fn run(args []string) os.Result {
 }
 
 fn main() {
+	args := os.args[1..]
 	mut test_paths := []string{}
-	if os.args.len > 1 {
-		test_paths << os.args[1..]
+	if args.len > 1 {
+		test_paths << args[1..]
 	}
 	if test_paths.len == 0 {
 		test_paths << os.getwd()
