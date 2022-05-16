@@ -8,8 +8,6 @@
 // The user will be responsible for adding a small line to their .*rc - that will ensure *live* (i.e. not-static)
 // auto-completion features.
 //
-// # Please make sure that `vab` is already in your PATH.
-//
 // # bash
 // To install auto-completion for vab in bash, simply add this code to your `~/.bashrc`:
 // `source /dev/stdin <<<"$(vab complete setup bash)"`
