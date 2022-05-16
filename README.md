@@ -25,6 +25,10 @@ You can symlink `vab` to your `$PATH` so it works as a global shell command.
 sudo ln -s /path/to/vab /usr/local/bin/vab
 ```
 
+## Shell tab completion (optional)
+You can install tab completions for your shell by [following the instructions
+here](https://github.com/vlang/vab/blob/3091ade4c9792c6a37596ccfa9299fb269d3160e/cmd/complete.v#L11-L38).
+
 # Usage
 
 Dependencies:
