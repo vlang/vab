@@ -99,7 +99,7 @@ jobs:
     - name: Test vab complete
       run: |
         export VEXE=./v
-        [ "$(vab/vab complete bash vab com)" = "COMPREPLY+=('complet')" ]
+        [ "$(vab/vab complete bash vab com)" = "COMPREPLY+=('complete')" ]
 
     - name: Setup env
       run: |
