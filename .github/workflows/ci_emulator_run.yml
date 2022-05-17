@@ -90,9 +90,12 @@ jobs:
         #export ADB_TAGS="SOKOL_APP:D"
         #export ADB_TAGS="$ADB_TAGS V_ANDROID:D v_test_app:D"
 
+        echo "Installing V examples"
+        git clone --depth 1 https://github.com/vlang/v
+
         declare -a v_examples=('flappylearning' '2048' 'fireworks' 'tetris' 'sokol/particles' 'sokol/drawing.v' 'sokol/freetype_raven.v' 'gg/polygons.v' 'gg/raven_text_rendering.v' 'gg/rectangles.v' 'gg/stars.v' 'gg/worker_thread.v')
 
-        echo "Compiling examples $v_examples"
+        echo "Compiling V examples ${v_examples[@]}"
         for example in "${v_examples[@]}"; do
           #path_safe_name=$( echo "$example" | sed 's%/%-%' | sed 's%\.%-%' )
           package_id=$( echo "$example" | sed 's%/%%' | sed 's%\.%%' )
@@ -100,11 +103,11 @@ jobs:
 
           # APK
           echo "Compiling apk from examples/$example ($package_id)"
-          vab --package-id "io.v.apk.$package_id" run examples/$example
+          vab --package-id "io.v.apk.$package_id" run v/examples/$example
 
           # AAB
           echo "Compiling aab from examples/$example ($package_id)"
-          vab --package aab --package-id "io.v.aab.$package_id" run examples/$example
+          vab --package aab --package-id "io.v.aab.$package_id" run v/examples/$example
 
           # Remove if cache is run
           adb uninstall "io.v.apk.$package_id"
@@ -112,9 +115,9 @@ jobs:
         done
 
         # Output test
-        echo "Testing if examples/tetris can run..."
+        echo "Testing if v/examples/tetris can run..."
         adb -e logcat -c
-        vab -cg --package-id "io.v.ci.vab.apk.examples.tetris" run examples/tetris
+        vab -cg --package-id "io.v.ci.vab.apk.examples.tetris" run v/examples/tetris
         sleep 2
         adb -e logcat -d > /tmp/logcat.dump.txt
         cat /tmp/logcat.dump.txt | grep -q 'SOKOL_APP: ... ok'; if [ ! $? -eq 0 ]; then cat /tmp/logcat.dump.txt; fi
@@ -128,7 +131,7 @@ jobs:
 
         declare -a v_ui_examples=('rectangles.v' 'calculator.v')
 
-        echo "Compiling examples $v_ui_examples"
+        echo "Compiling examples ${v_ui_examples[@]}"
         for example in "${v_ui_examples[@]}"; do
           package_id=$( echo "$example" | sed 's%/%%' | sed 's%\.%%' )
           package_id=$( echo "v$package_id" )
