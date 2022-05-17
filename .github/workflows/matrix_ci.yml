@@ -45,20 +45,23 @@ jobs:
     - name: Build vab
       run: ./v -g vab/vab.v
 
+    - name: Symlink vab
+      run: cd vab && sudo ln -s "$(pwd)/vab" /usr/local/bin/vab
+
     - name: Run vab --help
-      run: vab/vab --help
+      run: vab --help
 
     - name: Run vab doctor
       run: |
         export VEXE=./v
-        vab/vab doctor
+        vab doctor
 
     # AAB
     - name: Install AAB dependencies
       run: |
         export VEXE=./v
-        vab/vab install bundletool
-        vab/vab install aapt2
+        vab install bundletool
+        vab install aapt2
 
     - name: Build examples as APK + AAB (Java ${{ matrix.java-version }}) ${{ matrix.android-api }}
       run: |
@@ -74,10 +77,10 @@ jobs:
           mkdir -p java-${{ matrix.java-version }}/$example
 
           # APK
-          vab/vab --package-id "io.v.apk.$package_id" --api ${{ matrix.android-api }} examples/$example -o java-${{ matrix.java-version }}/$example/$package_id.apk
+          vab --package-id "io.v.apk.$package_id" --api ${{ matrix.android-api }} examples/$example -o java-${{ matrix.java-version }}/$example/$package_id.apk
 
           # AAB
-          vab/vab --package aab --package-id "io.v.aab.$package_id" --api ${{ matrix.android-api }} examples/$example -o java-${{ matrix.java-version }}/$example/$package_id.aab
+          vab --package aab --package-id "io.v.aab.$package_id" --api ${{ matrix.android-api }} examples/$example -o java-${{ matrix.java-version }}/$example/$package_id.aab
         done
 
   build-v-examples-with-gc-enabled:
@@ -113,13 +116,16 @@ jobs:
     - name: Build vab
       run: ./v -g vab/vab.v
 
+    - name: Symlink vab
+      run: cd vab && sudo ln -s "$(pwd)/vab" /usr/local/bin/vab
+
     - name: Run vab --help
-      run: vab/vab --help
+      run: vab --help
 
     - name: Run vab doctor
       run: |
         export VEXE=./v
-        vab/vab doctor
+        vab doctor
 
     - name: Build examples with garbage collector (Java ${{ matrix.java-version }}) ${{ matrix.android-api }}
       run: |
@@ -135,6 +141,6 @@ jobs:
           mkdir -p gc-java-${{ matrix.java-version }}/$example
 
           # APK
-          vab/vab -gc boehm --package-id "io.v.apk.$package_id" --api ${{ matrix.android-api }} examples/$example -o gc-java-${{ matrix.java-version }}/$example/$package_id.apk
+          vab -gc boehm --package-id "io.v.apk.$package_id" --api ${{ matrix.android-api }} examples/$example -o gc-java-${{ matrix.java-version }}/$example/$package_id.apk
 
         done
