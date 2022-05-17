@@ -102,14 +102,16 @@ jobs:
           package_id=$( echo "v$package_id" )
 
           # APK
+          adb -e logcat -c
           echo "Compiling apk from examples/$example ($package_id)"
           vab --package-id "io.v.apk.$package_id" run v/examples/$example
 
           # AAB
+          adb -e logcat -c
           echo "Compiling aab from examples/$example ($package_id)"
           vab --package aab --package-id "io.v.aab.$package_id" run v/examples/$example
 
-          # Remove if cache is run
+          # Remove app in case cache is run
           adb uninstall "io.v.apk.$package_id"
           adb uninstall "io.v.aab.$package_id"
         done
@@ -120,8 +122,11 @@ jobs:
         vab -cg --package-id "io.v.ci.vab.apk.examples.tetris" run v/examples/tetris
         sleep 2
         adb -e logcat -d > /tmp/logcat.dump.txt
+        echo "Looking for traces of SOKOL_APP ok ..."
         cat /tmp/logcat.dump.txt | grep -q 'SOKOL_APP: ... ok'; if [ ! $? -eq 0 ]; then cat /tmp/logcat.dump.txt; fi
-        # Remove if cache is run
+
+        # Remove app in case cache is run
+        echo "Uninstalling v/examples/tetris"
         adb uninstall io.v.ci.vab.apk.examples.tetris
 
         # V UI
@@ -137,14 +142,16 @@ jobs:
           package_id=$( echo "v$package_id" )
 
           # APK
+          adb -e logcat -c
           echo "Compiling apk from ui/examples/$example ($package_id)"
           vab -cg --package-id "io.v.apk.ui.$package_id" run ui/examples/$example
 
           # AAB
+          adb -e logcat -c
           echo "Compiling aab from ui/examples/$example ($package_id)"
           vab -cg --package aab --package-id "io.v.aab.ui.$package_id" run ui/examples/$example
 
-          # Remove if cache is run
+          # Remove app in case cache is run
           adb uninstall "io.v.apk.ui.$package_id"
           adb uninstall "io.v.aab.ui.$package_id"
         done
@@ -155,9 +162,12 @@ jobs:
         vab -cg --package-id "io.v.ui.ci.examples.calculator" run ui/examples/calculator.v
         sleep 2
         adb -e logcat -d > /tmp/logcat.dump.txt
+        echo "Looking for traces of SOKOL_APP ok ..."
         cat /tmp/logcat.dump.txt | grep -q 'SOKOL_APP: ... ok'; if [ ! $? -eq 0 ]; then cat /tmp/logcat.dump.txt; fi
 
-        # Remove if cache is run
+        # Remove app in case cache is run
+        echo "Uninstalling ui/examples/calculator"
         adb uninstall io.v.ui.ci.examples.calculator
 
+        echo "Killing emulator"
         adb -s emulator-5554 emu kill
