@@ -92,15 +92,18 @@ jobs:
 
         declare -a v_examples=('flappylearning' '2048' 'fireworks' 'tetris' 'sokol/particles' 'sokol/drawing.v' 'sokol/freetype_raven.v' 'gg/polygons.v' 'gg/raven_text_rendering.v' 'gg/rectangles.v' 'gg/stars.v' 'gg/worker_thread.v')
 
+        echo "Compiling examples $v_examples"
         for example in "${v_examples[@]}"; do
           #path_safe_name=$( echo "$example" | sed 's%/%-%' | sed 's%\.%-%' )
           package_id=$( echo "$example" | sed 's%/%%' | sed 's%\.%%' )
           package_id=$( echo "v$package_id" )
 
           # APK
+          echo "Compiling apk from examples/$example ($package_id)"
           vab --package-id "io.v.apk.$package_id" run examples/$example
 
           # AAB
+          echo "Compiling aab from examples/$example ($package_id)"
           vab --package aab --package-id "io.v.aab.$package_id" run examples/$example
 
           # Remove if cache is run
@@ -109,6 +112,7 @@ jobs:
         done
 
         # Output test
+        echo "Testing if examples/tetris can run..."
         adb -e logcat -c
         vab -cg --package-id "io.v.ci.vab.apk.examples.tetris" run examples/tetris
         sleep 2
@@ -118,19 +122,23 @@ jobs:
         adb uninstall io.v.ci.vab.apk.examples.tetris
 
         # V UI
+        echo "Installing V UI"
         git clone --depth 1 https://github.com/vlang/ui
         cd ui ; mkdir -p ~/.vmodules ; ln -s $(pwd) ~/.vmodules/ui ; cd ..
 
         declare -a v_ui_examples=('rectangles.v' 'calculator.v')
 
+        echo "Compiling examples $v_ui_examples"
         for example in "${v_ui_examples[@]}"; do
           package_id=$( echo "$example" | sed 's%/%%' | sed 's%\.%%' )
           package_id=$( echo "v$package_id" )
 
           # APK
+          echo "Compiling apk from ui/examples/$example ($package_id)"
           vab -cg --package-id "io.v.apk.ui.$package_id" run ui/examples/$example
 
           # AAB
+          echo "Compiling aab from ui/examples/$example ($package_id)"
           vab -cg --package aab --package-id "io.v.aab.ui.$package_id" run ui/examples/$example
 
           # Remove if cache is run
@@ -139,6 +147,7 @@ jobs:
         done
 
         # Output test
+        echo "Testing if ui/examples/calculator can run..."
         adb -e logcat -c
         vab -cg --package-id "io.v.ui.ci.examples.calculator" run ui/examples/calculator.v
         sleep 2
