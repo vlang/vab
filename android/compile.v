@@ -69,8 +69,8 @@ pub fn compile(opt CompileOptions) bool {
 	v_cmd_res := util.run(v_cmd)
 
 	// Parse imported modules from dump
-	v_cmd_out := v_cmd_res.output.all_after('imported modules:').all_after('[')
-	v_cmd_out = out.all_before(']')
+	mut v_cmd_out := v_cmd_res.output.all_after('imported modules:').all_after('[')
+	v_cmd_out = v_cmd_out.all_before(']')
 	mut imported_modules := v_cmd_out.split(',')
 	imported_modules = imported_modules.map(fn (e string) string {
 		return e.trim('"\' ')
