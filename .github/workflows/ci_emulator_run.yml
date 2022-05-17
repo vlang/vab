@@ -134,7 +134,7 @@ jobs:
         git clone --depth 1 https://github.com/vlang/ui
         cd ui ; mkdir -p ~/.vmodules ; ln -s $(pwd) ~/.vmodules/ui ; cd ..
 
-        declare -a v_ui_examples=('rectangles.v' 'calculator.v')
+        declare -a v_ui_examples=('rectangles.v')
 
         echo "Compiling examples ${v_ui_examples[@]}"
         for example in "${v_ui_examples[@]}"; do
