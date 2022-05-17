@@ -49,7 +49,7 @@ pub fn compile(opt CompileOptions) bool {
 	vexe := vxt.vexe()
 	v_output_file := os.join_path(opt.work_dir, 'v_android.c')
 
-	// Dump C flags
+	// Dump C flags to a file
 	vcflags_file := os.join_path(opt.work_dir, 'v.cflags')
 	os.rm(vcflags_file) or {}
 	mut v_cmd := [vexe]
@@ -58,6 +58,7 @@ pub fn compile(opt CompileOptions) bool {
 	}
 	v_cmd << opt.v_flags
 	v_cmd << [
+		'-v', // Verbose so we can catch imported modules string
 		'-dump-c-flags',
 		'"$vcflags_file"',
 		'-os android',
@@ -65,9 +66,18 @@ pub fn compile(opt CompileOptions) bool {
 	]
 	v_cmd << opt.input
 	util.verbosity_print_cmd(v_cmd, opt.verbosity)
-	util.run(v_cmd)
-	//
+	v_cmd_res := util.run(v_cmd)
 
+	// Parse imported modules from dump
+	v_cmd_out := v_cmd_res.output.all_after('imported modules:').all_after('[')
+	v_cmd_out = out.all_before(']')
+	mut imported_modules := v_cmd_out.split(',')
+	imported_modules = imported_modules.map(fn (e string) string {
+		return e.trim('"\' ')
+	})
+	imported_modules.sort()
+
+	// Compile to Android compatible C file
 	v_cmd = [vexe]
 	if !opt.cache {
 		v_cmd << '-nocache'
@@ -263,13 +273,27 @@ pub fn compile(opt CompileOptions) bool {
 
 	ldflags << ['-uANativeActivity_onCreate', '-usokol_main']
 
-	// stb_image
-	// includes << ['-I"$v_home/thirdparty/stb_image"']
-	sources << ['"' + os.join_path(v_home, 'thirdparty', 'stb_image', 'stbi.c') + '"']
+	// stb_image via `stbi` module
+	if 'stbi' in imported_modules {
+		if opt.verbosity > 1 {
+			println('Including stb_image via stbi module')
+		}
+		// includes << ['-I"$v_home/thirdparty/stb_image"']
+		sources << [
+			'"' + os.join_path(v_home, 'thirdparty', 'stb_image', 'stbi.c') + '"',
+		]
+	}
 
-	// cJson / `json` module
-	includes << ['-I"' + os.join_path(v_home, 'thirdparty', 'cJSON') + '"']
-	sources << ['"' + os.join_path(v_home, 'thirdparty', 'cJSON', 'cJSON.c') + '"']
+	// cJson via `json` module
+	if 'json' in imported_modules {
+		if opt.verbosity > 1 {
+			println('Including cJSON via json module')
+		}
+		includes << ['-I"' + os.join_path(v_home, 'thirdparty', 'cJSON') + '"']
+		sources << [
+			'"' + os.join_path(v_home, 'thirdparty', 'cJSON', 'cJSON.c') + '"',
+		]
+	}
 
 	// misc
 	ldflags << ['-llog', '-landroid', '-lEGL', '-lGLESv2', '-lm']
