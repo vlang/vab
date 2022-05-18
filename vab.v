@@ -45,9 +45,10 @@ struct Options {
 	no_printf_hijack bool     // Do not let V redefine printf for log output aka. V_ANDROID_LOG_PRINT
 	archs            []string
 	// Deploy specifics
-	run            bool
-	device_log     bool
-	device_log_raw bool
+	run              bool
+	device_log       bool
+	device_log_raw   bool
+	clear_device_log bool // clears the log buffers on the device
 	// Detected environment
 	dump_usage       bool
 	list_ndks        bool
@@ -202,6 +203,8 @@ fn main() {
 	}
 	opt.input = input
 
+	resolve_output(mut opt)
+
 	extend_options_from_dot_vab(mut opt)
 
 	kill_adb := os.getenv('VAB_KILL_ADB') != ''
@@ -276,6 +279,7 @@ fn main() {
 		device_id: device_id
 		deploy_file: opt.output
 		kill_adb: kill_adb
+		clear_device_log: opt.clear_device_log
 		device_log: opt.device_log || opt.device_log_raw
 		log_mode: if opt.device_log_raw { android.LogMode.raw } else { android.LogMode.filtered }
 		log_tag: log_tag
@@ -421,6 +425,7 @@ fn args_to_options(arguments []string, defaults Options) ?(Options, &flag.FlagPa
 		run: 'run' in cmd_flags // fp.bool('run', `r`, false, 'Run the app on the device after successful deployment.')
 		device_log: fp.bool('log', 0, defaults.device_log, 'Enable device logging after deployment.')
 		device_log_raw: fp.bool('log-raw', 0, defaults.device_log_raw, 'Enable unfiltered, full device logging after deployment.')
+		clear_device_log: fp.bool('log-clear', 0, defaults.clear_device_log, 'Clear the log buffer on the device before deployment.')
 		//
 		keystore: fp.string('keystore', 0, defaults.keystore, 'Use this keystore file to sign the package')
 		keystore_alias: fp.string('keystore-alias', 0, defaults.keystore_alias, 'Use this keystore alias from the keystore file to sign the package')
@@ -662,28 +667,6 @@ fn resolve_options(mut opt Options, exit_on_error bool) {
 
 	opt.ndk_version = ndk_version
 
-	// Resolve output
-	default_file_name := opt.app_name.replace(os.path_separator.str(), '').replace(' ',
-		'_').to_lower()
-
-	mut output_file := ''
-	if opt.output != '' {
-		ext := os.file_ext(opt.output)
-		if ext != '' {
-			output_file = opt.output.all_before(ext)
-		} else {
-			output_file = os.join_path(opt.output.trim_right(os.path_separator), default_file_name)
-		}
-	} else {
-		output_file = default_file_name
-	}
-	if opt.package_format == 'aab' {
-		output_file += '.aab'
-	} else {
-		output_file += '.apk'
-	}
-	opt.output = output_file
-
 	// Java package ids/names are integrated hard into the eco-system
 	opt.lib_name = opt.app_name.replace(' ', '_').to_lower()
 
@@ -693,6 +676,33 @@ fn resolve_options(mut opt Options, exit_on_error bool) {
 	if os.getenv('KEYSTORE_ALIAS_PASSWORD') != '' {
 		opt.keystore_alias_password = os.getenv('KEYSTORE_ALIAS_PASSWORD')
 	}
+}
+
+fn resolve_output(mut opt Options) {
+	// Resolve output
+	mut output_file := ''
+	if os.file_ext(opt.input) in ['.apk', '.aab'] {
+		output_file = opt.input
+	} else {
+		default_file_name := opt.app_name.replace(os.path_separator.str(), '').replace(' ',
+			'_').to_lower()
+		if opt.output != '' {
+			ext := os.file_ext(opt.output)
+			if ext != '' {
+				output_file = opt.output.all_before(ext)
+			} else {
+				output_file = os.join_path(opt.output.trim_right(os.path_separator), default_file_name)
+			}
+		} else {
+			output_file = default_file_name
+		}
+		if opt.package_format == 'aab' {
+			output_file += '.aab'
+		} else {
+			output_file += '.apk'
+		}
+	}
+	opt.output = output_file
 }
 
 fn extend_options_from_dot_vab(mut opt Options) {

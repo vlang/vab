@@ -8,19 +8,20 @@ import android.env
 import android.util
 
 pub struct DeployOptions {
-	verbosity     int
-	v_flags       []string
-	format        PackageFormat = .apk
-	keystore      Keystore
-	activity_name string
-	work_dir      string
-	device_id     string
-	device_log    bool
-	log_mode      LogMode = .filtered
-	deploy_file   string
-	log_tag       string
-	run           string // Full id 'com.package.name/com.package.name.ActivityName'
-	kill_adb      bool   // Kill ADB after use.
+	verbosity        int
+	v_flags          []string
+	format           PackageFormat = .apk
+	keystore         Keystore
+	activity_name    string
+	work_dir         string
+	device_id        string
+	device_log       bool
+	log_mode         LogMode = .filtered
+	clear_device_log bool
+	deploy_file      string
+	log_tag          string
+	run              string // Full id 'com.package.name/com.package.name.ActivityName'
+	kill_adb         bool   // Kill ADB after use.
 }
 
 pub enum LogMode {
@@ -103,7 +104,7 @@ pub fn deploy_apk(opt DeployOptions) bool {
 			'logcat',
 			'-c',
 		]
-		if opt.run != '' && opt.device_log {
+		if opt.clear_device_log || (opt.run != '' && opt.device_log) {
 			// Clear logs first
 			if opt.verbosity > 0 {
 				println('Clearing log buffer on device "$device_id"')
