@@ -681,8 +681,10 @@ fn resolve_options(mut opt Options, exit_on_error bool) {
 fn resolve_output(mut opt Options) {
 	// Resolve output
 	mut output_file := ''
-	if os.file_ext(opt.input) in ['.apk', '.aab'] {
+	file_ext := os.file_ext(opt.input)
+	if file_ext in ['.apk', '.aab'] {
 		output_file = opt.input
+		opt.package_format = file_ext.trim_left('.') // apk / aab
 	} else {
 		default_file_name := opt.app_name.replace(os.path_separator.str(), '').replace(' ',
 			'_').to_lower()
