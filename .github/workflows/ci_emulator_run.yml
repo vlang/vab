@@ -90,12 +90,12 @@ jobs:
         #export ADB_TAGS="SOKOL_APP:D"
         #export ADB_TAGS="$ADB_TAGS V_ANDROID:D v_test_app:D"
 
+        echo "Installing V examples"
+        git clone --depth 1 https://github.com/vlang/v
+
         # Test deployment of single file *after* build
         vab --name "V DEPLOY TEST APK" v/examples/gg/bezier.v && vab v_deploy_test_apk.apk
         vab --name "V DEPLOY TEST AAB" v/examples/gg/bezier.v && vab v_deploy_test_aab.aab
-
-        echo "Installing V examples"
-        git clone --depth 1 https://github.com/vlang/v
 
         // 'flappylearning' can build but running is currently broken on Android
         declare -a v_examples=('2048' 'fireworks' 'tetris' 'sokol/particles' 'sokol/drawing.v' 'sokol/freetype_raven.v' 'gg/bezier.v' 'gg/bezier_anim.v' 'gg/polygons.v' 'gg/raven_text_rendering.v' 'gg/rectangles.v' 'gg/stars.v' 'gg/worker_thread.v')
