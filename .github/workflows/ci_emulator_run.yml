@@ -90,6 +90,10 @@ jobs:
         #export ADB_TAGS="SOKOL_APP:D"
         #export ADB_TAGS="$ADB_TAGS V_ANDROID:D v_test_app:D"
 
+        # Test deployment of single file *after* build
+        vab --name "V DEPLOY TEST APK" v/examples/gg/bezier.v && vab v_deploy_test_apk.apk
+        vab --name "V DEPLOY TEST AAB" v/examples/gg/bezier.v && vab v_deploy_test_aab.aab
+
         echo "Installing V examples"
         git clone --depth 1 https://github.com/vlang/v
 
