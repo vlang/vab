@@ -457,6 +457,11 @@ fn args_to_options(arguments []string, defaults Options) ?(Options, &flag.FlagPa
 	opt.additional_args = fp.finalize()?
 
 	v_flags << opt.v_flags
+	for v_flag in defaults.v_flags {
+		if v_flag !in v_flags {
+			v_flags << v_flag
+		}
+	}
 	opt.v_flags = v_flags
 	return opt, fp
 }
