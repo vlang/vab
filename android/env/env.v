@@ -261,15 +261,15 @@ fn install_opt(opt InstallOptions) ?bool {
 		yes_file := os.join_path(env.work_path, 'yes.txt')
 		os.write_file(yes_file, 'y\r\ny\r\ny\r\ny\r\ny\r\ny\r\ny\r\ny\r\ny\r\ny')?
 		cmd := [
-			'call',
-			sdkmanager(),
+			'cmd /c',
+			'""' + sdkmanager() + '"',
 			'--sdk_root="$sdk.root()"',
 			'--licenses',
 			'<',
-			'"' + yes_file + '"',
+			'"' + yes_file + '""',
 		]
 		util.verbosity_print_cmd(cmd, opt.verbosity)
-		cmd_res := util.run(cmd)
+		cmd_res := util.run_raw(cmd)
 		if cmd_res.exit_code > 0 {
 			return error(cmd_res.output)
 		}
