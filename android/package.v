@@ -178,38 +178,42 @@ fn package_apk(opt PackageOptions) bool {
 		// TODO Workaround dx and Java > 8 (1.8.0) BUG
 		// Error message we are trying to prevent:
 		// -Djava.ext.dirs=C:<path>lib is not supported.  Use -classpath instead.
-		if jdk_semantic_version.gt(semver.build(1, 8, 0)) && os.exists(dx) {
-			mut patched_dx := os.join_path(os.dir(dx), os.file_name(dx).all_before_last('.') +
-				'_patched.bat')
-			if !os.exists(patched_dx) {
-				mut dx_contents := os.read_file(dx) or { '' }
-				if dx_contents != '' && dx_contents.contains('-Djava.ext.dirs=') {
-					dx_contents = dx_contents.replace_once('-Djava.ext.dirs=', '-classpath ')
-					os.write_file(patched_dx, dx_contents) or { patched_dx = dx }
-				} else {
-					patched_dx = dx
+		if jdk_semantic_version.gt(semver.build(1, 8, 0)) {
+			if os.exists(dx) {
+				mut patched_dx := os.join_path(os.dir(dx), os.file_name(dx).all_before_last('.') +
+					'_patched.bat')
+				if !os.exists(patched_dx) {
+					mut dx_contents := os.read_file(dx) or { '' }
+					if dx_contents != '' && dx_contents.contains('-Djava.ext.dirs=') {
+						dx_contents = dx_contents.replace_once('-Djava.ext.dirs=', '-classpath ')
+						os.write_file(patched_dx, dx_contents) or { patched_dx = dx }
+					} else {
+						patched_dx = dx
+					}
+					if opt.verbosity > 1 {
+						println('Using patched dx ($patched_dx)')
+					}
 				}
-				if opt.verbosity > 1 {
-					println('Using patched dx ($patched_dx)')
-				}
+				dx = patched_dx
 			}
-			dx = patched_dx
 
-			mut patched_d8 := os.join_path(os.dir(d8), os.file_name(d8).all_before_last('.') +
-				'_patched.bat')
-			if !os.exists(patched_d8) {
-				mut d8_contents := os.read_file(d8) or { '' }
-				if d8_contents != '' && d8_contents.contains('-Djava.ext.dirs=') {
-					d8_contents = d8_contents.replace_once('-Djava.ext.dirs=', '-classpath ')
-					os.write_file(patched_d8, d8_contents) or { patched_d8 = d8 }
-				} else {
-					patched_d8 = d8
+			if os.exists(d8) {
+				mut patched_d8 := os.join_path(os.dir(d8), os.file_name(d8).all_before_last('.') +
+					'_patched.bat')
+				if !os.exists(patched_d8) {
+					mut d8_contents := os.read_file(d8) or { '' }
+					if d8_contents != '' && d8_contents.contains('-Djava.ext.dirs=') {
+						d8_contents = d8_contents.replace_once('-Djava.ext.dirs=', '-classpath ')
+						os.write_file(patched_d8, d8_contents) or { patched_d8 = d8 }
+					} else {
+						patched_d8 = d8
+					}
+					if opt.verbosity > 1 {
+						println('Using patched d8 ($patched_d8)')
+					}
 				}
-				if opt.verbosity > 1 {
-					println('Using patched d8 ($patched_d8)')
-				}
+				d8 = patched_d8
 			}
-			d8 = patched_d8
 		}
 		// Workaround END
 	}
