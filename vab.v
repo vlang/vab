@@ -560,18 +560,17 @@ fn validate_env(opt Options) {
 	if ndk.found() {
 		// The NDK version is sniffed from the directory it resides in (which can be anything)
 		// So we only report back if the verion can be read
-		if ndk_semantic_version := semver.from(opt.ndk_version) or {
+		if ndk_semantic_version := semver.from(opt.ndk_version) {
 			if ndk_semantic_version.lt(semver.build(21, 1, 0)) {
 				eprintln('Android NDK >= 21.1.0 is currently needed. "$opt.ndk_version" is too low.')
 				eprintln('Please provide a valid path via ANDROID_NDK_ROOT')
-				eprintln('or run `${exe_name} install "ndk;<version>"`')
+				eprintln('or run `$exe_name install "ndk;<version>"`')
 				exit(1)
 			}
 		} else {
 			eprintln('Notice: Android NDK version could not be validated from "$opt.ndk_version"')
 			eprintln('Notice: The NDK is not guaranteed to be compatible with $exe_name')
 		}
-
 	}
 
 	// API level
