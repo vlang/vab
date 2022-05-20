@@ -556,22 +556,23 @@ fn validate_env(opt Options) {
 		eprintln('Notice: Android build-tools version "$sdk.default_build_tools_version" is unknown to $exe_name, things might not work as expected.')
 	}
 
-	// Validate NDK
-	/*
-	Currently not possible as version is sniffed from the directory it resides in (which can be anything)
 	// Validate Android NDK requirements
 	if ndk.found() {
-		ndk_semantic_version := semver.from(opt.ndk_version) or {
-			panic(@MOD+'.'+@FN+':'+@LINE+' error converting "$opt.ndk_version" to semantic version.\nsemver: $err')
-		}
-		if ndk_semantic_version.lt(semver.build(21, 1, 0)) {
-			eprintln('Android NDK >= 21.1.0 is currently needed. "$opt.ndk_version" is too low.')
-			eprintln('Please provide a valid path via ANDROID_NDK_ROOT')
-			eprintln('or run `${exe_name} install "ndk;<version>"`')
-			exit(1)
+		// The NDK version is sniffed from the directory it resides in (which can be anything)
+		// So we only report back if the verion can be read
+		if ndk_semantic_version := semver.from(opt.ndk_version) {
+			if ndk_semantic_version.lt(semver.build(21, 1, 0)) {
+				eprintln('Android NDK >= 21.1.0 is currently needed. "$opt.ndk_version" is too low.')
+				eprintln('Please provide a valid path via ANDROID_NDK_ROOT')
+				eprintln('or run `$exe_name install "ndk;<version>"`')
+				exit(1)
+			}
+		} else {
+			eprintln('Notice: Android NDK version could not be validated from "$opt.ndk_version"')
+			eprintln('Notice: The NDK is not guaranteed to be compatible with $exe_name')
 		}
 	}
-	*/
+
 	// API level
 	if opt.api_level.i16() < sdk.default_api_level.i16() {
 		eprintln('Notice: Android API level $opt.api_level is less than the default level ($sdk.default_api_level).')
