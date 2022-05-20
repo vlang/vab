@@ -337,18 +337,30 @@ fn install_opt(opt InstallOptions) ?bool {
 					return true
 				}
 			}
-
-			cmd := [
-				sdkmanager(),
-				'--sdk_root="$sdk.root()"',
-				'"$item"',
-			]
-			util.verbosity_print_cmd(cmd, opt.verbosity)
-			cmd_res := util.run(cmd)
-			if cmd_res.exit_code != 0 {
-				return error(cmd_res.output)
+			$if windows {
+				cmd := [
+					'cmd /c',
+					'""' + sdkmanager() + '"',
+					'--sdk_root="$sdk.root()"',
+					'"$item""',
+				]
+				util.verbosity_print_cmd(cmd, opt.verbosity)
+				cmd_res := util.run_raw(cmd)
+				if cmd_res.exit_code != 0 {
+					return error(cmd_res.output)
+				}
+			} $else {
+				cmd := [
+					sdkmanager(),
+					'--sdk_root="$sdk.root()"',
+					'"$item"',
+				]
+				util.verbosity_print_cmd(cmd, opt.verbosity)
+				cmd_res := util.run(cmd)
+				if cmd_res.exit_code != 0 {
+					return error(cmd_res.output)
+				}
 			}
-
 			return true
 		}
 		.platforms {
