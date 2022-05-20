@@ -194,6 +194,22 @@ fn package_apk(opt PackageOptions) bool {
 				}
 			}
 			dx = patched_dx
+
+			mut patched_d8 := os.join_path(os.dir(d8), os.file_name(d8).all_before_last('.') +
+				'_patched.bat')
+			if !os.exists(patched_d8) {
+				mut d8_contents := os.read_file(d8) or { '' }
+				if d8_contents != '' && d8_contents.contains('-Djava.ext.dirs=') {
+					d8_contents = d8_contents.replace_once('-Djava.ext.dirs=', '-classpath ')
+					os.write_file(patched_d8, d8_contents) or { patched_d8 = d8 }
+				} else {
+					patched_d8 = d8
+				}
+				if opt.verbosity > 1 {
+					println('Using patched d8 ($patched_d8)')
+				}
+			}
+			d8 = patched_d8
 		}
 		// Workaround END
 	}
