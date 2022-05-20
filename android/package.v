@@ -85,6 +85,10 @@ fn package_apk(opt PackageOptions) bool {
 
 	build_path := os.join_path(opt.work_dir, 'build')
 	build_tools_path := os.join_path(sdk.build_tools_root(), opt.build_tools)
+	build_tools_semantic_version := semver.from(opt.build_tools) or {
+		panic(@MOD + '.' + @FN + ':' + @LINE +
+			' error converting build-tools version "$opt.build_tools" to semantic version.\nsemver: $err')
+	}
 
 	// Used for various bug workarounds below
 	jdk_semantic_version := semver.from(java.jdk_version()) or {
@@ -95,8 +99,10 @@ fn package_apk(opt PackageOptions) bool {
 	javac := os.join_path(java.jdk_bin_path(), 'javac')
 	aapt := os.join_path(build_tools_path, 'aapt')
 	mut dx := os.join_path(build_tools_path, 'dx')
+	mut d8 := os.join_path(build_tools_path, 'd8') // Not available prior to build-tools v28.0.1
 	$if windows {
 		dx += '.bat'
+		d8 += '.bat'
 	}
 	zipalign := os.join_path(build_tools_path, 'zipalign')
 	mut apksigner := os.join_path(build_tools_path, 'apksigner')
@@ -192,16 +198,39 @@ fn package_apk(opt PackageOptions) bool {
 		// Workaround END
 	}
 
-	// Dex
-	dx_cmd := [
-		dx,
-		'--verbose',
-		'--dex',
-		'--output=' + os.join_path('bin', 'classes.dex'),
-		'obj' /* obj_path, */,
-	]
-	util.verbosity_print_cmd(dx_cmd, opt.verbosity)
-	util.run_or_exit(dx_cmd)
+	// Dex either with `dx` or `d8`
+	if build_tools_semantic_version.ge(semver.build(28, 0, 1)) {
+		mut class_files := os.walk_ext('obj', '.class')
+		class_files = class_files.filter(!it.contains('$')) // Filter out R$xxx.class files
+		class_files = class_files.map(fn (e string) string {
+			return '"$e"'
+		})
+		mut dex_type := if opt.is_prod { '--release' } else { '--debug' }
+		mut d8_cmd := [
+			d8,
+			dex_type,
+			'--lib "' + android_runtime + '"',
+			'--classpath .',
+			'--output ' + 'classes.zip',
+		]
+		d8_cmd << class_files
+		util.verbosity_print_cmd(d8_cmd, opt.verbosity)
+		util.run_or_exit(d8_cmd)
+		util.unzip('classes.zip', 'bin') or {
+			panic(@MOD + '.' + @FN + ':' + @LINE + ' error unzipping classes.zip to bin: $err')
+		}
+		os.rm('classes.zip') or { panic(err) }
+	} else {
+		dx_cmd := [
+			dx,
+			'--verbose',
+			'--dex',
+			'--output=' + os.join_path('bin', 'classes.dex'),
+			'obj' /* obj_path, */,
+		]
+		util.verbosity_print_cmd(dx_cmd, opt.verbosity)
+		util.run_or_exit(dx_cmd)
+	}
 
 	// Second run
 	aapt_cmd = [

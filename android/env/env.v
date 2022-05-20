@@ -65,6 +65,7 @@ const (
 		os.join_path('cmdline-tools', 'tools', 'bin'),
 		os.join_path('tools', 'bin'),
 	]
+	work_path                                 = os.join_path(os.temp_dir(), 'vab', 'tmp')
 )
 
 pub enum Dependency {
@@ -241,25 +242,53 @@ fn install_opt(opt InstallOptions) ?bool {
 		}
 	}
 
-	item := opt.item
-
-	mut yes_cmd := 'yes' // Linux / macOS
-	$if windows {
-		yes_cmd = 'echo y' // Windows PowerShell
+	// Accept all SDK licenses
+	$if !windows {
+		cmd := [
+			'yes',
+			'|',
+			sdkmanager(),
+			'--sdk_root="$sdk.root()"',
+			'--licenses',
+		]
+		util.verbosity_print_cmd(cmd, opt.verbosity)
+		cmd_res := util.run(cmd)
+		if cmd_res.exit_code > 0 {
+			return error(cmd_res.output)
+		}
+	} $else {
+		os.mkdir_all(env.work_path) or {}
+		yes_file := os.join_path(env.work_path, 'yes.txt')
+		os.write_file(yes_file, 'y\r\ny\r\ny\r\ny\r\ny\r\ny\r\ny\r\ny\r\ny\r\ny')?
+		cmd := [
+			'call',
+			sdkmanager(),
+			'--sdk_root="$sdk.root()"',
+			'--licenses',
+			'<',
+			'"' + yes_file + '"',
+		]
+		util.verbosity_print_cmd(cmd, opt.verbosity)
+		cmd_res := util.run(cmd)
+		if cmd_res.exit_code > 0 {
+			return error(cmd_res.output)
+		}
 	}
+
+	item := opt.item
 
 	if opt.verbosity > 0 {
 		println(@MOD + '.' + @FN + ' installing $opt.dep: "$item"...')
 	}
-	if opt.dep == .bundletool {
-		return ensure_bundletool(opt.verbosity)
-	} else if opt.dep == .aapt2 {
-		return ensure_aapt2(opt.verbosity)
-	} else if opt.dep == .cmdline_tools {
-		$if !windows {
+	match opt.dep {
+		.bundletool {
+			return ensure_bundletool(opt.verbosity)
+		}
+		.aapt2 {
+			return ensure_aapt2(opt.verbosity)
+		}
+		.cmdline_tools, .platform_tools {
 			cmd := [
-				yes_cmd,
-				'|',
 				sdkmanager(),
 				'--sdk_root="$sdk.root()"',
 				'"$item"',
@@ -269,147 +298,47 @@ fn install_opt(opt InstallOptions) ?bool {
 			if cmd_res.exit_code > 0 {
 				return error(cmd_res.output)
 			}
-		} $else {
-			cmd := [
-				'cmd /c',
-				'"' + yes_cmd,
-				'|',
-				sdkmanager(),
-				'--sdk_root="$sdk.root()"',
-				'"$item"' + '"',
-			]
-			util.verbosity_print_cmd(cmd, opt.verbosity)
-			cmd_res := util.raw_run(cmd)
-			if cmd_res.exit_code != 0 {
-				return error(cmd_res.output)
-			}
-		}
-		return true
-	} else if opt.dep == .platform_tools {
-		// Ignore opt.item for now
-		$if !windows {
-			cmd := [
-				yes_cmd,
-				'|',
-				sdkmanager(),
-				'--sdk_root="$sdk.root()"',
-				'"$item"',
-			]
-			util.verbosity_print_cmd(cmd, opt.verbosity)
-			cmd_res := util.run(cmd)
-			if cmd_res.exit_code > 0 {
-				return error(cmd_res.output)
-			}
-		} $else {
-			cmd := [
-				'cmd /c',
-				'"' + yes_cmd,
-				'|',
-				sdkmanager(),
-				'--sdk_root="$sdk.root()"',
-				'"$item"' + '"',
-			]
-			util.verbosity_print_cmd(cmd, opt.verbosity)
-			cmd_res := util.raw_run(cmd)
-			if cmd_res.exit_code != 0 {
-				return error(cmd_res.output)
-			}
-		}
-		return true
-	} else if opt.dep == .ndk {
-		version_check := item.all_after(';')
-		if version_check != '' {
-			sv_check := semver.from(version_check) or { panic(err) }
-			comp_sv := semver.from(ndk.min_supported_version) or { panic(err) }
-			if sv_check.lt(comp_sv) {
-				eprintln('Notice: Skipping install. NDK $item is lower than supported ${ndk.min_supported_version}...')
-				return true
-			}
-		}
-
-		if opt.verbosity > 0 {
-			println('Installing NDK (Side-by-side) "$item"...')
-		}
-
-		$if !windows {
-			cmd := [
-				yes_cmd,
-				'|',
-				sdkmanager(),
-				'--sdk_root="$sdk.root()"',
-				'"$item"',
-			]
-			util.verbosity_print_cmd(cmd, opt.verbosity)
-			cmd_res := util.run(cmd)
-			if cmd_res.exit_code > 0 {
-				return error(cmd_res.output)
-			}
-		} $else {
-			cmd := [
-				'cmd /c',
-				'"' + yes_cmd,
-				'|',
-				sdkmanager(),
-				'--sdk_root="$sdk.root()"',
-				'"$item"' + '"',
-			]
-			util.verbosity_print_cmd(cmd, opt.verbosity)
-			cmd_res := util.raw_run(cmd)
-			if cmd_res.exit_code != 0 {
-				return error(cmd_res.output)
-			}
-		}
-		return true
-	} else if opt.dep == .build_tools {
-		version_check := item.all_after(';')
-		if version_check != '' {
-			sv_check := semver.from(version_check) or { panic(err) }
-			comp_sv := semver.from(sdk.min_supported_build_tools_version) or { panic(err) }
-			if sv_check.lt(comp_sv) {
-				eprintln('Notice: Skipping install. build-tools "$item" is lower than supported ${sdk.min_supported_build_tools_version}...')
-				return true
-			}
-		}
-
-		$if !windows {
-			cmd := [
-				yes_cmd,
-				'|',
-				sdkmanager(),
-				'--sdk_root="$sdk.root()"',
-				'"$item"',
-			]
-			util.verbosity_print_cmd(cmd, opt.verbosity)
-			cmd_res := util.run(cmd)
-			if cmd_res.exit_code != 0 {
-				return error(cmd_res.output)
-			}
-		} $else {
-			cmd := [
-				'cmd /c',
-				'"' + yes_cmd,
-				'|',
-				sdkmanager(),
-				'--sdk_root="$sdk.root()"',
-				'"$item"' + '"',
-			]
-			util.verbosity_print_cmd(cmd, opt.verbosity)
-			cmd_res := util.raw_run(cmd)
-			if cmd_res.exit_code != 0 {
-				return error(cmd_res.output)
-			}
-		}
-		return true
-	} else if opt.dep == .platforms {
-		v := item.all_after('-')
-		if v.i16() < sdk.min_supported_api_level.i16() {
-			eprintln('Notice: Skipping install. platform $item is lower than supported android-${sdk.min_supported_api_level}...')
 			return true
 		}
-		$if !windows {
+		.ndk {
+			version_check := item.all_after(';')
+			if version_check != '' {
+				sv_check := semver.from(version_check) or { panic(err) }
+				comp_sv := semver.from(ndk.min_supported_version) or { panic(err) }
+				if sv_check.lt(comp_sv) {
+					eprintln('Notice: Skipping install. NDK $item is lower than supported ${ndk.min_supported_version}...')
+					return true
+				}
+			}
+			if opt.verbosity > 0 {
+				println('Installing NDK (Side-by-side) "$item"...')
+			}
+
 			cmd := [
-				yes_cmd,
-				'|',
+				sdkmanager(),
+				'--sdk_root="$sdk.root()"',
+				'"$item"',
+			]
+			util.verbosity_print_cmd(cmd, opt.verbosity)
+			cmd_res := util.run(cmd)
+			if cmd_res.exit_code > 0 {
+				return error(cmd_res.output)
+			}
+
+			return true
+		}
+		.build_tools {
+			version_check := item.all_after(';')
+			if version_check != '' {
+				sv_check := semver.from(version_check) or { panic(err) }
+				comp_sv := semver.from(sdk.min_supported_build_tools_version) or { panic(err) }
+				if sv_check.lt(comp_sv) {
+					eprintln('Notice: Skipping install. build-tools "$item" is lower than supported ${sdk.min_supported_build_tools_version}...')
+					return true
+				}
+			}
+
+			cmd := [
 				sdkmanager(),
 				'--sdk_root="$sdk.root()"',
 				'"$item"',
@@ -419,22 +348,27 @@ fn install_opt(opt InstallOptions) ?bool {
 			if cmd_res.exit_code != 0 {
 				return error(cmd_res.output)
 			}
-		} $else {
+
+			return true
+		}
+		.platforms {
+			api_level := item.all_after('-')
+			if api_level.i16() < sdk.min_supported_api_level.i16() {
+				eprintln('Notice: Skipping install. platform $item is lower than supported android-${sdk.min_supported_api_level}...')
+				return true
+			}
 			cmd := [
-				'cmd /c',
-				'"' + yes_cmd,
-				'|',
 				sdkmanager(),
 				'--sdk_root="$sdk.root()"',
-				'"$item"' + '"',
+				'"$item"',
 			]
 			util.verbosity_print_cmd(cmd, opt.verbosity)
-			cmd_res := util.raw_run(cmd)
+			cmd_res := util.run(cmd)
 			if cmd_res.exit_code != 0 {
 				return error(cmd_res.output)
 			}
+			return true
 		}
-		return true
 	}
 	return error(@MOD + '.' + @FN + ' ' + 'unknown install type $opt.dep')
 }
