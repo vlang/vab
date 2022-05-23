@@ -82,11 +82,6 @@ pub fn compile(opt CompileOptions) bool {
 	// if v_cmd_res.exit_code != 0 {
 	//	panic('dumping V flags failed with:\n$v_cmd_res.output')
 	//}
-	$if windows {
-		if v_cmd_res.exit_code != 0 {
-			panic('dumping V flags failed with:\n$v_cmd_res.output')
-		}
-	}
 
 	// Parse imported modules from dump
 	mut v_cmd_out := v_cmd_res.output.all_after('imported modules:').all_after('[')
