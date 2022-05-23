@@ -268,8 +268,8 @@ jobs:
     - name: Run tests
       run: v test vab
 
-    - name: Build vab with -prod
-      run: v -prod vab/vab.v
+#    - name: Build vab with -prod
+#      run: v -prod vab/vab.v
 
     - name: Build vab
       run: v -g vab/vab.v
