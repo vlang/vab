@@ -243,20 +243,7 @@ fn install_opt(opt InstallOptions) ?bool {
 	}
 
 	// Accept all SDK licenses
-	$if !windows {
-		cmd := [
-			'yes',
-			'|',
-			sdkmanager(),
-			'--sdk_root="$sdk.root()"',
-			'--licenses',
-		]
-		util.verbosity_print_cmd(cmd, opt.verbosity)
-		cmd_res := util.run(cmd)
-		if cmd_res.exit_code > 0 {
-			return error(cmd_res.output)
-		}
-	} $else {
+	$if windows {
 		os.mkdir_all(env.work_path) or {}
 		yes_file := os.join_path(env.work_path, 'yes.txt')
 		os.write_file(yes_file, 'y\r\ny\r\ny\r\ny\r\ny\r\ny\r\ny\r\ny\r\ny\r\ny')?
@@ -302,6 +289,8 @@ fn install_opt(opt InstallOptions) ?bool {
 				}
 			} $else {
 				cmd := [
+					'yes',
+					'|',
 					sdkmanager(),
 					'--sdk_root="$sdk.root()"',
 					'"$item"',
@@ -342,6 +331,8 @@ fn install_opt(opt InstallOptions) ?bool {
 				}
 			} $else {
 				cmd := [
+					'yes',
+					'|',
 					sdkmanager(),
 					'--sdk_root="$sdk.root()"',
 					'"$item"',
@@ -378,6 +369,8 @@ fn install_opt(opt InstallOptions) ?bool {
 				}
 			} $else {
 				cmd := [
+					'yes',
+					'|',
 					sdkmanager(),
 					'--sdk_root="$sdk.root()"',
 					'"$item"',
@@ -410,6 +403,8 @@ fn install_opt(opt InstallOptions) ?bool {
 				}
 			} $else {
 				cmd := [
+					'yes',
+					'|',
 					sdkmanager(),
 					'--sdk_root="$sdk.root()"',
 					'"$item"',
