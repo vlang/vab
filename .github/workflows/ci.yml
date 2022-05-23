@@ -252,9 +252,9 @@ jobs:
         repository: vlang/v
 
     - name: Build
-        run: |
-          .\make.bat -msvc
-          .\v.exe -cflags /WX self
+      run: |
+        .\make.bat -msvc
+        .\v.exe -cflags /WX self
 
     - uses: actions/checkout@v2
       with:
