@@ -61,6 +61,11 @@ pub fn compile(opt CompileOptions) bool {
 		ndk_root := ndk.root()
 		ls_ndkr := os.ls(ndk_root) or { panic('ls paniced: $err.msg()') }
 		println(ls_ndkr)
+
+		p1 := os.join_path(ndk.root(),'toolchains','llvm','prebuilt','windows-x86_64','bin')
+		ls_p1 := os.ls(p1) or { panic('ls paniced: $err.msg()') }
+		println(ls_p1)
+
 		panic('$err_sig: failed getting NDK compiler. $err')
 	}
 	os.setenv('VCROSS_COMPILER_NAME', cross_compiler_name, true)
