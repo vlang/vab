@@ -66,6 +66,7 @@ pub fn compile(opt CompileOptions) bool {
 	v_cmd << opt.v_flags
 	v_cmd << [
 		'-v', // Verbose so we can catch imported modules string
+		'-cc clang',
 		'-dump-c-flags',
 		'"$vcflags_file"',
 		'-os android',
