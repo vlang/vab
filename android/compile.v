@@ -50,14 +50,14 @@ pub fn compile(opt CompileOptions) bool {
 	v_output_file := os.join_path(opt.work_dir, 'v_android.c')
 
 	// Dump C flags to a file
-	vcflags_file := os.join_path(opt.work_dir, 'v_cflags.txt')
+	vcflags_file := os.join_path(opt.work_dir, 'v.cflags')
 	os.rm(vcflags_file) or {}
 	mut v_cmd := [vexe]
 	if !opt.cache {
 		v_cmd << '-nocache'
 	}
 
-	os.write_file(vcflags_file, 'test') or { panic('WHOOPS\n$err.msg()') }
+	os.write_file(vcflags_file, '') or { panic('WHOOPS\n$err.msg()') }
 	println(os.read_file(vcflags_file) or { 'YUK-SAUCE' })
 	os.rm(vcflags_file) or { println('Could not remove "$vcflags_file"') }
 
