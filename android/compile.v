@@ -57,23 +57,18 @@ pub fn compile(opt CompileOptions) bool {
 		v_cmd << '-nocache'
 	}
 
-	/*
-	os.write_file(vcflags_file, '') or { panic('WHOOPS\n$err.msg()') }
-	println(os.read_file(vcflags_file) or { 'YUK-SAUCE' })
-	os.rm(vcflags_file) or { println('Could not remove "$vcflags_file"') }
-	*/
-
 	v_cmd << opt.v_flags
 	v_cmd << [
-		//'-v', // Verbose so we can catch imported modules string
+		'-v', // Verbose so we can catch imported modules string
 		'-dump-c-flags',
-		'-', // '"$vcflags_file"',
+		'"$vcflags_file"',
 		'-os android',
 		'-apk',
 	]
 	v_cmd << opt.input
 	util.verbosity_print_cmd(v_cmd, opt.verbosity)
 	v_cmd_res := util.run(v_cmd)
+
 	println(v_cmd_res)
 
 	// Parse imported modules from dump

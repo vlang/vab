@@ -237,6 +237,7 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 10
     env:
+      VFLAGS: -cc tcc -no-retry-compilation
       VAB_FLAGS: -cg -v 3
     steps:
     #- uses: actions/setup-java@v2
@@ -244,21 +245,36 @@ jobs:
         #distribution: 'adopt'
         #java-version: 11
 
-    - name: Install V
-      uses: vlang/setup-v@v1
-      with:
-        check-latest: true
-
-    # TODO https://github.com/vlang/setup-v/issues
-    - name: Checkout V examples
+    - name: Checkout V
       uses: actions/checkout@v2
       with:
         repository: vlang/v
-        path: v
 
-    - uses: actions/checkout@v2
-      with:
-        path: vab
+    #- name: Install V
+      #uses: vlang/setup-v@v1
+      #with:
+        #check-latest: true
+    - name: Build with make.bat -tcc
+      run: |
+        .\make.bat -tcc
+    - name: Test new v.c
+      run: |
+        .\v.exe -o v.c cmd/v
+        .\thirdparty\tcc\tcc.exe -Werror -w -ladvapi32 -bt10 v.c
+    - name: Install dependencies
+      run: |
+        .\v.exe setup-freetype
+        .\.github\workflows\windows-install-sqlite.bat
+    - name: v doctor
+      run: |
+        ./v doctor
+    # TODO https://github.com/vlang/setup-v/issues
+
+    #- name: Checkout V examples
+      #uses: actions/checkout@v2
+      #with:
+        #repository: vlang/v
+        #path: v
 
     - name: Checkout vab
       uses: actions/checkout@v2
@@ -266,24 +282,28 @@ jobs:
         path: vab
 
     - name: Run tests
-      run: v test vab
+      run: ./v test vab
 
 #    - name: Build vab with -prod
 #      run: v -prod vab/vab.v
 
     - name: Build vab
-      run: v -g vab/vab.v
+      run: ./v -g vab/vab.v
 
     - name: Run vab --help
-      run: vab/vab --help
+      run: |
+        export VEXE=./v
+        vab/vab --help
 
     - name: Install AAB dependencies
       run: |
+        export VEXE=./v
         vab/vab install bundletool
         vab/vab install aapt2
 
     - name: Run vab doctor
       run: |
+        export VEXE=./v
         vab/vab doctor
 
     #- name: Run 'vab install auto'
@@ -301,5 +321,6 @@ jobs:
 
     - name: Build APK (Default) v/examples/sokol/particles
       run: |
+        export VEXE=./v
         vab/vab v/examples/sokol/particles -o apks/particles.apk
         vab/vab v/examples/sokol/particles -o aabs/particles.aab
