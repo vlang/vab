@@ -90,7 +90,7 @@ pub fn run(args []string) os.Result {
 	return res
 }
 
-pub fn raw_run(args []string) os.Result {
+pub fn run_raw(args []string) os.Result {
 	res := unsafe { os.raw_execute(args.join(' ')) }
 	if res.exit_code < 0 {
 		return os.Result{1, ''}
