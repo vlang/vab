@@ -162,6 +162,7 @@ pub fn compile(opt CompileOptions) bool {
 
 	// Read in the dumped cflags
 	vcflags := os.read_file(vcflags_file) or {
+		println(os.ls(os.dir(vcflags_file)) or {panic('failed dirlisting "$vcflags_file":\n$err')})
 		panic('$err_sig: failed reading C flags to "$vcflags_file". $err')
 	}
 	for line in vcflags.split('\n') {
