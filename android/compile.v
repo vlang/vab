@@ -56,6 +56,11 @@ pub fn compile(opt CompileOptions) bool {
 	if !opt.cache {
 		v_cmd << '-nocache'
 	}
+
+	os.write_file(vcflags_file, 'test') or { panic('WHOOPS\n$err.msg()') }
+	println(os.read_file(vcflags_file) or { 'YUK-SAUCE' })
+	os.rm(vcflags_file) or { println('Could not remove "$vcflags_file"') }
+
 	v_cmd << opt.v_flags
 	v_cmd << [
 		'-v', // Verbose so we can catch imported modules string
@@ -164,7 +169,7 @@ pub fn compile(opt CompileOptions) bool {
 	vcflags := os.read_file(vcflags_file) or {
 		dirls := os.dir(vcflags_file)
 		println('ls: $dirls')
-		println(os.ls(dirls) or {panic('failed dirlisting "$dirls":\n$err')})
+		println(os.ls(dirls) or { panic('failed dirlisting "$dirls":\n$err') })
 		println('--------------- PANIC UNDER HERE -----------------------')
 		panic('$err_sig: failed reading C flags to "$vcflags_file". $err')
 	}
