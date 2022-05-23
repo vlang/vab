@@ -306,5 +306,5 @@ jobs:
     - name: Build APK (Default) v/examples/sokol/particles
       run: |
         $env:VEXE = '.\v'
-        vab/vab v/examples/sokol/particles -o apks/particles.apk
-        vab/vab v/examples/sokol/particles -o aabs/particles.aab
+        vab/vab examples/sokol/particles -o apks/particles.apk
+        vab/vab examples/sokol/particles -o aabs/particles.aab
