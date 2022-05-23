@@ -50,7 +50,7 @@ pub fn compile(opt CompileOptions) bool {
 	v_output_file := os.join_path(opt.work_dir, 'v_android.c')
 
 	// Dump C flags to a file
-	vcflags_file := os.join_path(opt.work_dir, 'v.cflags')
+	vcflags_file := os.join_path(opt.work_dir, 'v_cflags.txt')
 	os.rm(vcflags_file) or {}
 	mut v_cmd := [vexe]
 	if !opt.cache {
