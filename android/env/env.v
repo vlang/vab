@@ -218,8 +218,6 @@ pub fn install(components string, verbosity int) int {
 		}
 	}
 
-	// TODO Windows: `call sdkmanager --licenses < file-y.txt`
-
 	for iopt in iopts {
 		install_opt(iopt) or {
 			eprintln(err)
@@ -267,6 +265,24 @@ fn install_opt(opt InstallOptions) ?bool {
 	if opt.verbosity > 0 {
 		println(@MOD + '.' + @FN + ' installing $opt.dep: "$item"...')
 	}
+
+	install_cmd := $if windows {
+		[
+			'cmd /c',
+			'""' + sdkmanager() + '"',
+			'--sdk_root="$sdk.root()"',
+			'"$item""',
+		]
+	} $else {
+		[
+			'yes',
+			'|',
+			sdkmanager(),
+			'--sdk_root="$sdk.root()"',
+			'"$item"',
+		]
+	}
+
 	match opt.dep {
 		.bundletool {
 			return ensure_bundletool(opt.verbosity)
@@ -275,31 +291,14 @@ fn install_opt(opt InstallOptions) ?bool {
 			return ensure_aapt2(opt.verbosity)
 		}
 		.cmdline_tools, .platform_tools {
-			$if windows {
-				cmd := [
-					'cmd /c',
-					'""' + sdkmanager() + '"',
-					'--sdk_root="$sdk.root()"',
-					'"$item""',
-				]
-				util.verbosity_print_cmd(cmd, opt.verbosity)
-				cmd_res := util.run_raw(cmd)
-				if cmd_res.exit_code != 0 {
-					return error(cmd_res.output)
-				}
+			util.verbosity_print_cmd(install_cmd, opt.verbosity)
+			cmd_res := $if windows {
+				util.run_raw(install_cmd)
 			} $else {
-				cmd := [
-					'yes',
-					'|',
-					sdkmanager(),
-					'--sdk_root="$sdk.root()"',
-					'"$item"',
-				]
-				util.verbosity_print_cmd(cmd, opt.verbosity)
-				cmd_res := util.run(cmd)
-				if cmd_res.exit_code > 0 {
-					return error(cmd_res.output)
-				}
+				util.run(install_cmd)
+			}
+			if cmd_res.exit_code != 0 {
+				return error(cmd_res.output)
 			}
 			return true
 		}
@@ -317,31 +316,14 @@ fn install_opt(opt InstallOptions) ?bool {
 				println('Installing NDK (Side-by-side) "$item"...')
 			}
 
-			$if windows {
-				cmd := [
-					'cmd /c',
-					'""' + sdkmanager() + '"',
-					'--sdk_root="$sdk.root()"',
-					'"$item""',
-				]
-				util.verbosity_print_cmd(cmd, opt.verbosity)
-				cmd_res := util.run_raw(cmd)
-				if cmd_res.exit_code != 0 {
-					return error(cmd_res.output)
-				}
+			util.verbosity_print_cmd(install_cmd, opt.verbosity)
+			cmd_res := $if windows {
+				util.run_raw(install_cmd)
 			} $else {
-				cmd := [
-					'yes',
-					'|',
-					sdkmanager(),
-					'--sdk_root="$sdk.root()"',
-					'"$item"',
-				]
-				util.verbosity_print_cmd(cmd, opt.verbosity)
-				cmd_res := util.run(cmd)
-				if cmd_res.exit_code > 0 {
-					return error(cmd_res.output)
-				}
+				util.run(install_cmd)
+			}
+			if cmd_res.exit_code != 0 {
+				return error(cmd_res.output)
 			}
 			return true
 		}
@@ -355,31 +337,14 @@ fn install_opt(opt InstallOptions) ?bool {
 					return true
 				}
 			}
-			$if windows {
-				cmd := [
-					'cmd /c',
-					'""' + sdkmanager() + '"',
-					'--sdk_root="$sdk.root()"',
-					'"$item""',
-				]
-				util.verbosity_print_cmd(cmd, opt.verbosity)
-				cmd_res := util.run_raw(cmd)
-				if cmd_res.exit_code != 0 {
-					return error(cmd_res.output)
-				}
+			util.verbosity_print_cmd(install_cmd, opt.verbosity)
+			cmd_res := $if windows {
+				util.run_raw(install_cmd)
 			} $else {
-				cmd := [
-					'yes',
-					'|',
-					sdkmanager(),
-					'--sdk_root="$sdk.root()"',
-					'"$item"',
-				]
-				util.verbosity_print_cmd(cmd, opt.verbosity)
-				cmd_res := util.run(cmd)
-				if cmd_res.exit_code != 0 {
-					return error(cmd_res.output)
-				}
+				util.run(install_cmd)
+			}
+			if cmd_res.exit_code != 0 {
+				return error(cmd_res.output)
 			}
 			return true
 		}
@@ -389,31 +354,14 @@ fn install_opt(opt InstallOptions) ?bool {
 				eprintln('Notice: Skipping install. platform $item is lower than supported android-${sdk.min_supported_api_level}...')
 				return true
 			}
-			$if windows {
-				cmd := [
-					'cmd /c',
-					'""' + sdkmanager() + '"',
-					'--sdk_root="$sdk.root()"',
-					'"$item""',
-				]
-				util.verbosity_print_cmd(cmd, opt.verbosity)
-				cmd_res := util.run_raw(cmd)
-				if cmd_res.exit_code != 0 {
-					return error(cmd_res.output)
-				}
+			util.verbosity_print_cmd(install_cmd, opt.verbosity)
+			cmd_res := $if windows {
+				util.run_raw(install_cmd)
 			} $else {
-				cmd := [
-					'yes',
-					'|',
-					sdkmanager(),
-					'--sdk_root="$sdk.root()"',
-					'"$item"',
-				]
-				util.verbosity_print_cmd(cmd, opt.verbosity)
-				cmd_res := util.run(cmd)
-				if cmd_res.exit_code != 0 {
-					return error(cmd_res.output)
-				}
+				util.run(install_cmd)
+			}
+			if cmd_res.exit_code != 0 {
+				return error(cmd_res.output)
 			}
 			return true
 		}
