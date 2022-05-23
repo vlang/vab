@@ -218,8 +218,6 @@ pub fn install(components string, verbosity int) int {
 		}
 	}
 
-	// TODO Windows: `call sdkmanager --licenses < file-y.txt`
-
 	for iopt in iopts {
 		install_opt(iopt) or {
 			eprintln(err)
