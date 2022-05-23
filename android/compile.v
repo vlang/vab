@@ -75,9 +75,11 @@ pub fn compile(opt CompileOptions) bool {
 	v_cmd << opt.input
 	util.verbosity_print_cmd(v_cmd, opt.verbosity)
 	v_cmd_res := util.run(v_cmd)
-	if v_cmd_res.exit_code != 0 {
-		panic('dumping V flags failed with:\n$v_cmd_res.output')
-	}
+	// NOTE this command fails with a C compile error but the output we need is still
+	// present... Yes - not exactly pretty.
+	// if v_cmd_res.exit_code != 0 {
+	//	panic('dumping V flags failed with:\n$v_cmd_res.output')
+	//}
 
 	// Parse imported modules from dump
 	mut v_cmd_out := v_cmd_res.output.all_after('imported modules:').all_after('[')
