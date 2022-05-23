@@ -58,6 +58,9 @@ pub fn compile(opt CompileOptions) bool {
 	}
 
 	cross_compiler_name := ndk.compiler(opt.ndk_version, 'armeabi-v7a', opt.api_level) or {
+		ndk_root := ndk.root()
+		ls_ndkr := os.ls(ndk_root) or { panic('ls paniced: $err.msg()') }
+		println(ls_ndkr)
 		panic('$err_sig: failed getting NDK compiler. $err')
 	}
 	os.setenv('VCROSS_COMPILER_NAME', cross_compiler_name, true)
