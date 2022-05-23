@@ -57,6 +57,12 @@ pub fn compile(opt CompileOptions) bool {
 		v_cmd << '-nocache'
 	}
 
+	cross_compiler_name := ndk.compiler(opt.ndk_version, 'armeabi-v7a', opt.api_level)
+	os.setenv('VCROSS_COMPILER_NAME', cross_compiler_name, true)
+	if opt.verbosity > 1 {
+		println('Sat VCROSS_COMPILER_NAME to "$cross_compiler_name"')
+	}
+
 	v_cmd << opt.v_flags
 	v_cmd << [
 		'-v', // Verbose so we can catch imported modules string
@@ -166,10 +172,6 @@ pub fn compile(opt CompileOptions) bool {
 
 	// Read in the dumped cflags
 	vcflags := os.read_file(vcflags_file) or {
-		dirls := os.dir(vcflags_file)
-		println('ls: $dirls')
-		println(os.ls(dirls) or { panic('failed dirlisting "$dirls":\n$err') })
-		println('--------------- PANIC UNDER HERE -----------------------')
 		panic('$err_sig: failed reading C flags to "$vcflags_file". $err')
 	}
 	for line in vcflags.split('\n') {
