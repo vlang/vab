@@ -230,3 +230,76 @@ jobs:
       #run: |
         #export VEXE=./v
         ##vab/vab -v 3 examples/sokol/particles -o apks/particles.apk
+
+
+
+  windows-latest-install:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    env:
+      VAB_FLAGS: -cg -v 3
+    steps:
+    #- uses: actions/setup-java@v2
+      #with:
+        #distribution: 'adopt'
+        #java-version: 11
+
+    - name: Install V
+      uses: vlang/setup-v@v1
+      with:
+        check-latest: true
+
+    # TODO https://github.com/vlang/setup-v/issues
+    - name: Checkout V examples
+      uses: actions/checkout@v2
+      with:
+        repository: vlang/v
+        path: v
+
+    - uses: actions/checkout@v2
+      with:
+        path: vab
+
+    - name: Checkout vab
+      uses: actions/checkout@v2
+      with:
+        path: vab
+
+    - name: Run tests
+      run: v test vab
+
+    - name: Build vab with -prod
+      run: v -prod vab/vab.v
+
+    - name: Build vab
+      run: v -g vab/vab.v
+
+    - name: Run vab --help
+      run: vab/vab --help
+
+    - name: Install AAB dependencies
+      run: |
+        vab/vab install bundletool
+        vab/vab install aapt2
+
+    - name: Run vab doctor
+      run: |
+        vab/vab doctor
+
+    #- name: Run 'vab install auto'
+      #run: |
+        #export ANDROID_SDK_ROOT="" # These are set in the CI by default
+        #export ANDROID_HOME=""
+        #export ANDROID_NDK_ROOT=""
+        ## Sometimes this step fails in CI???
+        ##vab/vab -v 3 install auto
+
+    - name: Setup env
+      run: |
+        mkdir apks
+        mkdir aabs
+
+    - name: Build APK (Default) v/examples/sokol/particles
+      run: |
+        vab/vab v/examples/sokol/particles -o apks/particles.apk
+        vab/vab v/examples/sokol/particles -o aabs/particles.aab
