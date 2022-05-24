@@ -56,9 +56,19 @@ pub fn compile(opt CompileOptions) bool {
 	if !opt.cache {
 		v_cmd << '-nocache'
 	}
+
+	cross_compiler_name := ndk.compiler(opt.ndk_version, 'armeabi-v7a', opt.api_level) or {
+		panic('$err_sig: failed getting NDK compiler. $err')
+	}
+	os.setenv('VCROSS_COMPILER_NAME', cross_compiler_name, true)
+	if opt.verbosity > 1 {
+		println('Sat VCROSS_COMPILER_NAME to "$cross_compiler_name"')
+	}
+
 	v_cmd << opt.v_flags
 	v_cmd << [
 		'-v', // Verbose so we can catch imported modules string
+		'-cc clang',
 		'-dump-c-flags',
 		'"$vcflags_file"',
 		'-os android',
@@ -67,6 +77,11 @@ pub fn compile(opt CompileOptions) bool {
 	v_cmd << opt.input
 	util.verbosity_print_cmd(v_cmd, opt.verbosity)
 	v_cmd_res := util.run(v_cmd)
+	// NOTE this command fails with a C compile error but the output we need is still
+	// present... Yes - not exactly pretty.
+	// if v_cmd_res.exit_code != 0 {
+	//	panic('dumping V flags failed with:\n$v_cmd_res.output')
+	//}
 
 	// Parse imported modules from dump
 	mut v_cmd_out := v_cmd_res.output.all_after('imported modules:').all_after('[')

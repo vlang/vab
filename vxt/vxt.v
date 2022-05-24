@@ -15,7 +15,7 @@ pub fn vexe() string {
 		}
 		possible_symlink := os.find_abs_path_of_executable('v') or { '' }
 		if os.is_executable(possible_symlink) {
-			exe = os.real_path(possible_symlink)
+			return os.real_path(possible_symlink)
 		}
 	} $else {
 		if os.exists(exe) {
@@ -28,9 +28,16 @@ pub fn vexe() string {
 		if !os.exists(exe) {
 			res := os.execute('where.exe v')
 			if res.exit_code != 0 {
-				return ''
+				exe = ''
+			} else {
+				return res.output.trim('\n\r')
 			}
-			return res.output.trim('\n\r')
+		}
+	}
+	// Try the compiler that built this
+	if !os.exists(exe) {
+		if os.exists(@VEXE) {
+			return @VEXE
 		}
 	}
 	return exe
@@ -43,15 +50,19 @@ pub fn found() bool {
 pub fn home() string {
 	// credits to @spytheman:
 	// https://discord.com/channels/592103645835821068/592294828432424960/746040606358503484
-	exe := vexe()
+	mut exe := vexe()
 	$if !windows {
 		if os.is_executable(exe) {
 			return os.dir(exe)
 		}
 	} $else {
 		if os.exists(exe) {
-			// Skip the `.bin/` dir
-			return os.dir(os.dir(exe))
+			exe = exe.replace('/', os.path_separator)
+			// Skip the `.bin\` dir
+			if os.dir(exe).ends_with('.bin') {
+				exe = os.dir(exe)
+			}
+			return os.dir(exe)
 		}
 	}
 	return ''

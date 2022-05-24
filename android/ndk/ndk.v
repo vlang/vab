@@ -193,7 +193,6 @@ pub fn arch_to_instruction_set(arch string) string {
 	}
 }
 
-// TODO do Windows as well
 [inline]
 pub fn compiler(ndk_version string, arch string, api_level string) ?string {
 	mut eabi := ''
@@ -209,6 +208,10 @@ pub fn compiler(ndk_version string, arch string, api_level string) ?string {
 	$if windows {
 		compiler += '.cmd'
 	}
+	// TODO some setups like in CI the max API level reported by the SDK will be higher than
+	// what the NDK supports - we could maybe report a better error if we try to look for the
+	// highest number of compiler in the `bin` dir.
+
 	// legacy ndk version setups
 	/*
 	if !os.is_file(compiler) {

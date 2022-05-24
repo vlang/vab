@@ -110,8 +110,7 @@ jobs:
         export VEXE=./v
         vab/vab examples/sokol/particles -o apks/particles.apk
 
-
-  ubuntu-latest-install:
+  ubuntu-latest-build:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
@@ -168,8 +167,6 @@ jobs:
       run: |
         export VEXE=./v
         vab/vab examples/sokol/particles -o apks/particles.apk
-
-
 
   #macos-latest-bootstrap:
     #runs-on: macOS-latest
@@ -230,3 +227,67 @@ jobs:
       #run: |
         #export VEXE=./v
         ##vab/vab -v 3 examples/sokol/particles -o apks/particles.apk
+
+  windows-latest-build:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    env:
+      VAB_FLAGS: -cg -v 3 --api 30
+    steps:
+    #- uses: actions/setup-java@v2
+      #with:
+        #distribution: 'adopt'
+        #java-version: 11
+
+    - name: Install V
+      uses: vlang/setup-v@v1
+      with:
+        check-latest: true
+
+    # TODO https://github.com/vlang/setup-v/issues
+    - name: Checkout V examples
+      uses: actions/checkout@v2
+      with:
+        repository: vlang/v
+        path: v
+
+    - uses: actions/checkout@v2
+      with:
+        path: vab
+
+    - name: Checkout vab
+      uses: actions/checkout@v2
+      with:
+        path: vab
+
+    - name: Run tests
+      run: v test vab
+
+# TODO fails on Windows
+#    - name: Build vab with -prod
+#      run: v -prod vab/vab.v
+
+    - name: Build vab
+      run: v -g vab/vab.v
+
+    - name: Run vab --help
+      run: vab/vab --help
+
+    - name: Install AAB dependencies
+      run: |
+        vab/vab install bundletool
+        vab/vab install aapt2
+
+    - name: Run vab doctor
+      run: |
+        vab/vab doctor
+
+    - name: Setup env
+      run: |
+        mkdir apks
+        mkdir aabs
+
+    - name: Build APK (Default) v/examples/sokol/particles
+      run: |
+        vab/vab v/examples/sokol/particles -o apks/particles.apk
+        vab/vab v/examples/sokol/particles -o aabs/particles.aab

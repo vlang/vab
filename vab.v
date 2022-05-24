@@ -23,7 +23,7 @@ The following flags does the same as if they were passed to the "v" compiler:
 
 -autofree, -gc <type>, -g, -cg, -prod, -showcc'
 	exe_git_hash         = vab_commit_hash()
-	work_directory       = os.join_path(os.temp_dir(), exe_name.replace(' ', '_').to_lower())
+	work_directory       = vab_work_dir()
 	rip_vflags           = ['-autofree', '-gc', '-g', '-cg', '-prod', 'run', '-showcc']
 	subcmds              = ['complete', 'test-cleancode']
 	accepted_input_files = ['.v', '.apk', '.aab']
@@ -813,6 +813,10 @@ fn vab_commit_hash() string {
 		}
 	}
 	return hash
+}
+
+fn vab_work_dir() string {
+	return os.join_path(os.temp_dir(), exe_name.replace(' ', '_').replace('.exe', '').to_lower())
 }
 
 fn doctor(opt Options) {
