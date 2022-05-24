@@ -92,7 +92,8 @@ jobs:
       run: vab/vab doctor
 
     - name: Test vab complete
-      run: [ "$(vab/vab complete bash vab com)" = "COMPREPLY+=('complete')" ]
+      run: |
+        [ "$(vab/vab complete bash vab com)" = "COMPREPLY+=('complete')" ]
 
     - name: Setup env
       run: |
