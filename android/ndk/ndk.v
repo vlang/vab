@@ -193,7 +193,6 @@ pub fn arch_to_instruction_set(arch string) string {
 	}
 }
 
-// TODO do Windows as well
 [inline]
 pub fn compiler(ndk_version string, arch string, api_level string) ?string {
 	mut eabi := ''
