@@ -381,8 +381,10 @@ fn package_aab(opt PackageOptions) bool {
 	javac := os.join_path(java.jdk_bin_path(), 'javac')
 	jarsigner := os.join_path(java.jdk_bin_path(), 'jarsigner')
 	mut dx := os.join_path(build_tools_path, 'dx')
+	mut d8 := os.join_path(build_tools_path, 'd8') // Not available prior to build-tools v28.0.1
 	$if windows {
 		dx += '.bat'
+		d8 += '.bat'
 	}
 	bundletool := env.bundletool() // Run with "java -jar ..."
 	aapt2 := env.aapt2()
@@ -554,36 +556,84 @@ fn package_aab(opt PackageOptions) bool {
 		// TODO Workaround dx and Java > 8 (1.8.0) BUG
 		// Error message we are trying to prevent:
 		// -Djava.ext.dirs=C:<path>lib is not supported.  Use -classpath instead.
-		if jdk_semantic_version.gt(semver.build(1, 8, 0)) && os.exists(dx) {
-			mut patched_dx := os.join_path(os.dir(dx), os.file_name(dx).all_before_last('.') +
-				'_patched.bat')
-			if !os.exists(patched_dx) {
-				mut dx_contents := os.read_file(dx) or { '' }
-				if dx_contents != '' && dx_contents.contains('-Djava.ext.dirs=') {
-					dx_contents = dx_contents.replace_once('-Djava.ext.dirs=', '-classpath ')
-					os.write_file(patched_dx, dx_contents) or { patched_dx = dx }
-				} else {
-					patched_dx = dx
+		if jdk_semantic_version.gt(semver.build(1, 8, 0)) {
+			if os.exists(dx) {
+				mut patched_dx := os.join_path(os.dir(dx), os.file_name(dx).all_before_last('.') +
+					'_patched.bat')
+				if !os.exists(patched_dx) {
+					mut dx_contents := os.read_file(dx) or { '' }
+					if dx_contents != '' && dx_contents.contains('-Djava.ext.dirs=') {
+						dx_contents = dx_contents.replace_once('-Djava.ext.dirs=', '-classpath ')
+						os.write_file(patched_dx, dx_contents) or { patched_dx = dx }
+					} else {
+						patched_dx = dx
+					}
+					if opt.verbosity > 1 {
+						println('Using patched dx ($patched_dx)')
+					}
 				}
-				if opt.verbosity > 1 {
-					println('Using patched dx ($patched_dx)')
-				}
+				dx = patched_dx
 			}
-			dx = patched_dx
+
+			if os.exists(d8) {
+				mut patched_d8 := os.join_path(os.dir(d8), os.file_name(d8).all_before_last('.') +
+					'_patched.bat')
+				if !os.exists(patched_d8) {
+					mut d8_contents := os.read_file(d8) or { '' }
+					if d8_contents != '' && d8_contents.contains('-Djava.ext.dirs=') {
+						d8_contents = d8_contents.replace_once('-Djava.ext.dirs=', '-classpath ')
+						os.write_file(patched_d8, d8_contents) or { patched_d8 = d8 }
+					} else {
+						patched_d8 = d8
+					}
+					if opt.verbosity > 1 {
+						println('Using patched d8 ($patched_d8)')
+					}
+				}
+				d8 = patched_d8
+			}
 		}
+		// Workaround END
 	}
 
-	os.mkdir_all(os.join_path(staging_path, 'dex')) or { panic(err) }
-	// dx --dex --output=staging/dex/classes.dex classes/
-	dx_cmd := [
-		dx,
-		'--verbose',
-		'--dex',
-		'--output=' + os.join_path(staging_path, 'dex', 'classes.dex'),
-		'classes/',
-	]
-	util.verbosity_print_cmd(dx_cmd, opt.verbosity)
-	util.run_or_exit(dx_cmd)
+	dex_output_path := os.join_path(staging_path, 'dex')
+	os.mkdir_all(dex_output_path) or { panic(err) }
+
+	// Dex either with `dx` or `d8`
+	if build_tools_semantic_version.ge(semver.build(28, 0, 1)) {
+		mut class_files := os.walk_ext('classes', '.class')
+		class_files = class_files.filter(!it.contains('$')) // Filter out R$xxx.class files
+		class_files = class_files.map(fn (e string) string {
+			return '"$e"'
+		})
+		mut dex_type := if opt.is_prod { '--release' } else { '--debug' }
+		mut d8_cmd := [
+			d8,
+			dex_type,
+			'--lib "' + android_runtime + '"',
+			'--classpath .',
+			'--output ' + 'classes.zip',
+		]
+		d8_cmd << class_files
+		util.verbosity_print_cmd(d8_cmd, opt.verbosity)
+		util.run_or_exit(d8_cmd)
+		util.unzip('classes.zip', dex_output_path) or {
+			panic(@MOD + '.' + @FN + ':' + @LINE +
+				' error unzipping classes.zip to $dex_output_path: $err')
+		}
+		os.rm('classes.zip') or { panic(err) }
+	} else {
+		// dx --dex --output=staging/dex/classes.dex classes/
+		dx_cmd := [
+			dx,
+			'--verbose',
+			'--dex',
+			'--output=' + os.join_path(dex_output_path, 'classes.dex'),
+			'classes/',
+		]
+		util.verbosity_print_cmd(dx_cmd, opt.verbosity)
+		util.run_or_exit(dx_cmd)
+	}
 
 	// cd staging; zip -r ../base.zip *
 	os.chdir(staging_path) or {}
