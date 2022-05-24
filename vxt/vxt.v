@@ -15,7 +15,7 @@ pub fn vexe() string {
 		}
 		possible_symlink := os.find_abs_path_of_executable('v') or { '' }
 		if os.is_executable(possible_symlink) {
-			exe = os.real_path(possible_symlink)
+			return os.real_path(possible_symlink)
 		}
 	} $else {
 		if os.exists(exe) {
@@ -28,9 +28,15 @@ pub fn vexe() string {
 		if !os.exists(exe) {
 			res := os.execute('where.exe v')
 			if res.exit_code != 0 {
-				return ''
+				exe = ''
+			} else {
+				return res.output.trim('\n\r')
 			}
-			return res.output.trim('\n\r')
+		}
+	}
+	if !os.exists(exe) {
+		if os.exists(@VEXE) {
+			return @VEXE
 		}
 	}
 	return exe
