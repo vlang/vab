@@ -58,10 +58,11 @@ pub fn home() string {
 	} $else {
 		if os.exists(exe) {
 			exe = exe.replace('/', os.path_separator)
-			// Skip the `.bin/` dir
+			// Skip the `.bin\` dir
 			if exe.contains('.bin' + os.path_separator) {
-				exe = os.dir(os.dir(exe))
+				exe = os.dir(exe)
 			}
+			return os.dir(exe)
 		}
 	}
 	return ''
