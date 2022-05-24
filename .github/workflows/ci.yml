@@ -141,6 +141,12 @@ jobs:
     - name: Run 'vab doctor'
       run: vab/vab doctor
 
+    - name: Run vab --list-* flags
+      run: |
+        vab/vab --list-apis
+        vab/vab --list-build-tools
+        vab/vab --list-ndks
+
     - name: Run 'vab install "platforms;android-21"'
       run: vab/vab install "platforms;android-21"
 
@@ -150,7 +156,6 @@ jobs:
     - name: Setup env
       run: |
         mkdir apks
-        mkdir aabs
 
     - name: Build APK (Default) examples/sokol/particles
       run: |
@@ -269,6 +274,12 @@ jobs:
 
     - name: Run vab doctor
       run: vab/vab doctor
+
+    - name: Run vab --list-* flags
+      run: |
+        vab/vab --list-apis
+        vab/vab --list-build-tools
+        vab/vab --list-ndks
 
     - name: Setup env
       run: |
