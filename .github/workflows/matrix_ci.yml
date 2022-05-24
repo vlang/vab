@@ -74,9 +74,13 @@ jobs:
 
           # APK
           vab --package-id "io.v.apk.$package_id" --api ${{ matrix.android-api }} examples/$example -o java-${{ matrix.java-version }}/$example/$package_id.apk
+          [ -f java-${{ matrix.java-version }}/$example/$package_id.apk ]
 
           # AAB
-          vab --package aab --package-id "io.v.aab.$package_id" --api ${{ matrix.android-api }} examples/$example -o java-${{ matrix.java-version }}/$example/$package_id.aab
+          vab --package-id "io.v.aab.$package_id" --api ${{ matrix.android-api }} examples/$example -o java-${{ matrix.java-version }}/$example/$package_id.aab
+
+          # Checks output inferring
+          [ -f java-${{ matrix.java-version }}/$example/$package_id.aab ]
         done
 
   build-v-examples-with-gc-enabled:

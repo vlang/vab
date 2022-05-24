@@ -104,11 +104,6 @@ jobs:
         vab/vab examples/sokol/particles -o apks/particles.apk
         [ -f apks/particles.apk ]
 
-        # Checks output inferring
-        vab/vab examples/sokol/particles -o aabs/particles.aab
-        [ -f aabs/particles.aab ]
-
-
   ubuntu-latest-build:
     runs-on: ubuntu-latest
     timeout-minutes: 30
