@@ -102,6 +102,12 @@ jobs:
     - name: Build APK (Default) examples/sokol/particles
       run: |
         vab/vab examples/sokol/particles -o apks/particles.apk
+        [ -f apks/particles.apk ]
+
+        # Checks output inferring
+        vab/vab examples/sokol/particles -o aabs/particles.aab
+        [ -f aabs/particles.aab ]
+
 
   ubuntu-latest-build:
     runs-on: ubuntu-latest
@@ -155,10 +161,6 @@ jobs:
       run: |
         vab/vab examples/sokol/particles -o apks/particles.apk
         [ -f apks/particles.apk ]
-
-        # Checks output inferring
-        vab/vab examples/sokol/particles -o aabs/particles.aab
-        [ -f aabs/particles.aab ]
 
   #macos-latest-bootstrap:
     #runs-on: macOS-latest
