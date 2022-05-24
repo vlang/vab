@@ -690,7 +690,7 @@ fn resolve_output(mut opt Options) {
 		opt.package_format = input_file_ext // apk / aab
 	} else if output_file_ext in ['apk', 'aab'] { // Infer from output, if a package file: vab -o <output package file> <input path>
 		output_file = opt.output
-		opt.package_format = file_ext // apk / aab
+		opt.package_format = output_file_ext // apk / aab
 	} else { // Generate from defaults: vab [-o <output>] <input>
 		default_file_name := opt.app_name.replace(os.path_separator.str(), '').replace(' ',
 			'_').to_lower()
