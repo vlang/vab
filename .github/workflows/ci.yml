@@ -232,7 +232,7 @@ jobs:
     - uses: actions/setup-java@v2
       with:
         distribution: 'adopt'
-        java-version: 11
+        java-version: 9
 
     - name: Install V
       uses: vlang/setup-v@v1
@@ -268,8 +268,12 @@ jobs:
     - name: Run vab --help
       run: vab/vab --help
 
+    - name: Nuke cmdline-tools
+      run: rm -r -fo "$ANDROID_SDK_ROOT/cmdline-tools"
+
     - name: Install AAB dependencies
       run: |
+        vab/vab install cmdline-tools
         vab/vab install bundletool
         vab/vab install aapt2
 
