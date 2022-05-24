@@ -79,27 +79,20 @@ jobs:
         sudo rm -fr /usr/local/lib/android
 
     - name: Run 'vab doctor'
-      run: |
-        export VEXE=./v
-        vab/vab doctor
+      run: vab/vab doctor
 
     - name: Run 'vab install auto'
       run: |
         export ANDROID_SDK_ROOT="" # These are set in the CI by default
         export ANDROID_HOME=""
         export ANDROID_NDK_ROOT=""
-        export VEXE=./v
         vab/vab install auto
 
     - name: Run vab doctor
-      run: |
-        export VEXE=./v
-        vab/vab doctor
+      run: vab/vab doctor
 
     - name: Test vab complete
-      run: |
-        export VEXE=./v
-        [ "$(vab/vab complete bash vab com)" = "COMPREPLY+=('complete')" ]
+      run: [ "$(vab/vab complete bash vab com)" = "COMPREPLY+=('complete')" ]
 
     - name: Setup env
       run: |
@@ -107,7 +100,6 @@ jobs:
 
     - name: Build APK (Default) examples/sokol/particles
       run: |
-        export VEXE=./v
         vab/vab examples/sokol/particles -o apks/particles.apk
 
   ubuntu-latest-build:
@@ -145,28 +137,27 @@ jobs:
         sudo rm -fr "$ANDROID_SDK_ROOT/platforms"
 
     - name: Run 'vab doctor'
-      run: |
-        export VEXE=./v
-        vab/vab doctor
+      run: vab/vab doctor
 
     - name: Run 'vab install "platforms;android-21"'
-      run: |
-        export VEXE=./v
-        vab/vab install "platforms;android-21"
+      run: vab/vab install "platforms;android-21"
 
     - name: Run vab doctor
-      run: |
-        export VEXE=./v
-        vab/vab doctor
+      run: vab/vab doctor
 
     - name: Setup env
       run: |
         mkdir apks
+        mkdir aabs
 
     - name: Build APK (Default) examples/sokol/particles
       run: |
-        export VEXE=./v
         vab/vab examples/sokol/particles -o apks/particles.apk
+        [ -f apks/particles.apk ]
+
+        # Checks output inferring
+        vab/vab examples/sokol/particles -o aabs/particles.aab
+        [ -f aabs/particles.aab ]
 
   #macos-latest-bootstrap:
     #runs-on: macOS-latest
@@ -279,8 +270,7 @@ jobs:
         vab/vab install aapt2
 
     - name: Run vab doctor
-      run: |
-        vab/vab doctor
+      run: vab/vab doctor
 
     - name: Setup env
       run: |
