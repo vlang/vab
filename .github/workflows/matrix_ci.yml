@@ -52,20 +52,16 @@ jobs:
       run: vab --help
 
     - name: Run vab doctor
-      run: |
-        export VEXE=./v
-        vab doctor
+      run: vab doctor
 
     # AAB
     - name: Install AAB dependencies
       run: |
-        export VEXE=./v
         vab install bundletool
         vab install aapt2
 
     - name: Build examples as APK + AAB (Java ${{ matrix.java-version }}) ${{ matrix.android-api }}
       run: |
-        export VEXE=./v
 
         declare -a v_examples=('flappylearning' '2048' 'fireworks' 'tetris' 'sokol/particles' 'sokol/drawing.v' 'sokol/freetype_raven.v' 'gg/polygons.v' 'gg/raven_text_rendering.v' 'gg/rectangles.v' 'gg/stars.v' 'gg/worker_thread.v')
 
@@ -103,6 +99,7 @@ jobs:
       uses: actions/checkout@v2
       with:
         repository: vlang/v
+
     - uses: actions/checkout@v2
       with:
         path: vab
@@ -123,13 +120,10 @@ jobs:
       run: vab --help
 
     - name: Run vab doctor
-      run: |
-        export VEXE=./v
-        vab doctor
+      run: vab doctor
 
     - name: Build examples with garbage collector (Java ${{ matrix.java-version }}) ${{ matrix.android-api }}
       run: |
-        export VEXE=./v
 
         declare -a v_examples=('flappylearning' '2048' 'fireworks' 'tetris' 'sokol/particles' 'sokol/drawing.v' 'sokol/freetype_raven.v' 'gg/polygons.v' 'gg/raven_text_rendering.v' 'gg/rectangles.v' 'gg/stars.v' 'gg/worker_thread.v')
 

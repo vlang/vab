@@ -59,7 +59,7 @@ pub fn home() string {
 		if os.exists(exe) {
 			exe = exe.replace('/', os.path_separator)
 			// Skip the `.bin\` dir
-			if exe.contains('.bin' + os.path_separator) {
+			if os.dir(exe).ends_with('.bin') {
 				exe = os.dir(exe)
 			}
 			return os.dir(exe)
