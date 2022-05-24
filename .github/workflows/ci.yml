@@ -269,7 +269,7 @@ jobs:
       run: vab/vab --help
 
     - name: Nuke cmdline-tools
-      run: rm -r -fo "$ANDROID_SDK_ROOT/cmdline-tools"
+      run: rm -r -fo "${env:ANDROID_SDK_ROOT}/cmdline-tools"
 
     - name: Install AAB dependencies
       run: |
