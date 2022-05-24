@@ -245,6 +245,7 @@ fn install_opt(opt InstallOptions) ?bool {
 		os.mkdir_all(env.work_path) or {}
 		yes_file := os.join_path(env.work_path, 'yes.txt')
 		os.write_file(yes_file, 'y\r\ny\r\ny\r\ny\r\ny\r\ny\r\ny\r\ny\r\ny\r\ny')?
+
 		cmd := [
 			'cmd /c',
 			'""' + sdkmanager() + '"',

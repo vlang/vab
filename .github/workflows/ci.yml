@@ -79,26 +79,20 @@ jobs:
         sudo rm -fr /usr/local/lib/android
 
     - name: Run 'vab doctor'
-      run: |
-        export VEXE=./v
-        vab/vab doctor
+      run: vab/vab doctor
 
     - name: Run 'vab install auto'
       run: |
         export ANDROID_SDK_ROOT="" # These are set in the CI by default
         export ANDROID_HOME=""
         export ANDROID_NDK_ROOT=""
-        export VEXE=./v
         vab/vab install auto
 
     - name: Run vab doctor
-      run: |
-        export VEXE=./v
-        vab/vab doctor
+      run: vab/vab doctor
 
     - name: Test vab complete
       run: |
-        export VEXE=./v
         [ "$(vab/vab complete bash vab com)" = "COMPREPLY+=('complete')" ]
 
     - name: Setup env
@@ -107,8 +101,8 @@ jobs:
 
     - name: Build APK (Default) examples/sokol/particles
       run: |
-        export VEXE=./v
         vab/vab examples/sokol/particles -o apks/particles.apk
+        [ -f apks/particles.apk ]
 
   ubuntu-latest-build:
     runs-on: ubuntu-latest
@@ -145,19 +139,19 @@ jobs:
         sudo rm -fr "$ANDROID_SDK_ROOT/platforms"
 
     - name: Run 'vab doctor'
+      run: vab/vab doctor
+
+    - name: Run vab --list-* flags
       run: |
-        export VEXE=./v
-        vab/vab doctor
+        vab/vab --list-apis
+        vab/vab --list-build-tools
+        vab/vab --list-ndks
 
     - name: Run 'vab install "platforms;android-21"'
-      run: |
-        export VEXE=./v
-        vab/vab install "platforms;android-21"
+      run: vab/vab install "platforms;android-21"
 
     - name: Run vab doctor
-      run: |
-        export VEXE=./v
-        vab/vab doctor
+      run: vab/vab doctor
 
     - name: Setup env
       run: |
@@ -165,8 +159,8 @@ jobs:
 
     - name: Build APK (Default) examples/sokol/particles
       run: |
-        export VEXE=./v
         vab/vab examples/sokol/particles -o apks/particles.apk
+        [ -f apks/particles.apk ]
 
   #macos-latest-bootstrap:
     #runs-on: macOS-latest
@@ -234,10 +228,11 @@ jobs:
     env:
       VAB_FLAGS: -cg -v 3 --api 30
     steps:
+
     #- uses: actions/setup-java@v2
       #with:
         #distribution: 'adopt'
-        #java-version: 11
+        #java-version: 15
 
     - name: Install V
       uses: vlang/setup-v@v1
@@ -279,15 +274,20 @@ jobs:
         vab/vab install aapt2
 
     - name: Run vab doctor
+      run: vab/vab doctor
+
+    - name: Run vab --list-* flags
       run: |
-        vab/vab doctor
+        vab/vab --list-apis
+        vab/vab --list-build-tools
+        vab/vab --list-ndks
 
     - name: Setup env
       run: |
         mkdir apks
-        mkdir aabs
+        # TODO mkdir aabs
 
     - name: Build APK (Default) v/examples/sokol/particles
       run: |
         vab/vab v/examples/sokol/particles -o apks/particles.apk
-        vab/vab v/examples/sokol/particles -o aabs/particles.aab
+        # TODO vab/vab v/examples/sokol/particles -o aabs/particles.aab

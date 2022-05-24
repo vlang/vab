@@ -53,13 +53,13 @@ VEXE=/path/to/custom/v/binary
 
 The fast way from V source to an APK is:
 ```bash
-./vab /path/to/v/source/file/or/dir
+vab /path/to/v/source/file/or/dir
 ```
 ... yes, that's it. Your APK should now reside in the current directory.
 
 The fast way from source to a run on the device (build, package, deploy and launch app on device) is:
 ```bash
-./vab run --device auto --archs 'armeabi-v7a' /path/to/v/source/file/or/dir
+vab run --device auto --archs 'armeabi-v7a' /path/to/v/source/file/or/dir
 ```
 The `--archs` flag control what architectures your app is built for.
 You can specify multiple archs with `--archs 'armeabi-v7a, arm64-v8a'`.
@@ -71,7 +71,7 @@ You can build an Android app ready for the Play Store with the following command
 ```bash
 export KEYSTORE_PASSWORD="pass"
 export KEYSTORE_ALIAS_PASSWORD="word"
-./vab -prod --name "V App" --package-id "com.example.app.id" --icon /path/to/file.png  --version-code <int> --keystore /path/to/sign.keystore --keystore-alias "example" /path/to/v/source/file/or/dir
+vab -prod --name "V App" --package-id "com.example.app.id" --icon /path/to/file.png  --version-code <int> --keystore /path/to/sign.keystore --keystore-alias "example" /path/to/v/source/file/or/dir
 ```
 Do not submit apps using default values.
 Please make sure to adhere to all [guidelines](https://developer.android.com/studio/publish) of the app store you're publishing to.
@@ -82,7 +82,12 @@ Please make sure to adhere to all [guidelines](https://developer.android.com/stu
 To output an `.aab` file you can specify the package format with the `--package` flag:
 
 ```bash
-./vab --package aab /path/to/v/source/file/or/dir
+vab --package aab /path/to/v/source/file/or/dir
+```
+
+Alternatively it will be inferred if you use the `--output`/`-o` flag:
+```bash
+vab -o /tmp/ma_app.aab /path/to/v/source/file/or/dir
 ```
 
 # Environment variables
@@ -116,7 +121,7 @@ VAB_KILL_ADB             # Set to let vab kill adb after use. This is useful on 
 
 See all options:
 ```bash
-./vab -h
+vab -h
 ```
 
 # Setup
