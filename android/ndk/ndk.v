@@ -195,41 +195,51 @@ pub fn arch_to_instruction_set(arch string) string {
 
 [inline]
 pub fn compiler(ndk_version string, arch string, api_level string) ?string {
+	available_compilers := available_ndk_compilers_by_api(ndk_version, arch, api_level)
+
+	if compiler := available_compilers[api_level] {
+		return compiler
+	}
+
+	// Some setups (E.g. some CI servers) the max API level reported by the default SDK will be higher than
+	// what the default NDK supports - report a descriptive error.
+
+	mut other_api_level_supported_hint := '.'
+	if available_compilers.len > 0 {
+		other_api_level_supported_hint = ' or use another API level (--api <level>).\nNDK "$ndk_version" supports API levels: $available_compilers.keys()'
+	}
+	return error(@MOD + '.' + @FN +
+		' couldn\'t locate compiler "$compiler" for architecture "$arch" at API level "$api_level". You could try with a NDK version > "$ndk_version"$other_api_level_supported_hint')
+}
+
+fn available_ndk_compilers_by_api(ndk_version string, arch string, api_level string) map[string]string {
+	mut compilers := map[string]string{}
+
 	mut eabi := ''
 	if arch == 'armeabi-v7a' {
 		eabi = 'eabi'
 	}
-
 	host_architecture := host_arch()
 	arch_is := arch_to_instruction_set(arch)
-
-	mut compiler := os.join_path(root_version(ndk_version), 'toolchains', 'llvm', 'prebuilt',
-		host_architecture, 'bin', arch_is + '-linux-android$eabi$api_level-clang')
-	$if windows {
-		compiler += '.cmd'
-	}
-	// TODO some setups like in CI the max API level reported by the SDK will be higher than
-	// what the NDK supports - we could maybe report a better error if we try to look for the
-	// highest number of compiler in the `bin` dir.
-
-	// legacy ndk version setups
-	/*
-	if !os.is_file(compiler) {
-		toolchains := util.ls_sorted(os.join_path(root_version(ndk_version),'toolchains'))
-		for toolchain in toolchains {
-			if toolchain.starts_with('llvm') {
-				compiler = os.join_path(root_version(ndk_version),'toolchains',toolchain,'prebuilt',host_architecture,'bin',arch_is+'-linux-android${eabi}${api_level}-clang')
-				break
+	compiler_bin_path := os.join_path(root_version(ndk_version), 'toolchains', 'llvm',
+		'prebuilt', host_architecture, 'bin')
+	if os.is_dir(compiler_bin_path) {
+		from := i16(sdk.min_supported_api_level.int())
+		to := i16(api_level.int()) + 1
+		if to > from {
+			for level in from .. to {
+				mut compiler := os.join_path(compiler_bin_path, arch_is +
+					'-linux-android$eabi$level-clang')
+				$if windows {
+					compiler += '.cmd'
+				}
+				if os.is_file(compiler) {
+					compilers['$level'] = compiler
+				}
 			}
 		}
 	}
-	*/
-
-	if !os.is_file(compiler) {
-		return error(@MOD + '.' + @FN +
-			' couldn\'t locate compiler "$compiler". You could try with a newer ndk version.')
-	}
-	return compiler
+	return compilers
 }
 
 [inline]
