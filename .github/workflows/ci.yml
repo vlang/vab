@@ -232,7 +232,7 @@ jobs:
     - uses: actions/setup-java@v2
       with:
         distribution: 'adopt'
-        java-version: 9
+        java-version: 15
 
     - name: Install V
       uses: vlang/setup-v@v1
