@@ -85,6 +85,8 @@ fn package_apk(opt PackageOptions) bool {
 
 	build_path := os.join_path(opt.work_dir, 'build')
 	build_tools_path := os.join_path(sdk.build_tools_root(), opt.build_tools)
+
+	// Used for various bug workarounds below
 	build_tools_semantic_version := semver.from(opt.build_tools) or {
 		panic(@MOD + '.' + @FN + ':' + @LINE +
 			' error converting build-tools version "$opt.build_tools" to semantic version.\nsemver: $err')
@@ -370,6 +372,12 @@ fn package_aab(opt PackageOptions) bool {
 
 	build_path := os.join_path(opt.work_dir, 'build')
 	build_tools_path := os.join_path(sdk.build_tools_root(), opt.build_tools)
+
+	// Used for various bug workarounds below
+	build_tools_semantic_version := semver.from(opt.build_tools) or {
+		panic(@MOD + '.' + @FN + ':' + @LINE +
+			' error converting build-tools version "$opt.build_tools" to semantic version.\nsemver: $err')
+	}
 
 	// Used for various bug workarounds below
 	jdk_semantic_version := semver.from(java.jdk_version()) or {
