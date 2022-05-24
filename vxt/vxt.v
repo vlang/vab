@@ -34,6 +34,7 @@ pub fn vexe() string {
 			}
 		}
 	}
+	// Try the compiler that built this
 	if !os.exists(exe) {
 		if os.exists(@VEXE) {
 			return @VEXE

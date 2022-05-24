@@ -238,7 +238,6 @@ jobs:
     timeout-minutes: 10
     env:
       VAB_FLAGS: -cg -v 3 --api 30
-      VFLAGS: -cc msvc
     steps:
     #- uses: actions/setup-java@v2
       #with:
