@@ -228,10 +228,11 @@ jobs:
     env:
       VAB_FLAGS: -cg -v 3 --api 30
     steps:
-    #- uses: actions/setup-java@v2
-      #with:
-        #distribution: 'adopt'
-        #java-version: 11
+
+    - uses: actions/setup-java@v2
+      with:
+        distribution: 'adopt'
+        java-version: 11
 
     - name: Install V
       uses: vlang/setup-v@v1
