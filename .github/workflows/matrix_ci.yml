@@ -73,7 +73,7 @@ jobs:
 
         declare -a v_examples=('flappylearning' '2048' 'fireworks' 'tetris' 'sokol/particles' 'sokol/drawing.v' 'sokol/freetype_raven.v' 'gg/polygons.v' 'gg/raven_text_rendering.v' 'gg/rectangles.v' 'gg/stars.v' 'gg/worker_thread.v')
 
-        vab_home=~/.vmodules/vab
+        export vab_home=~/.vmodules/vab
         for example in "${v_examples[@]}"; do
           package_id=$( echo "$example" | sed 's%/%%' | sed 's%\.%%' )
           package_id=$( echo "v$package_id" )
@@ -147,7 +147,7 @@ jobs:
 
         declare -a v_examples=('flappylearning' '2048' 'fireworks' 'tetris' 'sokol/particles' 'sokol/drawing.v' 'sokol/freetype_raven.v' 'gg/polygons.v' 'gg/raven_text_rendering.v' 'gg/rectangles.v' 'gg/stars.v' 'gg/worker_thread.v')
 
-        vab_home=~/.vmodules/vab
+        export vab_home=~/.vmodules/vab
         for example in "${v_examples[@]}"; do
           package_id=$( echo "$example" | sed 's%/%%' | sed 's%\.%%' )
           package_id=$( echo "vgc$package_id" )

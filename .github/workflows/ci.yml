@@ -32,18 +32,26 @@ jobs:
       with:
         path: vab
 
+    - name: Install vab as module
+      run: |
+        # v install vab
+        mv vab ~/.vmodules
+
     - name: Test code formatting
       run: |
         cd vab
         ../v test-fmt
 
     - name: Build vab
-      run: ./v -g vab/vab.v
+      run: ./v -g ~/.vmodules/vab
+
+    - name: Symlink vab
+      run: sudo ln -s ~/.vmodules/vab/vab /usr/local/bin/vab
 
     - name: Test clean vab code
       run: |
         export VEXE=./v
-        vab/vab test-cleancode vab
+        vab test-cleancode ~/.vmodules/vab
 
   ubuntu-latest-bootstrap:
     runs-on: ubuntu-latest
@@ -287,8 +295,7 @@ jobs:
       run: v -g $HOME\.vmodules\vab
 
     - name: Add vab to PATH
-      run: echo "$HOME\.vmodules\vab" >> $GITHUB_PATH
-      #| Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+      run: echo "$HOME\.vmodules\vab" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
     - name: Run vab --help
       run: vab --help
