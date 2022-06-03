@@ -79,7 +79,6 @@ const (
 	auto_complete_commands       = [
 		// tools in one .v file
 		'complete',
-		'test-cleancode',
 		// commands
 		'run',
 		'doctor',
