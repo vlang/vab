@@ -59,8 +59,15 @@ jobs:
     - name: Build local v
       run: make -j4
 
-    - name: Install vab
-      run: v install vab
+    - name: Checkout vab
+      uses: actions/checkout@v2
+      with:
+        path: vab
+
+    - name: Install vab as module
+      run: |
+        # v install vab
+        mv vab ~/.vmodules
 
     - name: Run tests
       run: ./v test ~/.vmodules/vab
@@ -121,8 +128,15 @@ jobs:
     - name: Build local v
       run: make -j4
 
-    - name: Install vab
-      run: v install vab
+    - name: Checkout vab
+      uses: actions/checkout@v2
+      with:
+        path: vab
+
+    - name: Install vab as module
+      run: |
+        # v install vab
+        mv vab ~/.vmodules
 
     - name: Run tests
       run: ./v test  ~/.vmodules/vab
@@ -252,8 +266,15 @@ jobs:
         repository: vlang/v
         path: v
 
-    - name: Install vab
-      run: v install vab
+    - name: Checkout vab
+      uses: actions/checkout@v2
+      with:
+        path: vab
+
+    - name: Install vab as module
+      run: |
+        # v install vab
+        Move-Item -Path .\vab -Destination $HOME\.vmodules\vab -force
 
     - name: Run tests
       run: v test $HOME\.vmodules\vab

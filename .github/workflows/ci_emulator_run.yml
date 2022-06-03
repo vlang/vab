@@ -29,8 +29,15 @@ jobs:
       with:
         check-latest: true
 
-    - name: Install vab
-      run: v install vab
+    - name: Checkout vab
+      uses: actions/checkout@v2
+      with:
+        path: vab
+
+    - name: Install vab as module
+      run: |
+        # v install vab
+        mv vab ~/.vmodules
 
     - name: Run tests
       run: v test ~/.vmodules/vab
