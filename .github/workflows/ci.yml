@@ -32,15 +32,13 @@ jobs:
       with:
         path: vab
 
-    - name: Install vab as module
-      run: |
-        # simulate "v install vab"
-        mv vab ~/.vmodules
-
     - name: Test code formatting
       run: |
         cd vab
         ../v test-fmt
+
+    - name: Simulate "v install vab"
+      run: mv vab ~/.vmodules
 
     - name: Build vab
       run: ./v -g ~/.vmodules/vab
@@ -72,10 +70,8 @@ jobs:
       with:
         path: vab
 
-    - name: Install vab as module
-      run: |
-        # simulate "v install vab"
-        mv vab ~/.vmodules
+    - name: Simulate "v install vab"
+      run: mv vab ~/.vmodules
 
     - name: Run tests
       run: ./v test ~/.vmodules/vab
@@ -141,10 +137,8 @@ jobs:
       with:
         path: vab
 
-    - name: Install vab as module
-      run: |
-        # simulate "v install vab"
-        mv vab ~/.vmodules
+    - name: Simulate "v install vab"
+      run: mv vab ~/.vmodules
 
     - name: Run tests
       run: ./v test  ~/.vmodules/vab
@@ -279,10 +273,8 @@ jobs:
       with:
         path: vab
 
-    - name: Install vab as module
-      run: |
-        # simulate "v install vab"
-        Move-Item -Path .\vab -Destination $HOME\.vmodules\vab -force
+    - name: Simulate "v install vab"
+      run: Move-Item -Path .\vab -Destination $HOME\.vmodules\vab -force
 
     - name: Run tests
       run: v test "$HOME\.vmodules\vab"

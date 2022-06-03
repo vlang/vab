@@ -42,10 +42,8 @@ jobs:
       with:
         path: vab
 
-    - name: Install vab as module
-      run: |
-        # simulate "v install vab"
-        mv vab ~/.vmodules
+    - name: Simulate "v install vab"
+      run: mv vab ~/.vmodules
 
     - name: Run tests
       run: ./v test ~/.vmodules/vab
@@ -121,10 +119,8 @@ jobs:
       with:
         path: vab
 
-    - name: Install vab as module
-      run: |
-        # simulate "v install vab"
-        mv vab ~/.vmodules
+    - name: Simulate "v install vab"
+      run: mv vab ~/.vmodules
 
     - name: Run tests
       run: ./v test ~/.vmodules/vab
