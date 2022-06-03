@@ -38,7 +38,7 @@ jobs:
       run: make -j2
 
     - name: Install vab
-      run: v install vab
+      run: ./v install vab
 
     - name: Run tests
       run: ./v test ~/.vmodules/vab
@@ -107,11 +107,11 @@ jobs:
       with:
         repository: vlang/v
 
-    - name: Install vab
-      run: v install vab
-
     - name: Build local v
       run: make -j2
+
+    - name: Install vab
+      run: ./v install vab
 
     - name: Run tests
       run: ./v test ~/.vmodules/vab
