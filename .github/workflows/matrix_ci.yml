@@ -33,20 +33,21 @@ jobs:
       uses: actions/checkout@v2
       with:
         repository: vlang/v
-    - uses: actions/checkout@v2
-      with:
-        path: vab
+
     - name: Build local v
       run: make -j2
 
+    - name: Install vab
+      run: v install vab
+
     - name: Run tests
-      run: ./v test vab
+      run: ./v test ~/.vmodules/vab
 
     - name: Build vab
-      run: ./v -g vab/vab.v
+      run: ./v -g ~/.vmodules/vab
 
     - name: Symlink vab
-      run: cd vab && sudo ln -s "$(pwd)/vab" /usr/local/bin/vab
+      run: sudo ln -s ~/.vmodules/vab/vab /usr/local/bin/vab
 
     - name: Run vab --help
       run: vab --help
@@ -65,19 +66,21 @@ jobs:
 
         declare -a v_examples=('flappylearning' '2048' 'fireworks' 'tetris' 'sokol/particles' 'sokol/drawing.v' 'sokol/freetype_raven.v' 'gg/polygons.v' 'gg/raven_text_rendering.v' 'gg/rectangles.v' 'gg/stars.v' 'gg/worker_thread.v')
 
+        vab_home=~/.vmodules/vab
         for example in "${v_examples[@]}"; do
           package_id=$( echo "$example" | sed 's%/%%' | sed 's%\.%%' )
           package_id=$( echo "v$package_id" )
+
 
           # Setup env
           mkdir -p java-${{ matrix.java-version }}/$example
 
           # APK
-          vab --package-id "io.v.apk.$package_id" --api ${{ matrix.android-api }} examples/$example -o java-${{ matrix.java-version }}/$example/$package_id.apk
+          vab --package-id "io.v.apk.$package_id" --api ${{ matrix.android-api }} "$vab_home/examples/$example" -o java-${{ matrix.java-version }}/$example/$package_id.apk
           [ -f java-${{ matrix.java-version }}/$example/$package_id.apk ]
 
           # AAB
-          vab --package-id "io.v.aab.$package_id" --api ${{ matrix.android-api }} examples/$example -o java-${{ matrix.java-version }}/$example/$package_id.aab
+          vab --package-id "io.v.aab.$package_id" --api ${{ matrix.android-api }} "$vab_home/examples/$example" -o java-${{ matrix.java-version }}/$example/$package_id.aab
 
           # Checks output inferring
           [ -f java-${{ matrix.java-version }}/$example/$package_id.aab ]
@@ -104,21 +107,20 @@ jobs:
       with:
         repository: vlang/v
 
-    - uses: actions/checkout@v2
-      with:
-        path: vab
+    - name: Install vab
+      run: v install vab
 
     - name: Build local v
       run: make -j2
 
     - name: Run tests
-      run: ./v test vab
+      run: ./v test ~/.vmodules/vab
 
     - name: Build vab
-      run: ./v -g vab/vab.v
+      run: ./v -g ~/.vmodules/vab
 
     - name: Symlink vab
-      run: cd vab && sudo ln -s "$(pwd)/vab" /usr/local/bin/vab
+      run: sudo ln -s ~/.vmodules/vab/vab /usr/local/bin/vab
 
     - name: Run vab --help
       run: vab --help
@@ -131,6 +133,7 @@ jobs:
 
         declare -a v_examples=('flappylearning' '2048' 'fireworks' 'tetris' 'sokol/particles' 'sokol/drawing.v' 'sokol/freetype_raven.v' 'gg/polygons.v' 'gg/raven_text_rendering.v' 'gg/rectangles.v' 'gg/stars.v' 'gg/worker_thread.v')
 
+        vab_home=~/.vmodules/vab
         for example in "${v_examples[@]}"; do
           package_id=$( echo "$example" | sed 's%/%%' | sed 's%\.%%' )
           package_id=$( echo "vgc$package_id" )
@@ -139,6 +142,6 @@ jobs:
           mkdir -p gc-java-${{ matrix.java-version }}/$example
 
           # APK
-          vab -gc boehm --package-id "io.v.apk.$package_id" --api ${{ matrix.android-api }} examples/$example -o gc-java-${{ matrix.java-version }}/$example/$package_id.apk
+          vab -gc boehm --package-id "io.v.apk.$package_id" --api ${{ matrix.android-api }} "$vab_home/examples/$example" -o gc-java-${{ matrix.java-version }}/$example/$package_id.apk
 
         done

@@ -1,8 +1,9 @@
 # V Android Bootstrapper
 
-V Android Bootstrapper (`vab`) is the currently supported way
+V Android Bootstrapper is the currently supported way
 to compile, package, sign and deploy V graphical apps on Android
-based devices.
+based devices. It can be used as a V module (`import vab`) and also
+provides a standalone executable (`vab`) for building apps from the command-line
 
 <img src="https://user-images.githubusercontent.com/768942/107622846-c13f3900-6c58-11eb-8a66-55db12979b73.png">
 
@@ -10,17 +11,25 @@ based devices.
 
 Linux, macOS and Windows build hosts are supported.
 
+### Unix (Linux, macOS)
 ```bash
-git clone https://github.com/vlang/vab.git
-cd vab
-v vab.v
+v install vab
+v ~/.vmodules/vab
 ```
 
-**Note** `vab` use V's `net.http` module which currently requires the development files for libssl / OpenSSL.
+### Windows
+```bash
+v install vab
+v %USERPROFILE%\.vmodules\vab
+```
+
+**Note**
+`vab` use V's `net.http` module which currently requires the development files for libssl / OpenSSL.
 These can be installed as [described](https://github.com/vlang/v#v-nethttp-netwebsocket-v-install) in V's own documentation.
 
 ## Symlink (optional)
 You can symlink `vab` to your `$PATH` so it works as a global shell command.
+
 ```bash
 sudo ln -s /path/to/vab /usr/local/bin/vab
 ```

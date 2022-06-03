@@ -3,8 +3,8 @@
 module android
 
 import os
-import java
-import android.util
+import vab.java
+import vab.android.util
 
 pub struct Keystore {
 pub mut:

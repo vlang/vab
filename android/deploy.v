@@ -3,9 +3,9 @@
 module android
 
 import os
-import java
-import android.env
-import android.util
+import vab.java
+import vab.android.env
+import vab.android.util
 
 pub struct DeployOptions {
 	verbosity        int

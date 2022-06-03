@@ -5,12 +5,12 @@ module main
 import os
 import flag
 import semver
-import vxt
-import java
+import vab.vxt
+import vab.java
 import android
-import android.sdk
-import android.ndk
-import android.env
+import vab.android.sdk
+import vab.android.ndk
+import vab.android.env
 
 const (
 	exe_version     = version()

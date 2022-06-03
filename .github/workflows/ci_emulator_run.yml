@@ -29,22 +29,20 @@ jobs:
       with:
         check-latest: true
 
-    - name: Checkout vab
-      uses: actions/checkout@v2
-      with:
-        path: vab
+    - name: Install vab
+      run: v install vab
 
     - name: Run tests
-      run: v test vab
+      run: v test ~/.vmodules/vab
 
     - name: Build vab with -prod
-      run: v -prod vab/vab.v
+      run: v -prod ~/.vmodules/vab
 
     - name: Build vab
-      run: v -g vab/vab.v
+      run: v -g ~/.vmodules/vab
 
     - name: Symlink vab
-      run: cd vab && sudo ln -s "$(pwd)/vab" /usr/local/bin/vab
+      run: sudo ln -s ~/.vmodules/vab/vab /usr/local/bin/vab
 
     - name: Run vab --help
       run: vab --help

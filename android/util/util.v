@@ -4,7 +4,7 @@ module util
 
 import os
 import szip
-import cache
+import vab.cache
 
 // Utility functions
 pub fn find_sorted(path string) []string {
