@@ -34,7 +34,7 @@ jobs:
 
     - name: Install vab as module
       run: |
-        # v install vab
+        # simulate "v install vab"
         mv vab ~/.vmodules
 
     - name: Test code formatting
@@ -74,7 +74,7 @@ jobs:
 
     - name: Install vab as module
       run: |
-        # v install vab
+        # simulate "v install vab"
         mv vab ~/.vmodules
 
     - name: Run tests
@@ -143,7 +143,7 @@ jobs:
 
     - name: Install vab as module
       run: |
-        # v install vab
+        # simulate "v install vab"
         mv vab ~/.vmodules
 
     - name: Run tests
@@ -281,7 +281,7 @@ jobs:
 
     - name: Install vab as module
       run: |
-        # v install vab
+        # simulate "v install vab"
         Move-Item -Path .\vab -Destination $HOME\.vmodules\vab -force
 
     - name: Run tests

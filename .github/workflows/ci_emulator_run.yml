@@ -36,7 +36,7 @@ jobs:
 
     - name: Install vab as module
       run: |
-        # v install vab
+        # simulate "v install vab"
         mv vab ~/.vmodules
 
     - name: Run tests
@@ -60,8 +60,7 @@ jobs:
         vab install aapt2
 
     - name: Run vab doctor
-      run: |
-        vab doctor
+      run: vab doctor
 
     - name: Cache emulator
       id: cache-emulator
