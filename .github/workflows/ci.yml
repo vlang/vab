@@ -256,17 +256,18 @@ jobs:
       run: v install vab
 
     - name: Run tests
-      run: v test %USERPROFILE%\.vmodules\vab
+      run: v test $HOME\.vmodules\vab
 
 # TODO fails on Windows
 #    - name: Build vab with -prod
-#      run: v -prod %USERPROFILE%\.vmodules\vab
+#      run: v -prod $HOME\.vmodules\vab
 
     - name: Build vab
-      run: v -g %USERPROFILE%\.vmodules\vab
+      run: v -g $HOME\.vmodules\vab
 
     - name: Add vab to PATH
-      run: echo "%USERPROFILE%\.vmodules\vab" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+      run: echo "$HOME\.vmodules\vab" >> $GITHUB_PATH
+      #| Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
     - name: Run vab --help
       run: vab --help
@@ -283,7 +284,7 @@ jobs:
       run: |
         vab --list-apis
         vab --list-build-tools
-        vvab --list-ndks
+        vab --list-ndks
 
     - name: Setup env
       run: |
@@ -292,5 +293,5 @@ jobs:
 
     - name: Build APK (Default) v/examples/sokol/particles
       run: |
-        vab %USERPROFILE%\.vmodules\vab\examples\sokol\particles -o apks\particles.apk
+        vab $HOME\.vmodules\vab\examples\sokol\particles -o apks\particles.apk
         # TODO vab/vab v/examples/sokol/particles -o aabs/particles.aab
