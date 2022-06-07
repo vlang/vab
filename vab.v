@@ -7,7 +7,7 @@ import flag
 import semver
 import vab.vxt
 import vab.java
-import android
+import vab.android
 import vab.android.sdk
 import vab.android.ndk
 import vab.android.env
