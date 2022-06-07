@@ -5,10 +5,10 @@ module env
 import os
 import semver
 import net.http
-import cache
-import android.sdk
-import android.ndk
-import android.util
+import vab.cache
+import vab.android.sdk
+import vab.android.ndk
+import vab.android.util
 
 pub const (
 	accepted_components = ['auto', 'cmdline-tools', 'platform-tools', 'ndk', 'platforms',

@@ -24,25 +24,36 @@ jobs:
       with:
         repository: vlang/v
 
-    - uses: actions/checkout@v2
-      with:
-        path: vab
-
     - name: Build local v
       run: make -j4
+
+    - name: Checkout vab
+      uses: actions/checkout@v2
+      with:
+        path: vab
 
     - name: Test code formatting
       run: |
         cd vab
         ../v test-fmt
 
+    - name: Symlink as module
+      run: sudo ln -s $(pwd)/vab ~/.vmodules/vab # TODO workaround for doing `mv vab ~/.vmodules` below
+
+    # TODO this makes formatting checks fail?
+    #- name: Simulate "v install vab"
+    #  run: mv vab ~/.vmodules
+
     - name: Build vab
-      run: ./v -g vab/vab.v
+      run: ./v -g ~/.vmodules/vab
+
+    - name: Symlink vab command
+      run: sudo ln -s ~/.vmodules/vab/vab /usr/local/bin/vab
 
     - name: Test clean vab code
       run: |
         export VEXE=./v
-        vab/vab test-cleancode vab
+        vab test-cleancode ~/.vmodules/vab
 
   ubuntu-latest-bootstrap:
     runs-on: ubuntu-latest
@@ -55,45 +66,52 @@ jobs:
       with:
         repository: vlang/v
 
-    - uses: actions/checkout@v2
-      with:
-        path: vab
-
     - name: Build local v
       run: make -j4
 
+    - name: Checkout vab
+      uses: actions/checkout@v2
+      with:
+        path: vab
+
+    - name: Simulate "v install vab"
+      run: mv vab ~/.vmodules
+
     - name: Run tests
-      run: ./v test vab
+      run: ./v test ~/.vmodules/vab
 
     - name: Build vab with -prod
-      run: ./v -prod vab/vab.v
+      run: ./v -prod ~/.vmodules/vab
 
     - name: Build vab
-      run: ./v -g vab/vab.v
+      run: ./v -g ~/.vmodules/vab
+
+    - name: Symlink vab
+      run: sudo ln -s ~/.vmodules/vab/vab /usr/local/bin/vab
 
     - name: Run 'vab --help'
-      run: vab/vab --help
+      run: vab --help
 
     - name: Ruin Android environment on purpose
       run: |
         sudo rm -fr /usr/local/lib/android
 
     - name: Run 'vab doctor'
-      run: vab/vab doctor
+      run: vab doctor
 
     - name: Run 'vab install auto'
       run: |
         export ANDROID_SDK_ROOT="" # These are set in the CI by default
         export ANDROID_HOME=""
         export ANDROID_NDK_ROOT=""
-        vab/vab install auto
+        vab install auto
 
     - name: Run vab doctor
-      run: vab/vab doctor
+      run: vab doctor
 
     - name: Test vab complete
       run: |
-        [ "$(vab/vab complete bash vab com)" = "COMPREPLY+=('complete')" ]
+        [ "$(vab complete bash vab com)" = "COMPREPLY+=('complete')" ]
 
     - name: Setup env
       run: |
@@ -101,7 +119,7 @@ jobs:
 
     - name: Build APK (Default) examples/sokol/particles
       run: |
-        vab/vab examples/sokol/particles -o apks/particles.apk
+        vab examples/sokol/particles -o apks/particles.apk
         [ -f apks/particles.apk ]
 
   ubuntu-latest-build:
@@ -115,43 +133,50 @@ jobs:
       with:
         repository: vlang/v
 
-    - uses: actions/checkout@v2
-      with:
-        path: vab
-
     - name: Build local v
       run: make -j4
 
+    - name: Checkout vab
+      uses: actions/checkout@v2
+      with:
+        path: vab
+
+    - name: Simulate "v install vab"
+      run: mv vab ~/.vmodules
+
     - name: Run tests
-      run: ./v test vab
+      run: ./v test  ~/.vmodules/vab
 
     - name: Build vab with -prod
-      run: ./v -prod vab/vab.v
+      run: ./v -prod  ~/.vmodules/vab
 
     - name: Build vab
-      run: ./v -g vab/vab.v
+      run: ./v -g ~/.vmodules/vab
+
+    - name: Symlink vab
+      run: sudo ln -s ~/.vmodules/vab/vab /usr/local/bin/vab
 
     - name: Run 'vab --help'
-      run: vab/vab --help
+      run: vab --help
 
     - name: Ruin Android environment on purpose
       run: |
         sudo rm -fr "$ANDROID_SDK_ROOT/platforms"
 
     - name: Run 'vab doctor'
-      run: vab/vab doctor
+      run: vab doctor
 
     - name: Run vab --list-* flags
       run: |
-        vab/vab --list-apis
-        vab/vab --list-build-tools
-        vab/vab --list-ndks
+        vab --list-apis
+        vab --list-build-tools
+        vab --list-ndks
 
     - name: Run 'vab install "platforms;android-21"'
-      run: vab/vab install "platforms;android-21"
+      run: vab install "platforms;android-21"
 
     - name: Run vab doctor
-      run: vab/vab doctor
+      run: vab doctor
 
     - name: Setup env
       run: |
@@ -159,7 +184,7 @@ jobs:
 
     - name: Build APK (Default) examples/sokol/particles
       run: |
-        vab/vab examples/sokol/particles -o apks/particles.apk
+        vab examples/sokol/particles -o apks/particles.apk
         [ -f apks/particles.apk ]
 
   #macos-latest-bootstrap:
@@ -171,12 +196,13 @@ jobs:
       #with:
         #repository: vlang/v
 
-    #- uses: actions/checkout@v2
-      #with:
-        #path: vab
-
     #- name: Build local v
       #run: make -j4
+
+    #- name: Checkout vab
+      #uses: actions/checkout@v2
+      #with:
+        #path: vab
 
     #- name: Run tests
       #run: ./v test vab
@@ -246,41 +272,43 @@ jobs:
         repository: vlang/v
         path: v
 
-    - uses: actions/checkout@v2
-      with:
-        path: vab
-
     - name: Checkout vab
       uses: actions/checkout@v2
       with:
         path: vab
 
+    - name: Simulate "v install vab"
+      run: Move-Item -Path .\vab -Destination $HOME\.vmodules\vab -force
+
     - name: Run tests
-      run: v test vab
+      run: v test "$HOME\.vmodules\vab"
 
 # TODO fails on Windows
 #    - name: Build vab with -prod
-#      run: v -prod vab/vab.v
+#      run: v -prod "$HOME\.vmodules\vab"
 
     - name: Build vab
-      run: v -g vab/vab.v
+      run: v -g "$HOME\.vmodules\vab"
+
+    - name: Add vab to PATH
+      run: echo "$HOME\.vmodules\vab" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
     - name: Run vab --help
-      run: vab/vab --help
+      run: vab --help
 
     - name: Install AAB dependencies
       run: |
-        vab/vab install bundletool
-        vab/vab install aapt2
+        vab install bundletool
+        vab install aapt2
 
     - name: Run vab doctor
-      run: vab/vab doctor
+      run: vab doctor
 
     - name: Run vab --list-* flags
       run: |
-        vab/vab --list-apis
-        vab/vab --list-build-tools
-        vab/vab --list-ndks
+        vab --list-apis
+        vab --list-build-tools
+        vab --list-ndks
 
     - name: Setup env
       run: |
@@ -289,5 +317,5 @@ jobs:
 
     - name: Build APK (Default) v/examples/sokol/particles
       run: |
-        vab/vab v/examples/sokol/particles -o apks/particles.apk
+        vab v\examples\sokol\particles -o apks\particles.apk
         # TODO vab/vab v/examples/sokol/particles -o aabs/particles.aab

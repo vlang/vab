@@ -34,17 +34,20 @@ jobs:
       with:
         path: vab
 
+    - name: Simulate "v install vab"
+      run: mv vab ~/.vmodules
+
     - name: Run tests
-      run: v test vab
+      run: v test ~/.vmodules/vab
 
     - name: Build vab with -prod
-      run: v -prod vab/vab.v
+      run: v -prod ~/.vmodules/vab
 
     - name: Build vab
-      run: v -g vab/vab.v
+      run: v -g ~/.vmodules/vab
 
     - name: Symlink vab
-      run: cd vab && sudo ln -s "$(pwd)/vab" /usr/local/bin/vab
+      run: sudo ln -s ~/.vmodules/vab/vab /usr/local/bin/vab
 
     - name: Run vab --help
       run: vab --help
@@ -55,8 +58,7 @@ jobs:
         vab install aapt2
 
     - name: Run vab doctor
-      run: |
-        vab doctor
+      run: vab doctor
 
     - name: Cache emulator
       id: cache-emulator
