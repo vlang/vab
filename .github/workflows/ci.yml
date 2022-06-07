@@ -40,11 +40,11 @@ jobs:
     - name: Simulate "v install vab"
       run: mv vab ~/.vmodules
 
-    # TODO this doesn't work in CI after installing in ~/.vmodules?
-    #- name: Test code formatting
-      #run: |
-        #./v vet -hide-warnings ~/.vmodules/vab
-        #./v fmt -verify ~/.vmodules/vab
+    # TODO this only works locally - it doesn't work in CI after installing in ~/.vmodules?
+    - name: Test code formatting
+      run: |
+        ./v vet -hide-warnings ~/.vmodules/vab
+        ./v fmt -verify ~/.vmodules/vab
 
     - name: Build vab
       run: ./v -g ~/.vmodules/vab
@@ -52,7 +52,7 @@ jobs:
     - name: Symlink vab
       run: sudo ln -s ~/.vmodules/vab/vab /usr/local/bin/vab
 
-    # TODO this doesn't work in CI after installing in ~/.vmodules?
+    # TODO this only works locally - it doesn't work in CI after installing in ~/.vmodules?
     #- name: Test clean vab code
       #run: |
         #export VEXE=./v
