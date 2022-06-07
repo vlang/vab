@@ -32,34 +32,28 @@ jobs:
       with:
         path: vab
 
-    - name: Symlink as module
-      run: sudo ln -s $(pwd)/vab ~/.vmodules/vab
-
     - name: Test code formatting
       run: |
         cd vab
         ../v test-fmt
 
+    - name: Symlink as module
+      run: sudo ln -s $(pwd)/vab ~/.vmodules/vab # TODO workaround for doing `mv vab ~/.vmodules` below
+
+    # TODO this makes formatting checks fail?
     #- name: Simulate "v install vab"
     #  run: mv vab ~/.vmodules
-
-    # TODO this only works locally - it doesn't work in CI after installing in ~/.vmodules?
-    - name: Test code formatting
-      run: |
-        ./v vet -hide-warnings ~/.vmodules/vab
-        ./v fmt -verify ~/.vmodules/vab
 
     - name: Build vab
       run: ./v -g ~/.vmodules/vab
 
-    - name: Symlink vab
+    - name: Symlink vab command
       run: sudo ln -s ~/.vmodules/vab/vab /usr/local/bin/vab
 
-    # TODO this only works locally - it doesn't work in CI after installing in ~/.vmodules?
-    #- name: Test clean vab code
-      #run: |
-        #export VEXE=./v
-        #vab test-cleancode ~/.vmodules/vab
+    - name: Test clean vab code
+      run: |
+        export VEXE=./v
+        vab test-cleancode ~/.vmodules/vab
 
   ubuntu-latest-bootstrap:
     runs-on: ubuntu-latest
