@@ -327,15 +327,13 @@ pub fn compiler_target_triplet(arch string) string {
 
 [inline]
 pub fn libs_path(ndk_version string, arch string, api_level string) ?string {
-	mut eabi := ''
-	if arch == 'armeabi-v7a' {
-		eabi = 'eabi'
-	}
 
 	mut host_architecture := host_arch()
 	mut arch_is := arch_to_instruction_set(arch)
 
-	if eabi != '' {
+	mut eabi := ''
+	if arch == 'armeabi-v7a' {
+		eabi = 'eabi'
 		arch_is = 'arm'
 	}
 
