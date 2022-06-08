@@ -39,3 +39,10 @@ fn test_package_ids() {
 		assert android.is_valid_package_id(id) == false
 	}
 }
+
+fn test_supported_target_archs() {
+	should_support_archs := ['arm64-v8a', 'armeabi-v7a', 'x86', 'x86_64']
+	for should_support_arch in should_support_archs {
+		assert should_support_arch in android.supported_target_archs
+	}
+}
