@@ -21,9 +21,9 @@ fn test_ndk_arch_to_instruction_set() {
 	assert ndk.arch_to_instruction_set('x86_64') == 'x86_64'
 }
 
-fn test_compiler_target_triplet() {
-	assert ndk.compiler_target_triplet('armeabi-v7a') == 'armv7a-linux-androideabi'
-	assert ndk.compiler_target_triplet('arm64-v8a') == 'aarch64-linux-android'
-	assert ndk.compiler_target_triplet('x86') == 'i686-linux-android'
-	assert ndk.compiler_target_triplet('x86_64') == 'x86_64-linux-android'
+fn test_compiler_triplet() {
+	assert ndk.compiler_triplet('armeabi-v7a') == 'armv7a-linux-androideabi'
+	assert ndk.compiler_triplet('arm64-v8a') == 'aarch64-linux-android'
+	assert ndk.compiler_triplet('x86') == 'i686-linux-android'
+	assert ndk.compiler_triplet('x86_64') == 'x86_64-linux-android'
 }
