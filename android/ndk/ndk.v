@@ -21,6 +21,10 @@ pub enum CompilerLanguageType {
 	cpp
 }
 
+pub enum Tool {
+	ar
+}
+
 // ANDROID_SDK_ROOT and ANDROID_HOME is official ENV variables to get the SDK root
 // but no such conventions exists for getting the NDK.
 // However ANDROID_NDK_ROOT is widely used and the `sdkmanager` has support
@@ -296,6 +300,31 @@ fn available_ndk_cpp_compilers_by_api(ndk_version string, arch string, api_level
 		}
 	}
 	return compilers
+}
+
+pub fn tool(tool_type Tool, ndk_version string, arch string) ?string {
+	match tool_type {
+		.ar {
+			mut eabi := ''
+			mut arch_is := arch_to_instruction_set(arch)
+			if arch == 'armeabi-v7a' {
+				arch_is = 'arm'
+				eabi = 'eabi'
+			}
+			path := bin_path(ndk_version)
+			if os.is_dir(path) {
+				mut ar := os.join_path(path, arch_is + '-linux-android$eabi-ar')
+				$if windows {
+					ar += '.cmd' // TODO validate if this is correct
+				}
+				if os.is_file(ar) {
+					return ar
+				}
+			}
+		}
+	}
+	return error(@MOD + '.' + @FN +
+		' couldn\'t locate "$tool_type" tool for architecture "$arch". You could try with a NDK version > "$ndk_version"')
 }
 
 [inline]
