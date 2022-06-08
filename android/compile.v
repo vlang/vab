@@ -9,6 +9,7 @@ import vab.android.util
 import crypto.md5
 
 pub const (
+	supported_target_archs  = ['arm64-v8a', 'armeabi-v7a', 'x86', 'x86_64']
 	default_archs           = ['arm64-v8a', 'armeabi-v7a', 'x86', 'x86_64']
 	supported_gles_versions = [2, 3]
 	default_gles_version    = 2
