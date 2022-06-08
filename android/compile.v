@@ -57,7 +57,7 @@ pub fn compile(opt CompileOptions) bool {
 		v_cmd << '-nocache'
 	}
 
-	cross_compiler_name := ndk.compiler(opt.ndk_version, 'armeabi-v7a', opt.api_level) or {
+	cross_compiler_name := ndk.compiler(.c, opt.ndk_version, 'armeabi-v7a', opt.api_level) or {
 		panic('$err_sig: failed getting NDK compiler. $err')
 	}
 	os.setenv('VCROSS_COMPILER_NAME', cross_compiler_name, true)
@@ -323,7 +323,7 @@ pub fn compile(opt CompileOptions) bool {
 	mut arch_cc := map[string]string{}
 	mut arch_libs := map[string]string{}
 	for arch in archs {
-		compiler := ndk.compiler(opt.ndk_version, arch, opt.api_level) or {
+		compiler := ndk.compiler(.c, opt.ndk_version, arch, opt.api_level) or {
 			panic('$err_sig: failed getting NDK compiler. $err')
 		}
 		arch_cc[arch] = compiler
