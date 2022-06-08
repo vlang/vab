@@ -254,7 +254,7 @@ fn available_ndk_c_compilers_by_api(ndk_version string, arch string, api_level s
 		to := i16(api_level.int()) + 1
 		if to > from {
 			for level in from .. to {
-				mut compiler := os.join_path(compiler_bin_path, compiler_target_triplet(arch) +
+				mut compiler := os.join_path(compiler_bin_path, compiler_triplet(arch) +
 					'$level-clang')
 				$if windows {
 					compiler += '.cmd'
@@ -277,7 +277,7 @@ fn available_ndk_cpp_compilers_by_api(ndk_version string, arch string, api_level
 		to := i16(api_level.int()) + 1
 		if to > from {
 			for level in from .. to {
-				mut compiler := os.join_path(compiler_bin_path, compiler_target_triplet(arch) +
+				mut compiler := os.join_path(compiler_bin_path, compiler_triplet(arch) +
 					'$level-clang++')
 				$if windows {
 					compiler += '.cmd'
@@ -316,7 +316,7 @@ pub fn tool(tool_type Tool, ndk_version string, arch string) ?string {
 		' couldn\'t locate "$tool_type" tool for architecture "$arch". You could try with a NDK version > "$ndk_version"')
 }
 
-pub fn compiler_target_triplet(arch string) string {
+pub fn compiler_triplet(arch string) string {
 	mut eabi := ''
 	arch_is := arch_to_instruction_set(arch)
 	if arch == 'armeabi-v7a' {
