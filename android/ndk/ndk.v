@@ -156,7 +156,7 @@ pub fn min_version() string {
 	mut version := '0.0.0'
 	uos := os.user_os()
 	if uos == 'windows' {
-		version = '0.0.0'
+		version = '0.0.0' // TODO
 	}
 	if uos == 'macos' {
 		version = '21.3.6528147'
@@ -180,13 +180,12 @@ pub fn default_version() string {
 
 [inline]
 pub fn host_arch() string {
-	host_arch := match os.user_os() {
-		'windows' { 'windows-x86_64' }
-		'macos' { 'darwin-x86_64' }
+	return match os.user_os() {
 		'linux' { 'linux-x86_64' }
+		'macos' { 'darwin-x86_64' }
+		'windows' { 'windows-x86_64' }
 		else { 'unknown' }
 	}
-	return host_arch
 }
 
 // arch_to_instruction_set maps `arch` to an instruction set
@@ -249,19 +248,14 @@ pub fn compiler(lang_type CompilerLanguageType, ndk_version string, arch string,
 fn available_ndk_c_compilers_by_api(ndk_version string, arch string, api_level string) map[string]string {
 	mut compilers := map[string]string{}
 
-	mut eabi := ''
-	if arch == 'armeabi-v7a' {
-		eabi = 'eabi'
-	}
-	arch_is := arch_to_instruction_set(arch)
 	compiler_bin_path := bin_path(ndk_version)
 	if os.is_dir(compiler_bin_path) {
 		from := i16(sdk.min_supported_api_level.int())
 		to := i16(api_level.int()) + 1
 		if to > from {
 			for level in from .. to {
-				mut compiler := os.join_path(compiler_bin_path, arch_is +
-					'-linux-android$eabi$level-clang')
+				mut compiler := os.join_path(compiler_bin_path, compiler_target_triplet(arch) +
+					'$level-clang')
 				$if windows {
 					compiler += '.cmd'
 				}
@@ -277,19 +271,14 @@ fn available_ndk_c_compilers_by_api(ndk_version string, arch string, api_level s
 fn available_ndk_cpp_compilers_by_api(ndk_version string, arch string, api_level string) map[string]string {
 	mut compilers := map[string]string{}
 
-	mut eabi := ''
-	if arch == 'armeabi-v7a' {
-		eabi = 'eabi'
-	}
-	arch_is := arch_to_instruction_set(arch)
 	compiler_bin_path := bin_path(ndk_version)
 	if os.is_dir(compiler_bin_path) {
 		from := i16(sdk.min_supported_api_level.int())
 		to := i16(api_level.int()) + 1
 		if to > from {
 			for level in from .. to {
-				mut compiler := os.join_path(compiler_bin_path, arch_is +
-					'-linux-android$eabi$level-clang++')
+				mut compiler := os.join_path(compiler_bin_path, compiler_target_triplet(arch) +
+					'$level-clang++')
 				$if windows {
 					compiler += '.cmd'
 				}
@@ -325,6 +314,15 @@ pub fn tool(tool_type Tool, ndk_version string, arch string) ?string {
 	}
 	return error(@MOD + '.' + @FN +
 		' couldn\'t locate "$tool_type" tool for architecture "$arch". You could try with a NDK version > "$ndk_version"')
+}
+
+pub fn compiler_target_triplet(arch string) string {
+	mut eabi := ''
+	mut arch_is := arch_to_instruction_set(arch)
+	if arch == 'armeabi-v7a' {
+		eabi = 'eabi'
+	}
+	return arch_is + '-linux-android$eabi'
 }
 
 [inline]
