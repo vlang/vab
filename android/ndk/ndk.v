@@ -318,7 +318,7 @@ pub fn tool(tool_type Tool, ndk_version string, arch string) ?string {
 
 pub fn compiler_target_triplet(arch string) string {
 	mut eabi := ''
-	mut arch_is := arch_to_instruction_set(arch)
+	arch_is := arch_to_instruction_set(arch)
 	if arch == 'armeabi-v7a' {
 		eabi = 'eabi'
 	}
