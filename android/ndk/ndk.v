@@ -199,7 +199,7 @@ pub fn arch_to_instruction_set(arch string) string {
 }
 
 [inline]
-pub fn bin_path(ndk_version string) {
+pub fn bin_path(ndk_version string) string {
 	return os.join_path(root_version(ndk_version), 'toolchains', 'llvm', 'prebuilt', host_arch(),
 		'bin')
 }
