@@ -71,6 +71,7 @@ mut:
 	v_flags                 []string // flags passed to the V compiler
 	lib_name                string
 	assets_extra            []string
+	libs_extra              []string
 	keystore_password       string
 	keystore_alias_password string
 	// Build specifics
@@ -341,6 +342,7 @@ fn main() {
 		v_flags: opt.v_flags
 		input: opt.input
 		assets_extra: opt.assets_extra
+		libs_extra: opt.libs_extra
 		output_file: opt.output
 		keystore: keystore
 		base_files: os.join_path(exe_dir, 'platforms', 'android')
@@ -414,6 +416,7 @@ fn args_to_options(arguments []string, defaults Options) ?(Options, &flag.FlagPa
 
 	mut opt := Options{
 		assets_extra: fp.string_multi('assets', `a`, 'Asset dir(s) to include in build')
+		libs_extra: fp.string_multi('libs', `a`, 'Lib dir(s) to include in build')
 		v_flags: fp.string_multi('flag', `f`, 'Additional flags for the V compiler')
 		//
 		no_printf_hijack: fp.bool('no-printf-hijack', 0, defaults.no_printf_hijack, 'Do not let V redefine printf for log output (aka. do not define V_ANDROID_LOG_PRINT)')
@@ -715,90 +718,105 @@ fn resolve_output(mut opt Options) {
 
 fn extend_options_from_dot_vab(mut opt Options) {
 	// Look up values in input .vab file next to input if no flags or defaults was set
-	if opt.package_id == android.default_package_id || opt.activity_name == ''
-		|| opt.app_name == android.default_app_name || opt.icon == ''
-		|| opt.package_overrides_path == '' {
-		dot_vab_file := dot_vab_path(opt.input)
-		dot_vab := os.read_file(dot_vab_file) or { '' }
-		if dot_vab.len > 0 {
-			if opt.icon == '' && dot_vab.contains('icon:') {
-				vab_icon := dot_vab.all_after('icon:').all_before('\n').replace("'", '').replace('"',
-					'').trim(' ')
-				if vab_icon != '' {
-					if opt.verbosity > 1 {
-						println('Using icon "vab_icon" from .vab file "$dot_vab_file"')
-					}
-					opt.icon = vab_icon
+	dot_vab_file := dot_vab_path(opt.input)
+	dot_vab := os.read_file(dot_vab_file) or { '' }
+	if dot_vab.len > 0 {
+		if opt.icon == '' && dot_vab.contains('icon:') {
+			vab_icon := dot_vab.all_after('icon:').all_before('\n').replace("'", '').replace('"',
+				'').trim(' ')
+			if vab_icon != '' {
+				if opt.verbosity > 1 {
+					println('Using icon "vab_icon" from .vab file "$dot_vab_file"')
 				}
+				opt.icon = vab_icon
 			}
-			if opt.app_name == android.default_app_name && dot_vab.contains('app_name:') {
-				vab_app_name := dot_vab.all_after('app_name:').all_before('\n').replace("'",
-					'').replace('"', '').trim(' ')
-				if vab_app_name != '' {
-					if opt.verbosity > 1 {
-						println('Using app name "vab_app_name" from .vab file "$dot_vab_file"')
-					}
-					opt.app_name = vab_app_name
+		}
+		if opt.app_name == android.default_app_name && dot_vab.contains('app_name:') {
+			vab_app_name := dot_vab.all_after('app_name:').all_before('\n').replace("'",
+				'').replace('"', '').trim(' ')
+			if vab_app_name != '' {
+				if opt.verbosity > 1 {
+					println('Using app name "vab_app_name" from .vab file "$dot_vab_file"')
 				}
+				opt.app_name = vab_app_name
 			}
-			if opt.package_id == android.default_package_id && dot_vab.contains('package_id:') {
-				vab_package_id := dot_vab.all_after('package_id:').all_before('\n').replace("'",
-					'').replace('"', '').trim(' ')
-				if vab_package_id != '' {
-					if opt.verbosity > 1 {
-						println('Using package id "$vab_package_id" from .vab file "$dot_vab_file"')
-					}
-					opt.package_id = vab_package_id
+		}
+		if opt.package_id == android.default_package_id && dot_vab.contains('package_id:') {
+			vab_package_id := dot_vab.all_after('package_id:').all_before('\n').replace("'",
+				'').replace('"', '').trim(' ')
+			if vab_package_id != '' {
+				if opt.verbosity > 1 {
+					println('Using package id "$vab_package_id" from .vab file "$dot_vab_file"')
 				}
+				opt.package_id = vab_package_id
 			}
-			if opt.min_sdk_version == android.default_min_sdk_version
-				&& dot_vab.contains('min_sdk_version:') {
-				vab_min_sdk_version := dot_vab.all_after('min_sdk_version:').all_before('\n').replace("'",
-					'').replace('"', '').trim(' ')
-				if vab_min_sdk_version != '' {
-					if opt.verbosity > 1 {
-						println('Using minimum SDK version "$vab_min_sdk_version" from .vab file "$dot_vab_file"')
-					}
-					opt.min_sdk_version = vab_min_sdk_version.int()
+		}
+		if opt.min_sdk_version == android.default_min_sdk_version
+			&& dot_vab.contains('min_sdk_version:') {
+			vab_min_sdk_version := dot_vab.all_after('min_sdk_version:').all_before('\n').replace("'",
+				'').replace('"', '').trim(' ')
+			if vab_min_sdk_version != '' {
+				if opt.verbosity > 1 {
+					println('Using minimum SDK version "$vab_min_sdk_version" from .vab file "$dot_vab_file"')
 				}
+				opt.min_sdk_version = vab_min_sdk_version.int()
 			}
-			if opt.package_overrides_path == '' && dot_vab.contains('package_overrides:') {
-				mut vab_package_overrides_path := dot_vab.all_after('package_overrides:').all_before('\n').replace("'",
-					'').replace('"', '').trim(' ')
-				if vab_package_overrides_path != '' {
-					if vab_package_overrides_path in ['.', '..']
-						|| vab_package_overrides_path.starts_with('.' + os.path_separator)
-						|| vab_package_overrides_path.starts_with('..' + os.path_separator) {
-						dot_vab_file_dir := os.dir(dot_vab_file)
-						if vab_package_overrides_path == '.' {
-							vab_package_overrides_path = dot_vab_file_dir
-						} else if vab_package_overrides_path == '..' {
-							vab_package_overrides_path = os.dir(dot_vab_file_dir)
-						} else if vab_package_overrides_path.starts_with('.' + os.path_separator) {
-							vab_package_overrides_path = vab_package_overrides_path.replace_once(
-								'.' + os.path_separator, dot_vab_file_dir + os.path_separator)
-						} else {
-							// vab_package_overrides_path.starts_with('..'+os.path_separator)
-							vab_package_overrides_path = vab_package_overrides_path.replace_once(
-								'..' + os.path_separator, os.dir(dot_vab_file_dir) +
-								os.path_separator)
-						}
+		}
+		if opt.package_overrides_path == '' && dot_vab.contains('package_overrides:') {
+			mut vab_package_overrides_path := dot_vab.all_after('package_overrides:').all_before('\n').replace("'",
+				'').replace('"', '').trim(' ')
+			if vab_package_overrides_path != '' {
+				if vab_package_overrides_path in ['.', '..']
+					|| vab_package_overrides_path.starts_with('.' + os.path_separator)
+					|| vab_package_overrides_path.starts_with('..' + os.path_separator) {
+					dot_vab_file_dir := os.dir(dot_vab_file)
+					if vab_package_overrides_path == '.' {
+						vab_package_overrides_path = dot_vab_file_dir
+					} else if vab_package_overrides_path == '..' {
+						vab_package_overrides_path = os.dir(dot_vab_file_dir)
+					} else if vab_package_overrides_path.starts_with('.' + os.path_separator) {
+						vab_package_overrides_path = vab_package_overrides_path.replace_once('.' +
+							os.path_separator, dot_vab_file_dir + os.path_separator)
+					} else {
+						// vab_package_overrides_path.starts_with('..'+os.path_separator)
+						vab_package_overrides_path = vab_package_overrides_path.replace_once('..' +
+							os.path_separator, os.dir(dot_vab_file_dir) + os.path_separator)
 					}
-					if opt.verbosity > 1 {
-						println('Using package overrides in "$vab_package_overrides_path" from .vab file "$dot_vab_file"')
-					}
-					opt.package_overrides_path = vab_package_overrides_path
 				}
+				if opt.verbosity > 1 {
+					println('Using package overrides in "$vab_package_overrides_path" from .vab file "$dot_vab_file"')
+				}
+				opt.package_overrides_path = vab_package_overrides_path
 			}
-			if opt.activity_name == '' && dot_vab.contains('activity_name:') {
-				vab_activity := dot_vab.all_after('activity_name:').all_before('\n').replace("'",
-					'').replace('"', '').trim(' ')
-				if vab_activity != '' {
-					if opt.verbosity > 1 {
-						println('Using activity name "$vab_activity" from .vab file "$dot_vab_file"')
-					}
-					opt.activity_name = vab_activity
+		}
+		if opt.activity_name == '' && dot_vab.contains('activity_name:') {
+			vab_activity := dot_vab.all_after('activity_name:').all_before('\n').replace("'",
+				'').replace('"', '').trim(' ')
+			if vab_activity != '' {
+				if opt.verbosity > 1 {
+					println('Using activity name "$vab_activity" from .vab file "$dot_vab_file"')
 				}
+				opt.activity_name = vab_activity
+			}
+		}
+		if dot_vab.contains('assets_extra:') {
+			vab_assets_extra := dot_vab.all_after('assets_extra:').all_before('\n').replace("'",
+				'').replace('"', '').trim(' ')
+			if os.is_dir(vab_assets_extra) {
+				if opt.verbosity > 1 {
+					println('Appending extra assets at "$vab_assets_extra" from .vab file "$dot_vab_file"')
+				}
+				opt.assets_extra << vab_assets_extra
+			}
+		}
+		if dot_vab.contains('libs_extra:') {
+			vab_libs_extra := dot_vab.all_after('libs_extra:').all_before('\n').replace("'",
+				'').replace('"', '').trim(' ')
+			if os.is_dir(vab_libs_extra) {
+				if opt.verbosity > 1 {
+					println('Appending extra libs at "$vab_libs_extra" from .vab file "$dot_vab_file"')
+				}
+				opt.libs_extra << vab_libs_extra
 			}
 		}
 	}
