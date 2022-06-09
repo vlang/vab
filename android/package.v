@@ -406,7 +406,16 @@ fn package_aab(opt PackageOptions) bool {
 	pwd := os.getwd()
 
 	build_path := os.join_path(opt.work_dir, 'build')
+	libs_extra_path := os.join_path(opt.work_dir, 'libs')
 	build_tools_path := os.join_path(sdk.build_tools_root(), opt.build_tools)
+
+	// Remove any previous extra libs
+	if os.is_dir(libs_extra_path) {
+		os.rmdir_all(libs_extra_path) or {}
+	}
+	for supported_lib_folder in android.supported_lib_folders {
+		os.mkdir_all(os.join_path(libs_extra_path, 'lib', supported_lib_folder)) or { panic(err) }
+	}
 
 	// Used for various bug workarounds below
 	build_tools_semantic_version := semver.from(opt.build_tools) or {
@@ -586,6 +595,58 @@ fn package_aab(opt PackageOptions) bool {
 	os.mv(os.join_path(staging_path, 'AndroidManifest.xml'), os.join_path(staging_path,
 		'manifest')) or { panic(err) }
 
+	if opt.verbosity > 1 {
+		println('Adding libs...')
+	}
+	// Add libs to product
+	mut collected_libs := map[string][]string{}
+	collected_libs[build_path] = os.walk_ext(os.join_path(build_path, 'lib'), '.so')
+	for lib_extra_path in opt.libs_extra {
+		collected_extra_libs := os.walk_ext(os.join_path(lib_extra_path), '.so')
+		for collected_extra_lib in collected_extra_libs {
+			path_split := collected_extra_lib.split(os.path_separator)
+			for path_part in path_split {
+				if path_part in android.supported_lib_folders {
+					if opt.verbosity > 2 {
+						println('Adding extra lib "$collected_extra_lib"...')
+					}
+					os.cp(collected_extra_lib, os.join_path(libs_extra_path, 'lib', path_part,
+						os.file_name(collected_extra_lib))) or { panic(err) }
+					break
+				}
+			}
+		}
+	}
+	collected_libs[libs_extra_path] = os.walk_ext(os.join_path(libs_extra_path, 'lib'),
+		'.so')
+
+	for lib_path, libs in collected_libs {
+		for lib in libs {
+			lib_base := lib.replace(lib_path + os.path_separator, '')
+			os.mkdir_all(os.join_path(staging_path, os.dir(lib_base))) or { panic(err) }
+			os.cp_all(lib, os.join_path(staging_path, lib_base), true) or { panic(err) }
+		}
+		/*
+		os.chdir(lib_path) or {}
+		for lib in libs {
+			mut lib_s := lib.replace(lib_path + os.path_separator, '')
+			$if windows {
+				// NOTE This is necessary for paths to work when packaging up on Windows
+				lib_s = lib_s.replace(os.path_separator, '/')
+			}
+			aapt_cmd = [
+				aapt,
+				'add',
+				'-v',
+				'"' + tmp_unaligned_product + '"',
+				'"' + lib_s + '"',
+			]
+			util.verbosity_print_cmd(aapt_cmd, opt.verbosity)
+			util.run_or_exit(aapt_cmd)
+		}*/
+	}
+
+	/*
 	// copy libs
 	collected_libs := os.walk_ext(os.join_path(build_path, 'lib'), '.so')
 	for lib in collected_libs {
@@ -594,6 +655,7 @@ fn package_aab(opt PackageOptions) bool {
 		os.cp_all(lib, os.join_path(staging_path, lib_base), true) or { panic(err) }
 	}
 	// os.chdir(pwd) or {}
+	*/
 
 	$if windows {
 		// TODO Workaround dx and Java > 8 (1.8.0) BUG
