@@ -69,6 +69,7 @@ pub fn compile(opt CompileOptions) bool {
 	v_cmd << opt.v_flags
 	v_cmd << [
 		'-v', // Verbose so we can catch imported modules string
+		'-gc none',
 		'-cc clang',
 		'-dump-c-flags',
 		'"$vcflags_file"',
@@ -100,6 +101,7 @@ pub fn compile(opt CompileOptions) bool {
 	}
 	v_cmd << opt.v_flags
 	v_cmd << [
+		'-gc none',
 		'-os android',
 		'-apk',
 		'-o "$v_output_file"',
@@ -246,13 +248,15 @@ pub fn compile(opt CompileOptions) bool {
 	is_debug_build := '-cg' in opt.v_flags || '-g' in opt.v_flags
 
 	// Boehm-Demers-Weiser Garbage Collector (bdwgc / libgc)
-	mut uses_gc := false
+	mut uses_gc := true // V default
 	for v_flag in opt.v_flags {
 		if v_flag.starts_with('-gc') {
-			if opt.verbosity > 1 {
-				println('Using garbage collecting via "$v_flag"')
+			if v_flag.ends_with('none') {
+				uses_gc = false
 			}
-			uses_gc = true
+			if opt.verbosity > 1 {
+				println('Garbage collecting is $uses_gc via "$v_flag"')
+			}
 			break
 		}
 	}
