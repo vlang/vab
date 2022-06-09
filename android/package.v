@@ -626,36 +626,7 @@ fn package_aab(opt PackageOptions) bool {
 			os.mkdir_all(os.join_path(staging_path, os.dir(lib_base))) or { panic(err) }
 			os.cp_all(lib, os.join_path(staging_path, lib_base), true) or { panic(err) }
 		}
-		/*
-		os.chdir(lib_path) or {}
-		for lib in libs {
-			mut lib_s := lib.replace(lib_path + os.path_separator, '')
-			$if windows {
-				// NOTE This is necessary for paths to work when packaging up on Windows
-				lib_s = lib_s.replace(os.path_separator, '/')
-			}
-			aapt_cmd = [
-				aapt,
-				'add',
-				'-v',
-				'"' + tmp_unaligned_product + '"',
-				'"' + lib_s + '"',
-			]
-			util.verbosity_print_cmd(aapt_cmd, opt.verbosity)
-			util.run_or_exit(aapt_cmd)
-		}*/
 	}
-
-	/*
-	// copy libs
-	collected_libs := os.walk_ext(os.join_path(build_path, 'lib'), '.so')
-	for lib in collected_libs {
-		lib_base := lib.replace(build_path + os.path_separator, '')
-		os.mkdir_all(os.join_path(staging_path, os.dir(lib_base))) or { panic(err) }
-		os.cp_all(lib, os.join_path(staging_path, lib_base), true) or { panic(err) }
-	}
-	// os.chdir(pwd) or {}
-	*/
 
 	$if windows {
 		// TODO Workaround dx and Java > 8 (1.8.0) BUG
