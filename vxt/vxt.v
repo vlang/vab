@@ -43,6 +43,18 @@ pub fn vexe() string {
 	return exe
 }
 
+// vmodules returns the path to the `.vmodules` folder if found
+pub fn vmodules() !string {
+	mut vmodules_path := os.getenv('VMODULES')
+	if !os.is_dir(vmodules_path) {
+		vmodules_path = os.join_path(os.home_dir(), '.vmodules')
+	}
+	if !os.is_dir(vmodules_path) {
+		return error(@MOD + '.' + @FN + ': no valid v modules path found at "$vmodules_path"')
+	}
+	return vmodules_path
+}
+
 pub fn found() bool {
 	return home() != ''
 }
