@@ -38,23 +38,29 @@ pub struct CompileOptions {
 }
 
 struct ShellJob {
-	cmd               []string
-	verbosity         int
-	verbosity_trigger int
+	cmd      []string
+	env_vars map[string]string
 }
 
-fn async_run(pp &pool.PoolProcessor, idx int, wid int) voidptr {
+struct ShellJobResult {
+	job    ShellJob
+	result os.Result
+}
+
+fn async_run(pp &pool.PoolProcessor, idx int, wid int) &ShellJobResult {
 	item := pp.get_item<ShellJob>(idx)
 	return sync_run(item)
 }
 
-fn sync_run(item ShellJob) voidptr {
-	util.verbosity_print_cmd(item.cmd, item.verbosity)
-	res := util.run_or_exit(item.cmd)
-	if item.verbosity > item.verbosity_trigger {
-		println(res)
+fn sync_run(item ShellJob) &ShellJobResult {
+	for key, value in item.env_vars {
+		os.setenv(key, value, true)
 	}
-	return voidptr(0)
+	res := util.run(item.cmd)
+	return &ShellJobResult{
+		job: item
+		result: res
+	}
 }
 
 pub fn compile(opt CompileOptions) bool {
@@ -66,7 +72,7 @@ pub fn compile(opt CompileOptions) bool {
 	mut jobs := []ShellJob{}
 
 	if opt.verbosity > 0 {
-		println('Compiling V to C')
+		println('Compiling V to C' + if opt.parallel { ' in parallel' } else { '' })
 		if opt.v_flags.len > 0 {
 			println('V flags: `$opt.v_flags`')
 		}
@@ -74,49 +80,33 @@ pub fn compile(opt CompileOptions) bool {
 	vexe := vxt.vexe()
 	v_output_file := os.join_path(opt.work_dir, 'v_android.c')
 
-	// Dump C flags to a file
-	vcflags_file := os.join_path(opt.work_dir, 'v.cflags')
-	os.rm(vcflags_file) or {}
+	// Dump modules and C flags to files
+	v_cflags_file := os.join_path(opt.work_dir, 'v.cflags')
+	os.rm(v_cflags_file) or {}
+	v_dump_modules_file := os.join_path(opt.work_dir, 'v.modules')
+	os.rm(v_dump_modules_file) or {}
+
 	mut v_cmd := [vexe]
 	if !opt.cache {
 		v_cmd << '-nocache'
 	}
 
-	cross_compiler_name := ndk.compiler(.c, opt.ndk_version, 'armeabi-v7a', opt.api_level) or {
-		panic('$err_sig: failed getting NDK compiler. $err')
-	}
-	os.setenv('VCROSS_COMPILER_NAME', cross_compiler_name, true)
-	if opt.verbosity > 1 {
-		println('Sat VCROSS_COMPILER_NAME to "$cross_compiler_name"')
-	}
-
 	v_cmd << opt.v_flags
 	v_cmd << [
-		'-v', // Verbose so we can catch imported modules string
 		'-gc none',
 		'-cc clang',
-		'-dump-c-flags',
-		'"$vcflags_file"',
+		'-dump-modules "$v_dump_modules_file"',
+		'-dump-c-flags "$v_cflags_file"',
 		'-os android',
 		'-apk',
 	]
 	v_cmd << opt.input
-	util.verbosity_print_cmd(v_cmd, opt.verbosity)
-	v_cmd_res := util.run(v_cmd)
+
 	// NOTE this command fails with a C compile error but the output we need is still
 	// present... Yes - not exactly pretty.
-	// if v_cmd_res.exit_code != 0 {
-	//	panic('dumping V flags failed with:\n$v_cmd_res.output')
-	//}
-
-	// Parse imported modules from dump
-	mut v_cmd_out := v_cmd_res.output.all_after('imported modules:').all_after('[')
-	v_cmd_out = v_cmd_out.all_before(']')
-	mut imported_modules := v_cmd_out.split(',')
-	imported_modules = imported_modules.map(fn (e string) string {
-		return e.trim('"\' ')
-	})
-	imported_modules.sort()
+	jobs << ShellJob{
+		cmd: v_cmd.clone()
+	}
 
 	// Compile to Android compatible C file
 	v_cmd = [vexe]
@@ -131,11 +121,46 @@ pub fn compile(opt CompileOptions) bool {
 		'-o "$v_output_file"',
 	]
 	v_cmd << opt.input
-	util.verbosity_print_cmd(v_cmd, opt.verbosity)
-	v_comp_res := util.run_or_exit(v_cmd)
+	jobs << ShellJob{
+		cmd: v_cmd.clone()
+	}
 
-	if opt.verbosity > 1 {
-		println(v_comp_res)
+	if opt.parallel {
+		mut pp := pool.new_pool_processor(maxjobs: runtime.nr_cpus() - 1, callback: async_run)
+		pp.work_on_items(jobs)
+		for job_res in pp.get_results<ShellJobResult>() {
+			util.verbosity_print_cmd(job_res.job.cmd, opt.verbosity)
+			if '-cc clang' !in job_res.job.cmd {
+				util.exit_on_bad_result(job_res.result, '${job_res.job.cmd[0]} failed with return code $job_res.result.exit_code')
+				if opt.verbosity > 2 {
+					println(job_res.result.output)
+				}
+			}
+		}
+	} else {
+		for job in jobs {
+			util.verbosity_print_cmd(job.cmd, opt.verbosity)
+			job_res := sync_run(job)
+			if '-cc clang' !in job_res.job.cmd {
+				util.exit_on_bad_result(job_res.result, '${job.cmd[0]} failed with return code $job_res.result.exit_code')
+				if opt.verbosity > 2 {
+					println(job_res.result.output)
+				}
+			}
+		}
+	}
+	jobs.clear()
+
+	// Parse imported modules from dump
+	mut imported_modules := os.read_file(v_dump_modules_file) or {
+		panic('$err_sig: failed reading module dump file "$v_dump_modules_file". $err')
+	}.split('\n').filter(it != '')
+	imported_modules.sort()
+	if opt.verbosity > 2 {
+		println('Imported modules:\n' + imported_modules.join('\n'))
+	}
+	if imported_modules.len == 0 {
+		panic('$err_sig: empty module dump file "$v_dump_modules_file".')
 	}
 
 	// Poor man's cache check
@@ -201,8 +226,8 @@ pub fn compile(opt CompileOptions) bool {
 	mut sources := []string{}
 
 	// Read in the dumped cflags
-	vcflags := os.read_file(vcflags_file) or {
-		panic('$err_sig: failed reading C flags to "$vcflags_file". $err')
+	vcflags := os.read_file(v_cflags_file) or {
+		panic('$err_sig: failed reading C flags to "$v_cflags_file". $err')
 	}
 	for line in vcflags.split('\n') {
 		if line.contains('.tmp.c') || line.ends_with('.o"') {
@@ -372,7 +397,6 @@ pub fn compile(opt CompileOptions) bool {
 	}
 
 	// Cross compile .so lib files
-	jobs.clear()
 	for arch in archs {
 		arch_lib_dir := os.join_path(build_dir, 'lib', arch)
 		os.mkdir_all(arch_lib_dir) or {
@@ -384,23 +408,29 @@ pub fn compile(opt CompileOptions) bool {
 			'-o "$arch_lib_dir/lib${opt.lib_name}.so"', v_output_file, '-L"' + arch_libs[arch] + '"',
 			ldflags.join(' ')]
 
-		mut verbosity := opt.verbosity
-		if '-showcc' in opt.v_flags {
-			verbosity = 3
-		}
 		jobs << ShellJob{
 			cmd: build_cmd
-			verbosity: verbosity
-			verbosity_trigger: 1
 		}
 	}
 
 	if opt.parallel {
 		mut pp := pool.new_pool_processor(maxjobs: runtime.nr_cpus() - 1, callback: async_run)
 		pp.work_on_items(jobs)
+		for job_res in pp.get_results<ShellJobResult>() {
+			util.verbosity_print_cmd(job_res.job.cmd, opt.verbosity)
+			util.exit_on_bad_result(job_res.result, '${job_res.job.cmd[0]} failed with return code $job_res.result.exit_code')
+			if opt.verbosity > 2 {
+				println(job_res.result.output)
+			}
+		}
 	} else {
 		for job in jobs {
-			sync_run(job)
+			util.verbosity_print_cmd(job.cmd, opt.verbosity)
+			job_res := sync_run(job)
+			util.exit_on_bad_result(job_res.result, '${job.cmd[0]} failed with return code $job_res.result.exit_code')
+			if opt.verbosity > 2 {
+				println(job_res.result.output)
+			}
 		}
 	}
 

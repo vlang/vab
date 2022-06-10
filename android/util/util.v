@@ -72,13 +72,17 @@ pub fn verbosity_print_cmd(args []string, verbosity int) {
 	}
 }
 
-pub fn run_or_exit(args []string) string {
-	res := run(args)
+pub fn exit_on_bad_result(res os.Result, error_message string) {
 	if res.exit_code != 0 {
-		eprintln('${args[0]} failed with return code $res.exit_code')
+		eprintln('$error_message')
 		eprintln(res.output)
 		exit(1)
 	}
+}
+
+pub fn run_or_exit(args []string) string {
+	res := run(args)
+	exit_on_bad_result(res, '${args[0]} failed with return code $res.exit_code')
 	return res.output
 }
 
