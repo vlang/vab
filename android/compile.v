@@ -63,6 +63,7 @@ pub fn compile(opt CompileOptions) bool {
 		panic('$err_sig: failed making directory "$opt.work_dir". $err')
 	}
 	build_dir := os.join_path(opt.work_dir, 'build')
+	mut jobs := []ShellJob{}
 
 	if opt.verbosity > 0 {
 		println('Compiling V to C')
@@ -136,6 +137,7 @@ pub fn compile(opt CompileOptions) bool {
 	if opt.verbosity > 1 {
 		println(v_comp_res)
 	}
+
 	// Poor man's cache check
 	mut hash := ''
 	hash_file := os.join_path(opt.work_dir, 'v_android.hash')
@@ -191,9 +193,6 @@ pub fn compile(opt CompileOptions) bool {
 		archs = android.default_archs.clone()
 	}
 
-	if opt.verbosity > 0 {
-		println('Compiling C to $archs' + if opt.parallel { ' in parallel' } else { '' })
-	}
 	// For all compilers
 	mut cflags := opt.c_flags
 	mut includes := []string{}
@@ -368,8 +367,12 @@ pub fn compile(opt CompileOptions) bool {
 	arch_cflags['x86'] = cflags_x86
 	arch_cflags['x86_64'] = cflags_x86_64
 
-	mut jobs := []ShellJob{}
+	if opt.verbosity > 0 {
+		println('Compiling C to $archs' + if opt.parallel { ' in parallel' } else { '' })
+	}
+
 	// Cross compile .so lib files
+	jobs.clear()
 	for arch in archs {
 		arch_lib_dir := os.join_path(build_dir, 'lib', arch)
 		os.mkdir_all(arch_lib_dir) or {
@@ -391,6 +394,7 @@ pub fn compile(opt CompileOptions) bool {
 			verbosity_trigger: 1
 		}
 	}
+
 	if opt.parallel {
 		mut pp := pool.new_pool_processor(maxjobs: runtime.nr_cpus() - 1, callback: async_run)
 		pp.work_on_items(jobs)
