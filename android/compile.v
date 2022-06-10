@@ -105,6 +105,11 @@ pub fn compile(opt CompileOptions) bool {
 	// NOTE this command fails with a C compile error but the output we need is still
 	// present... Yes - not exactly pretty.
 	jobs << ShellJob{
+		env_vars: {
+			'VCROSS_COMPILER_NAME': ndk.compiler(.c, opt.ndk_version, 'arm64-v8a', opt.api_level) or {
+				''
+			}
+		}
 		cmd: v_cmd.clone()
 	}
 
