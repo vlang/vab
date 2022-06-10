@@ -34,6 +34,7 @@ struct Options {
 	verbosity int
 	work_dir  string = work_directory
 	// Build, packaging and deployment
+	parallel       bool = true // Run, what can be run, in parallel
 	cache          bool
 	version_code   int
 	device_id      string
@@ -307,6 +308,7 @@ fn main() {
 		verbosity: opt.verbosity
 		cache: opt.cache
 		cache_key: compile_cache_key
+		parallel: opt.parallel
 		is_prod: opt.is_prod
 		gles_version: opt.gles_version
 		no_printf_hijack: opt.no_printf_hijack
@@ -448,6 +450,7 @@ fn args_to_options(arguments []string, defaults Options) ?(Options, &flag.FlagPa
 		output: fp.string('output', `o`, defaults.output, 'Path to output (dir/file)')
 		//
 		verbosity: verbosity
+		parallel: !fp.bool('no-parallel', 0, false, 'Do not run tasks in parallel.')
 		//
 		build_tools: fp.string('build-tools', 0, defaults.build_tools, 'Version of build-tools to use (--list-build-tools)')
 		api_level: fp.string('api', 0, defaults.api_level, 'Android API level to use (--list-apis)')

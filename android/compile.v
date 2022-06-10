@@ -3,6 +3,8 @@
 module android
 
 import os
+import runtime
+import sync.pool
 import vab.vxt
 import vab.android.ndk
 import vab.android.util
@@ -19,13 +21,14 @@ pub struct CompileOptions {
 	verbosity int // level of verbosity
 	cache     bool
 	cache_key string
+	parallel  bool = true // Run, what can be run, in parallel
 	// env
 	work_dir string // temporary work directory
 	input    string
 	//
 	is_prod          bool
 	gles_version     int = android.default_gles_version
-	no_printf_hijack bool     // Do not let V redefine printf for log output aka. V_ANDROID_LOG_PRINT
+	no_printf_hijack bool   // Do not let V redefine printf for log output aka. V_ANDROID_LOG_PRINT
 	archs            []string // compile for these CPU architectures
 	v_flags          []string // flags to pass to the v compiler
 	c_flags          []string // flags to pass to the C compiler(s)
@@ -34,12 +37,33 @@ pub struct CompileOptions {
 	api_level        string   // Android API level to use when compiling
 }
 
+struct ShellJob {
+	cmd               []string
+	verbosity         int
+	verbosity_trigger int
+}
+
+fn async_run(pp &pool.PoolProcessor, idx int, wid int) voidptr {
+	item := pp.get_item<ShellJob>(idx)
+	return sync_run(item)
+}
+
+fn sync_run(item ShellJob) voidptr {
+	util.verbosity_print_cmd(item.cmd, item.verbosity)
+	res := util.run_or_exit(item.cmd)
+	if item.verbosity > item.verbosity_trigger {
+		println(res)
+	}
+	return voidptr(0)
+}
+
 pub fn compile(opt CompileOptions) bool {
 	err_sig := @MOD + '.' + @FN
 	os.mkdir_all(opt.work_dir) or {
 		panic('$err_sig: failed making directory "$opt.work_dir". $err')
 	}
 	build_dir := os.join_path(opt.work_dir, 'build')
+	mut jobs := []ShellJob{}
 
 	if opt.verbosity > 0 {
 		println('Compiling V to C')
@@ -113,6 +137,7 @@ pub fn compile(opt CompileOptions) bool {
 	if opt.verbosity > 1 {
 		println(v_comp_res)
 	}
+
 	// Poor man's cache check
 	mut hash := ''
 	hash_file := os.join_path(opt.work_dir, 'v_android.hash')
@@ -168,9 +193,6 @@ pub fn compile(opt CompileOptions) bool {
 		archs = android.default_archs.clone()
 	}
 
-	if opt.verbosity > 0 {
-		println('Compiling C to $archs')
-	}
 	// For all compilers
 	mut cflags := opt.c_flags
 	mut includes := []string{}
@@ -345,7 +367,12 @@ pub fn compile(opt CompileOptions) bool {
 	arch_cflags['x86'] = cflags_x86
 	arch_cflags['x86_64'] = cflags_x86_64
 
+	if opt.verbosity > 0 {
+		println('Compiling C to $archs' + if opt.parallel { ' in parallel' } else { '' })
+	}
+
 	// Cross compile .so lib files
+	jobs.clear()
 	for arch in archs {
 		arch_lib_dir := os.join_path(build_dir, 'lib', arch)
 		os.mkdir_all(arch_lib_dir) or {
@@ -356,15 +383,24 @@ pub fn compile(opt CompileOptions) bool {
 			defines.join(' '), sources.join(' '), arch_cflags[arch].join(' '),
 			'-o "$arch_lib_dir/lib${opt.lib_name}.so"', v_output_file, '-L"' + arch_libs[arch] + '"',
 			ldflags.join(' ')]
-		if '-showcc' in opt.v_flags {
-			util.verbosity_print_cmd(build_cmd, 3)
-		} else {
-			util.verbosity_print_cmd(build_cmd, opt.verbosity)
-		}
-		comp_res := util.run_or_exit(build_cmd)
 
-		if opt.verbosity > 1 {
-			println(comp_res)
+		mut verbosity := opt.verbosity
+		if '-showcc' in opt.v_flags {
+			verbosity = 3
+		}
+		jobs << ShellJob{
+			cmd: build_cmd
+			verbosity: verbosity
+			verbosity_trigger: 1
+		}
+	}
+
+	if opt.parallel {
+		mut pp := pool.new_pool_processor(maxjobs: runtime.nr_cpus() - 1, callback: async_run)
+		pp.work_on_items(jobs)
+	} else {
+		for job in jobs {
+			sync_run(job)
 		}
 	}
 
