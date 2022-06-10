@@ -3,6 +3,8 @@
 module android
 
 import os
+import runtime
+import sync.pool
 import vab.vxt
 import vab.android.ndk
 import vab.android.util
@@ -19,19 +21,40 @@ pub struct CompileOptions {
 	verbosity int // level of verbosity
 	cache     bool
 	cache_key string
+	parallel  bool = true // Run, what can be run, in parallel
 	// env
 	work_dir string // temporary work directory
 	input    string
 	//
 	is_prod          bool
 	gles_version     int = android.default_gles_version
-	no_printf_hijack bool     // Do not let V redefine printf for log output aka. V_ANDROID_LOG_PRINT
+	no_printf_hijack bool   // Do not let V redefine printf for log output aka. V_ANDROID_LOG_PRINT
 	archs            []string // compile for these CPU architectures
 	v_flags          []string // flags to pass to the v compiler
 	c_flags          []string // flags to pass to the C compiler(s)
 	ndk_version      string   // version of the Android NDK to compile against
 	lib_name         string   // filename of the resulting .so ('${lib_name}.so')
 	api_level        string   // Android API level to use when compiling
+}
+
+struct ShellJob {
+	cmd               []string
+	verbosity         int
+	verbosity_trigger int
+}
+
+fn async_run(pp &pool.PoolProcessor, idx int, wid int) voidptr {
+	item := pp.get_item<ShellJob>(idx)
+	return sync_run(item)
+}
+
+fn sync_run(item ShellJob) voidptr {
+	util.verbosity_print_cmd(item.cmd, item.verbosity)
+	res := util.run_or_exit(item.cmd)
+	if item.verbosity > item.verbosity_trigger {
+		println(res)
+	}
+	return voidptr(0)
 }
 
 pub fn compile(opt CompileOptions) bool {
@@ -345,6 +368,7 @@ pub fn compile(opt CompileOptions) bool {
 	arch_cflags['x86'] = cflags_x86
 	arch_cflags['x86_64'] = cflags_x86_64
 
+	mut jobs := []ShellJob{}
 	// Cross compile .so lib files
 	for arch in archs {
 		arch_lib_dir := os.join_path(build_dir, 'lib', arch)
@@ -356,15 +380,29 @@ pub fn compile(opt CompileOptions) bool {
 			defines.join(' '), sources.join(' '), arch_cflags[arch].join(' '),
 			'-o "$arch_lib_dir/lib${opt.lib_name}.so"', v_output_file, '-L"' + arch_libs[arch] + '"',
 			ldflags.join(' ')]
-		if '-showcc' in opt.v_flags {
-			util.verbosity_print_cmd(build_cmd, 3)
-		} else {
-			util.verbosity_print_cmd(build_cmd, opt.verbosity)
-		}
-		comp_res := util.run_or_exit(build_cmd)
 
-		if opt.verbosity > 1 {
-			println(comp_res)
+		mut verbosity := opt.verbosity
+		if '-showcc' in opt.v_flags {
+			verbosity = 3
+		}
+		jobs << ShellJob{
+			cmd: build_cmd
+			verbosity: verbosity
+			verbosity_trigger: 1
+		}
+	}
+	if opt.parallel {
+		if opt.verbosity > 2 {
+			println('Running builds in parallel')
+		}
+		mut pp := pool.new_pool_processor(maxjobs: runtime.nr_cpus() - 1, callback: async_run)
+		pp.work_on_items(jobs)
+	} else {
+		if opt.verbosity > 2 {
+			println('Running builds in sequence')
+		}
+		for job in jobs {
+			sync_run(job)
 		}
 	}
 
