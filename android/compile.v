@@ -192,7 +192,7 @@ pub fn compile(opt CompileOptions) bool {
 	}
 
 	if opt.verbosity > 0 {
-		println('Compiling C to $archs')
+		println('Compiling C to $archs' + if opt.parallel { ' in parallel' } else { '' })
 	}
 	// For all compilers
 	mut cflags := opt.c_flags
@@ -392,15 +392,9 @@ pub fn compile(opt CompileOptions) bool {
 		}
 	}
 	if opt.parallel {
-		if opt.verbosity > 2 {
-			println('Running builds in parallel')
-		}
 		mut pp := pool.new_pool_processor(maxjobs: runtime.nr_cpus() - 1, callback: async_run)
 		pp.work_on_items(jobs)
 	} else {
-		if opt.verbosity > 2 {
-			println('Running builds in sequence')
-		}
 		for job in jobs {
 			sync_run(job)
 		}
