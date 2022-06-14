@@ -182,8 +182,8 @@ fn package_apk(opt PackageOptions) bool {
 	mut javac_cmd := [
 		javac,
 		'-d obj', /* +obj_path, */
-		'-source 1.8',
-		'-target 1.8',
+		'-source 1.7',
+		'-target 1.7',
 		'-classpath .',
 		'-sourcepath src',
 		'-bootclasspath "' + android_runtime + '"',
