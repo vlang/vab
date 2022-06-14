@@ -383,7 +383,7 @@ fn package_apk(opt PackageOptions) ! {
 	util.run_or_error(zipalign_cmd)!
 
 	// Sign the APK
-	keystore := resolve_keystore(opt.keystore, opt.verbosity)
+	keystore := resolve_keystore(opt.keystore, opt.verbosity)!
 
 	if opt.is_prod && os.file_name(keystore.path) == 'debug.keystore' {
 		eprintln('Warning: It looks like you are using the debug.keystore file to sign your application built in production mode ("-prod").')
@@ -847,7 +847,7 @@ fn package_aab(opt PackageOptions) ! {
 	}
 
 	// Make debug signing key if nothing else is provided
-	keystore := resolve_keystore(opt.keystore, opt.verbosity)
+	keystore := resolve_keystore(opt.keystore, opt.verbosity)!
 
 	// Sign the APK
 	if opt.is_prod && os.file_name(keystore.path) == 'debug.keystore' {

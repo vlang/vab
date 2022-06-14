@@ -261,14 +261,17 @@ fn main() {
 	}
 	if !os.is_file(keystore.path) {
 		if keystore.path != '' {
-			println('Couldn\'t locate "$keystore.path"')
+			eprintln('Couldn\'t locate "$keystore.path"')
 		}
 		keystore.path = ''
 	}
 	if keystore.path == '' {
 		keystore.path = os.join_path(exe_dir, 'debug.keystore')
 	}
-	keystore = android.resolve_keystore(keystore, opt.verbosity)
+	keystore = android.resolve_keystore(keystore, opt.verbosity) or {
+		eprintln('Could not resolve at keystore.\n$err')
+		exit(1)
+	}
 
 	log_tag := opt.lib_name
 	deploy_opt := android.DeployOptions{
@@ -291,15 +294,14 @@ fn main() {
 	// Early deployment
 	if input_ext in ['.apk', '.aab'] {
 		if opt.device_id != '' {
-			if !android.deploy(deploy_opt) {
-				eprintln('$exe_name deployment didn\'t succeed')
+			android.deploy(deploy_opt) or {
+				eprintln('$exe_name deployment didn\'t succeed.\n$err')
 				exit(1)
-			} else {
-				if opt.verbosity > 0 {
-					println('Deployed to $opt.device_id successfully')
-				}
-				exit(0)
 			}
+			if opt.verbosity > 0 {
+				println('Deployed to $opt.device_id successfully')
+			}
+			exit(0)
 		}
 	}
 
@@ -322,7 +324,7 @@ fn main() {
 		api_level: opt.api_level
 		min_sdk_version: opt.min_sdk_version
 	}
-	if !android.compile(comp_opt) {
+	android.compile(comp_opt) or {
 		eprintln('$exe_name compiling didn\'t succeed')
 		exit(1)
 	}
@@ -357,13 +359,12 @@ fn main() {
 	}
 
 	if device_id != '' {
-		if !android.deploy(deploy_opt) {
-			eprintln("Deployment didn't succeed")
+		android.deploy(deploy_opt) or {
+			eprintln("Deployment didn't succeed.\n$err")
 			exit(1)
-		} else {
-			if opt.verbosity > 0 {
-				println('Deployed to device ($device_id) successfully')
-			}
+		}
+		if opt.verbosity > 0 {
+			println('Deployed to device ($device_id) successfully')
 		}
 	} else {
 		if opt.verbosity > 0 {

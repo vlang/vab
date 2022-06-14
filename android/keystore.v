@@ -14,7 +14,7 @@ pub mut:
 	alias_password string
 }
 
-pub fn resolve_keystore(default_ks Keystore, verbosity int) Keystore {
+pub fn resolve_keystore(default_ks Keystore, verbosity int) !Keystore {
 	file := default_ks.path
 	if !os.is_file(file) {
 		if verbosity > 0 {
@@ -38,7 +38,7 @@ pub fn resolve_keystore(default_ks Keystore, verbosity int) Keystore {
 			dname_args,
 		]
 		util.verbosity_print_cmd(keytool_cmd, verbosity)
-		util.run_or_exit(keytool_cmd)
+		util.run_or_error(keytool_cmd)!
 	}
 	// Defaults from Android debug key
 	mut password := 'android'

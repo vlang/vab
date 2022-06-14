@@ -31,23 +31,20 @@ pub enum LogMode {
 }
 
 pub fn device_list() []string {
-	return get_device_list(0)
+	return get_device_list(0) or { return []string{} }
 }
 
-fn get_device_list(verbosity int) []string {
+fn get_device_list(verbosity int) ![]string {
 	adb := env.adb()
-	if !os.is_executable(adb) {
-		panic('Couldn\'t locate "adb". Please make sure it\'s installed.')
-	}
 	adb_list_cmd := [
 		adb,
 		'devices',
 		'-l',
 	]
 	util.verbosity_print_cmd(adb_list_cmd, verbosity) // opt.verbosity
-	output := util.run_or_exit(adb_list_cmd).split('\n')
+	output := util.run_or_error(adb_list_cmd)!
 	mut device_list := []string{}
-	for device in output {
+	for device in output.split('\n') {
 		if !device.contains(' model:') {
 			continue
 		}
@@ -56,26 +53,29 @@ fn get_device_list(verbosity int) []string {
 	return device_list
 }
 
-pub fn deploy(opt DeployOptions) bool {
-	return match opt.format {
+pub fn deploy(opt DeployOptions) ! {
+	match opt.format {
 		.apk {
-			deploy_apk(opt)
+			deploy_apk(opt)!
 		}
 		.aab {
-			deploy_aab(opt)
+			deploy_aab(opt)!
 		}
 	}
 }
 
-pub fn deploy_apk(opt DeployOptions) bool {
+pub fn deploy_apk(opt DeployOptions) ! {
+	error_tag := @MOD + '.' + @FN
 	mut device_id := opt.device_id
 
 	adb := env.adb()
 	if !os.is_executable(adb) {
-		panic('Couldn\'t locate "adb". Please make sure it\'s installed.')
+		return error('$error_tag: Couldn\'t locate "adb". Please make sure it\'s installed.')
 	}
 
-	devices := get_device_list(opt.verbosity)
+	devices := get_device_list(opt.verbosity) or {
+		return error('$error_tag: Failed getting device list.\n$err')
+	}
 
 	if device_id == 'auto' {
 		mut auto_device := ''
@@ -85,14 +85,13 @@ pub fn deploy_apk(opt DeployOptions) bool {
 		device_id = auto_device
 
 		if device_id == '' {
-			eprintln("Couldn't find any connected devices.")
+			return error("$error_tag: Couldn't find any connected devices.")
 		}
 	}
 	// Deploy
 	if device_id != '' {
 		if device_id !in devices {
-			eprintln('Couldn\'t connect to device "$device_id".')
-			return false
+			return error('$error_tag: Couldn\'t connect to device "$device_id".')
 		}
 
 		if opt.verbosity > 0 {
@@ -111,7 +110,7 @@ pub fn deploy_apk(opt DeployOptions) bool {
 				println('Clearing log buffer on device "$device_id"')
 			}
 			util.verbosity_print_cmd(adb_logcat_clear_cmd, opt.verbosity)
-			util.run_or_exit(adb_logcat_clear_cmd)
+			util.run_or_error(adb_logcat_clear_cmd)!
 		}
 
 		adb_cmd := [
@@ -122,7 +121,7 @@ pub fn deploy_apk(opt DeployOptions) bool {
 			opt.deploy_file,
 		]
 		util.verbosity_print_cmd(adb_cmd, opt.verbosity)
-		util.run_or_exit(adb_cmd)
+		util.run_or_error(adb_cmd)!
 
 		if opt.run != '' {
 			if opt.verbosity > 0 {
@@ -138,7 +137,7 @@ pub fn deploy_apk(opt DeployOptions) bool {
 				opt.run,
 			]
 			util.verbosity_print_cmd(adb_run_cmd, opt.verbosity)
-			util.run_or_exit(adb_run_cmd)
+			util.run_or_error(adb_run_cmd)!
 		}
 
 		mut crash_mode := false
@@ -209,7 +208,7 @@ pub fn deploy_apk(opt DeployOptions) bool {
 			'-d',
 		]
 		util.verbosity_print_cmd(adb_logcat_cmd, opt.verbosity)
-		crash_log := util.run_or_exit(adb_logcat_cmd)
+		crash_log := util.run_or_error(adb_logcat_cmd)!
 		if crash_log.count('\n') > 3 {
 			eprintln('It looks like your app might have crashed\nDumping crash buffer:')
 			eprintln(crash_log)
@@ -227,12 +226,11 @@ pub fn deploy_apk(opt DeployOptions) bool {
 				os.system('killall adb')
 			}
 		}
-		return true
 	}
-	return false
 }
 
-pub fn deploy_aab(opt DeployOptions) bool {
+pub fn deploy_aab(opt DeployOptions) ! {
+	error_tag := @MOD + '.' + @FN
 	mut device_id := opt.device_id
 
 	adb := env.adb()
@@ -240,10 +238,10 @@ pub fn deploy_aab(opt DeployOptions) bool {
 	bundletool := env.bundletool() // Run with "java -jar ..."
 
 	if !os.is_executable(adb) {
-		panic('Couldn\'t locate "adb". Please make sure it\'s installed.')
+		return error('$error_tag: Couldn\'t locate "adb". Please make sure it\'s installed.')
 	}
 
-	devices := get_device_list(opt.verbosity)
+	devices := get_device_list(opt.verbosity)!
 
 	if device_id == 'auto' {
 		mut auto_device := ''
@@ -253,7 +251,7 @@ pub fn deploy_aab(opt DeployOptions) bool {
 		device_id = auto_device
 
 		if device_id == '' {
-			eprintln("Couldn't find any connected devices.")
+			return error("$error_tag: Couldn't find any connected devices.")
 		}
 	}
 	// Deploy
@@ -264,7 +262,7 @@ pub fn deploy_aab(opt DeployOptions) bool {
 
 		apks_path := os.join_path(opt.work_dir,
 			os.file_name(opt.deploy_file).all_before_last('.') + '.apks')
-		keystore := resolve_keystore(opt.keystore, opt.verbosity)
+		keystore := resolve_keystore(opt.keystore, opt.verbosity)!
 
 		os.rm(apks_path) or {}
 
@@ -282,11 +280,10 @@ pub fn deploy_aab(opt DeployOptions) bool {
 			'--key-pass=pass:' + keystore.alias_password,
 		]
 		util.verbosity_print_cmd(bundletool_apks_cmd, opt.verbosity)
-		util.run_or_exit(bundletool_apks_cmd)
+		util.run_or_error(bundletool_apks_cmd)!
 
 		if device_id !in devices {
-			eprintln('Couldn\'t connect to device "$device_id".')
-			return false
+			return error('$error_tag: Couldn\'t connect to device "$device_id".')
 		}
 
 		if opt.verbosity > 0 {
@@ -305,7 +302,7 @@ pub fn deploy_aab(opt DeployOptions) bool {
 				println('Clearing log buffer on device "$device_id"')
 			}
 			util.verbosity_print_cmd(adb_logcat_clear_cmd, opt.verbosity)
-			util.run_or_exit(adb_logcat_clear_cmd)
+			util.run_or_error(adb_logcat_clear_cmd)!
 		}
 
 		// java -jar bundletool.jar install-apks --apks=/MyApp/my_app.apks
@@ -318,7 +315,7 @@ pub fn deploy_aab(opt DeployOptions) bool {
 			'--apks="' + apks_path + '"',
 		]
 		util.verbosity_print_cmd(bundletool_install_apks_cmd, opt.verbosity)
-		util.run_or_exit(bundletool_install_apks_cmd)
+		util.run_or_error(bundletool_install_apks_cmd)!
 
 		if opt.run != '' {
 			if opt.verbosity > 0 {
@@ -334,7 +331,7 @@ pub fn deploy_aab(opt DeployOptions) bool {
 				opt.run,
 			]
 			util.verbosity_print_cmd(adb_run_cmd, opt.verbosity)
-			util.run_or_exit(adb_run_cmd)
+			util.run_or_error(adb_run_cmd)!
 		}
 
 		mut crash_mode := false
@@ -420,7 +417,7 @@ pub fn deploy_aab(opt DeployOptions) bool {
 				os.system('killall adb')
 			}
 		}
-		return true
+		return
 	}
-	return false
+	return error('$error_tag: deployment to device "$device_id" failed')
 }
