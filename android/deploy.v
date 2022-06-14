@@ -8,6 +8,7 @@ import vab.android.env
 import vab.android.util
 
 pub struct DeployOptions {
+pub:
 	verbosity        int
 	v_flags          []string
 	format           PackageFormat = .apk
@@ -312,6 +313,7 @@ pub fn deploy_aab(opt DeployOptions) bool {
 			'-jar',
 			bundletool,
 			'install-apks',
+			'--device-id $opt.device_id',
 			'--apks="' + apks_path + '"',
 		]
 		util.verbosity_print_cmd(bundletool_install_apks_cmd, opt.verbosity)

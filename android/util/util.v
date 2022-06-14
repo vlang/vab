@@ -65,7 +65,7 @@ pub fn is_version(str string) bool {
 pub fn verbosity_print_cmd(args []string, verbosity int) {
 	cmd := args.join(' ')
 	if verbosity > 1 {
-		println('Running ${args[0]}')
+		println('Running ${args[0]}\nFrom: $os.getwd()')
 		if verbosity > 2 {
 			println(cmd)
 		}

@@ -18,6 +18,7 @@ pub const (
 )
 
 pub struct CompileOptions {
+pub:
 	verbosity int // level of verbosity
 	cache     bool
 	cache_key string
