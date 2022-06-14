@@ -308,7 +308,6 @@ pub fn deploy_aab(opt DeployOptions) bool {
 			util.run_or_exit(adb_logcat_clear_cmd)
 		}
 
-
 		// java -jar bundletool.jar install-apks --apks=/MyApp/my_app.apks
 		bundletool_install_apks_cmd := [
 			java_exe,
