@@ -28,6 +28,7 @@ pub enum PackageFormat {
 
 // PackageOptions represents an Android package configuration
 pub struct PackageOptions {
+pub:
 	verbosity       int
 	work_dir        string
 	is_prod         bool
@@ -86,6 +87,7 @@ fn package_apk(opt PackageOptions) bool {
 	pwd := os.getwd()
 
 	build_path := os.join_path(opt.work_dir, 'build')
+	artifacts_path := os.join_path(opt.work_dir, 'artifacts')
 	libs_extra_path := os.join_path(opt.work_dir, 'libs')
 	build_tools_path := os.join_path(sdk.build_tools_root(), opt.build_tools)
 
@@ -96,6 +98,10 @@ fn package_apk(opt PackageOptions) bool {
 	for supported_lib_folder in android.supported_lib_folders {
 		os.mkdir_all(os.join_path(libs_extra_path, 'lib', supported_lib_folder)) or { panic(err) }
 	}
+
+	// Remove any previous artifacts libs
+	os.rmdir_all(artifacts_path) or {}
+	os.mkdir_all(artifacts_path) or { panic(err) }
 
 	// Used for various bug workarounds below
 	build_tools_semantic_version := semver.from(opt.build_tools) or {
@@ -234,13 +240,18 @@ fn package_apk(opt PackageOptions) bool {
 	// Dex either with `dx` or `d8`
 	if build_tools_semantic_version.ge(semver.build(28, 0, 1)) {
 		mut class_files := os.walk_ext('obj', '.class')
+		if opt.verbosity > 2 {
+			println('Filtering out class files: ' + class_files.filter(it.contains('$')).str())
+		}
 		class_files = class_files.filter(!it.contains('$')) // Filter out R$xxx.class files
+		// class_files << r'obj/org/libsdl/app/SDLActivity$SDLCommandHandler.class'
 		class_files = class_files.map(fn (e string) string {
 			return '"$e"'
 		})
 		mut dex_type := if opt.is_prod { '--release' } else { '--debug' }
 		mut d8_cmd := [
 			d8,
+			// '--min-api 21',
 			dex_type,
 			'--lib "' + android_runtime + '"',
 			'--classpath .',
@@ -252,6 +263,7 @@ fn package_apk(opt PackageOptions) bool {
 		util.unzip('classes.zip', 'bin') or {
 			panic(@MOD + '.' + @FN + ':' + @LINE + ' error unzipping classes.zip to bin: $err')
 		}
+		os.cp('classes.zip', os.join_path(artifacts_path, 'classes.zip')) or { panic(err) }
 		os.rm('classes.zip') or { panic(err) }
 	} else {
 		dx_cmd := [
@@ -264,6 +276,21 @@ fn package_apk(opt PackageOptions) bool {
 		util.verbosity_print_cmd(dx_cmd, opt.verbosity)
 		util.run_or_exit(dx_cmd)
 	}
+
+	/*
+	$if !windows {
+		// TODO
+		if opt.verbosity > 2 {
+			dexdump_cmd := [
+				os.join_path(build_tools_path, 'dexdump'),
+				'dexdump',
+				'-d',
+				os.join_path('bin', 'classes.dex'),
+			]
+			util.verbosity_print_cmd(dexdump_cmd, 3)
+			util.run_or_exit(dexdump_cmd)
+		}
+	}*/
 
 	// Second run
 	aapt_cmd = [
@@ -391,9 +418,17 @@ fn package_apk(opt PackageOptions) bool {
 	util.verbosity_print_cmd(apksigner_cmd, opt.verbosity)
 	util.run_or_exit(apksigner_cmd)
 
+	if os.is_file(opt.output_file) {
+		if opt.verbosity > 1 {
+			println('Removing previous output "$opt.output_file"')
+		}
+		os.rm(opt.output_file) or { panic(err) }
+	}
+
 	if opt.verbosity > 1 {
 		println('Moving product from "$tmp_product" to "$opt.output_file"')
 	}
+
 	os.mv_by_cp(tmp_product, opt.output_file) or { panic(err) }
 
 	return true

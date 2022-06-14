@@ -320,6 +320,7 @@ fn main() {
 		ndk_version: opt.ndk_version
 		lib_name: opt.lib_name
 		api_level: opt.api_level
+		min_sdk_version: opt.min_sdk_version
 	}
 	if !android.compile(comp_opt) {
 		eprintln('$exe_name compiling didn\'t succeed')
