@@ -320,18 +320,6 @@ pub fn deploy_aab(opt DeployOptions) bool {
 		util.verbosity_print_cmd(bundletool_install_apks_cmd, opt.verbosity)
 		util.run_or_exit(bundletool_install_apks_cmd)
 
-		/*
-		adb_cmd := [
-			adb,
-			'-s "$device_id"',
-			'install',
-			'-r',
-			opt.deploy_file,
-		]
-		util.verbosity_print_cmd(adb_cmd, opt.verbosity)
-		util.run_or_exit(adb_cmd)
-		*/
-
 		if opt.run != '' {
 			if opt.verbosity > 0 {
 				println('Running "$opt.run" on "$device_id"')
