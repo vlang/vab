@@ -87,6 +87,14 @@ pub fn run_or_exit(args []string) string {
 	return res.output
 }
 
+pub fn run_or_error(args []string) !string {
+	res := run(args)
+	if res.exit_code != 0 {
+		return error('${args[0]} failed with return code $res.exit_code:\n$res.output')
+	}
+	return res.output
+}
+
 pub fn run(args []string) os.Result {
 	res := os.execute(args.join(' '))
 	if res.exit_code < 0 {

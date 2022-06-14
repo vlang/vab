@@ -351,8 +351,8 @@ fn main() {
 		base_files: os.join_path(exe_dir, 'platforms', 'android')
 		overrides_path: opt.package_overrides_path
 	}
-	if !android.package(pck_opt) {
-		eprintln("Packaging didn't succeed")
+	android.package(pck_opt) or {
+		eprintln("Packaging didn't succeed:\n$err")
 		exit(1)
 	}
 
