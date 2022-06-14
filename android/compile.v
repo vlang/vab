@@ -36,6 +36,7 @@ pub:
 	ndk_version      string   // version of the Android NDK to compile against
 	lib_name         string   // filename of the resulting .so ('${lib_name}.so')
 	api_level        string   // Android API level to use when compiling
+	min_sdk_version  int = default_min_sdk_version
 }
 
 struct ShellJob {
