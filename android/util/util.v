@@ -63,12 +63,13 @@ pub fn is_version(str string) bool {
 }
 
 pub fn verbosity_print_cmd(args []string, verbosity int) {
-	cmd := args.join(' ')
-	if verbosity > 1 {
-		println('Running ${args[0]}\nFrom: $os.getwd()')
+	if args.len > 0 && verbosity > 1 {
+		cmd_short := args[0].all_after_last(os.path_separator)
+		mut output := 'Running $cmd_short From: $os.getwd()'
 		if verbosity > 2 {
-			println(cmd)
+			output += '\n' + args.join(' ')
 		}
+		println(output)
 	}
 }
 
