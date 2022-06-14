@@ -33,10 +33,14 @@ const (
 
 fn test_package_ids() {
 	for id in valid_ids {
-		assert android.is_valid_package_id(id)
+		android.is_valid_package_id(id) or { assert false }
 	}
 	for id in invalid_ids {
-		assert android.is_valid_package_id(id) == false
+		android.is_valid_package_id(id) or {
+			assert true
+			continue
+		}
+		assert false
 	}
 }
 
