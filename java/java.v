@@ -4,7 +4,7 @@ module java
 
 import os
 import regex
-import vab.cache
+import cache
 
 // jre_version returns the version of your java runtime install, otherwise empty string
 pub fn jre_version() string {

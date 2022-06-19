@@ -5,9 +5,9 @@ module android
 import os
 import runtime
 import sync.pool
-import vab.vxt
-import vab.android.ndk
-import vab.android.util
+import vxt
+import android.ndk
+import android.util
 import crypto.md5
 
 pub const (

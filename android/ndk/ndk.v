@@ -3,9 +3,9 @@
 module ndk
 
 import os
-import vab.cache
-import vab.android.sdk
-import vab.android.util
+import cache
+import android.sdk
+import android.util
 
 const (
 	home = os.home_dir()

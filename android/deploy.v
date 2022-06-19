@@ -3,9 +3,9 @@
 module android
 
 import os
-import vab.java
-import vab.android.env
-import vab.android.util
+import java
+import android.env
+import android.util
 
 pub struct DeployOptions {
 pub:

@@ -3,7 +3,7 @@
 module main
 
 import os
-import vab.vxt
+import vxt
 
 const (
 	exe_name = os.file_name(os.executable())

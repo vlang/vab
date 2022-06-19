@@ -5,10 +5,10 @@ module android
 import os
 import regex
 import semver
-import vab.java
-import vab.android.env
-import vab.android.sdk
-import vab.android.util
+import java
+import android.env
+import android.sdk
+import android.util
 
 pub const (
 	default_app_name          = 'V Test App'

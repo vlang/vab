@@ -4,8 +4,8 @@ module sdk
 
 import os
 import semver
-import vab.cache
-import vab.android.util
+import cache
+import android.util
 
 const (
 	home = os.home_dir()
