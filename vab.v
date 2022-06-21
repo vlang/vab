@@ -93,29 +93,20 @@ fn main() {
 	if env_vab_flags != '' {
 		mut vab_flags := [os.args[0]]
 		vab_flags << string_to_args(env_vab_flags) or {
-			if fp != invalid_flag_parser {
-				// TODO careful fp can be null here
-				println(fp.usage())
-			}
 			eprintln('Error while parsing `VAB_FLAGS`: $err')
+			eprintln('Use `vab -h` to see all flags')
 			exit(1)
 		}
 		opt, fp = args_to_options(vab_flags, opt) or {
-			if fp != invalid_flag_parser {
-				// TODO careful fp can be null here
-				println(fp.usage())
-			}
 			eprintln('Error while parsing `VAB_FLAGS`: $err')
+			eprintln('Use `vab -h` to see all flags')
 			exit(1)
 		}
 	}
 
 	opt, fp = args_to_options(os.args, opt) or {
-		if fp != invalid_flag_parser {
-			// TODO careful fp can be null here
-			println(fp.usage())
-		}
 		eprintln('Error while parsing `os.args`: $err')
+		eprintln('Use `vab -h` to see all flags')
 		exit(1)
 	}
 

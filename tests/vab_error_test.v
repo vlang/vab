@@ -153,9 +153,6 @@ fn compile_vab() string {
 	if res.exit_code != 0 {
 		panic('command failed building vab in "$vab_home":\n$res.output')
 	}
-	$if windows {
-		return os.join_path(vab_home, 'vab.exe')
-	}
 	return os.join_path(vab_home, 'vab')
 }
 
