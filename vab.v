@@ -28,7 +28,6 @@ The following flags does the same as if they were passed to the "v" compiler:
 	rip_vflags           = ['-autofree', '-gc', '-g', '-cg', '-prod', 'run', '-showcc']
 	subcmds              = ['complete', 'test-cleancode']
 	accepted_input_files = ['.v', '.apk', '.aab']
-	invalid_flag_parser  = voidptr(0) // TODO find a way to reuse the flag parsing or prevent it from crashing
 )
 
 struct Options {
@@ -156,8 +155,8 @@ fn main() {
 	}
 	// All flags after this requires an input argument
 	if fp.args.len == 0 {
-		println(fp.usage())
 		eprintln('No arguments given')
+		eprintln('Use `vab -h` to see all flags')
 		exit(1)
 	}
 
@@ -198,7 +197,6 @@ fn main() {
 
 	input := fp.args.last()
 	validate_input(input) or {
-		println(fp.usage())
 		eprintln('$exe_short_name: $err')
 		exit(1)
 	}
