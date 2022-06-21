@@ -90,7 +90,7 @@ pub fn run_or_exit(args []string) string {
 pub fn run_or_error(args []string) !string {
 	res := run(args)
 	if res.exit_code != 0 {
-		return error('${args[0]} failed with return code $res.exit_code:\n$res.output')
+		return error('${args.join(' ')} failed with return code $res.exit_code:\n$res.output')
 	}
 	return res.output
 }
