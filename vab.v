@@ -15,6 +15,7 @@ import vab.android.env
 const (
 	exe_version     = version()
 	exe_name        = os.file_name(os.executable())
+	exe_short_name  = os.file_name(os.executable()).replace('.exe', '')
 	exe_dir         = os.dir(os.real_path(os.executable()))
 	exe_description = 'V Android Bootstrapper.
 Compile, package and deploy graphical V apps for Android.
@@ -123,7 +124,7 @@ fn main() {
 
 	if opt.list_ndks {
 		if !ndk.found() {
-			eprintln('No NDK could be found. Please use `$exe_name doctor` to get more information.')
+			eprintln('No NDK could be found. Please use `$exe_short_name doctor` to get more information.')
 			exit(1)
 		}
 		for ndk_v in ndk.versions_available() {
@@ -134,7 +135,7 @@ fn main() {
 
 	if opt.list_apis {
 		if !sdk.found() {
-			eprintln('No SDK could be found. Please use `$exe_name doctor` to get more information.')
+			eprintln('No SDK could be found. Please use `$exe_short_name doctor` to get more information.')
 			exit(1)
 		}
 		for api in sdk.apis_available() {
@@ -145,7 +146,7 @@ fn main() {
 
 	if opt.list_build_tools {
 		if !sdk.found() {
-			eprintln('No SDK could be found. Please use `$exe_name doctor` to get more information.')
+			eprintln('No SDK could be found. Please use `$exe_short_name doctor` to get more information.')
 			exit(1)
 		}
 		for btv in sdk.build_tools_available() {
@@ -198,7 +199,7 @@ fn main() {
 	input := fp.args.last()
 	validate_input(input) or {
 		println(fp.usage())
-		eprintln('$exe_name: $err')
+		eprintln('$exe_short_name: $err')
 		exit(1)
 	}
 	opt.input = input
@@ -295,7 +296,7 @@ fn main() {
 	if input_ext in ['.apk', '.aab'] {
 		if opt.device_id != '' {
 			android.deploy(deploy_opt) or {
-				eprintln('$exe_name deployment didn\'t succeed.\n$err')
+				eprintln('$exe_short_name deployment didn\'t succeed.\n$err')
 				exit(1)
 			}
 			if opt.verbosity > 0 {
@@ -325,7 +326,7 @@ fn main() {
 		min_sdk_version: opt.min_sdk_version
 	}
 	android.compile(comp_opt) or {
-		eprintln('$exe_name compiling didn\'t succeed')
+		eprintln('$exe_short_name compiling didn\'t succeed')
 		exit(1)
 	}
 
@@ -369,7 +370,7 @@ fn main() {
 	} else {
 		if opt.verbosity > 0 {
 			println('Generated ${os.real_path(opt.output)}')
-			println('Use `$exe_name --device <id> ${os.real_path(opt.output)}` to deploy package')
+			println('Use `$exe_short_name --device <id> ${os.real_path(opt.output)}` to deploy package')
 		}
 	}
 }
@@ -405,7 +406,7 @@ fn args_to_options(arguments []string, defaults Options) ?(Options, &flag.FlagPa
 	}
 
 	mut fp := flag.new_flag_parser(args)
-	fp.application(exe_name)
+	fp.application(exe_short_name)
 	fp.version(version_full())
 	fp.description(exe_description)
 	fp.arguments_description('input')
@@ -501,7 +502,7 @@ fn check_essentials(exit_on_error bool) {
 	if !sdk.found() {
 		eprintln('No Android SDK could be detected.')
 		eprintln('Please provide a valid path via ANDROID_SDK_ROOT')
-		eprintln('or run `$exe_name install auto`')
+		eprintln('or run `$exe_short_name install auto`')
 		if exit_on_error {
 			exit(1)
 		}
@@ -510,7 +511,7 @@ fn check_essentials(exit_on_error bool) {
 	if !ndk.found() {
 		eprintln('No Android NDK could be detected.')
 		eprintln('Please provide a valid path via ANDROID_NDK_ROOT')
-		eprintln('or run `$exe_name install ndk`')
+		eprintln('or run `$exe_short_name install ndk`')
 		if exit_on_error {
 			exit(1)
 		}
@@ -541,7 +542,7 @@ fn validate_env(opt Options) {
 	// Validate build-tools
 	if sdk.default_build_tools_version == '' {
 		eprintln('No known Android build-tools version(s) could be detected in the SDK.')
-		eprintln('(A vab compatible version can be installed with `$exe_name install "build-tools;$sdk.min_supported_build_tools_version"`)')
+		eprintln('(A vab compatible version can be installed with `$exe_short_name install "build-tools;$sdk.min_supported_build_tools_version"`)')
 		exit(1)
 	} else if semver.is_valid(sdk.default_build_tools_version) {
 		build_tools_semantic_version := semver.from(sdk.default_build_tools_version) or {
@@ -552,16 +553,16 @@ fn validate_env(opt Options) {
 		if !build_tools_semantic_version.satisfies('>=$sdk.min_supported_build_tools_version') {
 			// Some Android tools we need like `apksigner` is currently only available with build-tools >= 24.0.3.
 			// (Absolute mess, yes)
-			eprintln('Android build-tools version "$sdk.default_build_tools_version" is not supported by ${exe_name}.')
-			eprintln('Please install a build-tools version >= $sdk.min_supported_build_tools_version (run `$exe_name install build-tools` to install the default version).')
-			eprintln('You can see available build-tools with `$exe_name --list-build-tools`.')
-			eprintln('To use a specific version you can use `$exe_name --build-tools "<version>"`.')
+			eprintln('Android build-tools version "$sdk.default_build_tools_version" is not supported by ${exe_short_name}.')
+			eprintln('Please install a build-tools version >= $sdk.min_supported_build_tools_version (run `$exe_short_name install build-tools` to install the default version).')
+			eprintln('You can see available build-tools with `$exe_short_name --list-build-tools`.')
+			eprintln('To use a specific version you can use `$exe_short_name --build-tools "<version>"`.')
 			exit(1)
 		}
 	} else {
 		// Not blank but not a recognized format (x.y.z)
 		// NOTE It *might* be a SDK managed by the system package manager (apt, pacman etc.) - so we warn about it and go on...
-		eprintln('Notice: Android build-tools version "$sdk.default_build_tools_version" is unknown to $exe_name, things might not work as expected.')
+		eprintln('Notice: Android build-tools version "$sdk.default_build_tools_version" is unknown to $exe_short_name, things might not work as expected.')
 	}
 
 	// Validate Android NDK requirements
@@ -572,12 +573,12 @@ fn validate_env(opt Options) {
 			if ndk_semantic_version.lt(semver.build(21, 1, 0)) {
 				eprintln('Android NDK >= 21.1.0 is currently needed. "$opt.ndk_version" is too low.')
 				eprintln('Please provide a valid path via ANDROID_NDK_ROOT')
-				eprintln('or run `$exe_name install "ndk;<version>"`')
+				eprintln('or run `$exe_short_name install "ndk;<version>"`')
 				exit(1)
 			}
 		} else {
 			eprintln('Notice: Android NDK version could not be validated from "$opt.ndk_version"')
-			eprintln('Notice: The NDK is not guaranteed to be compatible with $exe_name')
+			eprintln('Notice: The NDK is not guaranteed to be compatible with $exe_short_name')
 		}
 	}
 
@@ -592,12 +593,12 @@ fn validate_env(opt Options) {
 		if !has_bundletool {
 			eprintln('The tool `bundletool` is needed for AAB package building and deployment.')
 			eprintln('Please install bundletool manually and provide a path to it via BUNDLETOOL')
-			eprintln('or run `$exe_name install bundletool`')
+			eprintln('or run `$exe_short_name install bundletool`')
 		}
 		if !has_aapt2 {
 			eprintln('The tool `aapt2` is needed for AAB package building.')
 			eprintln('Please install aapt2 manually and provide a path to it via AAPT2')
-			eprintln('or run `$exe_name install aapt2`')
+			eprintln('or run `$exe_short_name install aapt2`')
 		}
 		exit(1)
 	}
@@ -617,14 +618,14 @@ fn resolve_options(mut opt Options, exit_on_error bool) {
 	}
 	if api_level == '' {
 		eprintln('Android API level "$opt.api_level" is not available in SDK.')
-		eprintln('It can be installed with `$exe_name install "platforms;android-<API LEVEL>"`')
+		eprintln('It can be installed with `$exe_short_name install "platforms;android-<API LEVEL>"`')
 		if exit_on_error {
 			exit(1)
 		}
 	}
 	if api_level.i16() < sdk.min_supported_api_level.i16() {
 		eprintln('Android API level "$api_level" is less than the supported level ($sdk.min_supported_api_level).')
-		eprintln('A vab compatible version can be installed with `$exe_name install "platforms;android-$sdk.min_supported_api_level"`')
+		eprintln('A vab compatible version can be installed with `$exe_short_name install "platforms;android-$sdk.min_supported_api_level"`')
 		if exit_on_error {
 			exit(1)
 		}
@@ -640,13 +641,13 @@ fn resolve_options(mut opt Options, exit_on_error bool) {
 		} else {
 			// TODO FIX Warnings
 			eprintln('Android build-tools version "$opt.build_tools" is not available in SDK.')
-			eprintln('(It can be installed with `$exe_name install "build-tools;$opt.build_tools"`)')
+			eprintln('(It can be installed with `$exe_short_name install "build-tools;$opt.build_tools"`)')
 			eprintln('Falling back to default $build_tools_version')
 		}
 	}
 	if build_tools_version == '' {
 		eprintln('No known Android build-tools version(s) could be detected in the SDK.')
-		eprintln('(A vab compatible version can be installed with `$exe_name install "build-tools;$sdk.min_supported_build_tools_version"`)')
+		eprintln('(A vab compatible version can be installed with `$exe_short_name install "build-tools;$sdk.min_supported_build_tools_version"`)')
 		if exit_on_error {
 			exit(1)
 		}
@@ -662,13 +663,13 @@ fn resolve_options(mut opt Options, exit_on_error bool) {
 		} else {
 			// TODO FIX Warnings and add install function
 			eprintln('Android NDK version $opt.ndk_version is not available.')
-			// eprintln('(It can be installed with `$exe_name install "ndk;${opt.build_tools}"`)')
+			// eprintln('(It can be installed with `$exe_short_name install "ndk;${opt.build_tools}"`)')
 			eprintln('Falling back to default $ndk_version')
 		}
 	}
 	if ndk_version == '' {
 		eprintln('Android NDK version $opt.ndk_version is not available.')
-		// eprintln('It can be installed with `$exe_name install android-api-${opt.api_level}`')
+		// eprintln('It can be installed with `$exe_short_name install android-api-${opt.api_level}`')
 		if exit_on_error {
 			exit(1)
 		}
@@ -871,29 +872,29 @@ fn doctor(opt Options) {
 	if sdkm == '' {
 		eprintln('No "sdkmanager" could be detected.\n')
 		if env_managable {
-			eprintln('You can run `$exe_name install cmdline-tools` to install it.')
+			eprintln('You can run `$exe_short_name install cmdline-tools` to install it.')
 		}
-		eprintln('You can set the SDKMANAGER env variable or try your luck with `$exe_name install auto`.')
+		eprintln('You can set the SDKMANAGER env variable or try your luck with `$exe_short_name install auto`.')
 		eprintln('Please see https://stackoverflow.com/a/61176718/1904615 for more help.\n')
 	} else {
 		if !env_managable {
 			sdk_is_writable := os.is_writable(sdk.root())
 			if !sdk_is_writable {
 				eprintln('The SDK at "$sdk.root()" is not writable.')
-				eprintln("`$exe_name` is not able to control the SDK and it's dependencies.")
+				eprintln("`$exe_short_name` is not able to control the SDK and it's dependencies.")
 			} else {
 				eprintln('The detected `sdkmanager` seems outdated or incompatible with the Java version used.')
-				eprintln("For `$exe_name` to control it's own dependencies, please update `sdkmanager` found in:")
+				eprintln("For `$exe_short_name` to control it's own dependencies, please update `sdkmanager` found in:")
 				eprintln('"$sdkm"')
 				eprintln('or use a Java version that is compatible with your `sdkmanager`.')
-				eprintln('You can set the SDKMANAGER env variable or try your luck with `$exe_name install auto`.')
+				eprintln('You can set the SDKMANAGER env variable or try your luck with `$exe_short_name install auto`.')
 				eprintln('Please see https://stackoverflow.com/a/61176718/1904615 for more help.\n')
 			}
 		}
 	}
 
 	// vab section
-	println('$exe_name
+	println('$exe_short_name
 	Version $exe_version $exe_git_hash
 	Path "$exe_dir"')
 
