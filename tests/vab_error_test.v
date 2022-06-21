@@ -150,14 +150,9 @@ fn sync_run(job TOMLTestJob) &TOMLTestJobResult {
 }
 
 fn compile_vab() string {
-	pwd := os.getwd()
-	defer {
-		os.chdir(pwd) or { panic(err) }
-	}
-	os.chdir(vab_home) or { panic(err) }
-	res := os.execute([vexe, '.'].join(' '))
+	res := os.execute([vexe, '"$vab_home"'].join(' '))
 	if res.exit_code != 0 {
-		panic('failed building vab in "$vab_home"')
+		panic('command failed building vab in "$vab_home":\n$res.output')
 	}
 	return os.join_path(vab_home, 'vab')
 }
