@@ -27,6 +27,7 @@ The following flags does the same as if they were passed to the "v" compiler:
 	rip_vflags           = ['-autofree', '-gc', '-g', '-cg', '-prod', 'run', '-showcc']
 	subcmds              = ['complete', 'test-cleancode']
 	accepted_input_files = ['.v', '.apk', '.aab']
+	invalid_flag_parser  = voidptr(0) // TODO find a way to reuse the flag parsing or prevent it from crashing
 )
 
 struct Options {
@@ -92,19 +93,28 @@ fn main() {
 	if env_vab_flags != '' {
 		mut vab_flags := [os.args[0]]
 		vab_flags << string_to_args(env_vab_flags) or {
-			// println(fp.usage()) // NOTE careful fp is null here
+			if fp != invalid_flag_parser {
+				// TODO careful fp can be null here
+				println(fp.usage())
+			}
 			eprintln('Error while parsing `VAB_FLAGS`: $err')
 			exit(1)
 		}
 		opt, fp = args_to_options(vab_flags, opt) or {
-			// println(fp.usage()) // NOTE careful fp is null here
+			if fp != invalid_flag_parser {
+				// TODO careful fp can be null here
+				println(fp.usage())
+			}
 			eprintln('Error while parsing `VAB_FLAGS`: $err')
 			exit(1)
 		}
 	}
 
 	opt, fp = args_to_options(os.args, opt) or {
-		println(fp.usage())
+		if fp != invalid_flag_parser {
+			// TODO careful fp can be null here
+			println(fp.usage())
+		}
 		eprintln('Error while parsing `os.args`: $err')
 		exit(1)
 	}
@@ -194,13 +204,10 @@ fn main() {
 	check_essentials(true)
 	resolve_options(mut opt, true)
 
-	input := fp.args[fp.args.len - 1]
-
-	input_ext := os.file_ext(input)
-
-	if !(os.is_dir(input) || input_ext in accepted_input_files) {
+	input := fp.args.last()
+	validate_input(input) or {
 		println(fp.usage())
-		eprintln('$exe_name requires input to be a V file, an APK, AAB or a directory containing V sources')
+		eprintln('$exe_name: $err')
 		exit(1)
 	}
 	opt.input = input
@@ -290,6 +297,8 @@ fn main() {
 		log_tag: log_tag
 		run: run
 	}
+
+	input_ext := os.file_ext(opt.input)
 
 	// Early deployment
 	if input_ext in ['.apk', '.aab'] {
@@ -684,6 +693,20 @@ fn resolve_options(mut opt Options, exit_on_error bool) {
 	}
 	if os.getenv('KEYSTORE_ALIAS_PASSWORD') != '' {
 		opt.keystore_alias_password = os.getenv('KEYSTORE_ALIAS_PASSWORD')
+	}
+}
+
+fn validate_input(input string) ! {
+	input_ext := os.file_ext(input)
+
+	accepted_input_ext := input_ext in accepted_input_files
+	if !(os.is_dir(input) || accepted_input_ext) {
+		return error('input should be a V file, an APK, AAB or a directory containing V sources')
+	}
+	if accepted_input_ext {
+		if !os.is_file(input) {
+			return error('input should be a V file, an APK, AAB or a directory containing V sources')
+		}
 	}
 }
 

@@ -1,0 +1,6 @@
+execute = 'vab invalid_input'
+[expect]
+	exit_code = 1
+
+[compare]
+	output.from_line = -1 # negative means from bottom, positive from the top
