@@ -14,14 +14,13 @@ const (
 		os.join_path(vab_home, 'tests'),
 	]
 	vexe           = vxt.vexe()
+	vab_exe        = compile_vab()
 	should_autofix = os.getenv('VAUTOFIX') != ''
 	empty_toml_map = map[string]toml.Any{}
 )
 
 fn test_all() {
 	mut jobs := []TOMLTestJob{}
-
-	vab_exe := compile_vab()
 
 	for vab_test_dir in vab_test_dirs {
 		toml_files := os.walk_ext(vab_test_dir, '.toml')
@@ -93,7 +92,7 @@ fn sync_run(job TOMLTestJob) &TOMLTestJobResult {
 	}
 
 	doc := toml.parse_file(job.job_file) or { panic(err) }
-	execute := doc.value_opt('execute') or {
+	mut execute := doc.value_opt('execute') or {
 		panic('TOML config file needs a top-level `execute` entry')
 	}.string()
 	expect_exit_code := doc.value('expect.exit_code').default_to(0).int()
@@ -111,7 +110,7 @@ fn sync_run(job TOMLTestJob) &TOMLTestJobResult {
 		|| execute.contains('|') {
 		panic('Only single vab commands allowed')
 	}
-	res := os.execute(execute)
+	res := os.execute(execute.replace_once('vab', vab_exe))
 
 	mut expected := ''
 	expected = os.read_file(expected_out_path) or { panic(err) }
@@ -153,6 +152,9 @@ fn compile_vab() string {
 	res := os.execute([vexe, '"$vab_home"'].join(' '))
 	if res.exit_code != 0 {
 		panic('command failed building vab in "$vab_home":\n$res.output')
+	}
+	$if windows {
+		return os.join_path(vab_home, 'vab.exe')
 	}
 	return os.join_path(vab_home, 'vab')
 }
