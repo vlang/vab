@@ -3,6 +3,7 @@
 module android
 
 import os
+import time
 import vab.java
 import vab.android.env
 import vab.android.util
@@ -96,6 +97,12 @@ pub fn deploy_apk(opt DeployOptions) ! {
 
 		if opt.verbosity > 0 {
 			println('Deploying $opt.format package to "$device_id"')
+		}
+
+		if opt.kill_adb {
+			os.signal_opt(.int, kill_adb_on_exit) or {
+				// Kept for debugging return error('$error_tag: Could not set signal handler:\n$err')
+			}
 		}
 
 		adb_logcat_clear_cmd := [
@@ -199,32 +206,9 @@ pub fn deploy_apk(opt DeployOptions) ! {
 			}
 		}
 
-		adb_logcat_cmd := [
-			adb,
-			'-s',
-			'$device_id',
-			'logcat',
-			'--buffer=crash',
-			'-d',
-		]
-		util.verbosity_print_cmd(adb_logcat_cmd, opt.verbosity)
-		crash_log := util.run_or_error(adb_logcat_cmd)!
-		if crash_log.count('\n') > 3 {
-			eprintln('It looks like your app might have crashed\nDumping crash buffer:')
-			eprintln(crash_log)
+		has_crash_report := adb_detect_and_report_crashes(opt, device_id)!
+		if has_crash_report {
 			eprintln('You can clear all logs by running:\n"' + adb_logcat_clear_cmd.join(' ') + '"')
-		}
-
-		if opt.kill_adb {
-			uos := os.user_os()
-			if opt.verbosity > 0 {
-				println('Killing adb')
-			}
-			if uos == 'windows' {
-				// os.system('Taskkill /IM adb.exe /F') // TODO Untested
-			} else {
-				os.system('killall adb')
-			}
 		}
 	}
 }
@@ -288,6 +272,12 @@ pub fn deploy_aab(opt DeployOptions) ! {
 
 		if opt.verbosity > 0 {
 			println('Deploying $opt.format package to "$device_id"')
+		}
+
+		if opt.kill_adb {
+			os.signal_opt(.int, kill_adb_on_exit) or {
+				// Kept for debugging return error('$error_tag: Could not set signal handler:\n$err')
+			}
 		}
 
 		adb_logcat_clear_cmd := [
@@ -390,34 +380,40 @@ pub fn deploy_aab(opt DeployOptions) ! {
 			}
 		}
 
-		adb_logcat_cmd := [
-			adb,
-			'-s',
-			'$device_id',
-			'logcat',
-			'--buffer=crash',
-			'-d',
-		]
-		util.verbosity_print_cmd(adb_logcat_cmd, opt.verbosity)
-		crash_log := util.run_or_exit(adb_logcat_cmd)
-		if crash_log.count('\n') > 3 {
-			eprintln('It looks like your app might have crashed\nDumping crash buffer:')
-			eprintln(crash_log)
+		has_crash_report := adb_detect_and_report_crashes(opt, device_id)!
+		if has_crash_report {
 			eprintln('You can clear all logs by running:\n"' + adb_logcat_clear_cmd.join(' ') + '"')
 		}
-
-		if opt.kill_adb {
-			uos := os.user_os()
-			if opt.verbosity > 0 {
-				println('Killing adb')
-			}
-			if uos == 'windows' {
-				// os.system('Taskkill /IM adb.exe /F') // TODO Untested
-			} else {
-				os.system('killall adb')
-			}
-		}
-		return
 	}
-	return error('$error_tag: deployment to device "$device_id" failed')
+}
+
+fn adb_detect_and_report_crashes(opt DeployOptions, device_id string) !bool {
+	adb := env.adb()
+	time.sleep(150 * time.millisecond)
+	adb_logcat_cmd := [
+		adb,
+		'-s',
+		'$device_id',
+		'logcat',
+		'--buffer=crash',
+		'-d',
+	]
+	util.verbosity_print_cmd(adb_logcat_cmd, opt.verbosity)
+	crash_log := util.run_or_error(adb_logcat_cmd)!
+	if crash_log.count('\n') > 3 {
+		eprintln('It looks like your app might have crashed\nDumping crash buffer:')
+		eprintln(crash_log)
+		return true
+	}
+	return false
+}
+
+fn kill_adb_on_exit(signum os.Signal) {
+	uos := os.user_os()
+	println('Killing adb on signal $signum')
+	if uos == 'windows' {
+		// os.system('Taskkill /IM adb.exe /F') // TODO Untested
+	} else {
+		os.system('killall adb')
+	}
 }

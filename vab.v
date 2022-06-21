@@ -295,10 +295,16 @@ fn main() {
 		if opt.device_id != '' {
 			android.deploy(deploy_opt) or {
 				eprintln('$exe_short_name deployment didn\'t succeed.\n$err')
+				if deploy_opt.kill_adb {
+					kill_adb_on_exit()
+				}
 				exit(1)
 			}
 			if opt.verbosity > 0 {
 				println('Deployed to $opt.device_id successfully')
+			}
+			if deploy_opt.kill_adb {
+				kill_adb_on_exit()
 			}
 			exit(0)
 		}
@@ -324,7 +330,7 @@ fn main() {
 		min_sdk_version: opt.min_sdk_version
 	}
 	android.compile(comp_opt) or {
-		eprintln('$exe_short_name compiling didn\'t succeed')
+		eprintln('$exe_short_name compiling didn\'t succeed.\n$err')
 		exit(1)
 	}
 
@@ -353,17 +359,23 @@ fn main() {
 		overrides_path: opt.package_overrides_path
 	}
 	android.package(pck_opt) or {
-		eprintln("Packaging didn't succeed:\n$err")
+		eprintln("Packaging didn't succeed.\n$err")
 		exit(1)
 	}
 
 	if device_id != '' {
 		android.deploy(deploy_opt) or {
 			eprintln("Deployment didn't succeed.\n$err")
+			if deploy_opt.kill_adb {
+				kill_adb_on_exit()
+			}
 			exit(1)
 		}
 		if opt.verbosity > 0 {
 			println('Deployed to device ($device_id) successfully')
+		}
+		if deploy_opt.kill_adb {
+			kill_adb_on_exit()
 		}
 	} else {
 		if opt.verbosity > 0 {
@@ -1100,4 +1112,14 @@ fn string_to_args(input string) ?[]string {
 			': could not parse input, missing closing string delimiter `$delim.ascii_str()`')
 	}
 	return args
+}
+
+fn kill_adb_on_exit() {
+	uos := os.user_os()
+	println('Killing adb ...')
+	if uos == 'windows' {
+		// os.system('Taskkill /IM adb.exe /F') // TODO Untested
+	} else {
+		os.system('killall adb')
+	}
 }
