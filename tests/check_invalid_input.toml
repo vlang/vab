@@ -1,0 +1,3 @@
+execute = 'vab invalid_input'
+[expect]
+	exit_code = 1
