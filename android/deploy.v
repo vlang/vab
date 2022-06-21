@@ -147,63 +147,8 @@ pub fn deploy_apk(opt DeployOptions) ! {
 			util.run_or_error(adb_run_cmd)!
 		}
 
-		mut crash_mode := false
 		if opt.device_log {
-			if opt.verbosity > 0 {
-				println('Showing log output from device "$device_id"')
-			}
-			println('Ctrl+C to cancel logging')
-			mut adb_logcat_cmd := [
-				adb,
-				'-s',
-				'$device_id',
-				'logcat',
-			]
-
-			// Only filter output in "normal" log mode
-			if opt.log_mode == .filtered {
-				is_debug_build := '-cg' in opt.v_flags || '-g' in opt.v_flags
-				if is_debug_build {
-					// Sokol
-					adb_logcat_cmd << 'SOKOL_APP:D'
-					// Boehm-Demers-Weiser Garbage Collector (bdwgc / libgc)
-					adb_logcat_cmd << 'BDWGC:D'
-				}
-				adb_logcat_cmd << [
-					'V_ANDROID:D',
-					'$opt.log_tag:D',
-					// 'System.out:D', // Used by many other Android libs - so it's noisy
-					// 'System.err:D',
-					'$opt.activity_name:D',
-				]
-				// if !is_debug_build {
-				adb_logcat_cmd << '*:S'
-			}
-
-			// log_cmd := adb_logcat_cmd.join(' ')
-			// println('Use "$log_cmd" to view logs...')
-			util.verbosity_print_cmd(adb_logcat_cmd, opt.verbosity)
-			mut p := os.new_process(adb_logcat_cmd[0])
-			p.set_args(adb_logcat_cmd[1..])
-			p.set_redirect_stdio()
-			p.run()
-			for p.is_alive() {
-				s, b := os.fd_read(p.stdio_fd[1], 2 * 4096)
-				if s.contains('beginning of crash') {
-					crash_mode = true
-					break
-				}
-				if b <= 0 {
-					break
-				}
-				print('$s')
-				os.flush()
-			}
-			if !crash_mode {
-				rest := p.stdout_slurp()
-				p.wait()
-				println('$rest')
-			}
+			adb_log_step(opt, device_id)!
 		}
 
 		has_crash_report := adb_detect_and_report_crashes(opt, device_id)!
@@ -225,7 +170,9 @@ pub fn deploy_aab(opt DeployOptions) ! {
 		return error('$error_tag: Couldn\'t locate "adb". Please make sure it\'s installed.')
 	}
 
-	devices := get_device_list(opt.verbosity)!
+	devices := get_device_list(opt.verbosity) or {
+		return error('$error_tag: Failed getting device list.\n$err')
+	}
 
 	if device_id == 'auto' {
 		mut auto_device := ''
@@ -286,7 +233,7 @@ pub fn deploy_aab(opt DeployOptions) ! {
 			'logcat',
 			'-c',
 		]
-		if opt.run != '' && opt.device_log {
+		if opt.clear_device_log || (opt.run != '' && opt.device_log) {
 			// Clear logs first
 			if opt.verbosity > 0 {
 				println('Clearing log buffer on device "$device_id"')
@@ -324,60 +271,8 @@ pub fn deploy_aab(opt DeployOptions) ! {
 			util.run_or_error(adb_run_cmd)!
 		}
 
-		mut crash_mode := false
 		if opt.device_log {
-			if opt.verbosity > 0 {
-				println('Showing log output from device "$device_id"')
-			}
-			println('Ctrl+C to cancel logging')
-			mut adb_logcat_cmd := [
-				adb,
-				'-s',
-				'$device_id',
-				'logcat',
-			]
-			is_debug_build := '-cg' in opt.v_flags || '-g' in opt.v_flags
-			if is_debug_build {
-				// Sokol
-				adb_logcat_cmd << 'SOKOL_APP:D'
-				// Boehm-Demers-Weiser Garbage Collector (bdwgc / libgc)
-				adb_logcat_cmd << 'BDWGC:D'
-			}
-			adb_logcat_cmd << [
-				'V_ANDROID:D',
-				'$opt.log_tag:D',
-				// 'System.out:D', // Used by many other Android libs - so it's noisy
-				// 'System.err:D',
-				'$opt.activity_name:D',
-			]
-			// if !is_debug_build {
-			adb_logcat_cmd << '*:S'
-			//}
-
-			// log_cmd := adb_logcat_cmd.join(' ')
-			// println('Use "$log_cmd" to view logs...')
-			util.verbosity_print_cmd(adb_logcat_cmd, opt.verbosity)
-			mut p := os.new_process(adb_logcat_cmd[0])
-			p.set_args(adb_logcat_cmd[1..])
-			p.set_redirect_stdio()
-			p.run()
-			for p.is_alive() {
-				s, b := os.fd_read(p.stdio_fd[1], 2 * 4096)
-				if s.contains('beginning of crash') {
-					crash_mode = true
-					break
-				}
-				if b <= 0 {
-					break
-				}
-				print('$s')
-				os.flush()
-			}
-			if !crash_mode {
-				rest := p.stdout_slurp()
-				p.wait()
-				println('$rest')
-			}
+			adb_log_step(opt, device_id)!
 		}
 
 		has_crash_report := adb_detect_and_report_crashes(opt, device_id)!
@@ -406,6 +301,66 @@ fn adb_detect_and_report_crashes(opt DeployOptions, device_id string) !bool {
 		return true
 	}
 	return false
+}
+
+fn adb_log_step(opt DeployOptions, device_id string) ! {
+	adb := env.adb()
+	mut crash_mode := false
+	if opt.verbosity > 0 {
+		println('Showing log output from device "$device_id"')
+	}
+	println('Ctrl+C to cancel logging')
+	mut adb_logcat_cmd := [
+		adb,
+		'-s',
+		'$device_id',
+		'logcat',
+	]
+
+	// Only filter output in "normal" log mode
+	if opt.log_mode == .filtered {
+		is_debug_build := '-cg' in opt.v_flags || '-g' in opt.v_flags
+		if is_debug_build {
+			// Sokol
+			adb_logcat_cmd << 'SOKOL_APP:D'
+			// Boehm-Demers-Weiser Garbage Collector (bdwgc / libgc)
+			adb_logcat_cmd << 'BDWGC:D'
+		}
+		adb_logcat_cmd << [
+			'V_ANDROID:D',
+			'$opt.log_tag:D',
+			// 'System.out:D', // Used by many other Android libs - so it's noisy
+			// 'System.err:D',
+			'$opt.activity_name:D',
+		]
+		// if !is_debug_build {
+		adb_logcat_cmd << '*:S'
+	}
+
+	// log_cmd := adb_logcat_cmd.join(' ')
+	// println('Use "$log_cmd" to view logs...')
+	util.verbosity_print_cmd(adb_logcat_cmd, opt.verbosity)
+	mut p := os.new_process(adb_logcat_cmd[0])
+	p.set_args(adb_logcat_cmd[1..])
+	p.set_redirect_stdio()
+	p.run()
+	for p.is_alive() {
+		s, b := os.fd_read(p.stdio_fd[1], 2 * 4096)
+		if s.contains('beginning of crash') {
+			crash_mode = true
+			break
+		}
+		if b <= 0 {
+			break
+		}
+		print('$s')
+		os.flush()
+	}
+	if !crash_mode {
+		rest := p.stdout_slurp()
+		p.wait()
+		println('$rest')
+	}
 }
 
 fn kill_adb_on_exit(signum os.Signal) {
