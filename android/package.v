@@ -254,6 +254,9 @@ fn package_apk(opt PackageOptions) ! {
 	if build_tools_semantic_version.ge(semver.build(28, 0, 1)) {
 		mut class_files := os.walk_ext('obj', '.class')
 		class_files = class_files.map(fn (e string) string {
+			$if windows {
+				return '"$e"'
+			}
 			return "'$e'" // NOTE inclosing with ' is important since the files can contain `$` chars
 		})
 		mut dex_type := if opt.is_prod { '--release' } else { '--debug' }
