@@ -253,21 +253,19 @@ fn package_apk(opt PackageOptions) ! {
 	// Dex either with `dx` or `d8`
 	if build_tools_semantic_version.ge(semver.build(28, 0, 1)) {
 		mut class_files := os.walk_ext('obj', '.class')
-		if opt.verbosity > 2 {
-			println('Filtering out class files: ' + class_files.filter(it.contains('$')).str())
-		}
-		class_files = class_files.filter(!it.contains('$')) // Filter out R$xxx.class files
-		// class_files << r'obj/org/libsdl/app/SDLActivity$SDLCommandHandler.class'
 		class_files = class_files.map(fn (e string) string {
-			return '"$e"'
+			$if windows {
+				return '"$e"'
+			}
+			return "'$e'" // NOTE inclosing with ' is important since the files can contain `$` chars
 		})
 		mut dex_type := if opt.is_prod { '--release' } else { '--debug' }
 		mut d8_cmd := [
 			d8,
-			// '--min-api 21',
+			'--min-api $opt.min_sdk_version',
 			dex_type,
 			'--lib "' + android_runtime + '"',
-			'--classpath .',
+			'--classpath obj',
 			'--output ' + 'classes.zip',
 		]
 		d8_cmd << class_files
