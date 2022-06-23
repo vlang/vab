@@ -37,8 +37,12 @@ jobs:
         cd vab
         v test-fmt
 
-    - name: Simulate "v install vab"
-      run: mv vab ~/.vmodules
+    # TODO this makes formatting checks fail?
+    #- name: Simulate "v install vab"
+    #  run: mv vab ~/.vmodules
+
+    - name: Symlink as module
+      run: sudo ln -s $(pwd)/vab ~/.vmodules/vab # Workaround for doing `mv vab ~/.vmodules`
 
     - name: Build vab
       run: v -g ~/.vmodules/vab
