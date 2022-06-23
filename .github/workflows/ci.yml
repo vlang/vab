@@ -200,7 +200,7 @@ jobs:
         path: vab
 
     - name: Simulate "v install vab"
-      run: mkdir ~/.vmodules && mv vab ~/.vmodules
+      run: mv vab ~/.vmodules/
 
     - name: Run tests
       run: v test  ~/.vmodules/vab
