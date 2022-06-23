@@ -25,7 +25,7 @@ jobs:
         repository: vlang/v
 
     - name: Build local v
-      run: make -j4
+      run: make -j4 && sudo ./v symlink
 
     - name: Checkout vab
       uses: actions/checkout@v2
@@ -35,31 +35,26 @@ jobs:
     - name: Test code formatting
       run: |
         cd vab
-        ../v test-fmt
+        v test-fmt
 
-    - name: Symlink as module
-      run: sudo ln -s $(pwd)/vab ~/.vmodules/vab # TODO workaround for doing `mv vab ~/.vmodules` below
-
-    # TODO this makes formatting checks fail?
-    #- name: Simulate "v install vab"
-    #  run: mv vab ~/.vmodules
+    - name: Simulate "v install vab"
+      run: mkdir ~/.vmodules && mv vab ~/.vmodules
 
     - name: Build vab
-      run: ./v -g ~/.vmodules/vab
+      run: v -g ~/.vmodules/vab
 
     - name: Symlink vab command
       run: sudo ln -s ~/.vmodules/vab/vab /usr/local/bin/vab
 
     - name: Test clean vab code
       run: |
-        export VEXE=./v
         vab test-cleancode ~/.vmodules/vab
 
   ubuntu-latest-bootstrap:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
-      VAB_FLAGS: -v 3 --api 30 --build-tools 29.0.0
+      VAB_FLAGS: -v 3
     steps:
     - name: Checkout V
       uses: actions/checkout@v2
@@ -67,7 +62,7 @@ jobs:
         repository: vlang/v
 
     - name: Build local v
-      run: make -j4
+      run: make -j4 && sudo ./v symlink
 
     - name: Checkout vab
       uses: actions/checkout@v2
@@ -78,13 +73,13 @@ jobs:
       run: mv vab ~/.vmodules
 
     - name: Run tests
-      run: ./v test ~/.vmodules/vab
+      run: v test ~/.vmodules/vab
 
     - name: Build vab with -prod
-      run: ./v -prod ~/.vmodules/vab
+      run: v -prod ~/.vmodules/vab
 
     - name: Build vab
-      run: ./v -g ~/.vmodules/vab
+      run: v -g ~/.vmodules/vab
 
     - name: Symlink vab
       run: sudo ln -s ~/.vmodules/vab/vab /usr/local/bin/vab
@@ -126,7 +121,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
-      VAB_FLAGS: -v 3 --api 30 --build-tools 29.0.0
+      VAB_FLAGS: -v 3
     steps:
     - name: Checkout V
       uses: actions/checkout@v2
@@ -134,7 +129,7 @@ jobs:
         repository: vlang/v
 
     - name: Build local v
-      run: make -j4
+      run: make -j4 && sudo ./v symlink
 
     - name: Checkout vab
       uses: actions/checkout@v2
@@ -145,13 +140,13 @@ jobs:
       run: mv vab ~/.vmodules
 
     - name: Run tests
-      run: ./v test  ~/.vmodules/vab
+      run: v test  ~/.vmodules/vab
 
     - name: Build vab with -prod
-      run: ./v -prod  ~/.vmodules/vab
+      run: v -prod  ~/.vmodules/vab
 
     - name: Build vab
-      run: ./v -g ~/.vmodules/vab
+      run: v -g ~/.vmodules/vab
 
     - name: Symlink vab
       run: sudo ln -s ~/.vmodules/vab/vab /usr/local/bin/vab
@@ -186,6 +181,44 @@ jobs:
       run: |
         vab examples/sokol/particles -o apks/particles.apk
         [ -f apks/particles.apk ]
+
+  v-compiles-os-android:
+    runs-on: ubuntu-20.04
+    timeout-minutes: 10
+    steps:
+    - name: Checkout V
+      uses: actions/checkout@v2
+      with:
+        repository: vlang/v
+
+    - name: Build local v
+      run: make -j4 && sudo ./v symlink
+
+    - name: Checkout vab
+      uses: actions/checkout@v2
+      with:
+        path: vab
+
+    - name: Simulate "v install vab"
+      run: mkdir ~/.vmodules && mv vab ~/.vmodules
+
+    - name: Run tests
+      run: v test  ~/.vmodules/vab
+
+    - name: Build vab
+      run: v -g ~/.vmodules/vab
+
+    - name: Symlink vab
+      run: sudo ln -s ~/.vmodules/vab/vab /usr/local/bin/vab
+
+    - name: Run vab --help
+      run: vab --help
+
+    - name: Run vab doctor
+      run: vab doctor
+
+    - name: Check `v -os android` *without* -apk flag
+      run: .github/workflows/android_cross_compile.vsh
 
   #macos-latest-bootstrap:
     #runs-on: macOS-latest
