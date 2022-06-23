@@ -30,6 +30,22 @@ The following flags does the same as if they were passed to the "v" compiler:
 	accepted_input_files = ['.v', '.apk', '.aab']
 )
 
+const vab_env_vars = [
+	'VAB_FLAGS',
+	'VAB_KILL_ADB',
+	'ANDROID_SERIAL',
+	'ANDROID_HOME',
+	'ANDROID_SDK_ROOT',
+	'ANDROID_NDK_ROOT',
+	'SDKMANAGER',
+	'ADB',
+	'BUNDLETOOL',
+	'AAPT2',
+	'JAVA_HOME',
+	'VEXE',
+	'VMODULES',
+]
+
 struct Options {
 	// Internals
 	verbosity int
@@ -581,7 +597,7 @@ fn validate_env(opt Options) {
 		// So we only report back if the verion can be read
 		if ndk_semantic_version := semver.from(opt.ndk_version) {
 			if ndk_semantic_version.lt(semver.build(21, 1, 0)) {
-				eprintln('Android NDK >= 21.1.0 is currently needed. "$opt.ndk_version" is too low.')
+				eprintln('Android NDK >= 21.1.x is currently needed. "$opt.ndk_version" is too low.')
 				eprintln('Please provide a valid path via ANDROID_NDK_ROOT')
 				eprintln('or run `$exe_short_name install "ndk;<version>"`')
 				exit(1)
@@ -615,22 +631,25 @@ fn validate_env(opt Options) {
 }
 
 fn resolve_options(mut opt Options, exit_on_error bool) {
-	// Validate API level
+	// Validate SDK API level
 	mut api_level := sdk.default_api_level
+	if api_level == '' {
+		eprintln('No Android API levels could be detected in the SDK.')
+		eprintln('If the SDK is working and writable, new platforms can be installed with:')
+		eprintln('`$exe_short_name install "platforms;android-<API LEVEL>"`')
+		eprintln('You can set a custom SDK with the ANDROID_SDK_ROOT env variable')
+		if exit_on_error {
+			exit(1)
+		}
+	}
 	if opt.api_level != '' {
+		// Set user requested API level
 		if sdk.has_api(opt.api_level) {
 			api_level = opt.api_level
 		} else {
 			// TODO Warnings
-			eprintln('Android API level "$opt.api_level" is not available in SDK.')
-			eprintln('Falling back to default "$api_level"')
-		}
-	}
-	if api_level == '' {
-		eprintln('Android API level "$opt.api_level" is not available in SDK.')
-		eprintln('It can be installed with `$exe_short_name install "platforms;android-<API LEVEL>"`')
-		if exit_on_error {
-			exit(1)
+			eprintln('Notice: The requested Android API level "$opt.api_level" is not available in the SDK.')
+			eprintln('Notice: Falling back to default "$api_level"')
 		}
 	}
 	if api_level.i16() < sdk.min_supported_api_level.i16() {
@@ -667,25 +686,47 @@ fn resolve_options(mut opt Options, exit_on_error bool) {
 
 	// Validate NDK version
 	mut ndk_version := ndk.default_version()
-	if opt.ndk_version != '' {
-		if ndk.has_version(opt.ndk_version) {
-			ndk_version = opt.ndk_version
-		} else {
-			// TODO FIX Warnings and add install function
-			eprintln('Android NDK version $opt.ndk_version is not available.')
-			// eprintln('(It can be installed with `$exe_short_name install "ndk;${opt.build_tools}"`)')
-			eprintln('Falling back to default $ndk_version')
-		}
-	}
 	if ndk_version == '' {
-		eprintln('Android NDK version $opt.ndk_version is not available.')
-		// eprintln('It can be installed with `$exe_short_name install android-api-${opt.api_level}`')
+		eprintln('No Android NDK versions could be detected.')
+		eprintln('If the SDK is working and writable, new NDK versions can be installed with:')
+		eprintln('`$exe_short_name install "ndk;<NDK VERSION>"`')
+		eprintln('The minimum supported NDK version is "$ndk.min_supported_version"')
 		if exit_on_error {
 			exit(1)
 		}
 	}
+	if opt.ndk_version != '' {
+		// Set user requested NDK version
+		if ndk.has_version(opt.ndk_version) {
+			ndk_version = opt.ndk_version
+		} else {
+			// TODO FIX Warnings and add install function
+			eprintln('Android NDK version "$opt.ndk_version" could not be found.')
+			eprintln('If the SDK is working and writable, new NDK versions can be installed with:')
+			eprintln('`$exe_short_name install "ndk;<NDK VERSION>"`')
+			eprintln('The minimum supported NDK version is "$ndk.min_supported_version"')
+			eprintln('Falling back to default $ndk_version')
+		}
+	}
 
 	opt.ndk_version = ndk_version
+
+	// Resolve NDK vs. SDK available platforms
+	min_ndk_api_level := ndk.min_api_available(opt.ndk_version)
+	max_ndk_api_level := ndk.max_api_available(opt.ndk_version)
+	if opt.api_level.i16() > max_ndk_api_level.i16()
+		|| opt.api_level.i16() < min_ndk_api_level.i16() {
+		if opt.api_level.i16() > max_ndk_api_level.i16() {
+			eprintln('Notice: Falling back to API level "$max_ndk_api_level" (SDK API level $opt.api_level > highest NDK API level $max_ndk_api_level).')
+			opt.api_level = max_ndk_api_level
+		}
+		if opt.api_level.i16() < min_ndk_api_level.i16() {
+			if sdk.has_api(min_ndk_api_level) {
+				eprintln('Notice: Falling back to API level "$min_ndk_api_level" (SDK API level $opt.api_level < lowest NDK API level $max_ndk_api_level).')
+				opt.api_level = min_ndk_api_level
+			}
+		}
+	}
 
 	// Java package ids/names are integrated hard into the eco-system
 	opt.lib_name = opt.app_name.replace(' ', '_').to_lower()
@@ -914,15 +955,10 @@ fn doctor(opt Options) {
 			println('\t$var_name=' + os.getenv(var_name))
 		}
 	}
-	print_var_if_set(env_vars, 'ANDROID_HOME')
-	print_var_if_set(env_vars, 'ANDROID_SDK_ROOT')
-	print_var_if_set(env_vars, 'ANDROID_NDK_ROOT')
-	print_var_if_set(env_vars, 'SDKMANAGER')
-	print_var_if_set(env_vars, 'ADB')
-	print_var_if_set(env_vars, 'BUNDLETOOL')
-	print_var_if_set(env_vars, 'AAPT2')
-	print_var_if_set(env_vars, 'JAVA_HOME')
-	print_var_if_set(env_vars, 'VEXE')
+	println('env')
+	for env_var in vab_env_vars {
+		print_var_if_set(env_vars, env_var)
+	}
 
 	// Java section
 	println('Java
@@ -935,15 +971,22 @@ fn doctor(opt Options) {
 	ENV
 		sdkmanager "$sdkm"
 		sdkmanager.version "$env.sdkmanager_version()"
-		Managable: $env_managable
+		Managable $env_managable
 	SDK
 		Path "$sdk.root()"
 		Writable ${os.is_writable(sdk.root())}
+		APIs available $sdk.apis_available()
 	NDK
 		Version $opt.ndk_version
 		Path "$ndk.root()"
 		Side-by-side $ndk.is_side_by_side()
-	Build
+		min API level available ${ndk.min_api_available(opt.ndk_version)}
+		max API level available ${ndk.max_api_available(opt.ndk_version)}')
+	apis_by_arch := ndk.available_apis_by_arch(opt.ndk_version)
+	for arch, api_levels in apis_by_arch {
+		println('\t\t${arch:-11} $api_levels')
+	}
+	println('\tBuild
 		API $opt.api_level
 		Build-tools $opt.build_tools
 	Packaging
@@ -972,7 +1015,7 @@ fn doctor(opt Options) {
 	Version $vxt.version() $vxt.version_commit_hash()
 	Path "$vxt.home()"')
 	if opt.v_flags.len > 0 {
-		println('\tV flags: $opt.v_flags')
+		println('\tFlags $opt.v_flags')
 	}
 	// Print output of `v doctor` if v is found
 	if vxt.found() {
