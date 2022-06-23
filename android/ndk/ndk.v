@@ -160,18 +160,21 @@ pub fn min_version() string {
 }
 
 fn min_version_supported_by_vab() string {
-	mut version := '0.0.0'
 	uos := os.user_os()
-	if uos == 'windows' {
-		version = '0.0.0' // TODO
+	return match uos {
+		'windows' {
+			'21.4.7075529'
+		}
+		'macos' {
+			'21.3.6528147'
+		}
+		'linux' {
+			'21.1.6352462'
+		}
+		else {
+			'0.0.0'
+		}
 	}
-	if uos == 'macos' {
-		version = '21.3.6528147'
-	}
-	if uos == 'linux' {
-		version = '21.1.6352462'
-	}
-	return version
 }
 
 pub fn default_version() string {
@@ -420,6 +423,33 @@ pub fn max_api_available(version string) string {
 	platforms := read_platforms_json(version) or { return '' }
 	platform := platforms['max'] or { return '' }
 	return platform.str()
+}
+
+pub fn available_apis_by_arch(ndk_version string) map[string][]string {
+	mut arch_apis := map[string][]i16{}
+
+	compiler_bin_path := bin_path(ndk_version)
+	if os.is_dir(compiler_bin_path) {
+		from := i16(min_api_available(ndk_version).int())
+		to := i16(max_api_available(ndk_version).int()) + 1
+		if to > from {
+			for arch in ndk.supported_archs {
+				for level in from .. to {
+					mut compiler := os.join_path(compiler_bin_path, compiler_triplet(arch) +
+						'$level-clang')
+					if os.is_file(compiler) {
+						arch_apis['$arch'] << level
+					}
+				}
+				arch_apis['$arch'].sort(a > b)
+			}
+		}
+	}
+	mut arch_apis_result := map[string][]string{}
+	for arch, apis in arch_apis {
+		arch_apis_result['$arch'] = apis.map(it.str())
+	}
+	return arch_apis_result
 }
 
 pub fn meta_dir(version string) string {
