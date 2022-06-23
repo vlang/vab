@@ -38,7 +38,7 @@ jobs:
         v test-fmt
 
     - name: Simulate "v install vab"
-      run: mkdir ~/.vmodules && mv vab ~/.vmodules
+      run: mv vab ~/.vmodules
 
     - name: Build vab
       run: v -g ~/.vmodules/vab
