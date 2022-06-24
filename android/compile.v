@@ -11,7 +11,7 @@ import vab.android.util
 import crypto.md5
 
 pub const (
-	supported_target_archs  = ['arm64-v8a', 'armeabi-v7a', 'x86', 'x86_64']
+	supported_target_archs  = ndk.supported_archs
 	default_archs           = ['arm64-v8a', 'armeabi-v7a', 'x86', 'x86_64']
 	supported_gles_versions = [2, 3]
 	default_gles_version    = 2
@@ -37,6 +37,19 @@ pub:
 	lib_name         string   // filename of the resulting .so ('${lib_name}.so')
 	api_level        string   // Android API level to use when compiling
 	min_sdk_version  int = default_min_sdk_version
+}
+
+pub fn (opt CompileOptions) uses_gc() bool {
+	mut uses_gc := true // V default
+	for v_flag in opt.v_flags {
+		if v_flag.starts_with('-gc') {
+			if v_flag.ends_with('none') {
+				uses_gc = false
+			}
+			break
+		}
+	}
+	return uses_gc
 }
 
 struct ShellJob {
@@ -299,23 +312,17 @@ pub fn compile(opt CompileOptions) ! {
 	ndk_sysroot := ndk.sysroot_path(opt.ndk_version) or {
 		return error('$err_sig: getting NDK sysroot path.\n$err')
 	}
-	includes << ['-I"' + os.join_path(ndk_sysroot, 'usr', 'include') + '"',
-		'-I"' + os.join_path(ndk_sysroot, 'usr', 'include', 'android') + '"']
+	includes << [
+		'-I"' + os.join_path(ndk_sysroot, 'usr', 'include') + '"',
+		'-I"' + os.join_path(ndk_sysroot, 'usr', 'include', 'android') + '"',
+	]
 
 	is_debug_build := '-cg' in opt.v_flags || '-g' in opt.v_flags
 
 	// Boehm-Demers-Weiser Garbage Collector (bdwgc / libgc)
-	mut uses_gc := true // V default
-	for v_flag in opt.v_flags {
-		if v_flag.starts_with('-gc') {
-			if v_flag.ends_with('none') {
-				uses_gc = false
-			}
-			if opt.verbosity > 1 {
-				println('Garbage collecting is $uses_gc via "$v_flag"')
-			}
-			break
-		}
+	uses_gc := opt.uses_gc()
+	if opt.verbosity > 1 {
+		println('Garbage collecting is $uses_gc')
 	}
 
 	if uses_gc {
@@ -330,25 +337,6 @@ pub fn compile(opt CompileOptions) ! {
 		defines << '-D_REENTRANT'
 		defines << '-DUSE_MMAP' // Will otherwise crash with a message with a path to the lib in GC_unix_mmap_get_mem+528
 	}
-
-	// Sokol
-	if is_debug_build {
-		if opt.verbosity > 1 {
-			println('Define SOKOL_DEBUG')
-		}
-		defines << '-DSOKOL_DEBUG'
-	}
-
-	if opt.verbosity > 1 {
-		println('Using GLES $opt.gles_version')
-	}
-	if opt.gles_version == 3 {
-		defines << ['-DSOKOL_GLES3']
-	} else {
-		defines << ['-DSOKOL_GLES2']
-	}
-
-	ldflags << ['-uANativeActivity_onCreate', '-usokol_main']
 
 	// stb_image via `stbi` module
 	if 'stbi' in imported_modules {
@@ -370,6 +358,30 @@ pub fn compile(opt CompileOptions) ! {
 		sources << [
 			'"' + os.join_path(v_home, 'thirdparty', 'cJSON', 'cJSON.c') + '"',
 		]
+	}
+
+	// Sokol sapp
+	if 'sokol.sapp' in imported_modules {
+		if opt.verbosity > 1 {
+			println('Including sokol_sapp support via sokol.sapp module')
+		}
+		if is_debug_build {
+			if opt.verbosity > 1 {
+				println('Define SOKOL_DEBUG')
+			}
+			defines << '-DSOKOL_DEBUG'
+		}
+
+		if opt.verbosity > 1 {
+			println('Using GLES $opt.gles_version')
+		}
+		if opt.gles_version == 3 {
+			defines << ['-DSOKOL_GLES3']
+		} else {
+			defines << ['-DSOKOL_GLES2']
+		}
+
+		ldflags << ['-uANativeActivity_onCreate', '-usokol_main']
 	}
 
 	// misc
