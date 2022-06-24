@@ -24,7 +24,7 @@ The following flags does the same as if they were passed to the "v" compiler:
 
 -autofree, -gc <type>, -g, -cg, -prod, -showcc'
 	exe_git_hash         = vab_commit_hash()
-	work_directory       = vab_work_dir()
+	work_directory       = vab_tmp_work_dir()
 	rip_vflags           = ['-autofree', '-gc', '-g', '-cg', '-prod', 'run', '-showcc']
 	subcmds              = ['complete', 'test-cleancode']
 	accepted_input_files = ['.v', '.apk', '.aab']
@@ -274,12 +274,17 @@ fn main() {
 	}
 	if !os.is_file(keystore.path) {
 		if keystore.path != '' {
-			eprintln('Couldn\'t locate "$keystore.path"')
+			eprintln('Keystore "$keystore.path" is not a valid file')
+			eprintln('Notice: Signing with debug keystore')
 		}
-		keystore.path = ''
-	}
-	if keystore.path == '' {
-		keystore.path = os.join_path(exe_dir, 'debug.keystore')
+		keystore_dir := os.join_path(work_directory, 'keystore')
+		if !os.is_dir(keystore_dir) {
+			os.mkdir_all(keystore_dir) or {
+				eprintln('Could make directory for debug keystore.\n$err')
+				exit(1)
+			}
+		}
+		keystore.path = os.join_path(keystore_dir, 'debug.keystore')
 	}
 	keystore = android.resolve_keystore(keystore, opt.verbosity) or {
 		eprintln('Could not resolve at keystore.\n$err')
@@ -909,7 +914,7 @@ fn vab_commit_hash() string {
 	return hash
 }
 
-fn vab_work_dir() string {
+fn vab_tmp_work_dir() string {
 	return os.join_path(os.temp_dir(), exe_name.replace(' ', '_').replace('.exe', '').to_lower())
 }
 
