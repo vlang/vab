@@ -434,6 +434,8 @@ struct VDumpResult {
 	c_flags []string
 }
 
+// v_dump_source_info returns the information dumped by
+// -dump-modules and -dump-c-flags.
 pub fn v_dump_source_info(opt VCompileOptions) !VDumpResult {
 	err_sig := @MOD + '.' + @FN
 	os.mkdir_all(opt.work_dir) or {
