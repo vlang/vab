@@ -473,7 +473,7 @@ pub fn v_dump_source_info(opt VCompileOptions) !VDumpResult {
 		'arm64-v8a') or { '' }, true)
 
 	util.verbosity_print_cmd(v_cmd, opt.verbosity)
-	v_dump_res := util.run_or_error(v_cmd)!
+	v_dump_res := util.run(v_cmd)
 	if opt.verbosity > 2 {
 		println(v_dump_res)
 	}
