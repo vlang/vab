@@ -219,14 +219,7 @@ pub fn bin_path(ndk_version string) string {
 
 // compiler_min_api returns a compiler with the lowest API level available for `arch` in `ndk_version`.
 pub fn compiler_min_api(lang_type CompilerLanguageType, ndk_version string, arch string) ?string {
-	available_compilers := match lang_type {
-		.c {
-			available_ndk_c_compilers_by_api(ndk_version, arch)
-		}
-		.cpp {
-			available_ndk_cpp_compilers_by_api(ndk_version, arch)
-		}
-	}
+	available_compilers := available_ndk_compilers_by_api(lang_type, ndk_version, arch)
 	mut keys := available_compilers.keys().map(it.int())
 	keys.sort()
 	if compiler := available_compilers[keys.first().str()] {
@@ -239,14 +232,7 @@ pub fn compiler_min_api(lang_type CompilerLanguageType, ndk_version string, arch
 
 // compiler_max_api returns a compiler with the highest API level available for `arch` in `ndk_version`.
 pub fn compiler_max_api(lang_type CompilerLanguageType, ndk_version string, arch string) ?string {
-	available_compilers := match lang_type {
-		.c {
-			available_ndk_c_compilers_by_api(ndk_version, arch)
-		}
-		.cpp {
-			available_ndk_cpp_compilers_by_api(ndk_version, arch)
-		}
-	}
+	available_compilers := available_ndk_compilers_by_api(lang_type, ndk_version, arch)
 	mut keys := available_compilers.keys().map(it.int())
 	keys.sort()
 	if compiler := available_compilers[keys.last().str()] {
@@ -258,14 +244,7 @@ pub fn compiler_max_api(lang_type CompilerLanguageType, ndk_version string, arch
 }
 
 pub fn compiler(lang_type CompilerLanguageType, ndk_version string, arch string, api_level string) ?string {
-	available_compilers := match lang_type {
-		.c {
-			available_ndk_c_compilers_by_api(ndk_version, arch)
-		}
-		.cpp {
-			available_ndk_cpp_compilers_by_api(ndk_version, arch)
-		}
-	}
+	available_compilers := available_ndk_compilers_by_api(lang_type, ndk_version, arch)
 	if compiler := available_compilers[api_level] {
 		return compiler
 	}
@@ -280,7 +259,7 @@ pub fn compiler(lang_type CompilerLanguageType, ndk_version string, arch string,
 		' couldn\'t locate C compiler for architecture "$arch" at API level "$api_level". You could try with a NDK version > "$ndk_version"$other_api_level_supported_hint')
 }
 
-fn available_ndk_c_compilers_by_api(ndk_version string, arch string) map[string]string {
+fn available_ndk_compilers_by_api(lang_type CompilerLanguageType, ndk_version string, arch string) map[string]string {
 	mut compilers := map[string]string{}
 
 	compiler_bin_path := bin_path(ndk_version)
@@ -291,29 +270,9 @@ fn available_ndk_c_compilers_by_api(ndk_version string, arch string) map[string]
 			for level in from .. to {
 				mut compiler := os.join_path(compiler_bin_path, compiler_triplet(arch) +
 					'$level-clang')
-				$if windows {
-					compiler += '.cmd'
+				if lang_type == .cpp {
+					compiler += '++'
 				}
-				if os.is_file(compiler) {
-					compilers['$level'] = compiler
-				}
-			}
-		}
-	}
-	return compilers
-}
-
-fn available_ndk_cpp_compilers_by_api(ndk_version string, arch string) map[string]string {
-	mut compilers := map[string]string{}
-
-	compiler_bin_path := bin_path(ndk_version)
-	if os.is_dir(compiler_bin_path) {
-		from := i16(min_api_available(ndk_version).int())
-		to := i16(max_api_available(ndk_version).int()) + 1
-		if to > from {
-			for level in from .. to {
-				mut compiler := os.join_path(compiler_bin_path, compiler_triplet(arch) +
-					'$level-clang++')
 				$if windows {
 					compiler += '.cmd'
 				}
