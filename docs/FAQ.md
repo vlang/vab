@@ -4,7 +4,7 @@
 - [The app force closes/crashes when I start it?](#the-app-force-closescrashes-when-i-start-it)
 - [`vab` can't find my SDK/NDK/JAVA_HOME?](#vab-cant-find-my-SDKNDKJAVA_HOME)
 - [I can't redirect (f)printf output to a file?](#i-cant-redirect-fprintf-output-to-a-file)
-- [How do I load embedded assets from the APK/AAB?](#how-do-i-load-embedded-assets-from-the-apkaab)
+- [How do I load assets embedded in the APK/AAB?](#how-do-i-load-assets-embedded-in-the-apkaab)
 
 ## `vab` can't find my device when deploying?
 
@@ -39,7 +39,7 @@ by redefining the C functions `printf` and `fprintf`.
 
 To disable this behavior you can pass the `--no-printf-hijack` to `vab`.
 
-## How do I load embedded assets from the APK/AAB?
+## How do I load assets embedded in the APK/AAB?
 
 Use `os.read_apk_asset('relative/path/to/assets/file') or { panic(err) }`
 
