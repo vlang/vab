@@ -66,13 +66,15 @@ vab /path/to/v/source/file/or/dir
 ```
 ... yes, that's it. Your APK should now reside in the current directory.
 
-The fast way from source to a run on the device (build, package, deploy and launch app on device) is:
+The fast way from source to a run on the device
+(build, package, deploy and launch app on device) is:
 ```bash
 vab run --device auto --archs 'armeabi-v7a' /path/to/v/source/file/or/dir
 ```
 The `--archs` flag control what architectures your app is built for.
 You can specify multiple archs with `--archs 'armeabi-v7a, arm64-v8a'`.
-By default `vab` will build for all 4 supported CPU architectures (`arm64-v8a`, `armeabi-v7a`, `x86` and `x86_64`).
+By default `vab` will build for all 4 supported
+CPU architectures (`arm64-v8a`, `armeabi-v7a`, `x86` and `x86_64`).
 
 ## Release
 
@@ -167,7 +169,10 @@ E.g.: `sudo apt install openjdk-8-jdk`
 
 # Notes
 
-`vab` targets as low an API level as possible by default for maximum compatibility, you can however tell it to target newer Android versions by using the `--api` flag. Example: `vab --api 30 <...>`.
+`vab` targets as low an API level as possible by default for maximum
+compatibility, you can however tell it to target newer Android versions
+by using the `--api` flag. Example: `vab --api 30 <...>`.
+
 Installed API levels can be listed with `vab --list-apis`.
 
 # Troubleshooting
