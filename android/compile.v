@@ -39,6 +39,7 @@ pub:
 	min_sdk_version  int = default_min_sdk_version
 }
 
+// uses_gc returns true if a `-gc` flag is found among the passed v flags.
 pub fn (opt CompileOptions) uses_gc() bool {
 	mut uses_gc := true // V default
 	for v_flag in opt.v_flags {
