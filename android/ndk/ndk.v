@@ -270,7 +270,7 @@ fn available_ndk_compilers_by_api(lang_type CompilerLanguageType, ndk_version st
 			for level in from .. to {
 				mut compiler := os.join_path(compiler_bin_path, compiler_triplet(arch) +
 					'$level-clang')
-				if lang_type .cpp {
+				if lang_type == .cpp {
 					compiler += '++'
 				}
 				$if windows {
