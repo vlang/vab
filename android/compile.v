@@ -458,3 +458,6 @@ pub fn compile(opt CompileOptions) ! {
 		}
 	}
 }
+
+pub fn docs_ci_ttt() {
+}
