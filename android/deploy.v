@@ -328,7 +328,11 @@ fn adb_log_step(opt DeployOptions, device_id string) ! {
 		}
 		// Include caller log tags
 		for log_tag in opt.log_tags {
-			adb_logcat_cmd << '$log_tag:D'
+			mut tag := log_tag
+			if !tag.contains(':') {
+				tag += ':D'
+			}
+			adb_logcat_cmd << '$tag'
 		}
 		adb_logcat_cmd << [
 			'V_ANDROID:D',
