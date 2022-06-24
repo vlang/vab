@@ -38,6 +38,10 @@ jobs:
       - name: Build local v
         run: make -j4 && sudo ./v symlink
 
+      - name: Checkout vab
+        uses: actions/checkout@v2
+        with:
+          path: vab
 
       - name: Checkout previous vab
         uses: actions/checkout@v2
