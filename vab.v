@@ -59,8 +59,7 @@ struct Options {
 	keystore_alias string
 	gles_version   int = android.default_gles_version
 	// Build specifics
-	c_flags          []string // flags passed to the C compiler(s)
-	no_printf_hijack bool     // Do not let V redefine printf for log output aka. V_ANDROID_LOG_PRINT
+	no_printf_hijack bool // Do not let V redefine printf for log output aka. V_ANDROID_LOG_PRINT
 	archs            []string
 	// Deploy specifics
 	run              bool
@@ -84,8 +83,11 @@ mut:
 	activity_name          string
 	package_format         string = android.default_package_format
 	package_overrides_path string
+	// Deploy
+	log_tags []string // extra `--log-tag` log tags to include when running with '--log'
 	// Build and packaging
 	is_prod                 bool
+	c_flags                 []string // flags passed to the C compiler(s)
 	v_flags                 []string // flags passed to the V compiler
 	lib_name                string
 	assets_extra            []string
@@ -286,7 +288,9 @@ fn main() {
 		exit(1)
 	}
 
-	log_tag := opt.lib_name
+	mut log_tags := opt.log_tags
+	log_tags << opt.lib_name
+
 	deploy_opt := android.DeployOptions{
 		verbosity: opt.verbosity
 		format: format
@@ -300,7 +304,7 @@ fn main() {
 		clear_device_log: opt.clear_device_log
 		device_log: opt.device_log || opt.device_log_raw
 		log_mode: if opt.device_log_raw { android.LogMode.raw } else { android.LogMode.filtered }
-		log_tag: log_tag
+		log_tags: log_tags
 		run: run
 	}
 
@@ -460,6 +464,7 @@ fn args_to_options(arguments []string, defaults Options) ?(Options, &flag.FlagPa
 		device_log: fp.bool('log', 0, defaults.device_log, 'Enable device logging after deployment.')
 		device_log_raw: fp.bool('log-raw', 0, defaults.device_log_raw, 'Enable unfiltered, full device logging after deployment.')
 		clear_device_log: fp.bool('log-clear', 0, defaults.clear_device_log, 'Clear the log buffer on the device before deployment.')
+		log_tags: fp.string_multi('log-tag', 0, 'Additional tags to include in output when using --log')
 		//
 		keystore: fp.string('keystore', 0, defaults.keystore, 'Use this keystore file to sign the package')
 		keystore_alias: fp.string('keystore-alias', 0, defaults.keystore_alias, 'Use this keystore alias from the keystore file to sign the package')
@@ -496,6 +501,15 @@ fn args_to_options(arguments []string, defaults Options) ?(Options, &flag.FlagPa
 
 	opt.additional_args = fp.finalize()?
 
+	mut c_flags := []string{}
+	c_flags << opt.c_flags
+	for c_flag in defaults.c_flags {
+		if c_flag !in c_flags {
+			c_flags << c_flag
+		}
+	}
+	opt.c_flags = c_flags
+
 	v_flags << opt.v_flags
 	for v_flag in defaults.v_flags {
 		if v_flag !in v_flags {
@@ -503,6 +517,16 @@ fn args_to_options(arguments []string, defaults Options) ?(Options, &flag.FlagPa
 		}
 	}
 	opt.v_flags = v_flags
+
+	mut log_tags := []string{}
+	log_tags << opt.log_tags
+	for log_tag in defaults.log_tags {
+		if log_tag !in log_tags {
+			log_tags << log_tag
+		}
+	}
+	opt.log_tags = log_tags
+
 	return opt, fp
 }
 

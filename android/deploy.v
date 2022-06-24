@@ -21,7 +21,7 @@ pub:
 	log_mode         LogMode = .filtered
 	clear_device_log bool
 	deploy_file      string
-	log_tag          string
+	log_tags         []string
 	run              string // Full id 'com.package.name/com.package.name.ActivityName'
 	kill_adb         bool   // Kill ADB after use.
 }
@@ -326,9 +326,12 @@ fn adb_log_step(opt DeployOptions, device_id string) ! {
 			// Boehm-Demers-Weiser Garbage Collector (bdwgc / libgc)
 			adb_logcat_cmd << 'BDWGC:D'
 		}
+		// Include caller log tags
+		for log_tag in opt.log_tags {
+			adb_logcat_cmd << '$log_tag:D'
+		}
 		adb_logcat_cmd << [
 			'V_ANDROID:D',
-			'$opt.log_tag:D',
 			// 'System.out:D', // Used by many other Android libs - so it's noisy
 			// 'System.err:D',
 			'$opt.activity_name:D',
