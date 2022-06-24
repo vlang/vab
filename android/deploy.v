@@ -330,7 +330,7 @@ fn adb_log_step(opt DeployOptions, device_id string) ! {
 		for log_tag in opt.log_tags {
 			mut tag := log_tag
 			if !tag.contains(':') {
-				tag += ':D'
+				tag += ':V'
 			}
 			adb_logcat_cmd << '$tag'
 		}
