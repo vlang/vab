@@ -51,4 +51,4 @@ jobs:
 
       - name: Check against parent commit
         run: |
-          ./v missdoc --diff $MOPTIONS pvab .
+          ./v missdoc --diff $MOPTIONS pvab vab
