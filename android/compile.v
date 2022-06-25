@@ -104,7 +104,7 @@ pub fn compile(opt CompileOptions) ! {
 	}
 
 	v_meta_dump := v_dump_meta(v_compile_opt)!
-	vcflags := v_meta_dump.c_flags
+	v_cflags := v_meta_dump.c_flags
 	imported_modules := v_meta_dump.imports
 
 	if imported_modules.len == 0 {
@@ -201,7 +201,7 @@ pub fn compile(opt CompileOptions) ! {
 	mut sources := []string{}
 
 	// Grab any external C flags
-	for line in vcflags {
+	for line in v_cflags {
 		if line.contains('.tmp.c') || line.ends_with('.o"') {
 			continue
 		}
