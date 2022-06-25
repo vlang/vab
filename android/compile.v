@@ -85,10 +85,9 @@ pub fn compile(opt CompileOptions) ! {
 		return error('$err_sig: failed making directory "$opt.work_dir". $err')
 	}
 	build_dir := os.join_path(opt.work_dir, 'build')
-	mut jobs := []ShellJob{}
 
 	if opt.verbosity > 0 {
-		println('Compiling V to C' + if opt.parallel { ' in parallel' } else { '' })
+		println('Compiling V to C')
 		if opt.v_flags.len > 0 {
 			println('V flags: `$opt.v_flags`')
 		}
@@ -175,8 +174,6 @@ pub fn compile(opt CompileOptions) ! {
 		os.rmdir_all(build_dir) or { return error('$err_sig: failed removing "$build_dir": $err') }
 	}
 	os.mkdir(build_dir) or { return error('$err_sig: failed making directory "$build_dir".\n$err') }
-
-	v_home := vxt.home()
 
 	mut archs := []string{}
 	if opt.archs.len > 0 {
@@ -274,11 +271,13 @@ pub fn compile(opt CompileOptions) ! {
 		println('Garbage collecting is $uses_gc')
 	}
 
+	v_thirdparty_dir := os.join_path(vxt.home(), 'thirdparty')
+
 	if uses_gc {
 		includes << [
-			'-I"' + os.join_path(v_home, 'thirdparty', 'libgc', 'include') + '"',
+			'-I"' + os.join_path(v_thirdparty_dir, 'libgc', 'include') + '"',
 		]
-		sources << ['"' + os.join_path(v_home, 'thirdparty', 'libgc', 'gc.c') + '"']
+		sources << ['"' + os.join_path(v_thirdparty_dir, 'libgc', 'gc.c') + '"']
 		if is_debug_build {
 			defines << '-DGC_ASSERTIONS'
 			defines << '-DGC_ANDROID_LOG'
@@ -294,7 +293,7 @@ pub fn compile(opt CompileOptions) ! {
 		}
 		// includes << ['-I"$v_home/thirdparty/stb_image"']
 		sources << [
-			'"' + os.join_path(v_home, 'thirdparty', 'stb_image', 'stbi.c') + '"',
+			'"' + os.join_path(v_thirdparty_dir, 'stb_image', 'stbi.c') + '"',
 		]
 	}
 
@@ -303,9 +302,9 @@ pub fn compile(opt CompileOptions) ! {
 		if opt.verbosity > 1 {
 			println('Including cJSON via json module')
 		}
-		includes << ['-I"' + os.join_path(v_home, 'thirdparty', 'cJSON') + '"']
+		includes << ['-I"' + os.join_path(v_thirdparty_dir, 'cJSON') + '"']
 		sources << [
-			'"' + os.join_path(v_home, 'thirdparty', 'cJSON', 'cJSON.c') + '"',
+			'"' + os.join_path(v_thirdparty_dir, 'cJSON', 'cJSON.c') + '"',
 		]
 	}
 
@@ -366,6 +365,8 @@ pub fn compile(opt CompileOptions) ! {
 	if opt.verbosity > 0 {
 		println('Compiling C to $archs' + if opt.parallel { ' in parallel' } else { '' })
 	}
+
+	mut jobs := []ShellJob{}
 
 	// Cross compile .so lib files
 	for arch in archs {
