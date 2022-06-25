@@ -103,9 +103,9 @@ pub fn compile(opt CompileOptions) ! {
 		input: opt.input
 	}
 
-	v_dump_result := v_dump_meta(v_compile_opt)!
-	vcflags := v_dump_result.c_flags
-	imported_modules := v_dump_result.imports
+	v_meta_dump := v_dump_meta(v_compile_opt)!
+	vcflags := v_meta_dump.c_flags
+	imported_modules := v_meta_dump.imports
 
 	if imported_modules.len == 0 {
 		return error('$err_sig: empty module dump.')
