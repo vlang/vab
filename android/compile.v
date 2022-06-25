@@ -118,7 +118,7 @@ pub fn compile(opt CompileOptions) ! {
 		'-gc none',
 		'-os android',
 	]
-	if 'sokol.app' in imported_modules {
+	if 'sokol.sapp' in imported_modules {
 		v_cmd << '-apk'
 	}
 	if !opt.cache {
