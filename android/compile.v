@@ -103,7 +103,7 @@ pub fn compile(opt CompileOptions) ! {
 		input: opt.input
 	}
 
-	v_dump_result := v_dump_source_info(v_compile_opt)!
+	v_dump_result := v_dump_meta(v_compile_opt)!
 	vcflags := v_dump_result.c_flags
 	imported_modules := v_dump_result.imports
 
@@ -429,14 +429,14 @@ pub:
 	flags     []string // flags to pass to the v compiler
 }
 
-struct VDumpResult {
+struct VMetaInfo {
 	imports []string
 	c_flags []string
 }
 
-// v_dump_source_info returns the information dumped by
+// v_dump_meta returns the information dumped by
 // -dump-modules and -dump-c-flags.
-pub fn v_dump_source_info(opt VCompileOptions) !VDumpResult {
+pub fn v_dump_meta(opt VCompileOptions) !VMetaInfo {
 	err_sig := @MOD + '.' + @FN
 	os.mkdir_all(opt.work_dir) or {
 		return error('$err_sig: failed making directory "$opt.work_dir". $err')
@@ -492,7 +492,7 @@ pub fn v_dump_source_info(opt VCompileOptions) !VDumpResult {
 		println('Imported modules: $imported_modules')
 	}
 
-	return VDumpResult{
+	return VMetaInfo{
 		imports: imported_modules
 		c_flags: cflags.split('\n')
 	}
