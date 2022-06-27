@@ -136,7 +136,6 @@ pub fn compile(opt CompileOptions) ! {
 	// Compile to Android compatible C file
 	mut v_cmd := [
 		vexe,
-		'-gc none',
 		'-os android',
 	]
 	if 'sokol.sapp' in imported_modules {
