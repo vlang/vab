@@ -3,7 +3,6 @@
 module android
 
 import os
-import runtime
 import sync.pool
 import vab.vxt
 import vab.android.ndk
@@ -132,12 +131,23 @@ pub fn compile(opt CompileOptions) ! {
 
 	v_output_file := os.join_path(opt.work_dir, 'v_android.c')
 
+	v_thirdparty_dir := os.join_path(vxt.home(), 'thirdparty')
+
+	// Boehm-Demers-Weiser Garbage Collector (bdwgc / libgc)
+	uses_gc := opt.uses_gc()
+	if opt.verbosity > 1 {
+		println('Garbage collecting is $uses_gc')
+	}
+
 	vexe := vxt.vexe()
 	// Compile to Android compatible C file
 	mut v_cmd := [
 		vexe,
 		'-os android',
 	]
+	if !uses_gc {
+		v_cmd << '-gc none'
+	}
 	if 'sokol.sapp' in imported_modules {
 		v_cmd << '-apk'
 	}
@@ -293,6 +303,10 @@ pub fn compile(opt CompileOptions) ! {
 		}
 
 		ldflags << ['-uANativeActivity_onCreate', '-usokol_main']
+	}
+
+	if uses_gc {
+		includes << '-I"' + os.join_path(v_thirdparty_dir, 'libgc', 'include') + '"'
 	}
 
 	// misc
@@ -540,6 +554,7 @@ pub fn compile_v_imports_c_dependencies(opt CompileOptions, imported_modules []s
 	err_sig := @MOD + '.' + @FN
 	mut o_files := map[string][]string{}
 
+	uses_gc := opt.uses_gc()
 	build_dir := opt.build_directory()!
 	is_debug_build := '-cg' in opt.v_flags || '-g' in opt.v_flags
 
@@ -562,12 +577,6 @@ pub fn compile_v_imports_c_dependencies(opt CompileOptions, imported_modules []s
 	android_includes << '-I"' + os.join_path(ndk_sysroot, 'usr', 'include', 'android') + '"'
 
 	v_thirdparty_dir := os.join_path(vxt.home(), 'thirdparty')
-
-	// Boehm-Demers-Weiser Garbage Collector (bdwgc / libgc)
-	uses_gc := opt.uses_gc()
-	if opt.verbosity > 1 {
-		println('Garbage collecting is $uses_gc')
-	}
 
 	archs := opt.archs()!
 
