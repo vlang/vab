@@ -335,6 +335,12 @@ fn main() {
 		}
 	}
 
+	mut archs := opt.archs.filter(it.trim(' ') != '')
+	// Compile sources for all Android archs if no valid archs found
+	if archs.len <= 0 {
+		archs = android.default_archs.clone()
+	}
+
 	compile_cache_key := if os.is_dir(input) || input_ext == '.v' { opt.input } else { '' }
 	comp_opt := android.CompileOptions{
 		verbosity: opt.verbosity
@@ -346,7 +352,7 @@ fn main() {
 		no_printf_hijack: opt.no_printf_hijack
 		v_flags: opt.v_flags
 		c_flags: opt.c_flags
-		archs: opt.archs.filter(it.trim(' ') != '')
+		archs: archs
 		work_dir: opt.work_dir
 		input: opt.input
 		ndk_version: opt.ndk_version

@@ -53,6 +53,22 @@ pub fn (opt CompileOptions) uses_gc() bool {
 	return uses_gc
 }
 
+// archs returns an array of target architectures.
+pub fn (opt CompileOptions) archs() ![]string {
+	mut archs := []string{}
+	if opt.archs.len > 0 {
+		for arch in opt.archs.map(it.trim_space()) {
+			if arch in android.default_archs {
+				archs << arch
+			} else {
+				return error(@MOD + '.' + @FN +
+					': Architechture "$arch" not one of $android.default_archs')
+			}
+		}
+	}
+	return archs
+}
+
 struct ShellJob {
 	cmd      []string
 	env_vars map[string]string
@@ -175,20 +191,7 @@ pub fn compile(opt CompileOptions) ! {
 	}
 	os.mkdir(build_dir) or { return error('$err_sig: failed making directory "$build_dir".\n$err') }
 
-	mut archs := []string{}
-	if opt.archs.len > 0 {
-		for a in opt.archs {
-			if a in android.default_archs {
-				archs << a.trim_space()
-			} else {
-				eprintln('Architechture "$a" not one of $android.default_archs')
-			}
-		}
-	}
-	// Compile sources for all Android archs if no valid archs found
-	if archs.len <= 0 {
-		archs = android.default_archs.clone()
-	}
+	archs := opt.archs()!
 
 	// For all compilers
 	mut cflags := opt.c_flags
