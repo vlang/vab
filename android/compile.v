@@ -401,9 +401,9 @@ pub fn compile(opt CompileOptions) ! {
 
 	// Cross compile .so lib files
 	for arch in archs {
-		arch_o_dir := os.join_path(build_dir, 'lib', arch)
-		os.mkdir_all(arch_o_dir) or {
-			return error('$err_sig: failed making directory "$arch_o_dir".\n$err')
+		arch_lib_dir := os.join_path(build_dir, 'lib', arch)
+		os.mkdir_all(arch_lib_dir) or {
+			return error('$err_sig: failed making directory "$arch_lib_dir".\n$err')
 		}
 
 		arch_o_files := o_files[arch].map('"' + it + '"')
@@ -411,7 +411,7 @@ pub fn compile(opt CompileOptions) ! {
 		build_cmd := [
 			arch_cc[arch],
 			arch_o_files.join(' '),
-			'-o "$arch_o_dir/lib${opt.lib_name}.so"',
+			'-o "$arch_lib_dir/lib${opt.lib_name}.so"',
 			'-L"' + arch_libs[arch] + '"',
 			ldflags.join(' '),
 		]

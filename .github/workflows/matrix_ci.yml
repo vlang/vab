@@ -90,7 +90,7 @@ jobs:
           [ -f java-${{ matrix.java-version }}/$example/$package_id.aab ]
         done
 
-  build-v-examples-with-gc-enabled:
+  build-v-examples-with-gc-disabled:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -99,7 +99,7 @@ jobs:
         android-api: [27, 30]
     timeout-minutes: 30
     env:
-      VAB_FLAGS: -v 3 --build-tools 29.0.0
+      VAB_FLAGS: -v 3 -gc none --build-tools 29.0.0
     steps:
     - uses: actions/setup-java@v2
       with:
