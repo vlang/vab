@@ -344,7 +344,9 @@ pub fn compile(opt CompileOptions) ! {
 			if opt.parallel { ' in parallel' } else { '' })
 	}
 
-	mut o_files := compile_v_imports_c_dependencies(opt, imported_modules)!
+	vicd := compile_v_imports_c_dependencies(opt, imported_modules)!
+	mut o_files := vicd.o_files.clone()
+	mut a_files := vicd.a_files.clone()
 
 	if opt.verbosity > 0 {
 		println('Compiling C output for $archs' + if opt.parallel { ' in parallel' } else { '' })
@@ -420,11 +422,13 @@ pub fn compile(opt CompileOptions) ! {
 		}
 
 		arch_o_files := o_files[arch].map('"' + it + '"')
+		arch_a_files := a_files[arch].map('"' + it + '"')
 
 		build_cmd := [
 			arch_cc[arch],
 			arch_o_files.join(' '),
 			'-o "$arch_lib_dir/lib${opt.lib_name}.so"',
+			arch_a_files.join(' '),
 			'-L"' + arch_libs[arch] + '"',
 			ldflags.join(' '),
 		]
@@ -479,6 +483,20 @@ pub:
 	flags     []string // flags to pass to the v compiler
 }
 
+// uses_gc returns true if a `-gc` flag is found among the passed v flags.
+pub fn (opt VCompileOptions) uses_gc() bool {
+	mut uses_gc := true // V default
+	for v_flag in opt.flags {
+		if v_flag.starts_with('-gc') {
+			if v_flag.ends_with('none') {
+				uses_gc = false
+			}
+			break
+		}
+	}
+	return uses_gc
+}
+
 struct VMetaInfo {
 pub:
 	imports []string
@@ -495,6 +513,8 @@ pub fn v_dump_meta(opt VCompileOptions) !VMetaInfo {
 
 	vexe := vxt.vexe()
 
+	uses_gc := opt.uses_gc()
+
 	// Dump modules and C flags to files
 	v_cflags_file := os.join_path(opt.work_dir, 'v.cflags')
 	os.rm(v_cflags_file) or {}
@@ -504,8 +524,10 @@ pub fn v_dump_meta(opt VCompileOptions) !VMetaInfo {
 	mut v_cmd := [
 		vexe,
 		'-os android',
-		'-gc none',
 	]
+	if !uses_gc {
+		v_cmd << '-gc none'
+	}
 	if !opt.cache {
 		v_cmd << '-nocache'
 	}
@@ -549,10 +571,18 @@ pub fn v_dump_meta(opt VCompileOptions) !VMetaInfo {
 	}
 }
 
+struct VImportCDeps {
+pub:
+	o_files map[string][]string
+	a_files map[string][]string
+}
+
 // compile_v_imports_c_dependencies compiles the C dependencies of V's module imports.
-pub fn compile_v_imports_c_dependencies(opt CompileOptions, imported_modules []string) !map[string][]string {
+pub fn compile_v_imports_c_dependencies(opt CompileOptions, imported_modules []string) !VImportCDeps {
 	err_sig := @MOD + '.' + @FN
+
 	mut o_files := map[string][]string{}
+	mut a_files := map[string][]string{}
 
 	uses_gc := opt.uses_gc()
 	build_dir := opt.build_directory()!
@@ -593,6 +623,10 @@ pub fn compile_v_imports_c_dependencies(opt CompileOptions, imported_modules []s
 			return error('$err_sig: failed getting NDK compiler.\n$err')
 		}
 
+		// ar_tool := ndk.tool(.ar, opt.ndk_version, arch) or {
+		//	return error('$err_sig: failed getting ar tool.\n$err')
+		//}
+
 		if uses_gc {
 			if opt.verbosity > 1 {
 				println('Compiling libgc ($arch) via -gc flag')
@@ -603,10 +637,13 @@ pub fn compile_v_imports_c_dependencies(opt CompileOptions, imported_modules []s
 				defines << '-DGC_ASSERTIONS'
 				defines << '-DGC_ANDROID_LOG'
 			}
+			defines << '-DGC_THREADS=1'
+			defines << '-DGC_BUILTIN_ATOMIC=1'
 			defines << '-D_REENTRANT'
-			defines << '-DUSE_MMAP' // Will otherwise crash with a message with a path to the lib in GC_unix_mmap_get_mem+528
+			// defines << '-DUSE_MMAP' // When the gc is built into the exe: Will otherwise crash with a message with a path to the lib in GC_unix_mmap_get_mem+528
 
 			o_file := os.join_path(arch_o_dir, 'gc.o')
+			// a_file := os.join_path(arch_o_dir, 'libgc.a')
 			build_cmd := [
 				compiler,
 				cflags.join(' '),
@@ -615,7 +652,27 @@ pub fn compile_v_imports_c_dependencies(opt CompileOptions, imported_modules []s
 				'-c "' + os.join_path(v_thirdparty_dir, 'libgc', 'gc.c') + '"',
 				'-o "$o_file"',
 			]
+			util.verbosity_print_cmd(build_cmd, opt.verbosity)
+			o_res := util.run_or_error(build_cmd)!
+			if opt.verbosity > 2 {
+				eprintln(o_res)
+			}
 
+			// Build static .a
+			// build_static_cmd := [
+			//	ar_tool,
+			//	'crsD',
+			//	'"$a_file"',
+			//	'"$o_file"',
+			//]
+
+			// util.verbosity_print_cmd(build_static_cmd, opt.verbosity)
+			// a_res := util.run_or_error(build_static_cmd)!
+			// if opt.verbosity > 2 {
+			//	eprintln(a_res)
+			//}
+
+			// a_files[arch] << a_file
 			o_files[arch] << o_file
 
 			jobs << ShellJob{
@@ -688,5 +745,8 @@ pub fn compile_v_imports_c_dependencies(opt CompileOptions, imported_modules []s
 			}
 		}
 	}
-	return o_files
+	return VImportCDeps{
+		o_files: o_files
+		a_files: a_files
+	}
 }
