@@ -331,7 +331,7 @@ pub fn compile(opt CompileOptions) ! {
 			if opt.parallel { ' in parallel' } else { '' })
 	}
 
-	mut o_files := compile_imports_c_dependencies(opt, imported_modules)!
+	mut o_files := compile_v_imports_c_dependencies(opt, imported_modules)!
 
 	if opt.verbosity > 0 {
 		println('Compiling C output for $archs' + if opt.parallel { ' in parallel' } else { '' })
@@ -378,7 +378,7 @@ pub fn compile(opt CompileOptions) ! {
 	}
 
 	if opt.parallel {
-		mut pp := pool.new_pool_processor(maxjobs: runtime.nr_cpus() - 1, callback: async_run)
+		mut pp := pool.new_pool_processor(callback: async_run)
 		pp.work_on_items(jobs)
 		for job_res in pp.get_results<ShellJobResult>() {
 			util.verbosity_print_cmd(job_res.job.cmd, opt.verbosity)
@@ -422,7 +422,7 @@ pub fn compile(opt CompileOptions) ! {
 	}
 
 	if opt.parallel {
-		mut pp := pool.new_pool_processor(maxjobs: runtime.nr_cpus() - 1, callback: async_run)
+		mut pp := pool.new_pool_processor(callback: async_run)
 		pp.work_on_items(jobs)
 		for job_res in pp.get_results<ShellJobResult>() {
 			util.verbosity_print_cmd(job_res.job.cmd, opt.verbosity)
@@ -536,7 +536,8 @@ pub fn v_dump_meta(opt VCompileOptions) !VMetaInfo {
 	}
 }
 
-pub fn compile_imports_c_dependencies(opt CompileOptions, imported_modules []string) !map[string][]string {
+// compile_v_imports_c_dependencies compiles the C dependencies of V's module imports.
+pub fn compile_v_imports_c_dependencies(opt CompileOptions, imported_modules []string) !map[string][]string {
 	err_sig := @MOD + '.' + @FN
 	mut o_files := map[string][]string{}
 
@@ -660,7 +661,7 @@ pub fn compile_imports_c_dependencies(opt CompileOptions, imported_modules []str
 	}
 
 	if opt.parallel {
-		mut pp := pool.new_pool_processor(maxjobs: runtime.nr_cpus() - 1, callback: async_run)
+		mut pp := pool.new_pool_processor(callback: async_run)
 		pp.work_on_items(jobs)
 		for job_res in pp.get_results<ShellJobResult>() {
 			util.verbosity_print_cmd(job_res.job.cmd, opt.verbosity)
