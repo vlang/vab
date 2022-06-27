@@ -431,6 +431,7 @@ pub:
 }
 
 struct VMetaInfo {
+pub:
 	imports []string
 	c_flags []string
 }
