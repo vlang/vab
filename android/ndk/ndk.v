@@ -355,6 +355,7 @@ pub fn libs_path(ndk_version string, arch string, api_level string) ?string {
 
 [inline]
 pub fn sysroot_path(ndk_version string) ?string {
+	// NOTE "$ndk_root/sysroot/usr/include" was deprecated since NDK r19
 	mut sysroot_path := os.join_path(root_version(ndk_version), 'toolchains', 'llvm',
 		'prebuilt', host_arch(), 'sysroot')
 
