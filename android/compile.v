@@ -85,104 +85,54 @@ pub fn compile(opt CompileOptions) ! {
 		return error('$err_sig: failed making directory "$opt.work_dir". $err')
 	}
 	build_dir := os.join_path(opt.work_dir, 'build')
-	mut jobs := []ShellJob{}
 
 	if opt.verbosity > 0 {
-		println('Compiling V to C' + if opt.parallel { ' in parallel' } else { '' })
+		println('Compiling V to C')
 		if opt.v_flags.len > 0 {
 			println('V flags: `$opt.v_flags`')
 		}
 	}
-	vexe := vxt.vexe()
+
 	v_output_file := os.join_path(opt.work_dir, 'v_android.c')
 
-	// Dump modules and C flags to files
-	v_cflags_file := os.join_path(opt.work_dir, 'v.cflags')
-	os.rm(v_cflags_file) or {}
-	v_dump_modules_file := os.join_path(opt.work_dir, 'v.modules')
-	os.rm(v_dump_modules_file) or {}
-
-	mut v_cmd := [vexe]
-	if !opt.cache {
-		v_cmd << '-nocache'
+	v_compile_opt := VCompileOptions{
+		cache: opt.cache
+		flags: opt.v_flags
+		work_dir: os.join_path(opt.work_dir, 'v')
+		input: opt.input
 	}
 
-	v_cmd << opt.v_flags
-	v_cmd << [
-		'-gc none',
-		'-cc clang',
-		'-dump-modules "$v_dump_modules_file"',
-		'-dump-c-flags "$v_cflags_file"',
-		'-os android',
-		'-apk',
-	]
-	v_cmd << opt.input
+	v_meta_dump := v_dump_meta(v_compile_opt)!
+	v_cflags := v_meta_dump.c_flags
+	imported_modules := v_meta_dump.imports
 
-	// NOTE this command fails with a C compile error but the output we need is still
-	// present... Yes - not exactly pretty.
-	// VCROSS_COMPILER_NAME is needed (on at least Windows)
-	jobs << ShellJob{
-		env_vars: {
-			'VCROSS_COMPILER_NAME': ndk.compiler(.c, opt.ndk_version, 'arm64-v8a', opt.api_level) or {
-				''
-			}
-		}
-		cmd: v_cmd.clone()
+	if imported_modules.len == 0 {
+		return error('$err_sig: empty module dump.')
 	}
 
+	vexe := vxt.vexe()
 	// Compile to Android compatible C file
-	v_cmd = [vexe]
+	mut v_cmd := [
+		vexe,
+		'-gc none',
+		'-os android',
+	]
+	if 'sokol.sapp' in imported_modules {
+		v_cmd << '-apk'
+	}
 	if !opt.cache {
 		v_cmd << '-nocache'
 	}
 	v_cmd << opt.v_flags
 	v_cmd << [
-		'-gc none',
-		'-os android',
-		'-apk',
 		'-o "$v_output_file"',
 	]
 	v_cmd << opt.input
-	jobs << ShellJob{
-		cmd: v_cmd.clone()
-	}
 
-	if opt.parallel {
-		mut pp := pool.new_pool_processor(maxjobs: runtime.nr_cpus() - 1, callback: async_run)
-		pp.work_on_items(jobs)
-		for job_res in pp.get_results<ShellJobResult>() {
-			util.verbosity_print_cmd(job_res.job.cmd, opt.verbosity)
-			if '-cc clang' !in job_res.job.cmd {
-				util.exit_on_bad_result(job_res.result, '${job_res.job.cmd[0]} failed with return code $job_res.result.exit_code')
-				if opt.verbosity > 2 {
-					println(job_res.result.output)
-				}
-			}
-		}
-	} else {
-		for job in jobs {
-			util.verbosity_print_cmd(job.cmd, opt.verbosity)
-			job_res := sync_run(job)
-			if '-cc clang' !in job_res.job.cmd {
-				util.exit_on_bad_result(job_res.result, '${job.cmd[0]} failed with return code $job_res.result.exit_code')
-				if opt.verbosity > 2 {
-					println(job_res.result.output)
-				}
-			}
-		}
-	}
-	jobs.clear()
-
-	// Parse imported modules from dump
-	mut imported_modules := os.read_file(v_dump_modules_file) or {
-		return error('$err_sig: failed reading module dump file "$v_dump_modules_file". $err')
-	}.split('\n').filter(it != '')
-	imported_modules.sort()
+	util.verbosity_print_cmd(v_cmd, opt.verbosity)
+	v_dump_res := util.run_or_error(v_cmd)!
 	if opt.verbosity > 2 {
-		println('Imported modules: $imported_modules')
-	}
-	if imported_modules.len == 0 {
-		return error('$err_sig: empty module dump file "$v_dump_modules_file".')
+		println(v_dump_res)
 	}
 
 	// Poor man's cache check
@@ -225,8 +175,6 @@ pub fn compile(opt CompileOptions) ! {
 	}
 	os.mkdir(build_dir) or { return error('$err_sig: failed making directory "$build_dir".\n$err') }
 
-	v_home := vxt.home()
-
 	mut archs := []string{}
 	if opt.archs.len > 0 {
 		for a in opt.archs {
@@ -249,11 +197,8 @@ pub fn compile(opt CompileOptions) ! {
 	mut ldflags := []string{}
 	mut sources := []string{}
 
-	// Read in the dumped cflags
-	vcflags := os.read_file(v_cflags_file) or {
-		return error('$err_sig: failed reading C flags to "$v_cflags_file". $err')
-	}
-	for line in vcflags.split('\n') {
+	// Grab any external C flags
+	for line in v_cflags {
 		if line.contains('.tmp.c') || line.ends_with('.o"') {
 			continue
 		}
@@ -326,11 +271,13 @@ pub fn compile(opt CompileOptions) ! {
 		println('Garbage collecting is $uses_gc')
 	}
 
+	v_thirdparty_dir := os.join_path(vxt.home(), 'thirdparty')
+
 	if uses_gc {
 		includes << [
-			'-I"' + os.join_path(v_home, 'thirdparty', 'libgc', 'include') + '"',
+			'-I"' + os.join_path(v_thirdparty_dir, 'libgc', 'include') + '"',
 		]
-		sources << ['"' + os.join_path(v_home, 'thirdparty', 'libgc', 'gc.c') + '"']
+		sources << ['"' + os.join_path(v_thirdparty_dir, 'libgc', 'gc.c') + '"']
 		if is_debug_build {
 			defines << '-DGC_ASSERTIONS'
 			defines << '-DGC_ANDROID_LOG'
@@ -346,7 +293,7 @@ pub fn compile(opt CompileOptions) ! {
 		}
 		// includes << ['-I"$v_home/thirdparty/stb_image"']
 		sources << [
-			'"' + os.join_path(v_home, 'thirdparty', 'stb_image', 'stbi.c') + '"',
+			'"' + os.join_path(v_thirdparty_dir, 'stb_image', 'stbi.c') + '"',
 		]
 	}
 
@@ -355,9 +302,9 @@ pub fn compile(opt CompileOptions) ! {
 		if opt.verbosity > 1 {
 			println('Including cJSON via json module')
 		}
-		includes << ['-I"' + os.join_path(v_home, 'thirdparty', 'cJSON') + '"']
+		includes << ['-I"' + os.join_path(v_thirdparty_dir, 'cJSON') + '"']
 		sources << [
-			'"' + os.join_path(v_home, 'thirdparty', 'cJSON', 'cJSON.c') + '"',
+			'"' + os.join_path(v_thirdparty_dir, 'cJSON', 'cJSON.c') + '"',
 		]
 	}
 
@@ -419,6 +366,8 @@ pub fn compile(opt CompileOptions) ! {
 		println('Compiling C to $archs' + if opt.parallel { ' in parallel' } else { '' })
 	}
 
+	mut jobs := []ShellJob{}
+
 	// Cross compile .so lib files
 	for arch in archs {
 		arch_lib_dir := os.join_path(build_dir, 'lib', arch)
@@ -469,5 +418,83 @@ pub fn compile(opt CompileOptions) ! {
 		os.cp(armeabi_lib_src, armeabi_lib_dst) or {
 			return error('$err_sig: failed copying "$armeabi_lib_src" to "$armeabi_lib_dst".\n$err')
 		}
+	}
+}
+
+pub struct VCompileOptions {
+pub:
+	verbosity int // level of verbosity
+	cache     bool
+	work_dir  string // temporary work directory
+	input     string
+	flags     []string // flags to pass to the v compiler
+}
+
+struct VMetaInfo {
+	imports []string
+	c_flags []string
+}
+
+// v_dump_meta returns the information dumped by
+// -dump-modules and -dump-c-flags.
+pub fn v_dump_meta(opt VCompileOptions) !VMetaInfo {
+	err_sig := @MOD + '.' + @FN
+	os.mkdir_all(opt.work_dir) or {
+		return error('$err_sig: failed making directory "$opt.work_dir". $err')
+	}
+
+	vexe := vxt.vexe()
+
+	// Dump modules and C flags to files
+	v_cflags_file := os.join_path(opt.work_dir, 'v.cflags')
+	os.rm(v_cflags_file) or {}
+	v_dump_modules_file := os.join_path(opt.work_dir, 'v.modules')
+	os.rm(v_dump_modules_file) or {}
+
+	mut v_cmd := [
+		vexe,
+		'-os android',
+		'-gc none',
+	]
+	if !opt.cache {
+		v_cmd << '-nocache'
+	}
+	v_cmd << opt.flags
+	v_cmd << [
+		'-cc clang',
+		'-dump-modules "$v_dump_modules_file"',
+		'-dump-c-flags "$v_cflags_file"',
+	]
+	v_cmd << opt.input
+
+	// NOTE this command fails with a C compile error but the output we need is still
+	// present... Yes - not exactly pretty.
+	// VCROSS_COMPILER_NAME is needed (on at least Windows) - just get whatever compiler is available
+	os.setenv('VCROSS_COMPILER_NAME', ndk.compiler_min_api(.c, ndk.default_version(),
+		'arm64-v8a') or { '' }, true)
+
+	util.verbosity_print_cmd(v_cmd, opt.verbosity)
+	v_dump_res := util.run(v_cmd)
+	if opt.verbosity > 2 {
+		println(v_dump_res)
+	}
+
+	// Read in the dumped cflags
+	cflags := os.read_file(v_cflags_file) or {
+		return error('$err_sig: failed reading C flags to "$v_cflags_file". $err')
+	}
+
+	// Parse imported modules from dump
+	mut imported_modules := os.read_file(v_dump_modules_file) or {
+		return error('$err_sig: failed reading module dump file "$v_dump_modules_file". $err')
+	}.split('\n').filter(it != '')
+	imported_modules.sort()
+	if opt.verbosity > 2 {
+		println('Imported modules: $imported_modules')
+	}
+
+	return VMetaInfo{
+		imports: imported_modules
+		c_flags: cflags.split('\n')
 	}
 }
