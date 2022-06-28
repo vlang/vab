@@ -403,18 +403,22 @@ pub fn compile(opt CompileOptions) ! {
 		pp.work_on_items(jobs)
 		for job_res in pp.get_results<ShellJobResult>() {
 			util.verbosity_print_cmd(job_res.job.cmd, opt.verbosity)
-			util.exit_on_bad_result(job_res.result, '${job_res.job.cmd[0]} failed with return code $job_res.result.exit_code')
 			if opt.verbosity > 2 {
-				println(job_res.result.output)
+				println('$job_res.result.output')
+			}
+			if job_res.result.exit_code != 0 {
+				return error('${job_res.job.cmd[0]} failed with return code $job_res.result.exit_code')
 			}
 		}
 	} else {
 		for job in jobs {
 			util.verbosity_print_cmd(job.cmd, opt.verbosity)
 			job_res := sync_run(job)
-			util.exit_on_bad_result(job_res.result, '${job.cmd[0]} failed with return code $job_res.result.exit_code')
 			if opt.verbosity > 2 {
-				println(job_res.result.output)
+				println('$job_res.result.output')
+			}
+			if job_res.result.exit_code != 0 {
+				return error('${job_res.job.cmd[0]} failed with return code $job_res.result.exit_code')
 			}
 		}
 	}
@@ -449,18 +453,22 @@ pub fn compile(opt CompileOptions) ! {
 		pp.work_on_items(jobs)
 		for job_res in pp.get_results<ShellJobResult>() {
 			util.verbosity_print_cmd(job_res.job.cmd, opt.verbosity)
-			util.exit_on_bad_result(job_res.result, '${job_res.job.cmd[0]} failed with return code $job_res.result.exit_code')
 			if opt.verbosity > 2 {
-				println(job_res.result.output)
+				println('$job_res.result.output')
+			}
+			if job_res.result.exit_code != 0 {
+				return error('${job_res.job.cmd[0]} failed with return code $job_res.result.exit_code')
 			}
 		}
 	} else {
 		for job in jobs {
 			util.verbosity_print_cmd(job.cmd, opt.verbosity)
 			job_res := sync_run(job)
-			util.exit_on_bad_result(job_res.result, '${job.cmd[0]} failed with return code $job_res.result.exit_code')
 			if opt.verbosity > 2 {
-				println(job_res.result.output)
+				println('$job_res.result.output')
+			}
+			if job_res.result.exit_code != 0 {
+				return error('${job_res.job.cmd[0]} failed with return code $job_res.result.exit_code')
 			}
 		}
 	}
@@ -718,18 +726,22 @@ pub fn compile_v_imports_c_dependencies(opt CompileOptions, imported_modules []s
 		pp.work_on_items(jobs)
 		for job_res in pp.get_results<ShellJobResult>() {
 			util.verbosity_print_cmd(job_res.job.cmd, opt.verbosity)
-			util.exit_on_bad_result(job_res.result, '${job_res.job.cmd[0]} failed with return code $job_res.result.exit_code')
 			if opt.verbosity > 2 {
 				println('$job_res.result.output')
+			}
+			if job_res.result.exit_code != 0 {
+				return error('${job_res.job.cmd[0]} failed with return code $job_res.result.exit_code')
 			}
 		}
 	} else {
 		for job in jobs {
 			util.verbosity_print_cmd(job.cmd, opt.verbosity)
 			job_res := sync_run(job)
-			util.exit_on_bad_result(job_res.result, '${job.cmd[0]} failed with return code $job_res.result.exit_code')
 			if opt.verbosity > 2 {
 				println('$job_res.result.output')
+			}
+			if job_res.result.exit_code != 0 {
+				return error('${job_res.job.cmd[0]} failed with return code $job_res.result.exit_code')
 			}
 		}
 	}
