@@ -378,7 +378,7 @@ pub fn compile(opt CompileOptions) ! {
 			}
 		}
 
-		arch_lib := os.join_path(arch_o_dir, '${opt.lib_name}.o')
+		arch_o_file := os.join_path(arch_o_dir, '${opt.lib_name}.o')
 		// Compile .o
 		build_cmd := [
 			arch_cc[arch],
@@ -388,10 +388,10 @@ pub fn compile(opt CompileOptions) ! {
 			defines.join(' '),
 			arch_cflags[arch].join(' '),
 			'-c "$v_output_file"',
-			'-o "$arch_lib"',
+			'-o "$arch_o_file"',
 		]
 
-		o_files[arch] << arch_lib
+		o_files[arch] << arch_o_file
 
 		jobs << ShellJob{
 			cmd: build_cmd
