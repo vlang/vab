@@ -553,7 +553,7 @@ pub fn v_dump_meta(opt VCompileOptions) !VMetaInfo {
 
 	util.verbosity_print_cmd(v_cmd, opt.verbosity)
 	v_dump_res := util.run(v_cmd)
-	if opt.verbosity > 2 {
+	if opt.verbosity > 3 {
 		println(v_dump_res)
 	}
 
