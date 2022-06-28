@@ -115,6 +115,7 @@ pub fn compile(opt CompileOptions) ! {
 	}
 
 	v_compile_opt := VCompileOptions{
+		verbosity: opt.verbosity
 		cache: opt.cache
 		flags: opt.v_flags
 		work_dir: os.join_path(opt.work_dir, 'v')
