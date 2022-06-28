@@ -230,6 +230,11 @@ pub fn compile(opt CompileOptions) ! {
 		}
 		if line.starts_with('-l') {
 			if line.contains('-lgc') {
+				// compiled in
+				continue
+			}
+			if line.contains('-lpthread') {
+				// pthread is built into bionic
 				continue
 			}
 			ldflags << line
