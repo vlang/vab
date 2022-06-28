@@ -25,6 +25,7 @@ The following flags does the same as if they were passed to the "v" compiler:
 -autofree, -gc <type>, -g, -cg, -prod, -showcc'
 	exe_git_hash         = vab_commit_hash()
 	work_directory       = vab_tmp_work_dir()
+	cache_directory      = vab_cache_dir()
 	rip_vflags           = ['-autofree', '-gc', '-g', '-cg', '-prod', 'run', '-showcc']
 	subcmds              = ['complete', 'test-cleancode']
 	accepted_input_files = ['.v', '.apk', '.aab']
@@ -279,7 +280,10 @@ fn main() {
 			eprintln('Keystore "$keystore.path" is not a valid file')
 			eprintln('Notice: Signing with debug keystore')
 		}
-		keystore_dir := os.join_path(work_directory, 'keystore')
+		// NOTE use a cache directory to prevent 2 things:
+		// 1. Avoid adb error "INSTALL_FAILED_UPDATE_INCOMPATIBLE" between machine reboots
+		// 2. Do not pollute current directory / pwd with a debug.keystore
+		keystore_dir := os.join_path(cache_directory, 'keystore')
 		if !os.is_dir(keystore_dir) {
 			os.mkdir_all(keystore_dir) or {
 				eprintln('Could make directory for debug keystore.\n$err')
@@ -289,7 +293,7 @@ fn main() {
 		keystore.path = os.join_path(keystore_dir, 'debug.keystore')
 	}
 	keystore = android.resolve_keystore(keystore, opt.verbosity) or {
-		eprintln('Could not resolve at keystore.\n$err')
+		eprintln('Could not resolve keystore.\n$err')
 		exit(1)
 	}
 
@@ -946,6 +950,10 @@ fn vab_commit_hash() string {
 
 fn vab_tmp_work_dir() string {
 	return os.join_path(os.temp_dir(), exe_name.replace(' ', '_').replace('.exe', '').to_lower())
+}
+
+fn vab_cache_dir() string {
+	return os.join_path(os.cache_dir(), exe_name.replace(' ', '_').replace('.exe', '').to_lower())
 }
 
 fn doctor(opt Options) {
