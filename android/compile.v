@@ -115,6 +115,7 @@ pub fn compile(opt CompileOptions) ! {
 	}
 
 	v_compile_opt := VCompileOptions{
+		verbosity: opt.verbosity
 		cache: opt.cache
 		flags: opt.v_flags
 		work_dir: os.join_path(opt.work_dir, 'v')
@@ -377,7 +378,7 @@ pub fn compile(opt CompileOptions) ! {
 			}
 		}
 
-		arch_lib := os.join_path(arch_o_dir, '${opt.lib_name}.o')
+		arch_o_file := os.join_path(arch_o_dir, '${opt.lib_name}.o')
 		// Compile .o
 		build_cmd := [
 			arch_cc[arch],
@@ -387,10 +388,10 @@ pub fn compile(opt CompileOptions) ! {
 			defines.join(' '),
 			arch_cflags[arch].join(' '),
 			'-c "$v_output_file"',
-			'-o "$arch_lib"',
+			'-o "$arch_o_file"',
 		]
 
-		o_files[arch] << arch_lib
+		o_files[arch] << arch_o_file
 
 		jobs << ShellJob{
 			cmd: build_cmd
@@ -402,18 +403,22 @@ pub fn compile(opt CompileOptions) ! {
 		pp.work_on_items(jobs)
 		for job_res in pp.get_results<ShellJobResult>() {
 			util.verbosity_print_cmd(job_res.job.cmd, opt.verbosity)
-			util.exit_on_bad_result(job_res.result, '${job_res.job.cmd[0]} failed with return code $job_res.result.exit_code')
 			if opt.verbosity > 2 {
-				println(job_res.result.output)
+				println('$job_res.result.output')
+			}
+			if job_res.result.exit_code != 0 {
+				return error('${job_res.job.cmd[0]} failed with return code $job_res.result.exit_code')
 			}
 		}
 	} else {
 		for job in jobs {
 			util.verbosity_print_cmd(job.cmd, opt.verbosity)
 			job_res := sync_run(job)
-			util.exit_on_bad_result(job_res.result, '${job.cmd[0]} failed with return code $job_res.result.exit_code')
 			if opt.verbosity > 2 {
-				println(job_res.result.output)
+				println('$job_res.result.output')
+			}
+			if job_res.result.exit_code != 0 {
+				return error('${job_res.job.cmd[0]} failed with return code $job_res.result.exit_code')
 			}
 		}
 	}
@@ -448,18 +453,22 @@ pub fn compile(opt CompileOptions) ! {
 		pp.work_on_items(jobs)
 		for job_res in pp.get_results<ShellJobResult>() {
 			util.verbosity_print_cmd(job_res.job.cmd, opt.verbosity)
-			util.exit_on_bad_result(job_res.result, '${job_res.job.cmd[0]} failed with return code $job_res.result.exit_code')
 			if opt.verbosity > 2 {
-				println(job_res.result.output)
+				println('$job_res.result.output')
+			}
+			if job_res.result.exit_code != 0 {
+				return error('${job_res.job.cmd[0]} failed with return code $job_res.result.exit_code')
 			}
 		}
 	} else {
 		for job in jobs {
 			util.verbosity_print_cmd(job.cmd, opt.verbosity)
 			job_res := sync_run(job)
-			util.exit_on_bad_result(job_res.result, '${job.cmd[0]} failed with return code $job_res.result.exit_code')
 			if opt.verbosity > 2 {
-				println(job_res.result.output)
+				println('$job_res.result.output')
+			}
+			if job_res.result.exit_code != 0 {
+				return error('${job_res.job.cmd[0]} failed with return code $job_res.result.exit_code')
 			}
 		}
 	}
@@ -552,7 +561,7 @@ pub fn v_dump_meta(opt VCompileOptions) !VMetaInfo {
 
 	util.verbosity_print_cmd(v_cmd, opt.verbosity)
 	v_dump_res := util.run(v_cmd)
-	if opt.verbosity > 2 {
+	if opt.verbosity > 3 {
 		println(v_dump_res)
 	}
 
@@ -641,8 +650,9 @@ pub fn compile_v_imports_c_dependencies(opt CompileOptions, imported_modules []s
 			defines << '-DGC_THREADS=1'
 			defines << '-DGC_BUILTIN_ATOMIC=1'
 			defines << '-D_REENTRANT'
-			// NOTE When the gc is built into the exe and started *without* GC_INIT() the following was necessary:
-			// defines << '-DUSE_MMAP' // Will otherwise crash with a message with a path to the lib in GC_unix_mmap_get_mem+528
+			// NOTE it's currently a little unclear why this is needed.
+			// V UI can crash and with when the gc is built into the exe and started *without* GC_INIT() the error would occur:
+			defines << '-DUSE_MMAP' // Will otherwise crash with a message with a path to the lib in GC_unix_mmap_get_mem+528
 
 			o_file := os.join_path(arch_o_dir, 'gc.o')
 			build_cmd := [
@@ -716,18 +726,22 @@ pub fn compile_v_imports_c_dependencies(opt CompileOptions, imported_modules []s
 		pp.work_on_items(jobs)
 		for job_res in pp.get_results<ShellJobResult>() {
 			util.verbosity_print_cmd(job_res.job.cmd, opt.verbosity)
-			util.exit_on_bad_result(job_res.result, '${job_res.job.cmd[0]} failed with return code $job_res.result.exit_code')
 			if opt.verbosity > 2 {
 				println('$job_res.result.output')
+			}
+			if job_res.result.exit_code != 0 {
+				return error('${job_res.job.cmd[0]} failed with return code $job_res.result.exit_code')
 			}
 		}
 	} else {
 		for job in jobs {
 			util.verbosity_print_cmd(job.cmd, opt.verbosity)
 			job_res := sync_run(job)
-			util.exit_on_bad_result(job_res.result, '${job.cmd[0]} failed with return code $job_res.result.exit_code')
 			if opt.verbosity > 2 {
 				println('$job_res.result.output')
+			}
+			if job_res.result.exit_code != 0 {
+				return error('${job_res.job.cmd[0]} failed with return code $job_res.result.exit_code')
 			}
 		}
 	}
