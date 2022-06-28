@@ -3,7 +3,6 @@
 module android
 
 import os
-import runtime
 import sync.pool
 import vab.vxt
 import vab.android.ndk
@@ -69,6 +68,12 @@ pub fn (opt CompileOptions) archs() ![]string {
 	return archs
 }
 
+// build_directory returns the compile build directory.
+pub fn (opt CompileOptions) build_directory() !string {
+	dir := os.join_path(opt.work_dir, 'build')
+	return dir
+}
+
 struct ShellJob {
 	cmd      []string
 	env_vars map[string]string
@@ -100,7 +105,7 @@ pub fn compile(opt CompileOptions) ! {
 	os.mkdir_all(opt.work_dir) or {
 		return error('$err_sig: failed making directory "$opt.work_dir". $err')
 	}
-	build_dir := os.join_path(opt.work_dir, 'build')
+	build_dir := opt.build_directory()!
 
 	if opt.verbosity > 0 {
 		println('Compiling V to C')
@@ -108,8 +113,6 @@ pub fn compile(opt CompileOptions) ! {
 			println('V flags: `$opt.v_flags`')
 		}
 	}
-
-	v_output_file := os.join_path(opt.work_dir, 'v_android.c')
 
 	v_compile_opt := VCompileOptions{
 		cache: opt.cache
@@ -126,13 +129,25 @@ pub fn compile(opt CompileOptions) ! {
 		return error('$err_sig: empty module dump.')
 	}
 
+	v_output_file := os.join_path(opt.work_dir, 'v_android.c')
+
+	v_thirdparty_dir := os.join_path(vxt.home(), 'thirdparty')
+
+	// Boehm-Demers-Weiser Garbage Collector (bdwgc / libgc)
+	uses_gc := opt.uses_gc()
+	if opt.verbosity > 1 {
+		println('Garbage collecting is $uses_gc')
+	}
+
 	vexe := vxt.vexe()
 	// Compile to Android compatible C file
 	mut v_cmd := [
 		vexe,
-		'-gc none',
 		'-os android',
 	]
+	if !uses_gc {
+		v_cmd << '-gc none'
+	}
 	if 'sokol.sapp' in imported_modules {
 		v_cmd << '-apk'
 	}
@@ -198,7 +213,6 @@ pub fn compile(opt CompileOptions) ! {
 	mut includes := []string{}
 	mut defines := []string{}
 	mut ldflags := []string{}
-	mut sources := []string{}
 
 	// Grab any external C flags
 	for line in v_cflags {
@@ -216,6 +230,11 @@ pub fn compile(opt CompileOptions) ! {
 		}
 		if line.starts_with('-l') {
 			if line.contains('-lgc') {
+				// compiled in
+				continue
+			}
+			if line.contains('-lpthread') {
+				// pthread is built into bionic
 				continue
 			}
 			ldflags << line
@@ -231,15 +250,16 @@ pub fn compile(opt CompileOptions) ! {
 	cflags << ['-fPIC', '-fvisibility=hidden', '-ffunction-sections', '-fdata-sections',
 		'-ferror-limit=1']
 
-	cflags << ['-Wall', '-Wextra', '-Wno-unused-variable', '-Wno-unused-parameter',
-		'-Wno-unused-result', '-Wno-unused-function', '-Wno-missing-braces', '-Wno-unused-label',
-		'-Werror=implicit-function-declaration']
+	cflags << ['-Wall', '-Wextra']
 
-	// TODO Here to make the compiler(s) shut up :/
-	cflags << ['-Wno-braced-scalar-init', '-Wno-incompatible-pointer-types',
-		'-Wno-implicitly-unsigned-literal', '-Wno-pointer-sign', '-Wno-enum-conversion',
-		'-Wno-int-conversion', '-Wno-int-to-pointer-cast', '-Wno-sign-compare', '-Wno-return-type',
-		'-Wno-extra-tokens', '-Wno-unused-value']
+	cflags << ['-Wno-unused-parameter'] // sokol_app.h
+
+	// TODO V compile warnings - here to make the compiler(s) shut up :/
+	cflags << ['-Wno-unused-variable', '-Wno-unused-result', '-Wno-unused-function',
+		'-Wno-unused-label']
+	cflags << ['-Wno-missing-braces', '-Werror=implicit-function-declaration']
+	cflags << ['-Wno-enum-conversion', '-Wno-unused-value', '-Wno-pointer-sign',
+		'-Wno-incompatible-pointer-types']
 
 	// NOTE This define allows V to redefine C's printf() - to let logging via println() etc. go
 	// through Android device's system log (that adb logcat reads).
@@ -257,59 +277,14 @@ pub fn compile(opt CompileOptions) ! {
 	defines << '-DANDROID_FULLSCREEN'
 
 	// Include NDK headers
-	// NOTE "$ndk_root/sysroot/usr/include" was deprecated since NDK r19
+	mut android_includes := []string{}
 	ndk_sysroot := ndk.sysroot_path(opt.ndk_version) or {
 		return error('$err_sig: getting NDK sysroot path.\n$err')
 	}
-	includes << [
-		'-I"' + os.join_path(ndk_sysroot, 'usr', 'include') + '"',
-		'-I"' + os.join_path(ndk_sysroot, 'usr', 'include', 'android') + '"',
-	]
+	android_includes << '-I"' + os.join_path(ndk_sysroot, 'usr', 'include') + '"'
+	android_includes << '-I"' + os.join_path(ndk_sysroot, 'usr', 'include', 'android') + '"'
 
 	is_debug_build := '-cg' in opt.v_flags || '-g' in opt.v_flags
-
-	// Boehm-Demers-Weiser Garbage Collector (bdwgc / libgc)
-	uses_gc := opt.uses_gc()
-	if opt.verbosity > 1 {
-		println('Garbage collecting is $uses_gc')
-	}
-
-	v_thirdparty_dir := os.join_path(vxt.home(), 'thirdparty')
-
-	if uses_gc {
-		includes << [
-			'-I"' + os.join_path(v_thirdparty_dir, 'libgc', 'include') + '"',
-		]
-		sources << ['"' + os.join_path(v_thirdparty_dir, 'libgc', 'gc.c') + '"']
-		if is_debug_build {
-			defines << '-DGC_ASSERTIONS'
-			defines << '-DGC_ANDROID_LOG'
-		}
-		defines << '-D_REENTRANT'
-		defines << '-DUSE_MMAP' // Will otherwise crash with a message with a path to the lib in GC_unix_mmap_get_mem+528
-	}
-
-	// stb_image via `stbi` module
-	if 'stbi' in imported_modules {
-		if opt.verbosity > 1 {
-			println('Including stb_image via stbi module')
-		}
-		// includes << ['-I"$v_home/thirdparty/stb_image"']
-		sources << [
-			'"' + os.join_path(v_thirdparty_dir, 'stb_image', 'stbi.c') + '"',
-		]
-	}
-
-	// cJson via `json` module
-	if 'json' in imported_modules {
-		if opt.verbosity > 1 {
-			println('Including cJSON via json module')
-		}
-		includes << ['-I"' + os.join_path(v_thirdparty_dir, 'cJSON') + '"']
-		sources << [
-			'"' + os.join_path(v_thirdparty_dir, 'cJSON', 'cJSON.c') + '"',
-		]
-	}
 
 	// Sokol sapp
 	if 'sokol.sapp' in imported_modules {
@@ -333,6 +308,10 @@ pub fn compile(opt CompileOptions) ! {
 		}
 
 		ldflags << ['-uANativeActivity_onCreate', '-usokol_main']
+	}
+
+	if uses_gc {
+		includes << '-I"' + os.join_path(v_thirdparty_dir, 'libgc', 'include') + '"'
 	}
 
 	// misc
@@ -366,10 +345,79 @@ pub fn compile(opt CompileOptions) ! {
 	arch_cflags['x86_64'] = cflags_x86_64
 
 	if opt.verbosity > 0 {
-		println('Compiling C to $archs' + if opt.parallel { ' in parallel' } else { '' })
+		println('Compiling V import C dependencies (.c to .o for $archs)' +
+			if opt.parallel { ' in parallel' } else { '' })
+	}
+
+	vicd := compile_v_imports_c_dependencies(opt, imported_modules)!
+	mut o_files := vicd.o_files.clone()
+	mut a_files := vicd.a_files.clone()
+
+	if opt.verbosity > 0 {
+		println('Compiling C output for $archs' + if opt.parallel { ' in parallel' } else { '' })
 	}
 
 	mut jobs := []ShellJob{}
+
+	for arch in archs {
+		arch_cflags[arch] << [
+			'-target ' + ndk.compiler_triplet(arch) + opt.min_sdk_version.str(),
+		]
+		if arch == 'armeabi-v7a' {
+			arch_cflags[arch] << ['-march=armv7-a']
+		}
+	}
+
+	// Cross compile v.c to v.o lib files
+	for arch in archs {
+		arch_o_dir := os.join_path(build_dir, 'o', arch)
+		if !os.is_dir(arch_o_dir) {
+			os.mkdir_all(arch_o_dir) or {
+				return error('$err_sig: failed making directory "$arch_o_dir". $err')
+			}
+		}
+
+		arch_lib := os.join_path(arch_o_dir, '${opt.lib_name}.o')
+		// Compile .o
+		build_cmd := [
+			arch_cc[arch],
+			cflags.join(' '),
+			android_includes.join(' '),
+			includes.join(' '),
+			defines.join(' '),
+			arch_cflags[arch].join(' '),
+			'-c "$v_output_file"',
+			'-o "$arch_lib"',
+		]
+
+		o_files[arch] << arch_lib
+
+		jobs << ShellJob{
+			cmd: build_cmd
+		}
+	}
+
+	if opt.parallel {
+		mut pp := pool.new_pool_processor(callback: async_run)
+		pp.work_on_items(jobs)
+		for job_res in pp.get_results<ShellJobResult>() {
+			util.verbosity_print_cmd(job_res.job.cmd, opt.verbosity)
+			util.exit_on_bad_result(job_res.result, '${job_res.job.cmd[0]} failed with return code $job_res.result.exit_code')
+			if opt.verbosity > 2 {
+				println(job_res.result.output)
+			}
+		}
+	} else {
+		for job in jobs {
+			util.verbosity_print_cmd(job.cmd, opt.verbosity)
+			job_res := sync_run(job)
+			util.exit_on_bad_result(job_res.result, '${job.cmd[0]} failed with return code $job_res.result.exit_code')
+			if opt.verbosity > 2 {
+				println(job_res.result.output)
+			}
+		}
+	}
+	jobs.clear()
 
 	// Cross compile .so lib files
 	for arch in archs {
@@ -378,10 +426,17 @@ pub fn compile(opt CompileOptions) ! {
 			return error('$err_sig: failed making directory "$arch_lib_dir".\n$err')
 		}
 
-		build_cmd := [arch_cc[arch], cflags.join(' '), includes.join(' '),
-			defines.join(' '), sources.join(' '), arch_cflags[arch].join(' '),
-			'-o "$arch_lib_dir/lib${opt.lib_name}.so"', v_output_file, '-L"' + arch_libs[arch] + '"',
-			ldflags.join(' ')]
+		arch_o_files := o_files[arch].map('"$it"')
+		arch_a_files := a_files[arch].map('"$it"')
+
+		build_cmd := [
+			arch_cc[arch],
+			arch_o_files.join(' '),
+			'-o "$arch_lib_dir/lib${opt.lib_name}.so"',
+			arch_a_files.join(' '),
+			'-L"' + arch_libs[arch] + '"',
+			ldflags.join(' '),
+		]
 
 		jobs << ShellJob{
 			cmd: build_cmd
@@ -389,7 +444,7 @@ pub fn compile(opt CompileOptions) ! {
 	}
 
 	if opt.parallel {
-		mut pp := pool.new_pool_processor(maxjobs: runtime.nr_cpus() - 1, callback: async_run)
+		mut pp := pool.new_pool_processor(callback: async_run)
 		pp.work_on_items(jobs)
 		for job_res in pp.get_results<ShellJobResult>() {
 			util.verbosity_print_cmd(job_res.job.cmd, opt.verbosity)
@@ -433,6 +488,20 @@ pub:
 	flags     []string // flags to pass to the v compiler
 }
 
+// uses_gc returns true if a `-gc` flag is found among the passed v flags.
+pub fn (opt VCompileOptions) uses_gc() bool {
+	mut uses_gc := true // V default
+	for v_flag in opt.flags {
+		if v_flag.starts_with('-gc') {
+			if v_flag.ends_with('none') {
+				uses_gc = false
+			}
+			break
+		}
+	}
+	return uses_gc
+}
+
 struct VMetaInfo {
 pub:
 	imports []string
@@ -449,6 +518,8 @@ pub fn v_dump_meta(opt VCompileOptions) !VMetaInfo {
 
 	vexe := vxt.vexe()
 
+	uses_gc := opt.uses_gc()
+
 	// Dump modules and C flags to files
 	v_cflags_file := os.join_path(opt.work_dir, 'v.cflags')
 	os.rm(v_cflags_file) or {}
@@ -458,8 +529,10 @@ pub fn v_dump_meta(opt VCompileOptions) !VMetaInfo {
 	mut v_cmd := [
 		vexe,
 		'-os android',
-		'-gc none',
 	]
+	if !uses_gc {
+		v_cmd << '-gc none'
+	}
 	if !opt.cache {
 		v_cmd << '-nocache'
 	}
@@ -500,5 +573,166 @@ pub fn v_dump_meta(opt VCompileOptions) !VMetaInfo {
 	return VMetaInfo{
 		imports: imported_modules
 		c_flags: cflags.split('\n')
+	}
+}
+
+struct VImportCDeps {
+pub:
+	o_files map[string][]string
+	a_files map[string][]string
+}
+
+// compile_v_imports_c_dependencies compiles the C dependencies of V's module imports.
+pub fn compile_v_imports_c_dependencies(opt CompileOptions, imported_modules []string) !VImportCDeps {
+	err_sig := @MOD + '.' + @FN
+
+	mut o_files := map[string][]string{}
+	mut a_files := map[string][]string{}
+
+	uses_gc := opt.uses_gc()
+	build_dir := opt.build_directory()!
+	is_debug_build := '-cg' in opt.v_flags || '-g' in opt.v_flags
+
+	// For all compilers
+	mut cflags := opt.c_flags
+	if opt.is_prod {
+		cflags << ['-Os']
+	} else {
+		cflags << ['-O0']
+	}
+	cflags << ['-fPIC']
+	cflags << ['-Wall', '-Wextra']
+
+	mut android_includes := []string{}
+	// Include NDK headers
+	ndk_sysroot := ndk.sysroot_path(opt.ndk_version) or {
+		return error('$err_sig: getting NDK sysroot path.\n$err')
+	}
+	android_includes << '-I"' + os.join_path(ndk_sysroot, 'usr', 'include') + '"'
+	android_includes << '-I"' + os.join_path(ndk_sysroot, 'usr', 'include', 'android') + '"'
+
+	v_thirdparty_dir := os.join_path(vxt.home(), 'thirdparty')
+
+	archs := opt.archs()!
+
+	mut jobs := []ShellJob{}
+	for arch in archs {
+		arch_o_dir := os.join_path(build_dir, 'o', arch)
+		if !os.is_dir(arch_o_dir) {
+			os.mkdir_all(arch_o_dir) or {
+				return error('$err_sig: failed making directory "$arch_o_dir".\n$err')
+			}
+		}
+
+		compiler := ndk.compiler(.c, opt.ndk_version, arch, opt.api_level) or {
+			return error('$err_sig: failed getting NDK compiler.\n$err')
+		}
+
+		if uses_gc {
+			if opt.verbosity > 1 {
+				println('Compiling libgc ($arch) via -gc flag')
+			}
+
+			mut defines := []string{}
+			if is_debug_build {
+				defines << '-DGC_ASSERTIONS'
+				defines << '-DGC_ANDROID_LOG'
+			}
+			defines << '-DGC_THREADS=1'
+			defines << '-DGC_BUILTIN_ATOMIC=1'
+			defines << '-D_REENTRANT'
+			// NOTE When the gc is built into the exe and started *without* GC_INIT() the following was necessary:
+			// defines << '-DUSE_MMAP' // Will otherwise crash with a message with a path to the lib in GC_unix_mmap_get_mem+528
+
+			o_file := os.join_path(arch_o_dir, 'gc.o')
+			build_cmd := [
+				compiler,
+				cflags.join(' '),
+				'-I"' + os.join_path(v_thirdparty_dir, 'libgc', 'include') + '"',
+				defines.join(' '),
+				'-c "' + os.join_path(v_thirdparty_dir, 'libgc', 'gc.c') + '"',
+				'-o "$o_file"',
+			]
+			util.verbosity_print_cmd(build_cmd, opt.verbosity)
+			o_res := util.run_or_error(build_cmd)!
+			if opt.verbosity > 2 {
+				eprintln(o_res)
+			}
+
+			o_files[arch] << o_file
+
+			jobs << ShellJob{
+				cmd: build_cmd
+			}
+		}
+
+		// stb_image via `stbi` module
+		if 'stbi' in imported_modules {
+			if opt.verbosity > 1 {
+				println('Compiling stb_image ($arch) via stbi module')
+			}
+
+			o_file := os.join_path(arch_o_dir, 'stbi.o')
+			build_cmd := [
+				compiler,
+				cflags.join(' '),
+				'-Wno-sign-compare',
+				'-I"' + os.join_path(v_thirdparty_dir, 'stb_image') + '"',
+				'-c "' + os.join_path(v_thirdparty_dir, 'stb_image', 'stbi.c') + '"',
+				'-o "$o_file"',
+			]
+
+			o_files[arch] << o_file
+
+			jobs << ShellJob{
+				cmd: build_cmd
+			}
+		}
+
+		// cJson via `json` module
+		if 'json' in imported_modules {
+			if opt.verbosity > 1 {
+				println('Compiling cJSON ($arch) via json module')
+			}
+			o_file := os.join_path(arch_o_dir, 'cJSON.o')
+			build_cmd := [
+				compiler,
+				cflags.join(' '),
+				'-I"' + os.join_path(v_thirdparty_dir, 'cJSON') + '"',
+				'-c "' + os.join_path(v_thirdparty_dir, 'cJSON', 'cJSON.c') + '"',
+				'-o "$o_file"',
+			]
+
+			o_files[arch] << o_file
+
+			jobs << ShellJob{
+				cmd: build_cmd
+			}
+		}
+	}
+
+	if opt.parallel {
+		mut pp := pool.new_pool_processor(callback: async_run)
+		pp.work_on_items(jobs)
+		for job_res in pp.get_results<ShellJobResult>() {
+			util.verbosity_print_cmd(job_res.job.cmd, opt.verbosity)
+			util.exit_on_bad_result(job_res.result, '${job_res.job.cmd[0]} failed with return code $job_res.result.exit_code')
+			if opt.verbosity > 2 {
+				println('$job_res.result.output')
+			}
+		}
+	} else {
+		for job in jobs {
+			util.verbosity_print_cmd(job.cmd, opt.verbosity)
+			job_res := sync_run(job)
+			util.exit_on_bad_result(job_res.result, '${job.cmd[0]} failed with return code $job_res.result.exit_code')
+			if opt.verbosity > 2 {
+				println('$job_res.result.output')
+			}
+		}
+	}
+	return VImportCDeps{
+		o_files: o_files
+		a_files: a_files
 	}
 }

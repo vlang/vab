@@ -15,9 +15,9 @@ concurrency:
 jobs:
   macos-latest-run-v-examples:
     runs-on: macOS-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     env:
-      VAB_FLAGS: -cg -f '-d no_load_styles' -f '-d debug_embed_file_in_prod' -v 3 --api 30 --build-tools 29.0.0 --device auto --log-clear --archs x86_64
+      VAB_FLAGS: -cg -f '-d no_load_styles' -v 3 --api 30 --build-tools 29.0.0 --device auto --log-clear --archs x86_64
     steps:
     - uses: actions/setup-java@v2
       with:
