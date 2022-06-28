@@ -421,8 +421,8 @@ pub fn compile(opt CompileOptions) ! {
 			return error('$err_sig: failed making directory "$arch_lib_dir".\n$err')
 		}
 
-		arch_o_files := o_files[arch].map('"' + it + '"')
-		arch_a_files := a_files[arch].map('"' + it + '"')
+		arch_o_files := o_files[arch].map('"$it"')
+		arch_a_files := a_files[arch].map('"$it"')
 
 		build_cmd := [
 			arch_cc[arch],
@@ -623,10 +623,6 @@ pub fn compile_v_imports_c_dependencies(opt CompileOptions, imported_modules []s
 			return error('$err_sig: failed getting NDK compiler.\n$err')
 		}
 
-		// ar_tool := ndk.tool(.ar, opt.ndk_version, arch) or {
-		//	return error('$err_sig: failed getting ar tool.\n$err')
-		//}
-
 		if uses_gc {
 			if opt.verbosity > 1 {
 				println('Compiling libgc ($arch) via -gc flag')
@@ -640,10 +636,10 @@ pub fn compile_v_imports_c_dependencies(opt CompileOptions, imported_modules []s
 			defines << '-DGC_THREADS=1'
 			defines << '-DGC_BUILTIN_ATOMIC=1'
 			defines << '-D_REENTRANT'
-			// defines << '-DUSE_MMAP' // When the gc is built into the exe: Will otherwise crash with a message with a path to the lib in GC_unix_mmap_get_mem+528
+			// NOTE When the gc is built into the exe and started *without* GC_INIT() the following was necessary:
+			// defines << '-DUSE_MMAP' // Will otherwise crash with a message with a path to the lib in GC_unix_mmap_get_mem+528
 
 			o_file := os.join_path(arch_o_dir, 'gc.o')
-			// a_file := os.join_path(arch_o_dir, 'libgc.a')
 			build_cmd := [
 				compiler,
 				cflags.join(' '),
@@ -658,21 +654,6 @@ pub fn compile_v_imports_c_dependencies(opt CompileOptions, imported_modules []s
 				eprintln(o_res)
 			}
 
-			// Build static .a
-			// build_static_cmd := [
-			//	ar_tool,
-			//	'crsD',
-			//	'"$a_file"',
-			//	'"$o_file"',
-			//]
-
-			// util.verbosity_print_cmd(build_static_cmd, opt.verbosity)
-			// a_res := util.run_or_error(build_static_cmd)!
-			// if opt.verbosity > 2 {
-			//	eprintln(a_res)
-			//}
-
-			// a_files[arch] << a_file
 			o_files[arch] << o_file
 
 			jobs << ShellJob{
