@@ -105,7 +105,6 @@ fn sync_run(item ShellJob) &ShellJobResult {
 	}
 }
 
-// compile_v_to_c compiles V into sources to their C counterpart.
 pub fn compile_v_to_c(opt CompileOptions) !VMetaInfo {
 	err_sig := @MOD + '.' + @FN
 	os.mkdir_all(opt.work_dir) or {
