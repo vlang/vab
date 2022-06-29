@@ -141,6 +141,11 @@ pub fn jre_found() bool {
 	return jdk_root() != ''
 }
 
+pub fn jre_bin_path() string {
+	bin_dir := os.find_abs_path_of_executable('java') or { os.join_path(jre_root(), 'bin', 'java') }
+	return os.dir(bin_dir)
+}
+
 pub fn jdk_root() string {
 	mut java_home := cache.get_string(@MOD + '.' + @FN)
 	if java_home != '' {
@@ -168,9 +173,11 @@ pub fn jdk_root() string {
 }
 
 pub fn jdk_found() bool {
-	return jdk_root() != ''
+	root := jdk_root()
+	return root != '' && os.exists(root)
 }
 
+// jdk_bin_path returns the absolute path to the JDK `bin` directory.
 pub fn jdk_bin_path() string {
 	bin_dir := os.find_abs_path_of_executable('javac') or {
 		os.join_path(jdk_root(), 'bin', 'javac')
@@ -178,7 +185,28 @@ pub fn jdk_bin_path() string {
 	return os.dir(bin_dir)
 }
 
-pub fn jre_bin_path() string {
-	bin_dir := os.find_abs_path_of_executable('java') or { os.join_path(jre_root(), 'bin', 'java') }
-	return os.dir(bin_dir)
+// jdk_keytool returns the absolute path to the JDK keytool executable.
+pub fn jdk_keytool() !string {
+	mut keytool_exe := 'keytool'
+	$if windows {
+		keytool_exe += '.exe'
+	}
+	keytool := os.join_path(jdk_bin_path(), keytool_exe)
+	if !os.exists(keytool) {
+		return error(@MOD + '.' + @FN + ': no `$keytool_exe` could be located in "$jdk_bin_path()"')
+	}
+	return keytool
+}
+
+// jdk_javac returns the absolute path to the system javac executable.
+pub fn jdk_javac() !string {
+	mut javac_exe := 'javac'
+	$if windows {
+		javac_exe += '.exe'
+	}
+	javac := os.join_path(jdk_bin_path(), javac_exe)
+	if !os.exists(javac) {
+		return error(@MOD + '.' + @FN + ': no `$javac_exe` could be located in "$jdk_bin_path()"')
+	}
+	return javac
 }
