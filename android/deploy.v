@@ -193,7 +193,7 @@ pub fn deploy_aab(opt DeployOptions) ! {
 
 		apks_path := os.join_path(opt.work_dir,
 			os.file_name(opt.deploy_file).all_before_last('.') + '.apks')
-		keystore := resolve_keystore(opt.keystore, opt.verbosity)!
+		keystore := resolve_keystore(opt.keystore)!
 
 		os.rm(apks_path) or {}
 

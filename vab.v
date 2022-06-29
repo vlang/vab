@@ -280,21 +280,18 @@ fn main() {
 			eprintln('Keystore "$keystore.path" is not a valid file')
 			eprintln('Notice: Signing with debug keystore')
 		}
-		// NOTE use a cache directory to prevent 2 things:
-		// 1. Avoid adb error "INSTALL_FAILED_UPDATE_INCOMPATIBLE" between machine reboots
-		// 2. Do not pollute current directory / pwd with a debug.keystore
-		keystore_dir := os.join_path(cache_directory, 'keystore')
-		if !os.is_dir(keystore_dir) {
-			os.mkdir_all(keystore_dir) or {
-				eprintln('Could make directory for debug keystore.\n$err')
-				exit(1)
-			}
+		keystore = android.default_keystore(cache_directory) or {
+			eprintln('Getting a default keystore failed.\n$err')
+			exit(1)
 		}
-		keystore.path = os.join_path(keystore_dir, 'debug.keystore')
+	} else {
+		keystore = android.resolve_keystore(keystore) or {
+			eprintln('Could not resolve keystore.\n$err')
+			exit(1)
+		}
 	}
-	keystore = android.resolve_keystore(keystore, opt.verbosity) or {
-		eprintln('Could not resolve keystore.\n$err')
-		exit(1)
+	if opt.verbosity > 1 {
+		println('Output will be signed with keystore at "$keystore.path"')
 	}
 
 	mut log_tags := opt.log_tags
@@ -563,6 +560,24 @@ fn check_essentials(exit_on_error bool) {
 			exit(1)
 		}
 	}
+
+	// Validate keytool
+	keytool := java.jdk_keytool() or {
+		eprintln('Warning: could not locate `keytool`: $err')
+		''
+	}
+	if keytool == '' {
+		eprintln('$exe_short_name will not be able to sign any packages.')
+		if javac := java.jdk_javac() {
+			eprintln('It looks like you have a Java compiler ($javac) but no `keytool`')
+			eprintln('you probably have Java JRE installed but no JDK.')
+		}
+		eprintln('Please install Java JDK >= 8 or provide a valid path via JAVA_HOME')
+		if exit_on_error {
+			exit(1)
+		}
+	}
+
 	// Validate Android SDK requirements
 	if !sdk.found() {
 		eprintln('No Android SDK could be detected.')
@@ -588,7 +603,7 @@ fn validate_env(opt Options) {
 	jdk_version := java.jdk_version()
 	if jdk_version == '' {
 		eprintln('No Java JDK install(s) could be detected')
-		eprintln('Please install Java >= 8 JDK or provide a valid path via JAVA_HOME')
+		eprintln('Please install Java JDK >= 8 or provide a valid path via JAVA_HOME')
 		exit(1)
 	}
 
@@ -600,7 +615,7 @@ fn validate_env(opt Options) {
 		// Some Android tools like `sdkmanager` in cmdline-tools;1.0 only worked with Java 8 JDK (1.8.x).
 		// (Absolute mess, yes)
 		eprintln('Java JDK version $jdk_version is not supported')
-		eprintln('Please install Java >= 8 JDK or provide a valid path via JAVA_HOME')
+		eprintln('Please install Java JDK >= 8 or provide a valid path via JAVA_HOME')
 		exit(1)
 	}
 
@@ -1003,11 +1018,13 @@ fn doctor(opt Options) {
 		print_var_if_set(env_vars, env_var)
 	}
 
+	keytool := java.jdk_keytool() or { 'N/A' }
 	// Java section
 	println('Java
 	JDK
 		Version $java.jdk_version()
-		Path "$java.jdk_root()"')
+		Path "$java.jdk_root()"
+		Keytool "$keytool"')
 
 	// Android section
 	println('Android
