@@ -52,6 +52,11 @@ pub fn (opt CompileOptions) uses_gc() bool {
 	return uses_gc
 }
 
+// is_debug_build returns true if either `-cg` or `-g` flags is found among the passed v flags.
+pub fn (opt CompileOptions) is_debug_build() bool {
+	return '-cg' in opt.v_flags || '-g' in opt.v_flags
+}
+
 // archs returns an array of target architectures.
 pub fn (opt CompileOptions) archs() ![]string {
 	mut archs := []string{}
@@ -100,12 +105,12 @@ fn sync_run(item ShellJob) &ShellJobResult {
 	}
 }
 
-pub fn compile(opt CompileOptions) ! {
+// compile_v_to_c compiles V into sources to their C counterpart.
+pub fn compile_v_to_c(opt CompileOptions) !VMetaInfo {
 	err_sig := @MOD + '.' + @FN
 	os.mkdir_all(opt.work_dir) or {
 		return error('$err_sig: failed making directory "$opt.work_dir". $err')
 	}
-	build_dir := opt.build_directory()!
 
 	if opt.verbosity > 0 {
 		println('Compiling V to C')
@@ -123,7 +128,6 @@ pub fn compile(opt CompileOptions) ! {
 	}
 
 	v_meta_dump := v_dump_meta(v_compile_opt)!
-	v_cflags := v_meta_dump.c_flags
 	imported_modules := v_meta_dump.imports
 
 	if imported_modules.len == 0 {
@@ -131,8 +135,6 @@ pub fn compile(opt CompileOptions) ! {
 	}
 
 	v_output_file := os.join_path(opt.work_dir, 'v_android.c')
-
-	v_thirdparty_dir := os.join_path(vxt.home(), 'thirdparty')
 
 	// Boehm-Demers-Weiser Garbage Collector (bdwgc / libgc)
 	uses_gc := opt.uses_gc()
@@ -166,6 +168,24 @@ pub fn compile(opt CompileOptions) ! {
 	if opt.verbosity > 2 {
 		println(v_dump_res)
 	}
+	return v_meta_dump
+}
+
+pub fn compile(opt CompileOptions) ! {
+	err_sig := @MOD + '.' + @FN
+	os.mkdir_all(opt.work_dir) or {
+		return error('$err_sig: failed making directory "$opt.work_dir". $err')
+	}
+	build_dir := opt.build_directory()!
+
+	v_meta_dump := compile_v_to_c(opt)!
+	v_cflags := v_meta_dump.c_flags
+	imported_modules := v_meta_dump.imports
+
+	v_output_file := os.join_path(opt.work_dir, 'v_android.c')
+	v_thirdparty_dir := os.join_path(vxt.home(), 'thirdparty')
+
+	uses_gc := opt.uses_gc()
 
 	// Poor man's cache check
 	mut hash := ''
@@ -201,6 +221,7 @@ pub fn compile(opt CompileOptions) ! {
 		}
 		hash_fh.close()
 	}
+
 	// Remove any previous builds
 	if os.is_dir(build_dir) {
 		os.rmdir_all(build_dir) or { return error('$err_sig: failed removing "$build_dir": $err') }
@@ -208,6 +229,15 @@ pub fn compile(opt CompileOptions) ! {
 	os.mkdir(build_dir) or { return error('$err_sig: failed making directory "$build_dir".\n$err') }
 
 	archs := opt.archs()!
+
+	if opt.verbosity > 0 {
+		println('Compiling V import C dependencies (.c to .o for $archs)' +
+			if opt.parallel { ' in parallel' } else { '' })
+	}
+
+	vicd := compile_v_imports_c_dependencies(opt, imported_modules)!
+	mut o_files := vicd.o_files.clone()
+	mut a_files := vicd.a_files.clone()
 
 	// For all compilers
 	mut cflags := opt.c_flags
@@ -274,9 +304,6 @@ pub fn compile(opt CompileOptions) ! {
 	defines << '-DAPPNAME="$opt.lib_name"'
 	defines << ['-DANDROID', '-D__ANDROID__', '-DANDROIDVERSION=$opt.api_level']
 
-	// TODO if full_screen
-	defines << '-DANDROID_FULLSCREEN'
-
 	// Include NDK headers
 	mut android_includes := []string{}
 	ndk_sysroot := ndk.sysroot_path(opt.ndk_version) or {
@@ -285,7 +312,7 @@ pub fn compile(opt CompileOptions) ! {
 	android_includes << '-I"' + os.join_path(ndk_sysroot, 'usr', 'include') + '"'
 	android_includes << '-I"' + os.join_path(ndk_sysroot, 'usr', 'include', 'android') + '"'
 
-	is_debug_build := '-cg' in opt.v_flags || '-g' in opt.v_flags
+	is_debug_build := opt.is_debug_build()
 
 	// Sokol sapp
 	if 'sokol.sapp' in imported_modules {
@@ -302,10 +329,14 @@ pub fn compile(opt CompileOptions) ! {
 		if opt.verbosity > 1 {
 			println('Using GLES $opt.gles_version')
 		}
+
+		ldflags << '-lEGL'
 		if opt.gles_version == 3 {
 			defines << ['-DSOKOL_GLES3']
+			ldflags << '-lGLESv3'
 		} else {
 			defines << ['-DSOKOL_GLES2']
+			ldflags << '-lGLESv2'
 		}
 
 		ldflags << ['-uANativeActivity_onCreate', '-usokol_main']
@@ -316,8 +347,7 @@ pub fn compile(opt CompileOptions) ! {
 	}
 
 	// misc
-	ldflags << ['-llog', '-landroid', '-lEGL', '-lGLESv2', '-lm']
-
+	ldflags << ['-llog', '-landroid', '-lm']
 	ldflags << ['-shared'] // <- Android loads native code via a library in NativeActivity
 
 	mut cflags_arm64 := ['-m64']
@@ -344,15 +374,6 @@ pub fn compile(opt CompileOptions) ! {
 	arch_cflags['armeabi-v7a'] = cflags_arm32
 	arch_cflags['x86'] = cflags_x86
 	arch_cflags['x86_64'] = cflags_x86_64
-
-	if opt.verbosity > 0 {
-		println('Compiling V import C dependencies (.c to .o for $archs)' +
-			if opt.parallel { ' in parallel' } else { '' })
-	}
-
-	vicd := compile_v_imports_c_dependencies(opt, imported_modules)!
-	mut o_files := vicd.o_files.clone()
-	mut a_files := vicd.a_files.clone()
 
 	if opt.verbosity > 0 {
 		println('Compiling C output for $archs' + if opt.parallel { ' in parallel' } else { '' })
@@ -600,7 +621,7 @@ pub fn compile_v_imports_c_dependencies(opt CompileOptions, imported_modules []s
 
 	uses_gc := opt.uses_gc()
 	build_dir := opt.build_directory()!
-	is_debug_build := '-cg' in opt.v_flags || '-g' in opt.v_flags
+	is_debug_build := opt.is_debug_build()
 
 	// For all compilers
 	mut cflags := opt.c_flags

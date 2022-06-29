@@ -47,6 +47,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           repository: vlang/vab
+          ref: master
           path: pvab
 
       - name: Check against parent commit
