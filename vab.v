@@ -290,6 +290,9 @@ fn main() {
 			exit(1)
 		}
 	}
+	if opt.verbosity > 1 {
+		println('Output will be signed with keystore at "$keystore.path"')
+	}
 
 	mut log_tags := opt.log_tags
 	log_tags << opt.lib_name
