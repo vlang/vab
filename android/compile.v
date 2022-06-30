@@ -105,6 +105,33 @@ fn sync_run(item ShellJob) &ShellJobResult {
 	}
 }
 
+fn run_jobs(jobs []ShellJob, parallel bool, verbosity int) ! {
+	if parallel {
+		mut pp := pool.new_pool_processor(callback: async_run)
+		pp.work_on_items(jobs)
+		for job_res in pp.get_results<ShellJobResult>() {
+			util.verbosity_print_cmd(job_res.job.cmd, verbosity)
+			if verbosity > 2 {
+				println('$job_res.result.output')
+			}
+			if job_res.result.exit_code != 0 {
+				return error('${job_res.job.cmd[0]} failed with return code $job_res.result.exit_code')
+			}
+		}
+	} else {
+		for job in jobs {
+			util.verbosity_print_cmd(job.cmd, verbosity)
+			job_res := sync_run(job)
+			if verbosity > 2 {
+				println('$job_res.result.output')
+			}
+			if job_res.result.exit_code != 0 {
+				return error('${job_res.job.cmd[0]} failed with return code $job_res.result.exit_code')
+			}
+		}
+	}
+}
+
 // compile_v_to_c compiles V into sources to their C counterpart.
 pub fn compile_v_to_c(opt CompileOptions) !VMetaInfo {
 	err_sig := @MOD + '.' + @FN
@@ -153,6 +180,8 @@ pub fn compile_v_to_c(opt CompileOptions) !VMetaInfo {
 	}
 	if 'sokol.sapp' in imported_modules {
 		v_cmd << '-apk'
+	} else {
+		v_cmd << '-d no_sokol_app'
 	}
 	if !opt.cache {
 		v_cmd << '-nocache'
@@ -419,30 +448,7 @@ pub fn compile(opt CompileOptions) ! {
 		}
 	}
 
-	if opt.parallel {
-		mut pp := pool.new_pool_processor(callback: async_run)
-		pp.work_on_items(jobs)
-		for job_res in pp.get_results<ShellJobResult>() {
-			util.verbosity_print_cmd(job_res.job.cmd, opt.verbosity)
-			if opt.verbosity > 2 {
-				println('$job_res.result.output')
-			}
-			if job_res.result.exit_code != 0 {
-				return error('${job_res.job.cmd[0]} failed with return code $job_res.result.exit_code')
-			}
-		}
-	} else {
-		for job in jobs {
-			util.verbosity_print_cmd(job.cmd, opt.verbosity)
-			job_res := sync_run(job)
-			if opt.verbosity > 2 {
-				println('$job_res.result.output')
-			}
-			if job_res.result.exit_code != 0 {
-				return error('${job_res.job.cmd[0]} failed with return code $job_res.result.exit_code')
-			}
-		}
-	}
+	run_jobs(jobs, opt.parallel, opt.verbosity)!
 	jobs.clear()
 
 	// Cross compile .so lib files
@@ -469,30 +475,7 @@ pub fn compile(opt CompileOptions) ! {
 		}
 	}
 
-	if opt.parallel {
-		mut pp := pool.new_pool_processor(callback: async_run)
-		pp.work_on_items(jobs)
-		for job_res in pp.get_results<ShellJobResult>() {
-			util.verbosity_print_cmd(job_res.job.cmd, opt.verbosity)
-			if opt.verbosity > 2 {
-				println('$job_res.result.output')
-			}
-			if job_res.result.exit_code != 0 {
-				return error('${job_res.job.cmd[0]} failed with return code $job_res.result.exit_code')
-			}
-		}
-	} else {
-		for job in jobs {
-			util.verbosity_print_cmd(job.cmd, opt.verbosity)
-			job_res := sync_run(job)
-			if opt.verbosity > 2 {
-				println('$job_res.result.output')
-			}
-			if job_res.result.exit_code != 0 {
-				return error('${job_res.job.cmd[0]} failed with return code $job_res.result.exit_code')
-			}
-		}
-	}
+	run_jobs(jobs, opt.parallel, opt.verbosity)!
 
 	if 'armeabi-v7a' in archs {
 		// TODO fix DT_NAME crash instead of including a copy of the armeabi-v7a lib
@@ -742,30 +725,8 @@ pub fn compile_v_imports_c_dependencies(opt CompileOptions, imported_modules []s
 		}
 	}
 
-	if opt.parallel {
-		mut pp := pool.new_pool_processor(callback: async_run)
-		pp.work_on_items(jobs)
-		for job_res in pp.get_results<ShellJobResult>() {
-			util.verbosity_print_cmd(job_res.job.cmd, opt.verbosity)
-			if opt.verbosity > 2 {
-				println('$job_res.result.output')
-			}
-			if job_res.result.exit_code != 0 {
-				return error('${job_res.job.cmd[0]} failed with return code $job_res.result.exit_code')
-			}
-		}
-	} else {
-		for job in jobs {
-			util.verbosity_print_cmd(job.cmd, opt.verbosity)
-			job_res := sync_run(job)
-			if opt.verbosity > 2 {
-				println('$job_res.result.output')
-			}
-			if job_res.result.exit_code != 0 {
-				return error('${job_res.job.cmd[0]} failed with return code $job_res.result.exit_code')
-			}
-		}
-	}
+	run_jobs(jobs, opt.parallel, opt.verbosity)!
+
 	return VImportCDeps{
 		o_files: o_files
 		a_files: a_files
