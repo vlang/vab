@@ -6,7 +6,7 @@ on: [push, pull_request]
 
 jobs:
   check-markdown:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     timeout-minutes: 5
     env:
       VFLAGS: -cc tcc
@@ -19,13 +19,18 @@ jobs:
     - name: Build local v
       run: make -j4 && sudo ./v symlink
 
+    - name: Checkout vab
+      uses: actions/checkout@v2
+      with:
+        path: vab
+
     - name: Check markdown line length & code examples
-      run: ./v check-md -hide-warnings .
+      run: v check-md -hide-warnings vab
       ## NB: -hide-warnings is used here, so that the output is less noisy,
       ## thus real errors are easier to spot.
 
   report-missing-fn-doc:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     timeout-minutes: 5
     env:
       MOPTIONS: --relative-paths --exclude /tests/
@@ -51,5 +56,4 @@ jobs:
           path: pvab
 
       - name: Check against parent commit
-        run: |
-          ./v missdoc --diff $MOPTIONS pvab vab
+        run: v missdoc --diff $MOPTIONS pvab vab
