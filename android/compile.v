@@ -515,7 +515,7 @@ pub fn (opt VCompileOptions) uses_gc() bool {
 	return uses_gc
 }
 
-struct VMetaInfo {
+pub struct VMetaInfo {
 pub:
 	imports []string
 	c_flags []string
