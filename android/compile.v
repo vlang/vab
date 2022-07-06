@@ -571,12 +571,14 @@ pub fn v_dump_meta(opt VCompileOptions) !VMetaInfo {
 
 	// Read in the dumped cflags
 	cflags := os.read_file(v_cflags_file) or {
-		return error('$err_sig: failed reading C flags to "$v_cflags_file". $err')
+		flat_cmd := v_cmd.join(' ')
+		return error('$err_sig: failed reading C flags to "$v_cflags_file". $err\nCompile output of `$flat_cmd`:\n$v_dump_res')
 	}
 
 	// Parse imported modules from dump
 	mut imported_modules := os.read_file(v_dump_modules_file) or {
-		return error('$err_sig: failed reading module dump file "$v_dump_modules_file". $err')
+		flat_cmd := v_cmd.join(' ')
+		return error('$err_sig: failed reading module dump file "$v_dump_modules_file". $err\nCompile output of `$flat_cmd`:\n$v_dump_res')
 	}.split('\n').filter(it != '')
 	imported_modules.sort()
 	if opt.verbosity > 2 {
