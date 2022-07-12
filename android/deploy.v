@@ -322,9 +322,9 @@ fn adb_log_step(opt DeployOptions, device_id string) ! {
 		is_debug_build := '-cg' in opt.v_flags || '-g' in opt.v_flags
 		if is_debug_build {
 			// Sokol
-			adb_logcat_cmd << 'SOKOL_APP:D'
+			adb_logcat_cmd << 'SOKOL_APP:V'
 			// Boehm-Demers-Weiser Garbage Collector (bdwgc / libgc)
-			adb_logcat_cmd << 'BDWGC:D'
+			adb_logcat_cmd << 'BDWGC:V'
 		}
 		// Include caller log tags
 		for log_tag in opt.log_tags {
@@ -335,10 +335,10 @@ fn adb_log_step(opt DeployOptions, device_id string) ! {
 			adb_logcat_cmd << '$tag'
 		}
 		adb_logcat_cmd << [
-			'V_ANDROID:D',
+			'V:V',
 			// 'System.out:D', // Used by many other Android libs - so it's noisy
 			// 'System.err:D',
-			'$opt.activity_name:D',
+			'$opt.activity_name:V',
 		]
 		// if !is_debug_build {
 		adb_logcat_cmd << '*:S'
