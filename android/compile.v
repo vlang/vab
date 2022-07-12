@@ -97,6 +97,7 @@ pub enum CompileType {
 
 pub struct CompileError {
 	Error
+pub:
 	kind CompileType
 	err  string
 }
