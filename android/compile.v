@@ -89,6 +89,33 @@ struct ShellJobResult {
 	result os.Result
 }
 
+pub enum CompileType {
+	v_to_c
+	c_to_o
+	o_to_so
+}
+
+pub struct CompileError {
+	Error
+	kind CompileType
+	err  string
+}
+
+fn (err CompileError) msg() string {
+	enum_to_text := match err.kind {
+		.v_to_c {
+			'.v to .c'
+		}
+		.c_to_o {
+			'.c to .o'
+		}
+		.o_to_so {
+			'.o to .so'
+		}
+	}
+	return 'failed to compile $enum_to_text:\n$err.err'
+}
+
 fn async_run(pp &pool.PoolProcessor, idx int, wid int) &ShellJobResult {
 	item := pp.get_item<ShellJob>(idx)
 	return sync_run(item)
@@ -207,7 +234,12 @@ pub fn compile(opt CompileOptions) ! {
 	}
 	build_dir := opt.build_directory()!
 
-	v_meta_dump := compile_v_to_c(opt)!
+	v_meta_dump := compile_v_to_c(opt) or {
+		return IError(CompileError{
+			kind: .v_to_c
+			err: err.msg()
+		})
+	}
 	v_cflags := v_meta_dump.c_flags
 	imported_modules := v_meta_dump.imports
 
@@ -264,7 +296,12 @@ pub fn compile(opt CompileOptions) ! {
 			if opt.parallel { ' in parallel' } else { '' })
 	}
 
-	vicd := compile_v_imports_c_dependencies(opt, imported_modules)!
+	vicd := compile_v_imports_c_dependencies(opt, imported_modules) or {
+		return IError(CompileError{
+			kind: .c_to_o
+			err: err.msg()
+		})
+	}
 	mut o_files := vicd.o_files.clone()
 	mut a_files := vicd.a_files.clone()
 
@@ -448,7 +485,12 @@ pub fn compile(opt CompileOptions) ! {
 		}
 	}
 
-	run_jobs(jobs, opt.parallel, opt.verbosity)!
+	run_jobs(jobs, opt.parallel, opt.verbosity) or {
+		return IError(CompileError{
+			kind: .c_to_o
+			err: err.msg()
+		})
+	}
 	jobs.clear()
 
 	// Cross compile .so lib files
@@ -475,7 +517,12 @@ pub fn compile(opt CompileOptions) ! {
 		}
 	}
 
-	run_jobs(jobs, opt.parallel, opt.verbosity)!
+	run_jobs(jobs, opt.parallel, opt.verbosity) or {
+		return IError(CompileError{
+			kind: .o_to_so
+			err: err.msg()
+		})
+	}
 
 	if 'armeabi-v7a' in archs {
 		// TODO fix DT_NAME crash instead of including a copy of the armeabi-v7a lib
