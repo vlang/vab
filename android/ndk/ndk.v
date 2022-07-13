@@ -118,23 +118,56 @@ pub fn root() string {
 	return ndk_root
 }
 
+// default_version returns the default NDK version if found, blank otherwise
+pub fn default_version() string {
+	if !is_side_by_side() {
+		v := version_from_source_properties() or { '' }
+		if v != '' {
+			return v
+		}
+		return os.file_name(root())
+	}
+	dirs := util.find_sorted(root())
+	if dirs.len > 0 {
+		return os.file_name(dirs.first())
+	}
+	return ''
+}
+
+// root_version returns the root for the NDK with `version`.
 pub fn root_version(version string) string {
 	if !is_side_by_side() {
+		if version != 'ndk-bundle' {
+			v := version_from_source_properties() or { '' }
+			if v != '' {
+				if version == v {
+					return root()
+				}
+			}
+			return '' // TODO make everything return optionals
+		}
 		return root()
 	}
 	return os.join_path(root(), version)
 }
 
+// found returns `true` if a NDK is found.
 pub fn found() bool {
 	return root() != ''
 }
 
+// is_side_by_side returns `true` if the NDK is installed
+// in "side-by-side" form in the SDK.
 pub fn is_side_by_side() bool {
 	return os.real_path(os.join_path(sdk.root(), 'ndk')) == os.real_path(os.join_path(root()))
 }
 
 pub fn versions_available() []string {
 	if !is_side_by_side() {
+		v := version_from_source_properties() or { '' }
+		if v != '' {
+			return [v]
+		}
 		return [os.file_name(root())]
 	}
 	return util.ls_sorted(root())
@@ -142,6 +175,12 @@ pub fn versions_available() []string {
 
 pub fn has_version(version string) bool {
 	if !is_side_by_side() {
+		if version != 'ndk-bundle' {
+			v := version_from_source_properties() or { '' }
+			if v != '' {
+				return v == version
+			}
+		}
 		return os.file_name(root()) == version
 	}
 	return version in versions_available()
@@ -175,17 +214,6 @@ fn min_version_supported_by_vab() string {
 			'0.0.0'
 		}
 	}
-}
-
-pub fn default_version() string {
-	if !is_side_by_side() {
-		return os.file_name(root())
-	}
-	dirs := util.find_sorted(root())
-	if dirs.len > 0 {
-		return os.file_name(dirs.first())
-	}
-	return ''
 }
 
 [inline]
@@ -432,4 +460,34 @@ fn read_platforms_json(version string) ?map[string]json2.Any {
 	platforms := platforms_json.as_map()
 	cache.set_string(@MOD + '.' + @FN + '$version', platforms_json_file)
 	return platforms
+}
+
+fn version_from_source_properties() ?string {
+	cached_version := cache.get_string(@MOD + '.' + @FN)
+	if cached_version != '' {
+		return cached_version
+	}
+	lines := read_source_properties()?
+	for line in lines {
+		if line.contains('Pkg.Revision') {
+			v := line.all_after_last('=').trim_space()
+			if v == '' {
+				return none
+			} else {
+				cache.set_string(@MOD + '.' + @FN, v)
+				return v
+			}
+		}
+	}
+	return none
+}
+
+fn read_source_properties() ?[]string {
+	if found() {
+		sp_file := os.join_path(root(), 'source.properties')
+		if os.is_file(sp_file) {
+			return os.read_lines(sp_file)
+		}
+	}
+	return none
 }
