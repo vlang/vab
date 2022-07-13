@@ -10,15 +10,15 @@ const (
 	ndk_supported_cpp_features      = ['rtti', 'exceptions', 'no-rtti', 'no-exceptions']
 )
 
+[params]
 pub struct FlagConfig {
 pub:
-	pie                          bool = true // TODO
+	pic                          bool = true // TODO
 	debug                        bool = true // false = release
 	platform_level               int  = 21
-	arch                         string               [required]
+	arch                         string   [required]
 	neon                         bool
-	arm_mode                     string = 'thumb' // or 'arm'
-	lang                         CompilerLanguageType = .c
+	arm_mode                     string   = 'thumb' // or 'arm'
 	ld                           string   = 'lld'
 	stl                          string   = 'c++_static' // or 'c++_shared' 'none' 'system'
 	cpp_features                 []string = ['rtti', 'exceptions']
@@ -127,6 +127,9 @@ pub fn (f FlagGen) flags(flag_config FlagConfig) ![]string {
 		flags << '-Wno-error=format-security'
 	} else {
 		flags << '-Wformat -Werror=format-security'
+	}
+	if cnf.pic {
+		flags << '-fPIC'
 	}
 
 	return flags
