@@ -144,6 +144,9 @@ pub fn (f FlagGen) ld_flags(flag_config FlagConfig) ![]string {
 	if flag_config.ld == 'lld' {
 		ld_flags << '-fuse-ld=lld'
 		ld_flags << '-Wl,--build-id=sha1'
+		if cnf.platform_level < 29 {
+			ld_flags << '-Wl,--no-rosegment'
+		}
 	} else {
 		ld_flags << '-Wl,--build-id'
 	}
