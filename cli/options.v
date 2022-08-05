@@ -426,6 +426,7 @@ pub fn (mut opt Options) resolve(exit_on_error bool) {
 	}
 }
 
+// resolve_keystore returns an `android.Keystore` resolved from `Options`.
 pub fn (opt &Options) resolve_keystore() !android.Keystore {
 	mut keystore := android.Keystore{
 		path: opt.keystore
