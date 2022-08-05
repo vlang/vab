@@ -441,8 +441,8 @@ pub fn (mut opt Options) resolve(exit_on_error bool) {
 		archs = android.default_archs.clone()
 		if opt.verbosity > 1 {
 			eprintln('Setting all architectures: $archs')
-			opt.archs = archs
 		}
+		opt.archs = archs
 	}
 
 	// If no device id has been set at this point,
