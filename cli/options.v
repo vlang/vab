@@ -64,6 +64,19 @@ pub mut:
 	log_tags  []string // extra `--log-tag` log tags to include when running with '--log'
 }
 
+// options_from_env returns an `Option` struct filled with flags set via
+// the `VAB_FLAGS` env variable otherwise it returns a default `Option` struct.
+pub fn options_from_env(defaults Options) !Options {
+	env_vab_flags := os.getenv('VAB_FLAGS')
+	if env_vab_flags != '' {
+		mut vab_flags := [os.args[0]]
+		vab_flags << string_to_args(env_vab_flags)!
+		opts, _ = args_to_options(vab_flags, defaults)!
+		return opts
+	}
+	return defaults
+}
+
 // extend_from_dot_vab will merge the `Options` with any content
 // found in any `.vab` config files.
 pub fn (mut opt Options) extend_from_dot_vab() {

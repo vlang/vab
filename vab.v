@@ -16,19 +16,10 @@ fn main() {
 	mut opt := cli.Options{}
 	mut fp := &flag.FlagParser(0)
 
-	env_vab_flags := os.getenv('VAB_FLAGS')
-	if env_vab_flags != '' {
-		mut vab_flags := [os.args[0]]
-		vab_flags << cli.string_to_args(env_vab_flags) or {
-			eprintln('Error while parsing `VAB_FLAGS`: $err')
-			eprintln('Use `vab -h` to see all flags')
-			exit(1)
-		}
-		opt, fp = cli.args_to_options(vab_flags, opt) or {
-			eprintln('Error while parsing `VAB_FLAGS`: $err')
-			eprintln('Use `vab -h` to see all flags')
-			exit(1)
-		}
+	opt = cli.options_from_env(opt) or {
+		eprintln('Error while parsing `VAB_FLAGS`: $err')
+		eprintln('Use `vab -h` to see all flags')
+		exit(1)
 	}
 
 	opt, fp = cli.args_to_options(os.args, opt) or {
