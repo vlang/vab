@@ -422,6 +422,12 @@ pub fn (mut opt Options) resolve(exit_on_error bool) {
 	// Java package ids/names are integrated hard into the eco-system
 	opt.lib_name = opt.app_name.replace(' ', '_').to_lower()
 
+	// Convert v flags captured to option field
+	if '-prod' in opt.v_flags {
+		opt.is_prod = true
+		opt.v_flags.delete(opt.v_flags.index('-prod'))
+	}
+
 	if os.getenv('KEYSTORE_PASSWORD') != '' {
 		opt.keystore_password = os.getenv('KEYSTORE_PASSWORD')
 	}
