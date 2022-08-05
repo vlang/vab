@@ -10,20 +10,15 @@ import vab.android.env
 
 pub struct Options {
 pub:
-	// Internals
+	// These fields would make little sense to change during a run
 	verbosity int
 	work_dir  string = work_directory
 	// Build, packaging and deployment
-	parallel       bool = true // Run, what can be run, in parallel
-	cache          bool
-	version_code   int
-	device_id      string
-	keystore       string
-	keystore_alias string
-	gles_version   int = android.default_gles_version
+	parallel     bool = true // Run, what can be run, in parallel
+	cache        bool // defaults to false in os.args/flag parsing phase
+	gles_version int = android.default_gles_version
 	// Build specifics
 	no_printf_hijack bool // Do not let V redefine printf for log output aka. V_ANDROID_LOG_PRINT
-	archs            []string
 	// Deploy specifics
 	run              bool
 	device_log       bool
@@ -35,10 +30,10 @@ pub:
 	list_apis        bool
 	list_build_tools bool
 pub mut:
-	additional_args []string
-	//
-	input  string
-	output string
+	// I/O
+	input           string
+	output          string
+	additional_args []string // additional_args passed via os.args
 	// App essentials
 	app_name               string = android.default_app_name
 	icon                   string
@@ -46,15 +41,17 @@ pub mut:
 	activity_name          string
 	package_format         string = android.default_package_format
 	package_overrides_path string
-	// Deploy
-	log_tags []string // extra `--log-tag` log tags to include when running with '--log'
 	// Build and packaging
+	archs                   []string // Compile for these archs
 	is_prod                 bool
 	c_flags                 []string // flags passed to the C compiler(s)
 	v_flags                 []string // flags passed to the V compiler
 	lib_name                string
 	assets_extra            []string
 	libs_extra              []string
+	version_code            int
+	keystore                string // Path to keystore file
+	keystore_alias          string // Alias to use in keystore file
 	keystore_password       string
 	keystore_alias_password string
 	// Build specifics
@@ -62,6 +59,9 @@ pub mut:
 	api_level       string
 	ndk_version     string
 	min_sdk_version int = android.default_min_sdk_version
+	// Deployment
+	device_id string
+	log_tags  []string // extra `--log-tag` log tags to include when running with '--log'
 }
 
 // extend_from_dot_vab will merge the `Options` with any content
@@ -403,4 +403,45 @@ pub fn (mut opt Options) resolve(exit_on_error bool) {
 	if os.getenv('KEYSTORE_ALIAS_PASSWORD') != '' {
 		opt.keystore_alias_password = os.getenv('KEYSTORE_ALIAS_PASSWORD')
 	}
+
+	mut archs := opt.archs.map(it.trim_space()).filter(it != '')
+	// Compile sources for all Android archs if no valid archs found
+	if archs.len <= 0 {
+		archs = android.default_archs.clone()
+		if opt.verbosity > 1 {
+			eprintln('Setting all architectures: $archs')
+			opt.archs = archs
+		}
+	}
+
+	// If no device id has been set at this point,
+	// check for ENV vars
+	mut device_id := opt.device_id
+	if device_id == '' {
+		device_id = os.getenv('ANDROID_SERIAL')
+		if opt.verbosity > 1 && device_id != '' {
+			eprintln('Using device "$device_id" from ANDROID_SERIAL env variable')
+			opt.device_id = device_id
+		}
+	}
+}
+
+// resolve_keystore returns an `android.Keystore` resolved from `Options`.
+pub fn (opt &Options) resolve_keystore() !android.Keystore {
+	mut keystore := android.Keystore{
+		path: opt.keystore
+		password: opt.keystore_password
+		alias: opt.keystore_alias
+		alias_password: opt.keystore_alias_password
+	}
+	if !os.is_file(keystore.path) {
+		if keystore.path != '' {
+			eprintln('Keystore "$keystore.path" is not a valid file')
+			eprintln('Notice: Signing with debug keystore')
+		}
+		keystore = android.default_keystore(cache_directory)!
+	} else {
+		keystore = android.resolve_keystore(keystore)!
+	}
+	return keystore
 }
