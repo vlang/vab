@@ -8,6 +8,8 @@ import vab.android.sdk
 import vab.android.ndk
 import vab.android.env
 
+// doctor prints various useful information to the shell to aid
+// diagnosticing the work environment.
 pub fn doctor(opt Options) {
 	sdkm := env.sdkmanager()
 	env_managable := env.managable()

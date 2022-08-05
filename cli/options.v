@@ -64,6 +64,8 @@ pub mut:
 	min_sdk_version int = android.default_min_sdk_version
 }
 
+// extend_from_dot_vab will merge the `Options` with any content
+// found in any `.vab` config files.
 pub fn (mut opt Options) extend_from_dot_vab() {
 	// Look up values in input .vab file next to input if no flags or defaults was set
 	dot_vab_file := dot_vab_path(opt.input)
@@ -170,6 +172,7 @@ pub fn (mut opt Options) extend_from_dot_vab() {
 	}
 }
 
+// validate_env ensures that `Optins` meet all runtime requrements.
 pub fn (opt &Options) validate_env() {
 	// Validate JDK
 	jdk_version := java.jdk_version()
@@ -256,6 +259,7 @@ pub fn (opt &Options) validate_env() {
 	}
 }
 
+// resolve_output modifies `Options.output` according to what `Option.input` contains.
 pub fn (mut opt Options) resolve_output() {
 	// Resolve output
 	mut output_file := ''
@@ -290,6 +294,8 @@ pub fn (mut opt Options) resolve_output() {
 	opt.output = output_file
 }
 
+// resolve tries to resolve `Options` in a balance so everything works
+// optimally weighted against the best user experience.
 pub fn (mut opt Options) resolve(exit_on_error bool) {
 	// Validate SDK API level
 	mut api_level := sdk.default_api_level
