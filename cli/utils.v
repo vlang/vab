@@ -2,6 +2,17 @@ module cli
 
 import os
 
+// kill_adb will try to kill the `adb` process.
+pub fn kill_adb() {
+	uos := os.user_os()
+	println('Killing adb ...')
+	if uos == 'windows' {
+		// os.system('Taskkill /IM adb.exe /F') // TODO Untested
+	} else {
+		os.system('killall adb')
+	}
+}
+
 fn vab_commit_hash() string {
 	mut hash := ''
 	git_exe := os.find_abs_path_of_executable('git') or { '' }

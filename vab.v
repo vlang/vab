@@ -157,15 +157,6 @@ fn main() {
 		}
 	}
 
-	// If no device id has been set at this point,
-	// check for ENV vars
-	mut device_id := opt.device_id
-	if device_id == '' {
-		device_id = os.getenv('ANDROID_SERIAL')
-		if opt.verbosity > 1 && device_id != '' {
-			println('Using device "$device_id" from ANDROID_SERIAL env variable')
-		}
-	}
 	// Package format apk/aab
 	format := match opt.package_format {
 		'aab' {
@@ -177,26 +168,9 @@ fn main() {
 	}
 
 	// Keystore file
-	mut keystore := android.Keystore{
-		path: opt.keystore
-		password: opt.keystore_password
-		alias: opt.keystore_alias
-		alias_password: opt.keystore_alias_password
-	}
-	if !os.is_file(keystore.path) {
-		if keystore.path != '' {
-			eprintln('Keystore "$keystore.path" is not a valid file')
-			eprintln('Notice: Signing with debug keystore')
-		}
-		keystore = android.default_keystore(cli.cache_directory) or {
-			eprintln('Getting a default keystore failed.\n$err')
-			exit(1)
-		}
-	} else {
-		keystore = android.resolve_keystore(keystore) or {
-			eprintln('Could not resolve keystore.\n$err')
-			exit(1)
-		}
+	keystore := opt.resolve_keystore() or {
+		eprintln('Could not resolve keystore.\n$err')
+		exit(1)
 	}
 	if opt.verbosity > 1 {
 		println('Output will be signed with keystore at "$keystore.path"')
@@ -212,7 +186,7 @@ fn main() {
 		activity_name: activity_name
 		work_dir: opt.work_dir
 		v_flags: opt.v_flags
-		device_id: device_id
+		device_id: opt.device_id
 		deploy_file: opt.output
 		kill_adb: kill_adb
 		clear_device_log: opt.clear_device_log
@@ -226,28 +200,22 @@ fn main() {
 
 	// Early deployment
 	if input_ext in ['.apk', '.aab'] {
-		if opt.device_id != '' {
+		if deploy_opt.device_id != '' {
 			android.deploy(deploy_opt) or {
 				eprintln('$cli.exe_short_name deployment didn\'t succeed.\n$err')
 				if deploy_opt.kill_adb {
-					kill_adb_on_exit()
+					cli.kill_adb()
 				}
 				exit(1)
 			}
 			if opt.verbosity > 0 {
-				println('Deployed to $opt.device_id successfully')
+				println('Deployed to $deploy_opt.device_id successfully')
 			}
 			if deploy_opt.kill_adb {
-				kill_adb_on_exit()
+				cli.kill_adb()
 			}
 			exit(0)
 		}
-	}
-
-	mut archs := opt.archs.filter(it.trim(' ') != '')
-	// Compile sources for all Android archs if no valid archs found
-	if archs.len <= 0 {
-		archs = android.default_archs.clone()
 	}
 
 	compile_cache_key := if os.is_dir(input) || input_ext == '.v' { opt.input } else { '' }
@@ -261,7 +229,7 @@ fn main() {
 		no_printf_hijack: opt.no_printf_hijack
 		v_flags: opt.v_flags
 		c_flags: opt.c_flags
-		archs: archs
+		archs: opt.archs
 		work_dir: opt.work_dir
 		input: opt.input
 		ndk_version: opt.ndk_version
@@ -303,34 +271,24 @@ fn main() {
 		exit(1)
 	}
 
-	if device_id != '' {
+	if deploy_opt.device_id != '' {
 		android.deploy(deploy_opt) or {
 			eprintln("Deployment didn't succeed.\n$err")
 			if deploy_opt.kill_adb {
-				kill_adb_on_exit()
+				cli.kill_adb()
 			}
 			exit(1)
 		}
 		if opt.verbosity > 0 {
-			println('Deployed to device ($device_id) successfully')
+			println('Deployed to device ($deploy_opt.device_id) successfully')
 		}
 		if deploy_opt.kill_adb {
-			kill_adb_on_exit()
+			cli.kill_adb()
 		}
 	} else {
 		if opt.verbosity > 0 {
 			println('Generated ${os.real_path(opt.output)}')
 			println('Use `$cli.exe_short_name --device <id> ${os.real_path(opt.output)}` to deploy package')
 		}
-	}
-}
-
-fn kill_adb_on_exit() {
-	uos := os.user_os()
-	println('Killing adb ...')
-	if uos == 'windows' {
-		// os.system('Taskkill /IM adb.exe /F') // TODO Untested
-	} else {
-		os.system('killall adb')
 	}
 }
