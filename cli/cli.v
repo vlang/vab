@@ -45,7 +45,7 @@ pub const vab_env_vars = [
 
 // args_to_options returns an `Option` merged from (CLI/Shell) `arguments` using `defaults` as
 // values where no value can be obtained from `arguments`.
-pub fn args_to_options(arguments []string, defaults Options) ?(Options, &flag.FlagParser) {
+pub fn args_to_options(arguments []string, defaults Options) !(Options, &flag.FlagParser) {
 	mut args := arguments.clone()
 
 	// Indentify sub-commands.
@@ -139,7 +139,9 @@ pub fn args_to_options(arguments []string, defaults Options) ?(Options, &flag.Fl
 		list_build_tools: fp.bool('list-build-tools', 0, defaults.list_build_tools, 'List available Build-tools versions')
 	}
 
-	opt.additional_args = fp.finalize()?
+	opt.additional_args = fp.finalize() or {
+		return error(@FN + ': flag parser failed finalizing: $err')
+	}
 
 	mut c_flags := []string{}
 	c_flags << opt.c_flags
@@ -299,7 +301,7 @@ pub fn launch_cmd(args []string) int {
 
 // string_to_args converts `input` string to an `os.args`-like array.
 // string_to_args preserves strings delimited by both `"` and `'`.
-pub fn string_to_args(input string) ?[]string {
+pub fn string_to_args(input string) ![]string {
 	mut args := []string{}
 	mut buf := ''
 	mut in_string := false

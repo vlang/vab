@@ -71,7 +71,7 @@ pub fn options_from_env(defaults Options) !Options {
 	if env_vab_flags != '' {
 		mut vab_flags := [os.args[0]]
 		vab_flags << string_to_args(env_vab_flags)!
-		opts, _ = args_to_options(vab_flags, defaults)!
+		opts, _ := args_to_options(vab_flags, defaults)!
 		return opts
 	}
 	return defaults
