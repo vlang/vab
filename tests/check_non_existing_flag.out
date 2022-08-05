@@ -1,2 +1,2 @@
-Error while parsing `os.args`: flag.UnkownFlagError: Unknown flag `--non-existing-flag`
+Error while parsing `os.args`: args_to_options: flag parser failed finalizing: flag.UnkownFlagError: Unknown flag `--non-existing-flag`
 Use `vab -h` to see all flags
