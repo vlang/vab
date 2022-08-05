@@ -172,6 +172,20 @@ pub fn (mut opt Options) extend_from_dot_vab() {
 	}
 }
 
+pub fn (mut opt Options) resolve_package_id() {
+	// If no package id or activity name has set, use the defaults
+	mut package_id := opt.package_id
+	mut activity_name := opt.activity_name
+	if package_id == '' {
+		package_id = android.default_package_id
+	}
+	if activity_name == '' {
+		activity_name = android.default_activity_name
+	}
+	opt.package_id = package_id
+	opt.activity_name = activity_name
+}
+
 // validate_env ensures that `Optins` meet all runtime requrements.
 pub fn (opt &Options) validate_env() {
 	// Validate JDK
@@ -444,4 +458,110 @@ pub fn (opt &Options) resolve_keystore() !android.Keystore {
 		keystore = android.resolve_keystore(keystore)!
 	}
 	return keystore
+}
+
+// as_android_deploy_options returns `android.DeployOptions` based on the fields in `Options`.
+pub fn (opt &Options) as_android_deploy_options() !android.DeployOptions {
+	mut run := ''
+	if opt.run {
+		package_id := opt.package_id
+		activity_name := opt.activity_name
+		run = '$package_id/${package_id}.$activity_name'
+		if opt.verbosity > 1 {
+			println('Should run "$package_id/${package_id}.$activity_name"')
+		}
+	}
+
+	mut log_tags := opt.log_tags
+	log_tags << opt.lib_name
+
+	// Package format apk/aab
+	format := match opt.package_format {
+		'aab' {
+			android.PackageFormat.aab
+		}
+		else {
+			android.PackageFormat.apk
+		}
+	}
+
+	deploy_opt := android.DeployOptions{
+		verbosity: opt.verbosity
+		format: format
+		// keystore: keystore
+		activity_name: opt.activity_name
+		work_dir: opt.work_dir
+		v_flags: opt.v_flags
+		device_id: opt.device_id
+		deploy_file: opt.output
+		kill_adb: os.getenv('VAB_KILL_ADB') != ''
+		clear_device_log: opt.clear_device_log
+		device_log: opt.device_log || opt.device_log_raw
+		log_mode: if opt.device_log_raw { android.LogMode.raw } else { android.LogMode.filtered }
+		log_tags: log_tags
+		run: run
+	}
+
+	return deploy_opt
+}
+
+// as_android_deploy_options returns `android.DeployOptions` based on the fields in `Options`.
+pub fn (opt &Options) as_android_compile_options() android.CompileOptions {
+	comp_opt := android.CompileOptions{
+		verbosity: opt.verbosity
+		cache: opt.cache
+		// cache_key: compile_cache_key
+		parallel: opt.parallel
+		is_prod: opt.is_prod
+		gles_version: opt.gles_version
+		no_printf_hijack: opt.no_printf_hijack
+		v_flags: opt.v_flags
+		c_flags: opt.c_flags
+		archs: opt.archs
+		work_dir: opt.work_dir
+		input: opt.input
+		ndk_version: opt.ndk_version
+		lib_name: opt.lib_name
+		api_level: opt.api_level
+		min_sdk_version: opt.min_sdk_version
+	}
+	return comp_opt
+}
+
+pub fn (opt &Options) as_android_package_options() android.PackageOptions {
+	// Package format apk/aab
+	format := match opt.package_format {
+		'aab' {
+			android.PackageFormat.aab
+		}
+		else {
+			android.PackageFormat.apk
+		}
+	}
+
+	pck_opt := android.PackageOptions{
+		verbosity: opt.verbosity
+		work_dir: opt.work_dir
+		is_prod: opt.is_prod
+		api_level: opt.api_level
+		min_sdk_version: opt.min_sdk_version
+		gles_version: opt.gles_version
+		build_tools: opt.build_tools
+		app_name: opt.app_name
+		lib_name: opt.lib_name
+		package_id: opt.package_id
+		format: format
+		activity_name: opt.activity_name
+		icon: opt.icon
+		version_code: opt.version_code
+		v_flags: opt.v_flags
+		input: opt.input
+		assets_extra: opt.assets_extra
+		libs_extra: opt.libs_extra
+		output_file: opt.output
+		// keystore: keystore
+		base_files: os.join_path(exe_dir, 'platforms', 'android')
+		overrides_path: opt.package_overrides_path
+	}
+	return pck_opt
 }

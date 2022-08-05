@@ -133,67 +133,25 @@ fn main() {
 
 	opt.extend_from_dot_vab()
 
-	kill_adb := os.getenv('VAB_KILL_ADB') != ''
-
-	// If no package id or activity name has been set at this point,
-	// use the defaults
-	mut package_id := opt.package_id
-	mut activity_name := opt.activity_name
-	if package_id == '' {
-		package_id = android.default_package_id
-	}
-	if activity_name == '' {
-		activity_name = android.default_activity_name
-	}
-
 	// Validate environment after options and input has been resolved
 	opt.validate_env()
 
-	mut run := ''
-	if opt.run {
-		run = '$package_id/${package_id}.$activity_name'
-		if opt.verbosity > 1 {
-			println('Should run "$package_id/${package_id}.$activity_name"')
-		}
-	}
-
-	// Package format apk/aab
-	format := match opt.package_format {
-		'aab' {
-			android.PackageFormat.aab
-		}
-		else {
-			android.PackageFormat.apk
-		}
-	}
+	opt.resolve_package_id()
 
 	// Keystore file
-	keystore := opt.resolve_keystore() or {
-		eprintln('Could not resolve keystore.\n$err')
+	keystore := opt.resolve_keystore()!
+
+	ado := opt.as_android_deploy_options() or {
+		eprintln('Could not create deploy options.\n$err')
 		exit(1)
 	}
-	if opt.verbosity > 1 {
-		println('Output will be signed with keystore at "$keystore.path"')
+	deploy_opt := android.DeployOptions{
+		...ado
+		keystore: keystore
 	}
 
-	mut log_tags := opt.log_tags
-	log_tags << opt.lib_name
-
-	deploy_opt := android.DeployOptions{
-		verbosity: opt.verbosity
-		format: format
-		keystore: keystore
-		activity_name: activity_name
-		work_dir: opt.work_dir
-		v_flags: opt.v_flags
-		device_id: opt.device_id
-		deploy_file: opt.output
-		kill_adb: kill_adb
-		clear_device_log: opt.clear_device_log
-		device_log: opt.device_log || opt.device_log_raw
-		log_mode: if opt.device_log_raw { android.LogMode.raw } else { android.LogMode.filtered }
-		log_tags: log_tags
-		run: run
+	if opt.verbosity > 1 {
+		println('Output will be signed with keystore at "$deploy_opt.keystore.path"')
 	}
 
 	input_ext := os.file_ext(opt.input)
@@ -201,70 +159,25 @@ fn main() {
 	// Early deployment
 	if input_ext in ['.apk', '.aab'] {
 		if deploy_opt.device_id != '' {
-			android.deploy(deploy_opt) or {
-				eprintln('$cli.exe_short_name deployment didn\'t succeed.\n$err')
-				if deploy_opt.kill_adb {
-					cli.kill_adb()
-				}
-				exit(1)
-			}
-			if opt.verbosity > 0 {
-				println('Deployed to $deploy_opt.device_id successfully')
-			}
-			if deploy_opt.kill_adb {
-				cli.kill_adb()
-			}
+			deploy(deploy_opt)
 			exit(0)
 		}
 	}
 
-	compile_cache_key := if os.is_dir(input) || input_ext == '.v' { opt.input } else { '' }
+	aco := opt.as_android_compile_options()
 	comp_opt := android.CompileOptions{
-		verbosity: opt.verbosity
-		cache: opt.cache
-		cache_key: compile_cache_key
-		parallel: opt.parallel
-		is_prod: opt.is_prod
-		gles_version: opt.gles_version
-		no_printf_hijack: opt.no_printf_hijack
-		v_flags: opt.v_flags
-		c_flags: opt.c_flags
-		archs: opt.archs
-		work_dir: opt.work_dir
-		input: opt.input
-		ndk_version: opt.ndk_version
-		lib_name: opt.lib_name
-		api_level: opt.api_level
-		min_sdk_version: opt.min_sdk_version
+		...aco
+		cache_key: if os.is_dir(input) || input_ext == '.v' { opt.input } else { '' }
 	}
 	android.compile(comp_opt) or {
 		eprintln('$cli.exe_short_name compiling didn\'t succeed.\n$err')
 		exit(1)
 	}
 
+	apo := opt.as_android_package_options()
 	pck_opt := android.PackageOptions{
-		verbosity: opt.verbosity
-		work_dir: opt.work_dir
-		is_prod: opt.is_prod
-		api_level: opt.api_level
-		min_sdk_version: opt.min_sdk_version
-		gles_version: opt.gles_version
-		build_tools: opt.build_tools
-		app_name: opt.app_name
-		lib_name: opt.lib_name
-		package_id: package_id
-		format: format
-		activity_name: activity_name
-		icon: opt.icon
-		version_code: opt.version_code
-		v_flags: opt.v_flags
-		input: opt.input
-		assets_extra: opt.assets_extra
-		libs_extra: opt.libs_extra
-		output_file: opt.output
+		...apo
 		keystore: keystore
-		base_files: os.join_path(cli.exe_dir, 'platforms', 'android')
-		overrides_path: opt.package_overrides_path
 	}
 	android.package(pck_opt) or {
 		eprintln("Packaging didn't succeed.\n$err")
@@ -272,23 +185,27 @@ fn main() {
 	}
 
 	if deploy_opt.device_id != '' {
-		android.deploy(deploy_opt) or {
-			eprintln("Deployment didn't succeed.\n$err")
-			if deploy_opt.kill_adb {
-				cli.kill_adb()
-			}
-			exit(1)
-		}
-		if opt.verbosity > 0 {
-			println('Deployed to device ($deploy_opt.device_id) successfully')
-		}
-		if deploy_opt.kill_adb {
-			cli.kill_adb()
-		}
+		deploy(deploy_opt)
 	} else {
 		if opt.verbosity > 0 {
 			println('Generated ${os.real_path(opt.output)}')
 			println('Use `$cli.exe_short_name --device <id> ${os.real_path(opt.output)}` to deploy package')
 		}
+	}
+}
+
+fn deploy(deploy_opt android.DeployOptions) {
+	android.deploy(deploy_opt) or {
+		eprintln('$cli.exe_short_name deployment didn\'t succeed.\n$err')
+		if deploy_opt.kill_adb {
+			cli.kill_adb()
+		}
+		exit(1)
+	}
+	if deploy_opt.verbosity > 0 {
+		println('Deployed to $deploy_opt.device_id successfully')
+	}
+	if deploy_opt.kill_adb {
+		cli.kill_adb()
 	}
 }
