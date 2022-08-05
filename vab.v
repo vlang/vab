@@ -18,13 +18,13 @@ fn main() {
 
 	opt = cli.options_from_env(opt) or {
 		eprintln('Error while parsing `VAB_FLAGS`: $err')
-		eprintln('Use `vab -h` to see all flags')
+		eprintln('Use `$cli.exe_short_name -h` to see all flags')
 		exit(1)
 	}
 
 	opt, fp = cli.args_to_options(os.args, opt) or {
 		eprintln('Error while parsing `os.args`: $err')
-		eprintln('Use `vab -h` to see all flags')
+		eprintln('Use `$cli.exe_short_name -h` to see all flags')
 		exit(1)
 	}
 
