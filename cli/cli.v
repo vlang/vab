@@ -43,6 +43,8 @@ pub const vab_env_vars = [
 	'VMODULES',
 ]
 
+// args_to_options returns an `Option` merged from (CLI/Shell) `arguments` using `defaults` as
+// values where no value can be obtained from `arguments`.
 pub fn args_to_options(arguments []string, defaults Options) ?(Options, &flag.FlagParser) {
 	mut args := arguments.clone()
 
@@ -168,6 +170,8 @@ pub fn args_to_options(arguments []string, defaults Options) ?(Options, &flag.Fl
 	return opt, fp
 }
 
+// check_essentials ensures that the work environment has all needed dependencies
+// and meet all required needs.
 pub fn check_essentials(exit_on_error bool) {
 	// Validate V install
 	if vxt.vexe() == '' {
@@ -238,6 +242,7 @@ pub fn dot_vab_path(file_or_dir_path string) string {
 	return ''
 }
 
+// launch_cmd launches an external command.
 pub fn launch_cmd(args []string) int {
 	mut cmd := args[0]
 	tool_args := args[1..]
@@ -333,6 +338,7 @@ pub fn string_to_args(input string) ?[]string {
 	return args
 }
 
+// validate_input validates `input` for use with vab.
 pub fn validate_input(input string) ! {
 	input_ext := os.file_ext(input)
 
