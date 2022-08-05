@@ -136,7 +136,7 @@ fn main() {
 	// Validate environment after options and input has been resolved
 	opt.validate_env()
 
-	opt.resolve_package_id()
+	opt.ensure_launch_fields()
 
 	// Keystore file
 	keystore := opt.resolve_keystore()!

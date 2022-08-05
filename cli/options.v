@@ -172,18 +172,16 @@ pub fn (mut opt Options) extend_from_dot_vab() {
 	}
 }
 
-pub fn (mut opt Options) resolve_package_id() {
+// ensure_launch_fields sets `package_id` and `activity_name` fields if they're blank
+// these fields are necessary for succesful deployment.
+pub fn (mut opt Options) ensure_launch_fields() {
 	// If no package id or activity name has set, use the defaults
-	mut package_id := opt.package_id
-	mut activity_name := opt.activity_name
-	if package_id == '' {
-		package_id = android.default_package_id
+	if opt.package_id == '' {
+		opt.package_id = android.default_package_id
 	}
-	if activity_name == '' {
-		activity_name = android.default_activity_name
+	if opt.activity_name == '' {
+		opt.activity_name = android.default_activity_name
 	}
-	opt.package_id = package_id
-	opt.activity_name = activity_name
 }
 
 // validate_env ensures that `Optins` meet all runtime requrements.
@@ -505,7 +503,7 @@ pub fn (opt &Options) as_android_deploy_options() !android.DeployOptions {
 	return deploy_opt
 }
 
-// as_android_deploy_options returns `android.DeployOptions` based on the fields in `Options`.
+// as_android_compile_options returns `android.CompileOptions` based on the fields in `Options`.
 pub fn (opt &Options) as_android_compile_options() android.CompileOptions {
 	comp_opt := android.CompileOptions{
 		verbosity: opt.verbosity
@@ -528,6 +526,7 @@ pub fn (opt &Options) as_android_compile_options() android.CompileOptions {
 	return comp_opt
 }
 
+// as_android_package_options returns `android.PackageOptions` based on the fields in `Options`.
 pub fn (opt &Options) as_android_package_options() android.PackageOptions {
 	// Package format apk/aab
 	format := match opt.package_format {
