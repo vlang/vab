@@ -124,7 +124,10 @@ fn main() {
 	opt.ensure_launch_fields()
 
 	// Keystore file
-	keystore := opt.resolve_keystore()!
+	keystore := opt.resolve_keystore() or {
+		eprintln('$cli.exe_short_name: could not resolve keystore: $err')
+		exit(1)
+	}
 
 	ado := opt.as_android_deploy_options() or {
 		eprintln('Could not create deploy options.\n$err')

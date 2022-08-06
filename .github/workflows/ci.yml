@@ -44,6 +44,9 @@ jobs:
     - name: Symlink as module
       run: sudo ln -s $(pwd)/vab ~/.vmodules/vab # Workaround for doing `mv vab ~/.vmodules`
 
+    - name: Build vab with -skip-unused
+      run: v -skip-unused ~/.vmodules/vab
+
     - name: Build vab
       run: v -g ~/.vmodules/vab
 
