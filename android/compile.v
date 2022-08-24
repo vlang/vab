@@ -307,7 +307,7 @@ pub fn compile(opt CompileOptions) ! {
 	mut a_files := vicd.a_files.clone()
 
 	// For all compilers
-	mut cflags := opt.c_flags
+	mut cflags := opt.c_flags.clone()
 	mut includes := []string{}
 	mut defines := []string{}
 	mut ldflags := []string{}
@@ -657,7 +657,7 @@ pub fn compile_v_imports_c_dependencies(opt CompileOptions, imported_modules []s
 	is_debug_build := opt.is_debug_build()
 
 	// For all compilers
-	mut cflags := opt.c_flags
+	mut cflags := opt.c_flags.clone()
 	if opt.is_prod {
 		cflags << ['-Os']
 	} else {

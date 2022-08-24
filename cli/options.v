@@ -489,7 +489,7 @@ pub fn (opt &Options) as_android_deploy_options() !android.DeployOptions {
 		}
 	}
 
-	mut log_tags := opt.log_tags
+	mut log_tags := opt.log_tags.clone()
 	log_tags << opt.lib_name
 
 	// Package format apk/aab
