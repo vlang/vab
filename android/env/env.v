@@ -610,6 +610,7 @@ pub fn sdkmanager_version() string {
 		mut p := os.new_process(sdkm)
 		p.set_args(['--version'])
 		p.set_redirect_stdio()
+		p.run()
 		p.wait()
 		if p.code != 0 {
 			return version
