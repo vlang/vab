@@ -607,15 +607,14 @@ pub fn sdkmanager_version() string {
 	mut version := '0.0.0'
 	sdkm := sdkmanager()
 	if sdkm != '' {
-		cmd := [
-			sdkm,
-			'--version',
-		]
-		cmd_res := util.run(cmd)
-		if cmd_res.exit_code != 0 {
+		mut p := os.new_process(sdkm)
+		p.set_args(['--version'])
+		p.set_redirect_stdio()
+		p.wait()
+		if p.code != 0 {
 			return version
 		}
-		version = cmd_res.output.trim(' \n\r')
+		version = p.stdout_slurp().trim_space()
 	}
 	return version
 }
