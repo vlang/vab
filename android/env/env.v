@@ -607,51 +607,6 @@ pub fn sdkmanager_version() string {
 	mut version := '0.0.0'
 	sdkm := sdkmanager()
 	if sdkm != '' {
-		/*
-		mut p := os.new_process(sdkm)
-		defer {
-			p.close()
-		}
-		p.set_args(['--version'])
-		p.set_redirect_stdio()
-		p.run()
-
-		mut its := 0
-		for p.is_alive() {
-			s, b := os.fd_read(p.stdio_fd[1], 2 * 4096)
-			if b <= 0 {
-				break
-			}
-			print('S : $s\n')
-
-			so, bo := os.fd_read(p.stdio_fd[0], 2 * 4096)
-			if bo <= 0 {
-				break
-			}
-			print('SO: $so\n')
-			os.flush()
-			its++
-			if its >= 10 {
-				break
-			}
-			time.sleep(2 * time.second)
-		}
-		//if !crash_mode {
-			version = p.stdout_slurp()
-			//p.wait()
-			println('V : $version')
-		//}
-		p.signal_kill() // close()
-		*/
-		/*
-		p.wait()
-		p.stderr_slurp()
-		if p.code != 0 {
-			return version
-		}
-		version = p.stdout_slurp().trim_space()
-		*/
-
 		cmd := [
 			sdkm,
 			'--version',
@@ -660,7 +615,30 @@ pub fn sdkmanager_version() string {
 		if cmd_res.exit_code != 0 {
 			return version
 		}
-		version = cmd_res.output.trim(' \n\r')
+		// sdkmanager can be... Uhm.. noisy and using os.Process can hang the CI...
+		// So to work around this we try to find a version string in a more
+		// primitive way
+		for raw_line in cmd_res.output.split('\n') {
+			line := raw_line.trim_space()
+			if !line.contains('.') {
+				continue
+			}
+			vs := line.split('.')
+			if vs.len < 2 {
+				continue
+			}
+			for b in vs[0] {
+				if !b.is_digit() {
+					break
+				}
+			}
+			for b in vs[1] {
+				if !b.is_digit() {
+					break
+				}
+			}
+			version = line
+		}
 	}
 	return version
 }
