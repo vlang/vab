@@ -3,7 +3,6 @@
 module env
 
 import os
-import time
 import semver
 import net.http
 import vab.cache
@@ -608,6 +607,7 @@ pub fn sdkmanager_version() string {
 	mut version := '0.0.0'
 	sdkm := sdkmanager()
 	if sdkm != '' {
+		/*
 		mut p := os.new_process(sdkm)
 		defer {
 			p.close()
@@ -642,7 +642,7 @@ pub fn sdkmanager_version() string {
 			println('V : $version')
 		//}
 		p.signal_kill() // close()
-
+		*/
 		/*
 		p.wait()
 		p.stderr_slurp()
@@ -650,8 +650,8 @@ pub fn sdkmanager_version() string {
 			return version
 		}
 		version = p.stdout_slurp().trim_space()
-*/
-		/*
+		*/
+
 		cmd := [
 			sdkm,
 			'--version',
@@ -661,7 +661,6 @@ pub fn sdkmanager_version() string {
 			return version
 		}
 		version = cmd_res.output.trim(' \n\r')
-		*/
 	}
 	return version
 }
