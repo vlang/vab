@@ -3,6 +3,7 @@
 module env
 
 import os
+import time
 import semver
 import net.http
 import vab.cache
@@ -614,25 +615,33 @@ pub fn sdkmanager_version() string {
 		p.set_args(['--version'])
 		p.set_redirect_stdio()
 		p.run()
+
+		mut its := 0
 		for p.is_alive() {
 			s, b := os.fd_read(p.stdio_fd[1], 2 * 4096)
 			if b <= 0 {
 				break
 			}
-			print('S : $s')
+			print('S : $s\n')
 
 			so, bo := os.fd_read(p.stdio_fd[0], 2 * 4096)
 			if bo <= 0 {
 				break
 			}
-			print('SO: $so')
+			print('SO: $so\n')
 			os.flush()
+			its++
+			if its >= 10 {
+				break
+			}
+			time.sleep(2 * time.second)
 		}
 		//if !crash_mode {
 			version = p.stdout_slurp()
-			p.wait()
+			//p.wait()
 			println('V : $version')
 		//}
+		p.signal_kill() // close()
 
 		/*
 		p.wait()
