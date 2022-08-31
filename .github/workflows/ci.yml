@@ -15,7 +15,7 @@ concurrency:
 jobs:
   code-formatting:
     runs-on: ubuntu-20.04
-    timeout-minutes: 30
+    timeout-minutes: 10
     env:
       VFLAGS: -cc tcc
     steps:
@@ -59,7 +59,7 @@ jobs:
 
   ubuntu-latest-bootstrap:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 20
     env:
       VAB_FLAGS: -v 3
     steps:
@@ -126,7 +126,7 @@ jobs:
 
   ubuntu-latest-build:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 15
     env:
       VAB_FLAGS: -v 3
     steps:
