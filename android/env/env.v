@@ -608,18 +608,40 @@ pub fn sdkmanager_version() string {
 	sdkm := sdkmanager()
 	if sdkm != '' {
 		mut p := os.new_process(sdkm)
+		defer {
+			p.close()
+		}
 		p.set_args(['--version'])
 		p.set_redirect_stdio()
-		// p.run()
+		p.run()
+		for p.is_alive() {
+			s, b := os.fd_read(p.stdio_fd[1], 2 * 4096)
+			if b <= 0 {
+				break
+			}
+			print('S : $s')
+
+			so, bo := os.fd_read(p.stdio_fd[0], 2 * 4096)
+			if bo <= 0 {
+				break
+			}
+			print('SO: $so')
+			os.flush()
+		}
+		//if !crash_mode {
+			version = p.stdout_slurp()
+			p.wait()
+			println('V : $version')
+		//}
+
+		/*
 		p.wait()
 		p.stderr_slurp()
 		if p.code != 0 {
-			p.close()
 			return version
 		}
-		p.close()
 		version = p.stdout_slurp().trim_space()
-
+*/
 		/*
 		cmd := [
 			sdkm,
