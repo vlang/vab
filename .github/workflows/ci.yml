@@ -126,7 +126,7 @@ jobs:
 
   ubuntu-latest-build:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 5
     env:
       VAB_FLAGS: -v 3
     steps:

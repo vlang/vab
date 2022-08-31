@@ -604,8 +604,12 @@ pub fn sdkmanager() string {
 }
 
 pub fn sdkmanager_version() string {
-	mut version := '0.0.0'
 	sdkm := sdkmanager()
+	mut version := cache.get_string(@MOD + '.' + @FN + sdkm)
+	if version != '' {
+		return version
+	}
+	version = '0.0.0'
 	if sdkm != '' {
 		cmd := [
 			sdkm,
@@ -613,10 +617,35 @@ pub fn sdkmanager_version() string {
 		]
 		cmd_res := util.run(cmd)
 		if cmd_res.exit_code != 0 {
+			cache.set_string(@MOD + '.' + @FN + sdkm, version)
 			return version
 		}
-		version = cmd_res.output.trim(' \n\r')
+		// sdkmanager can be... Uhm.. noisy and using os.Process can hang the CI...
+		// So to work around this we try to find a version string in a more
+		// primitive way
+		for raw_line in cmd_res.output.split('\n') {
+			line := raw_line.trim_space()
+			if !line.contains('.') {
+				continue
+			}
+			vs := line.split('.')
+			if vs.len < 2 {
+				continue
+			}
+			for b in vs[0] {
+				if !b.is_digit() {
+					break
+				}
+			}
+			for b in vs[1] {
+				if !b.is_digit() {
+					break
+				}
+			}
+			version = line
+		}
 	}
+	cache.set_string(@MOD + '.' + @FN + sdkm, version)
 	return version
 }
 
