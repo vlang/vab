@@ -604,8 +604,12 @@ pub fn sdkmanager() string {
 }
 
 pub fn sdkmanager_version() string {
-	mut version := '0.0.0'
 	sdkm := sdkmanager()
+	mut version := cache.get_string(@MOD + '.' + @FN + sdkm)
+	if version != '' {
+		return version
+	}
+	version = '0.0.0'
 	if sdkm != '' {
 		cmd := [
 			sdkm,
@@ -613,6 +617,7 @@ pub fn sdkmanager_version() string {
 		]
 		cmd_res := util.run(cmd)
 		if cmd_res.exit_code != 0 {
+			cache.set_string(@MOD + '.' + @FN + sdkm, version)
 			return version
 		}
 		// sdkmanager can be... Uhm.. noisy and using os.Process can hang the CI...
@@ -640,6 +645,7 @@ pub fn sdkmanager_version() string {
 			version = line
 		}
 	}
+	cache.set_string(@MOD + '.' + @FN + sdkm, version)
 	return version
 }
 
