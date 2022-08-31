@@ -20,7 +20,7 @@ jobs:
         os: [ubuntu-20.04]
         java-version: [8,11,15]
         android-api: [27, 30]
-    timeout-minutes: 30
+    timeout-minutes: 20
     env:
       VAB_FLAGS: -v 3 --build-tools 29.0.0
     steps:
@@ -97,7 +97,7 @@ jobs:
         os: [ubuntu-20.04]
         java-version: [8, 15]
         android-api: [27, 30]
-    timeout-minutes: 30
+    timeout-minutes: 20
     env:
       VAB_FLAGS: -v 3 -gc none --build-tools 29.0.0
     steps:
