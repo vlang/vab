@@ -79,12 +79,12 @@ pub fn (opt CompileOptions) build_directory() !string {
 	return dir
 }
 
-struct ShellJob {
+pub struct ShellJob {
 	cmd      []string
 	env_vars map[string]string
 }
 
-struct ShellJobResult {
+pub struct ShellJobResult {
 	job    ShellJob
 	result os.Result
 }
