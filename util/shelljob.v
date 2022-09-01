@@ -6,6 +6,11 @@ import os
 import sync.pool
 
 pub struct ShellJob {
+	message struct  {
+		std_out string
+		std_err string
+	}
+
 	cmd      []string
 	env_vars map[string]string
 }
@@ -17,14 +22,20 @@ pub struct ShellJobResult {
 
 // async_run runs all the ShellJobs in `pp` asynchronously.
 fn async_run(pp &pool.PoolProcessor, idx int, wid int) &ShellJobResult {
-	item := pp.get_item<ShellJob>(idx)
-	return sync_run(item)
+	job := pp.get_item<ShellJob>(idx)
+	return sync_run(job)
 }
 
 // sync_run runs the `job` ShellJob.
 fn sync_run(job ShellJob) &ShellJobResult {
 	for key, value in job.env_vars {
 		os.setenv(key, value, true)
+	}
+	if job.message.std_out != '' {
+		println(job.message.std_out)
+	}
+	if job.message.std_err != '' {
+		eprintln(job.message.std_err)
 	}
 	res := run(job.cmd)
 	return &ShellJobResult{
