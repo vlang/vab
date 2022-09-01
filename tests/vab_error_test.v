@@ -65,12 +65,12 @@ fn test_all() {
 	assert true
 }
 
-struct TOMLTestJob {
+pub struct TOMLTestJob {
 	env_vars map[string]string
 	job_file string
 }
 
-struct TOMLTestJobResult {
+pub struct TOMLTestJobResult {
 	success            bool
 	job                TOMLTestJob
 	command            string
