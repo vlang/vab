@@ -3,8 +3,8 @@
 module android
 
 import os
-import sync.pool
 import vab.vxt
+import vab.util as job_util
 import vab.android.ndk
 import vab.android.util
 import crypto.md5
@@ -79,16 +79,6 @@ pub fn (opt CompileOptions) build_directory() !string {
 	return dir
 }
 
-pub struct ShellJob {
-	cmd      []string
-	env_vars map[string]string
-}
-
-pub struct ShellJobResult {
-	job    ShellJob
-	result os.Result
-}
-
 pub enum CompileType {
 	v_to_c
 	c_to_o
@@ -115,49 +105,6 @@ fn (err CompileError) msg() string {
 		}
 	}
 	return 'failed to compile $enum_to_text:\n$err.err'
-}
-
-fn async_run(pp &pool.PoolProcessor, idx int, wid int) &ShellJobResult {
-	item := pp.get_item<ShellJob>(idx)
-	return sync_run(item)
-}
-
-fn sync_run(item ShellJob) &ShellJobResult {
-	for key, value in item.env_vars {
-		os.setenv(key, value, true)
-	}
-	res := util.run(item.cmd)
-	return &ShellJobResult{
-		job: item
-		result: res
-	}
-}
-
-fn run_jobs(jobs []ShellJob, parallel bool, verbosity int) ! {
-	if parallel {
-		mut pp := pool.new_pool_processor(callback: async_run)
-		pp.work_on_items(jobs)
-		for job_res in pp.get_results<ShellJobResult>() {
-			util.verbosity_print_cmd(job_res.job.cmd, verbosity)
-			if verbosity > 2 {
-				println('$job_res.result.output')
-			}
-			if job_res.result.exit_code != 0 {
-				return error('${job_res.job.cmd[0]} failed with return code $job_res.result.exit_code')
-			}
-		}
-	} else {
-		for job in jobs {
-			util.verbosity_print_cmd(job.cmd, verbosity)
-			job_res := sync_run(job)
-			if verbosity > 2 {
-				println('$job_res.result.output')
-			}
-			if job_res.result.exit_code != 0 {
-				return error('${job_res.job.cmd[0]} failed with return code $job_res.result.exit_code')
-			}
-		}
-	}
 }
 
 // compile_v_to_c compiles V into sources to their C counterpart.
@@ -446,7 +393,7 @@ pub fn compile(opt CompileOptions) ! {
 		println('Compiling C output for $archs' + if opt.parallel { ' in parallel' } else { '' })
 	}
 
-	mut jobs := []ShellJob{}
+	mut jobs := []job_util.ShellJob{}
 
 	for arch in archs {
 		arch_cflags[arch] << [
@@ -481,12 +428,12 @@ pub fn compile(opt CompileOptions) ! {
 
 		o_files[arch] << arch_o_file
 
-		jobs << ShellJob{
+		jobs << job_util.ShellJob{
 			cmd: build_cmd
 		}
 	}
 
-	run_jobs(jobs, opt.parallel, opt.verbosity) or {
+	job_util.run_jobs(jobs, opt.parallel, opt.verbosity) or {
 		return IError(CompileError{
 			kind: .c_to_o
 			err: err.msg()
@@ -513,12 +460,12 @@ pub fn compile(opt CompileOptions) ! {
 			ldflags.join(' '),
 		]
 
-		jobs << ShellJob{
+		jobs << job_util.ShellJob{
 			cmd: build_cmd
 		}
 	}
 
-	run_jobs(jobs, opt.parallel, opt.verbosity) or {
+	job_util.run_jobs(jobs, opt.parallel, opt.verbosity) or {
 		return IError(CompileError{
 			kind: .o_to_so
 			err: err.msg()
@@ -678,7 +625,7 @@ pub fn compile_v_imports_c_dependencies(opt CompileOptions, imported_modules []s
 
 	archs := opt.archs()!
 
-	mut jobs := []ShellJob{}
+	mut jobs := []job_util.ShellJob{}
 	for arch in archs {
 		arch_o_dir := os.join_path(build_dir, 'o', arch)
 		if !os.is_dir(arch_o_dir) {
@@ -725,7 +672,7 @@ pub fn compile_v_imports_c_dependencies(opt CompileOptions, imported_modules []s
 
 			o_files[arch] << o_file
 
-			jobs << ShellJob{
+			jobs << job_util.ShellJob{
 				cmd: build_cmd
 			}
 		}
@@ -748,7 +695,7 @@ pub fn compile_v_imports_c_dependencies(opt CompileOptions, imported_modules []s
 
 			o_files[arch] << o_file
 
-			jobs << ShellJob{
+			jobs << job_util.ShellJob{
 				cmd: build_cmd
 			}
 		}
@@ -769,13 +716,13 @@ pub fn compile_v_imports_c_dependencies(opt CompileOptions, imported_modules []s
 
 			o_files[arch] << o_file
 
-			jobs << ShellJob{
+			jobs << job_util.ShellJob{
 				cmd: build_cmd
 			}
 		}
 	}
 
-	run_jobs(jobs, opt.parallel, opt.verbosity)!
+	job_util.run_jobs(jobs, opt.parallel, opt.verbosity)!
 
 	return VImportCDeps{
 		o_files: o_files
