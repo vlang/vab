@@ -5,17 +5,21 @@ module util
 import os
 import sync.pool
 
-pub struct ShellJob {
-	message struct  {
-		std_out string
-		std_err string
-	}
+pub struct ShellJobMessage {
+pub:
+	std_out string
+	std_err string
+}
 
+pub struct ShellJob {
+pub:
+	message  ShellJobMessage
 	cmd      []string
 	env_vars map[string]string
 }
 
 pub struct ShellJobResult {
+pub:
 	job    ShellJob
 	result os.Result
 }
