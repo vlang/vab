@@ -18,17 +18,18 @@ pub const (
 
 pub struct CompileOptions {
 pub:
-	verbosity int // level of verbosity
-	cache     bool
-	cache_key string
-	parallel  bool = true // Run, what can be run, in parallel
+	verbosity   int // level of verbosity
+	cache       bool
+	cache_key   string
+	parallel    bool = true // Run, what can be run, in parallel
+	no_so_build bool // Do not build the .so file, can be used if you're only interested in the object files
 	// env
 	work_dir string // temporary work directory
 	input    string
 	//
 	is_prod          bool
 	gles_version     int = android.default_gles_version
-	no_printf_hijack bool   // Do not let V redefine printf for log output aka. V_ANDROID_LOG_PRINT
+	no_printf_hijack bool     // Do not let V redefine printf for log output aka. V_ANDROID_LOG_PRINT
 	archs            []string // compile for these CPU architectures
 	v_flags          []string // flags to pass to the v compiler
 	c_flags          []string // flags to pass to the C compiler(s)
@@ -441,50 +442,57 @@ pub fn compile(opt CompileOptions) ! {
 	}
 	jobs.clear()
 
-	// Cross compile .so lib files
-	for arch in archs {
-		arch_lib_dir := os.join_path(build_dir, 'lib', arch)
-		os.mkdir_all(arch_lib_dir) or {
-			return error('$err_sig: failed making directory "$arch_lib_dir".\n$err')
-		}
-
-		arch_o_files := o_files[arch].map('"$it"')
-		arch_a_files := a_files[arch].map('"$it"')
-
-		build_cmd := [
-			arch_cc[arch],
-			arch_o_files.join(' '),
-			'-o "$arch_lib_dir/lib${opt.lib_name}.so"',
-			arch_a_files.join(' '),
-			'-L"' + arch_libs[arch] + '"',
-			ldflags.join(' '),
-		]
-
-		jobs << job_util.ShellJob{
-			cmd: build_cmd
-		}
+	if opt.no_so_build && opt.verbosity > 1 {
+		println('Skipping .so build since .no_so_build == true')
 	}
 
-	job_util.run_jobs(jobs, opt.parallel, opt.verbosity) or {
-		return IError(CompileError{
-			kind: .o_to_so
-			err: err.msg()
-		})
-	}
+	// Cross compile .o files to .so lib file
+	if !opt.no_so_build {
+		for arch in archs {
+			arch_lib_dir := os.join_path(build_dir, 'lib', arch)
+			os.mkdir_all(arch_lib_dir) or {
+				return error('$err_sig: failed making directory "$arch_lib_dir".\n$err')
+			}
 
-	if 'armeabi-v7a' in archs {
-		// TODO fix DT_NAME crash instead of including a copy of the armeabi-v7a lib
-		armeabi_lib_dir := os.join_path(build_dir, 'lib', 'armeabi')
-		os.mkdir_all(armeabi_lib_dir) or {
-			return error('$err_sig: failed making directory "$armeabi_lib_dir".\n$err')
+			arch_o_files := o_files[arch].map('"$it"')
+			arch_a_files := a_files[arch].map('"$it"')
+
+			build_cmd := [
+				arch_cc[arch],
+				arch_o_files.join(' '),
+				'-o "$arch_lib_dir/lib${opt.lib_name}.so"',
+				arch_a_files.join(' '),
+				'-L"' + arch_libs[arch] + '"',
+				ldflags.join(' '),
+			]
+
+			jobs << job_util.ShellJob{
+				cmd: build_cmd
+			}
 		}
 
-		armeabi_lib_src := os.join_path(build_dir, 'lib', 'armeabi-v7a', 'lib${opt.lib_name}.so')
-		armeabi_lib_dst := os.join_path(armeabi_lib_dir, 'lib${opt.lib_name}.so')
-		os.cp(armeabi_lib_src, armeabi_lib_dst) or {
-			return error('$err_sig: failed copying "$armeabi_lib_src" to "$armeabi_lib_dst".\n$err')
+		job_util.run_jobs(jobs, opt.parallel, opt.verbosity) or {
+			return IError(CompileError{
+				kind: .o_to_so
+				err: err.msg()
+			})
+		}
+
+		if 'armeabi-v7a' in archs {
+			// TODO fix DT_NAME crash instead of including a copy of the armeabi-v7a lib
+			armeabi_lib_dir := os.join_path(build_dir, 'lib', 'armeabi')
+			os.mkdir_all(armeabi_lib_dir) or {
+				return error('$err_sig: failed making directory "$armeabi_lib_dir".\n$err')
+			}
+
+			armeabi_lib_src := os.join_path(build_dir, 'lib', 'armeabi-v7a', 'lib${opt.lib_name}.so')
+			armeabi_lib_dst := os.join_path(armeabi_lib_dir, 'lib${opt.lib_name}.so')
+			os.cp(armeabi_lib_src, armeabi_lib_dst) or {
+				return error('$err_sig: failed copying "$armeabi_lib_src" to "$armeabi_lib_dst".\n$err')
+			}
 		}
 	}
+	// !opt.no_so_build
 }
 
 pub struct VCompileOptions {
