@@ -227,6 +227,10 @@ jobs:
     - name: Run 'vab doctor'
       run: /usr/bin/vab doctor
 
+    - name: Setup env
+      run: |
+        mkdir apks
+
     - name: Build APK (Default) examples/sokol/particles
       run: |
         /usr/bin/vab examples/sokol/particles -o apks/particles.apk
