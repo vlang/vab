@@ -146,6 +146,11 @@ pub fn jre_bin_path() string {
 	return os.dir(bin_dir)
 }
 
+// jre_java_exe returns the full path to the system `java` executable if found, empty string otherwise.
+pub fn jre_java_exe() string {
+	return os.join_path(jre_bin_path(), 'java')
+}
+
 pub fn jdk_root() string {
 	mut java_home := cache.get_string(@MOD + '.' + @FN)
 	if java_home != '' {
