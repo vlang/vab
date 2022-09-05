@@ -41,10 +41,16 @@ pub fn doctor(opt Options) {
 		}
 	}
 
+	mut default_base_files_path := android.default_base_files_path
+	if opt.package_overrides_path != '' {
+		default_base_files_path = opt.package_overrides_path
+	}
+
 	// vab section
 	println('$exe_short_name
 	Version $exe_version $exe_git_hash
-	Path "$exe_dir"')
+	Path "$exe_dir"
+	Base files "$default_base_files_path"')
 
 	// Shell environment
 	print_var_if_set := fn (vars map[string]string, var_name string) {

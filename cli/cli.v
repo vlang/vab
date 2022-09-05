@@ -9,16 +9,21 @@ import vab.android.sdk
 import vab.android.ndk
 
 pub const (
-	exe_version     = version()
-	exe_name        = os.file_name(os.executable())
-	exe_short_name  = os.file_name(os.executable()).replace('.exe', '')
-	exe_dir         = os.dir(os.real_path(os.executable()))
+	exe_version          = version()
+	exe_name             = os.file_name(os.executable())
+	exe_short_name       = os.file_name(os.executable()).replace('.exe', '')
+	exe_dir              = os.dir(os.real_path(os.executable()))
+	exe_args_description = 'input
+or:    vab <sub-command> [options] input'
 	exe_description = 'V Android Bootstrapper.
 Compile, package and deploy graphical V apps for Android.
 
 The following flags does the same as if they were passed to the "v" compiler:
 
--autofree, -gc <type>, -g, -cg, -prod, -showcc'
+-autofree, -gc <type>, -g, -cg, -prod, -showcc
+
+Sub-commands:
+  doctor                    Display useful info about your system for bug reports'
 	exe_git_hash         = vab_commit_hash()
 	work_directory       = vab_tmp_work_dir()
 	cache_directory      = vab_cache_dir()
@@ -79,7 +84,7 @@ pub fn args_to_options(arguments []string, defaults Options) !(Options, &flag.Fl
 	fp.application(cli.exe_short_name)
 	fp.version(version_full())
 	fp.description(cli.exe_description)
-	fp.arguments_description('input')
+	fp.arguments_description(cli.exe_args_description)
 
 	fp.skip_executable()
 
