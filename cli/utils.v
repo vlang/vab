@@ -26,7 +26,7 @@ fn vab_commit_hash() string {
 			hash = res.output
 		}
 	}
-	return hash
+	return hash.trim_space()
 }
 
 fn vab_tmp_work_dir() string {
@@ -47,7 +47,7 @@ fn version() string {
 	if vmod.len > 0 {
 		if vmod.contains('version:') {
 			v = vmod.all_after('version:').all_before('\n').replace("'", '').replace('"',
-				'').trim(' ')
+				'').trim_space()
 		}
 	}
 	return v

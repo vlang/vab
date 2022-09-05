@@ -578,7 +578,7 @@ pub fn (opt &Options) as_android_package_options() android.PackageOptions {
 		libs_extra: opt.libs_extra
 		output_file: opt.output
 		// keystore: keystore
-		base_files: os.join_path(exe_dir, 'platforms', 'android')
+		// base_files: // resolved in android.default_base_files_path
 		overrides_path: opt.package_overrides_path
 	}
 	return pck_opt

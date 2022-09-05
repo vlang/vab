@@ -189,6 +189,53 @@ jobs:
         vab examples/sokol/particles -o apks/particles.apk
         [ -f apks/particles.apk ]
 
+  ubuntu-latest-vab-can-live-anywhere:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      VAB_FLAGS: -v 3
+    steps:
+    - name: Checkout V
+      uses: actions/checkout@v2
+      with:
+        repository: vlang/v
+
+    - name: Build local v
+      run: make -j4 && sudo ./v symlink
+
+    - name: Checkout vab
+      uses: actions/checkout@v2
+      with:
+        path: vab
+
+    - name: Simulate "v install vab"
+      run: mv vab ~/.vmodules
+
+    - name: Run tests
+      run: v test  ~/.vmodules/vab
+
+    - name: Build vab
+      run: v -g ~/.vmodules/vab
+
+    - name: Move vab
+      run: |
+        sudo mv ~/.vmodules/vab/vab /usr/bin/vab
+
+    - name: Run 'vab --help'
+      run: /usr/bin/vab --help
+
+    - name: Run 'vab doctor'
+      run: /usr/bin/vab doctor
+
+    - name: Setup env
+      run: |
+        mkdir apks
+
+    - name: Build APK (Default) examples/sokol/particles
+      run: |
+        /usr/bin/vab examples/sokol/particles -o apks/particles.apk
+        [ -f apks/particles.apk ]
+
   v-compiles-os-android:
     runs-on: ubuntu-20.04
     timeout-minutes: 10

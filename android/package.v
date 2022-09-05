@@ -16,6 +16,7 @@ pub const (
 	default_activity_name     = 'VActivity'
 	default_package_format    = 'apk'
 	default_min_sdk_version   = 21
+	default_base_files_path   = get_default_base_files_path()
 	supported_package_formats = ['apk', 'aab']
 	supported_lib_folders     = ['armeabi', 'arm64-v8a', 'armeabi-v7a', 'x86', 'x86_64']
 )
@@ -49,8 +50,23 @@ pub:
 	libs_extra      []string
 	output_file     string
 	keystore        Keystore
-	base_files      string
+	base_files      string = android.default_base_files_path
 	overrides_path  string // Path to user provided files that will override `base_files`. `java` (and later `kotlin` TODO) subdirs are recognized
+}
+
+fn get_default_base_files_path() string {
+	// Look next to the executable
+	mut path := os.join_path(os.dir(os.real_path(os.executable())), 'platforms', 'android')
+	if os.is_dir(path) {
+		return path
+	}
+	// Assume they are in .vmodules/vab/...
+	vmodules_path := os.getenv_opt('VMODULES') or { os.join_path(os.home_dir(), '.vmodules') }
+	path = os.join_path(vmodules_path, 'vab', 'platforms', 'android')
+	if os.is_dir(path) {
+		return path
+	}
+	return ''
 }
 
 // package outputs one of the supported Android package formats based on
