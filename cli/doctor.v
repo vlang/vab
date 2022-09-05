@@ -41,6 +41,20 @@ pub fn doctor(opt Options) {
 		}
 	}
 
+	// Try to warn about broken Java distributions like IBM's Semeru
+	java_exe := java.jre_java_exe()
+	if os.is_executable(java_exe) {
+		java_version := os.execute(java_exe + ' -version')
+		if java_version.exit_code == 0 {
+			output := java_version.output
+			if !(output.contains('OpenJDK') || output.contains('Java(TM)')) {
+				eprintln("Notice: The detected Java Runtime Environment may be incompatible with some of the Android SDK tools needed. We recommend using OpenJDK's Temurin release from https://adoptium.net")
+				eprintln('Your Java shows:')
+				eprintln(output)
+			}
+		}
+	}
+
 	mut default_base_files_path := android.default_base_files_path
 	if opt.package_overrides_path != '' {
 		default_base_files_path = opt.package_overrides_path
