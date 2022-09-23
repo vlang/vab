@@ -251,7 +251,7 @@ import vab.android.ndk
 // Get the path to a C compiler.
 //
 // `ndk_version` should be the *full* version as indicated by the *directory name* where your NDK resides.
-// Availbale versions detected can be retrieved with:
+// Available versions detected can be retrieved with:
 // `list := ndk.versions_available()`
 // If you don't care you can get a default by running:
 ndk_version := ndk.default_version()
