@@ -44,7 +44,7 @@ completely eliminate the need to use Android Studio in V development.
 With all this in mind `vab` was born to make life easier for V developers.
 You can install it by following the instructions [in the README.md](https://github.com/vlang/vab#install).
 
-Because of the situation described above and the design of the Android developer eco-system,
+Because of the situation described above and the design of the Android developer ecosystem,
 `vab` is basically just a wrapper around the Android SDK and NDK. `vab` is able to both
 install, locate and orchestrate the tools found inside the distributed development kits.
 
