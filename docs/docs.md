@@ -104,7 +104,7 @@ import vab.android.sdk  // For easy access to tools in the Android SDK
 import vab.android.ndk  // For easy access to tools in the Android NDK
 ```
 
-For general programmatic usage see the, relatively, small [`vab.v`](https://github.com/vlang/vab/blob/master/vab.v) that makes up the command line tool,
+For general programmatic usage see the relatively small [`vab.v`](https://github.com/vlang/vab/blob/master/vab.v), that makes up the command line tool.
 it shows the *major* steps you need to take to get from V source code to a running Android app.
 
 Working with native code like C (and implicitly V) on Android can get a little
