@@ -160,7 +160,7 @@ is missing or could be better. All examples assumes that you have *a working* in
 ## Compile V code to Android Compatible C code
 
 It is important to keep in mind that most (if not all?) C libs that control the
-app window and (OpenGL) acceleration context usually have framework-like behaviour on Android, which
+app window and (OpenGL) acceleration context, usually have framework-like behavior on Android, which
 means that they usually require full authority over the way they start up and open the
 [NativeActivity](https://developer.android.com/ndk/reference/group/native-activity) which is the entry point for *native* graphical apps.
 
