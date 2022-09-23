@@ -23,10 +23,6 @@ v install vab
 v %USERPROFILE%\.vmodules\vab
 ```
 
-**Note**
-`vab` use V's `net.http` module which currently requires the development files for libssl / OpenSSL.
-These can be installed as [described](https://github.com/vlang/v#v-nethttp-netwebsocket-v-install) in V's own documentation.
-
 ## Symlink (optional)
 You can symlink `vab` to your `$PATH` so it works as a global shell command.
 
@@ -39,6 +35,10 @@ You can install tab completions for your shell by [following the instructions
 here](https://github.com/vlang/vab/blob/3091ade4c9792c6a37596ccfa9299fb269d3160e/cmd/complete.v#L11-L38).
 
 # Usage
+
+`vab` can be used both from the command line and as a module in V code.
+In either case the following dependencies is required before `vab` will work
+as intented.
 
 Dependencies:
  * V
