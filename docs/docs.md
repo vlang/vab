@@ -230,7 +230,7 @@ opt := android.CompileOptions {
     //
     // no_so_build: true // Use this if you only want to generate object files (.o) and no shared lib (.so)
 }
-android.compile(opt)
+android.compile(opt) or {panic(err)}
 ```
 [`android.CompileOptions`](https://github.com/vlang/vab/blob/f06e67cf/android/compile.v#L21-L39).
 
