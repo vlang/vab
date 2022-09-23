@@ -125,8 +125,9 @@ The high-level program logic for doing most of the work is implemented in the fi
 [`android/package.v`](https://github.com/vlang/vab/blob/master/android/package.v) and
 [`android/deploy.v`](https://github.com/vlang/vab/blob/master/android/deploy.v).
 
-If you're in doubt how some call is supposed to work - the source code of these functions is
-a good place to discover *how* things, in general, are used and in what *order* they should be invoked.
+If you're in doubt how some call is supposed to work - the source code of
+these functions is a good place to discover *how* things, in general, are
+used and in what *order* they should be invoked.
 
 They basically contain a function for each *major* step of the process:
 ```v ignore
