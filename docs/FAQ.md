@@ -57,7 +57,7 @@ The libraries need to reside inside a folder with the name of the architecture t
 are compiled for e.g.: `/tmp/libs/arm64-v8a` - this is normal and by convention for
 other build systems used in Android development.
 
-You can have one dir containing libs for multiple archs:
+You can have one parent directory, containing libs for multiple archs:
 ```
 /tmp/libs/arm64-v8a/libmain.so
 /tmp/libs/armeabi-v7a/libmain.so
