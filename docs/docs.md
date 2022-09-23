@@ -87,7 +87,7 @@ import vab.cli
 cli.doctor(...)
 ```
 
-On top, it's *recommended* that you have some experience with Android development already
+On top, it's *recommended* that you have some experience with Android development already,
 as some terms and situations can be resolved more quickly with knowledge about the different
 areas and implications of Android developement.
 
