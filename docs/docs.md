@@ -116,7 +116,7 @@ these stages as flexible and easy as possible.
 By using `vab` as a module you get access to both the high-level operations
 (compile, package, deploy) as well as fine grained control if you, for example,
 just want to compile a C file with a specific NDK compiler or locate the path(s) to
-the SDK or NDK on the user's host computer.
+the SDK or NDK on your host computer.
 
 (See examples for V snippets on how to do certain, popular, tasks).
 
