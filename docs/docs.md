@@ -1,5 +1,10 @@
 Please contribute to this document if you think something is missing or could be better.
 
+`vab` is basically just a wrapper around the Android SDK and NDK. `vab` is able to both
+install, locate and orchestrate the tools found inside the distributed development kits.
+
+Welcome - and have a productive time using V and `vab`!
+
 # Contents
 
 - [Introduction](#introduction)
@@ -43,12 +48,6 @@ completely eliminate the need to use Android Studio in V development.
 
 With all this in mind `vab` was born to make life easier for V developers.
 You can install it by following the instructions [in the README.md](https://github.com/vlang/vab#install).
-
-Because of the situation described above and the design of the Android developer ecosystem,
-`vab` is basically just a wrapper around the Android SDK and NDK. `vab` is able to both
-install, locate and orchestrate the tools found inside the distributed development kits.
-
-Welcome - and have a productive time using V and `vab`!
 
 # The V to Android App Development Cycle
 
@@ -178,7 +177,7 @@ A few nice to know flags, in regards to the window/context issue noted above, is
 the `-apk` and `-d no_sokol_app` flags.
 
 The former, `-apk`, tells V that we want to prepare the code for packaging - this implies that
-code is generated to support V's graphical backend ('gg'/`sokol.app`) - this means that
+code is generated to support V's graphical backend (`gg`/`sokol.app`) - this means that
 V will take control of the window opening and acceleration context.
 
 Sometimes you want your code to compile for other frameworks like e.g. RayLib or SDL2
@@ -198,12 +197,17 @@ import vab.android
 
 opt := android.CompileOptions {
     work_dir: os.temp_dir()
-    // For all options, see link
+    // For all options, see link below.
+    //
+    // You will find that options passed to the command line `vab` is
+    // named very closely after the fields in the config structs - to make
+    // it as easy as possible to follow the flags around the program.
 }
 android.compile_v_to_c(opt)
 ```
-[`android.CompileOptions`](https://github.com/vlang/vab/blob/f06e67cf/android/compile.v#L21-L39)
-Running the above will produce `/tmp/v_android.c` an Android compatible C file
+[`android.CompileOptions`](https://github.com/vlang/vab/blob/f06e67cf/android/compile.v#L21-L39).
+
+Running the above will produce `/tmp/v_android.c`, an Android compatible C file
 that can be compiled by a NDK compiler.
 
 ## Compile C code to Android shared library (.so)
@@ -221,14 +225,18 @@ import vab.android
 
 opt := android.CompileOptions {
     work_dir: os.temp_dir()
+    // For all options, see link below.
+    //
     // no_so_build: true // Use this if you only want to generate object files (.o) and no shared lib (.so)
 }
 android.compile(opt)
 ```
+[`android.CompileOptions`](https://github.com/vlang/vab/blob/f06e67cf/android/compile.v#L21-L39).
+
 The above produces files in
 `/tmp/build/lib/<arch>/lib<name from opt>.so` and `/tmp/build/o/<arch>/<source name>.o`
 
-If you just want to locate a compiler in the NDK and invoke it, see the example below.
+If you just want to locate a compiler in the NDK and invoke it, see the next example.
 
 ## Find and Invoke NDK Compiler Manually
 
@@ -239,12 +247,15 @@ passing everything in yourself - you can use something like the following:
 import os
 import vab.android.ndk
 
-// Get the path to a C compiler for API level 21 for architecture arm64-v8a from the NDK.
+// Get the path to a C compiler.
+//
 // `ndk_version` should be the *full* version as indicated by the *directory name* where your NDK resides.
 // Availbale versions detected can be retrieved with:
 // `list := ndk.versions_available()`
 // If you don't care you can get a default by running:
 ndk_version := ndk.default_version()
+
+// Request a C compiler for API level 21 for architecture arm64-v8a from the NDK.
 compiler := ndk.compiler(.c, ndk_version, 'arm64-v8a', '21') or { panic(err) }
 
 // Get recommended, Android specific, flags (also used by e.g. Gradle) for the compiler
@@ -259,11 +270,11 @@ compiler_flags := ndk.compiler_flags_from_config(ndk_version,
 // Flatten the flags
 flags := compiler_flags.flags.join(' ')
 
-// If you're linking, the linker flags can be obtained in `ld_flags`:
+// If you're linking, the linker flags can be obtained via the `ld_flags` field:
 // ld_flags := compiler_flags.ld_flags.join(' ')
 
 // Invoke the compiler
-res := os.execute('$compiler $flags -my-flags -c input.c -o out.o')
+res := os.execute('$compiler $flags -my-other-flags -c input.c -o out.o')
 ```
 
 See [`ndk.v`](https://github.com/vlang/vab/blob/master/android/ndk/ndk.v) for more functions.
