@@ -75,7 +75,7 @@ and the [FAQ.md](https://github.com/vlang/vab/blob/master/docs/FAQ.md).
 
 # Using `vab` programmatically
 
-First off; please keep in mind that using `vab` programmatically has the same
+Please keep in mind that using `vab` programmatically has the same
 prerequisites as using the `vab` command line tool. Use `vab doctor` on the command line
 to check if all dependencies are met and setup correctly.
 
