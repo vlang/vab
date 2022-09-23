@@ -165,7 +165,7 @@ means that they usually require full authority over the way they start up and op
 [NativeActivity](https://developer.android.com/ndk/reference/group/native-activity) which is the entry point for *native* graphical apps.
 
 This is often the reason why a lot of fiddling is required to get C libs like `SDL2`, `sokol_app`
-and `RayLib` mixed with V code; All of them want control over how the window/context is opened.
+and `RayLib` mixed with V code; *All of them* want control over how the window/context is opened.
 
 Luckily V allows for outputting code which is agnostic to who or what will open the window.
 
