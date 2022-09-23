@@ -5,7 +5,8 @@
 - [`vab` can't find my SDK/NDK/JAVA_HOME?](#vab-cant-find-my-SDKNDKJAVA_HOME)
 - [I can't redirect (f)printf output to a file?](#i-cant-redirect-fprintf-output-to-a-file)
 - [How do I load assets embedded in the APK/AAB?](#how-do-i-load-assets-embedded-in-the-apkaab)
-- [I managed to compile some external .so libs, how do I include them?](#i-managed-to-compile-some-external-so-libs-how-do-I-include-them)
+- [I managed to compile some external .so libs,
+how do I include them?](#i-managed-to-compile-some-external-so-libs-how-do-I-include-them)
 
 ## `vab` can't find my device when deploying?
 
