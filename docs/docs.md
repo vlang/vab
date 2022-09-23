@@ -169,7 +169,7 @@ and `RayLib` mixed with V code; *All of them* want control over how the window/c
 
 Luckily V allows for outputting code which is agnostic to who or what will open the window.
 
-From the command line this is basically just invoking `v` with the right set of flags for Android:
+From the command line, this is basically just invoking the `v` compiler with the right set of flags for Android:
 
 ```bash
 v -os android -o code.c source.v
