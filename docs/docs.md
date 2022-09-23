@@ -21,7 +21,7 @@ To be able to develop for Google-based devices, Google provide the *Android SDK*
 for native developement (C/C++), they provide the *Android NDK*. Both are currently required
 to be able to develop Android apps in V.
 
-While the Android OS itself is open source - the SDK and NDK distributed by Google is ***not***.
+While the Android OS itself is open source - the SDK and NDK distributed by Google are ***not***.
 This fact makes everything a bit harder than it ought to be.
 
 So - for us to target the majority, we need the Android SDK and NDK that are
