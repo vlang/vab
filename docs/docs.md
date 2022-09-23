@@ -96,7 +96,7 @@ and flexibility - fear not - this is why `vab` is also exposed as a module (`imp
 
 The most useful modules are the following:
 
-```v ignore
+```v oksyntax
 import vab.cli          // For easy replication of the `vab` command line tool
 import vab.android      // For invoking the major steps: compile, package and deploy
 import vab.android.sdk  // For easy access to tools in the Android SDK
@@ -192,19 +192,19 @@ the following V code to use `vab` to produce it.
 (For a real life example see the body of [`this function`](https://github.com/vlang/vab/blob/f06e67cf/android/compile.v#L112))
 
 
-```v ignore
+```v oksyntax
 import os
 import vab.android
 
-opt := android.CompileOptions {
-    work_dir: os.temp_dir()
-    // For all options, see link below.
-    //
-    // You will find that options passed to the command line `vab` is
-    // named very closely after the fields in the config structs - to make
-    // it as easy as possible to follow the flags around the program.
+opt := android.CompileOptions{
+	work_dir: os.temp_dir()
+	// For all options, see link below.
+	//
+	// You will find that options passed to the command line `vab` is
+	// named very closely after the fields in the config structs - to make
+	// it as easy as possible to follow the flags around the program.
 }
-android.compile_v_to_c(opt)
+android.compile_v_to_c(opt) or { panic(err) }
 ```
 [`android.CompileOptions`](https://github.com/vlang/vab/blob/f06e67cf/android/compile.v#L21-L39).
 
@@ -244,7 +244,7 @@ If you just want to locate a compiler in the NDK and invoke it, see the next exa
 If you just want to locate a compiler from the NDK and invoke it manually,
 passing everything in yourself - you can use something like the following:
 
-```v ignore
+```v
 import os
 import vab.android.ndk
 
@@ -275,7 +275,7 @@ flags := compiler_flags.flags.join(' ')
 // ld_flags := compiler_flags.ld_flags.join(' ')
 
 // Invoke the compiler
-res := os.execute('$compiler $flags -my-other-flags -c input.c -o out.o')
+os.execute('$compiler $flags -my-other-flags -c input.c -o out.o')
 ```
 
 See [`ndk.v`](https://github.com/vlang/vab/blob/master/android/ndk/ndk.v) for more functions.
