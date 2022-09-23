@@ -220,7 +220,7 @@ In theory the C code doesn't have to be produced by V - it can be any
 Android compatible C source code, `vab` does, however, adjust some compile flags that
 suit V code better, depending on what you pass in as options to the `compile` function.
 
-```v ignore
+```v
 import os
 import vab.android
 
