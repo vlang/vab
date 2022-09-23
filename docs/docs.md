@@ -224,13 +224,13 @@ suit V code better, depending on what you pass in as options to the `compile` fu
 import os
 import vab.android
 
-opt := android.CompileOptions {
-    work_dir: os.temp_dir()
-    // For all options, see link below.
-    //
-    // no_so_build: true // Use this if you only want to generate object files (.o) and no shared lib (.so)
+opt := android.CompileOptions{
+	work_dir: os.temp_dir()
+	// For all options, see link below.
+	//
+	// no_so_build: true // Use this if you only want to generate object files (.o) and no shared lib (.so)
 }
-android.compile(opt) or {panic(err)}
+android.compile(opt) or { panic(err) }
 ```
 [`android.CompileOptions`](https://github.com/vlang/vab/blob/f06e67cf/android/compile.v#L21-L39).
 
