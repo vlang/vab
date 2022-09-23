@@ -97,10 +97,10 @@ and flexibility - fear not - this is why `vab` is also exposed as a module (`imp
 The most useful modules are the following:
 
 ```v oksyntax
-import vab.cli          // For easy replication of the `vab` command line tool
-import vab.android      // For invoking the major steps: compile, package and deploy
-import vab.android.sdk  // For easy access to tools in the Android SDK
-import vab.android.ndk  // For easy access to tools in the Android NDK
+import vab.cli // For easy replication of the `vab` command line tool
+import vab.android // For invoking the major steps: compile, package and deploy
+import vab.android.sdk // For easy access to tools in the Android SDK
+import vab.android.ndk // For easy access to tools in the Android NDK
 ```
 
 For general programmatic usage see the relatively small [`vab.v`](https://github.com/vlang/vab/blob/master/vab.v), that makes up the command line tool.
