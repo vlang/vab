@@ -110,7 +110,7 @@ It shows the *major* steps you need to take, to get from V source code to a runn
 Working with native code like C (and implicitly V) on Android can get a little
 cumbersome when things doesn't fit into the usual boxes, especially because the smallest
 things can often touch and affect *all* the different stages in developing an
-Android application. `vab` is designed with this in mind to be able handle each of
+Android application. `vab` is designed with this in mind, to be able handle each of
 these stages as flexible and easy as possible.
 
 By using `vab` as a module you get access to both the high-level operations
