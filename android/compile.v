@@ -27,16 +27,15 @@ pub:
 	work_dir string // temporary work directory
 	input    string
 	//
-	is_prod          bool
-	gles_version     int = android.default_gles_version
-	no_printf_hijack bool     // Do not let V redefine printf for log output aka. V_ANDROID_LOG_PRINT
-	archs            []string // compile for these CPU architectures
-	v_flags          []string // flags to pass to the v compiler
-	c_flags          []string // flags to pass to the C compiler(s)
-	ndk_version      string   // version of the Android NDK to compile against
-	lib_name         string   // filename of the resulting .so ('${lib_name}.so')
-	api_level        string   // Android API level to use when compiling
-	min_sdk_version  int = default_min_sdk_version
+	is_prod         bool
+	gles_version    int = android.default_gles_version
+	archs           []string // compile for these CPU architectures
+	v_flags         []string // flags to pass to the v compiler
+	c_flags         []string // flags to pass to the C compiler(s)
+	ndk_version     string   // version of the Android NDK to compile against
+	lib_name        string   // filename of the resulting .so ('${lib_name}.so')
+	api_level       string   // Android API level to use when compiling
+	min_sdk_version int = default_min_sdk_version
 }
 
 // uses_gc returns true if a `-gc` flag is found among the passed v flags.
@@ -108,7 +107,9 @@ fn (err CompileError) msg() string {
 	return 'failed to compile $enum_to_text:\n$err.err'
 }
 
-// compile_v_to_c compiles V into sources to their C counterpart.
+// compile_v_to_c compiles V sources to their Android compatible C counterpart.
+// compile_v_to_c will also compile any supported C dependencies a vlib module might have.
+// See also: compile_v_imports_c_dependencies
 pub fn compile_v_to_c(opt CompileOptions) !VMetaInfo {
 	err_sig := @MOD + '.' + @FN
 	os.mkdir_all(opt.work_dir) or {
@@ -306,15 +307,6 @@ pub fn compile(opt CompileOptions) ! {
 	cflags << ['-Wno-missing-braces', '-Werror=implicit-function-declaration']
 	cflags << ['-Wno-enum-conversion', '-Wno-unused-value', '-Wno-pointer-sign',
 		'-Wno-incompatible-pointer-types']
-
-	// NOTE This define allows V to redefine C's printf() - to let logging via println() etc. go
-	// through Android device's system log (that adb logcat reads).
-	if !opt.no_printf_hijack {
-		if opt.verbosity > 1 {
-			println('Define V_ANDROID_LOG_PRINT - (f)printf will be redefined...')
-		}
-		defines << '-DV_ANDROID_LOG_PRINT'
-	}
 
 	defines << '-DAPPNAME="$opt.lib_name"'
 	defines << ['-DANDROID', '-D__ANDROID__', '-DANDROIDVERSION=$opt.api_level']
