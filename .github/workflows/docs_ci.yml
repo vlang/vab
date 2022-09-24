@@ -24,6 +24,9 @@ jobs:
       with:
         path: vab
 
+    - name: Symlink as module
+      run: sudo ln -s $(pwd)/vab ~/.vmodules/vab # Workaround for doing `mv vab ~/.vmodules`
+
     - name: Check markdown line length & code examples
       run: v check-md -hide-warnings vab
       ## NB: -hide-warnings is used here, so that the output is less noisy,
