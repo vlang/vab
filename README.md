@@ -1,9 +1,11 @@
 # V Android Bootstrapper
 
+[Home](https://github.com/vlang/vab) • [Docs](https://github.com/vlang/vab/blob/master/docs/docs.md) • [FAQ](https://github.com/vlang/vab/blob/master/docs/FAQ.md)
+
 V Android Bootstrapper is the currently supported way
 to compile, package, sign and deploy V graphical apps on Android
 based devices. It can be used as a V module (`import vab`) and also
-provides a standalone executable (`vab`) for building apps from the command-line
+provides a standalone executable (`vab`) for building apps from the command-line.
 
 <img src="https://user-images.githubusercontent.com/768942/107622846-c13f3900-6c58-11eb-8a66-55db12979b73.png">
 
