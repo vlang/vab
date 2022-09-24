@@ -107,7 +107,7 @@ fn (err CompileError) msg() string {
 	return 'failed to compile $enum_to_text:\n$err.err'
 }
 
-// compile_v_to_c compiles V sources to their Android comptible C counterpart.
+// compile_v_to_c compiles V sources to their Android compatible C counterpart.
 // compile_v_to_c will also compile any supported C dependencies a vlib module might have.
 // See also: compile_v_imports_c_dependencies
 pub fn compile_v_to_c(opt CompileOptions) !VMetaInfo {
