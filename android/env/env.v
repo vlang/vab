@@ -227,7 +227,7 @@ pub fn install(components string, verbosity int) int {
 	return 0
 }
 
-fn install_opt(opt InstallOptions) ?bool {
+fn install_opt(opt InstallOptions) !bool {
 	loose := opt.dep == .bundletool || opt.dep == .aapt2
 
 	if !loose && !managable() {
@@ -370,7 +370,7 @@ fn install_opt(opt InstallOptions) ?bool {
 	return error(@MOD + '.' + @FN + ' ' + 'unknown install type $opt.dep')
 }
 
-fn ensure_sdkmanager(verbosity int) ?bool {
+fn ensure_sdkmanager(verbosity int) !bool {
 	// Android development is a complete mess. Struggles include things like:
 	// * Ever changing tool locations
 	// * Missing version info from tools
@@ -405,12 +405,12 @@ fn ensure_sdkmanager(verbosity int) ?bool {
 		if verbosity > 1 {
 			println('Installing `sdkmanager` to "$dst"...')
 		}
-		os.mkdir_all(dst)?
+		os.mkdir_all(dst)!
 		dst_check := os.join_path(dst, 'tools', 'bin')
 
-		util.unzip(file, dst)?
+		util.unzip(file, dst)!
 
-		os.chmod(os.join_path(dst_check, 'sdkmanager'), 0o755)?
+		os.chmod(os.join_path(dst_check, 'sdkmanager'), 0o755)!
 
 		if os.is_executable(os.join_path(dst_check, 'sdkmanager')) {
 			$if linux {
@@ -432,7 +432,7 @@ fn ensure_sdkmanager(verbosity int) ?bool {
 	return false
 }
 
-fn ensure_bundletool(verbosity int) ?bool {
+fn ensure_bundletool(verbosity int) !bool {
 	if bundletool() == '' {
 		dst := util.cache_dir()
 		if verbosity > 0 {
@@ -748,7 +748,7 @@ pub fn aapt2() string {
 	return aapt2
 }
 
-fn ensure_aapt2(verbosity int) ?bool {
+fn ensure_aapt2(verbosity int) !bool {
 	if aapt2() == '' {
 		dst := util.cache_dir()
 		if verbosity > 0 {
@@ -775,7 +775,7 @@ fn ensure_aapt2(verbosity int) ?bool {
 		os.mkdir_all(unpack_path) or {
 			return error(@MOD + '.' + @FN + ' ' + 'failed to install `aapt2`: $err')
 		}
-		util.unzip(file, unpack_path)?
+		util.unzip(file, unpack_path)!
 		// Install
 		mut dot_exe := ''
 		$if windows {

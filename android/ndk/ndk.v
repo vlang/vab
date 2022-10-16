@@ -486,7 +486,7 @@ fn read_source_properties() ?[]string {
 	if found() {
 		sp_file := os.join_path(root(), 'source.properties')
 		if os.is_file(sp_file) {
-			return os.read_lines(sp_file)
+			return os.read_lines(sp_file) or { return none }
 		}
 	}
 	return none

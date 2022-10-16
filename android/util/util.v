@@ -111,13 +111,13 @@ pub fn run_raw(args []string) os.Result {
 	return res
 }
 
-pub fn unzip(file string, dir string) ? {
+pub fn unzip(file string, dir string) ! {
 	if !os.is_dir(dir) {
-		os.mkdir_all(dir)?
+		os.mkdir_all(dir)!
 	}
-	szip.extract_zip_to_dir(file, dir)?
+	szip.extract_zip_to_dir(file, dir)!
 }
 
-pub fn zip_folder(dir string, out_file string) ? {
-	szip.zip_folder(dir, out_file)?
+pub fn zip_folder(dir string, out_file string) ! {
+	szip.zip_folder(dir, out_file)!
 }
