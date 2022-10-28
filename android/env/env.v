@@ -15,7 +15,7 @@ pub const (
 		'build-tools', 'bundletool', 'aapt2']
 	// 6858069 = cmdline-tools;3.0 <- zip structure changes *sigh*
 	// 6609375 = cmdline-tools;2.1 <- latest that support `sdkmanager --version` *sigh*
-	// cmdline-tools-bootstrap-url - Replace {XXX} with linux/mac/win
+	// cmdline-tools-bootstrap-url - Replace [XXX] with linux/mac/win
 	// cmdline-tools - Latest more or less sane version that works with java versions >= 8 ...
 	// sdk - Latest
 	// ndk - Works with android.compile(...)
@@ -25,7 +25,7 @@ pub const (
 		'cmdline-tools':  {
 			'name':          'cmdline-tools'
 			'version':       '2.1'
-			'bootstrap_url': 'https://dl.google.com/android/repository/commandlinetools-\\{XXX}-6609375_latest.zip'
+			'bootstrap_url': 'https://dl.google.com/android/repository/commandlinetools-[XXX]-6609375_latest.zip'
 		}
 		'platform-tools': {
 			'name':    'platform-tools'
@@ -51,7 +51,7 @@ pub const (
 		'aapt2':          {
 			'name':          'aapt2'
 			'version':       '7.0.0'
-			'bootstrap_url': 'https://dl.google.com/android/maven2/com/android/tools/build/aapt2/7.0.0-alpha07-7087017/aapt2-7.0.0-alpha07-7087017-{XXX}.jar'
+			'bootstrap_url': 'https://dl.google.com/android/maven2/com/android/tools/build/aapt2/7.0.0-alpha07-7087017/aapt2-7.0.0-alpha07-7087017-[XXX].jar'
 		}
 	}
 )
@@ -389,7 +389,7 @@ fn ensure_sdkmanager(verbosity int) !bool {
 		}
 		// Download
 		uos := os.user_os().replace('windows', 'win').replace('macos', 'mac')
-		url := env.default_components['cmdline-tools']['bootstrap_url'].replace('\{XXX}',
+		url := env.default_components['cmdline-tools']['bootstrap_url'].replace('[XXX]',
 			uos)
 		file := os.join_path(os.temp_dir(), 'v-android-sdk-cmdltools.tmp.zip')
 		if !os.exists(file) {
@@ -757,7 +757,7 @@ fn ensure_aapt2(verbosity int) !bool {
 		// Download
 		// https://maven.google.com/web/index.html -> com.android.tools.build -> aapt2
 		uos := os.user_os().replace('macos', 'osx')
-		url := env.default_components['aapt2']['bootstrap_url'].replace('\{XXX}', uos)
+		url := env.default_components['aapt2']['bootstrap_url'].replace('[XXX]', uos)
 		file := os.join_path(os.temp_dir(), 'aapt2.jar')
 		// file := os.join_path(dst, 'aapt2.jar')
 		if !os.exists(file) {
