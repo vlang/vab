@@ -25,7 +25,7 @@ pub const (
 		'cmdline-tools':  {
 			'name':          'cmdline-tools'
 			'version':       '2.1'
-			'bootstrap_url': 'https://dl.google.com/android/repository/commandlinetools-\{XXX}-6609375_latest.zip'
+			'bootstrap_url': 'https://dl.google.com/android/repository/commandlinetools-\\{XXX}-6609375_latest.zip'
 		}
 		'platform-tools': {
 			'name':    'platform-tools'
