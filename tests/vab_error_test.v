@@ -81,7 +81,7 @@ pub struct TOMLTestJobResult {
 	exit_code          int
 }
 
-fn async_run(pp &pool.PoolProcessor, idx int, wid int) &TOMLTestJobResult {
+fn async_run(mut pp pool.PoolProcessor, idx int, wid int) &TOMLTestJobResult {
 	item := pp.get_item<TOMLTestJob>(idx)
 	return sync_run(item)
 }
