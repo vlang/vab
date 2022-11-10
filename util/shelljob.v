@@ -25,7 +25,7 @@ pub:
 }
 
 // async_run runs all the ShellJobs in `pp` asynchronously.
-fn async_run(pp &pool.PoolProcessor, idx int, wid int) &ShellJobResult {
+fn async_run(mut pp pool.PoolProcessor, idx int, wid int) &ShellJobResult {
 	job := pp.get_item<ShellJob>(idx)
 	return sync_run(job)
 }
