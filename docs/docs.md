@@ -275,7 +275,7 @@ flags := compiler_flags.flags.join(' ')
 // ld_flags := compiler_flags.ld_flags.join(' ')
 
 // Invoke the compiler
-os.execute('$compiler $flags -my-other-flags -c input.c -o out.o')
+os.execute('${compiler} ${flags} -my-other-flags -c input.c -o out.o')
 ```
 
 See [`ndk.v`](https://github.com/vlang/vab/blob/master/android/ndk/ndk.v) for more functions.

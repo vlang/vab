@@ -17,9 +17,9 @@ fn vab_commit_hash() string {
 	mut hash := ''
 	git_exe := os.find_abs_path_of_executable('git') or { '' }
 	if git_exe != '' {
-		mut git_cmd := 'git -C "$exe_dir" rev-parse --short HEAD'
+		mut git_cmd := 'git -C "${exe_dir}" rev-parse --short HEAD'
 		$if windows {
-			git_cmd = 'git.exe -C "$exe_dir" rev-parse --short HEAD'
+			git_cmd = 'git.exe -C "${exe_dir}" rev-parse --short HEAD'
 		}
 		res := os.execute(git_cmd)
 		if res.exit_code == 0 {
@@ -38,7 +38,7 @@ fn vab_cache_dir() string {
 }
 
 fn version_full() string {
-	return '$exe_version $exe_git_hash'
+	return '${exe_version} ${exe_git_hash}'
 }
 
 fn version() string {

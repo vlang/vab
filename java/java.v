@@ -43,8 +43,8 @@ pub fn jre_version() string {
 		pwd := os.getwd()
 		os.chdir(java_source_dir) or {}
 		os.write_file(java_source_file, java_source) or { return '' }
-		if os.system(javac + ' $java_source_file') == 0 {
-			r := os.execute(java + ' $java_source_exe')
+		if os.system(javac + ' ${java_source_file}') == 0 {
+			r := os.execute(java + ' ${java_source_exe}')
 			if r.exit_code != 0 {
 				return ''
 			}
@@ -94,8 +94,8 @@ pub fn jdk_version() string {
 		pwd := os.getwd()
 		os.chdir(java_source_dir) or {}
 		os.write_file(java_source_file, java_source) or { return '' }
-		if os.system(javac + ' $java_source_file') == 0 {
-			r := os.execute(java + ' $java_source_exe')
+		if os.system(javac + ' ${java_source_file}') == 0 {
+			r := os.execute(java + ' ${java_source_exe}')
 			if r.exit_code != 0 {
 				return ''
 			}
@@ -198,7 +198,8 @@ pub fn jdk_keytool() !string {
 	}
 	keytool := os.join_path(jdk_bin_path(), keytool_exe)
 	if !os.exists(keytool) {
-		return error(@MOD + '.' + @FN + ': no `$keytool_exe` could be located in "$jdk_bin_path()"')
+		return error(@MOD + '.' + @FN +
+			': no `${keytool_exe}` could be located in "${jdk_bin_path()}"')
 	}
 	return keytool
 }
@@ -211,7 +212,8 @@ pub fn jdk_javac() !string {
 	}
 	javac := os.join_path(jdk_bin_path(), javac_exe)
 	if !os.exists(javac) {
-		return error(@MOD + '.' + @FN + ': no `$javac_exe` could be located in "$jdk_bin_path()"')
+		return error(@MOD + '.' + @FN +
+			': no `${javac_exe}` could be located in "${jdk_bin_path()}"')
 	}
 	return javac
 }

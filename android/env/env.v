@@ -149,13 +149,13 @@ pub fn install(components string, verbosity int) int {
 		}
 
 		if component !in env.accepted_components {
-			eprintln(@MOD + ' ' + @FN + ' component "$component" not recognized.')
+			eprintln(@MOD + ' ' + @FN + ' component "${component}" not recognized.')
 			eprintln('Available components ${env.accepted_components}.')
 			return 1
 		}
 
 		if !is_auto && version == '' {
-			eprintln(@MOD + ' ' + @FN + ' install component "$component" has no version.')
+			eprintln(@MOD + ' ' + @FN + ' install component "${component}" has no version.')
 			return 1
 		}
 
@@ -205,7 +205,7 @@ pub fn install(components string, verbosity int) int {
 				iopts << InstallOptions{.aapt2, item, verbosity}
 			}
 			else {
-				eprintln(@MOD + ' ' + @FN + ' unknown component "$component"')
+				eprintln(@MOD + ' ' + @FN + ' unknown component "${component}"')
 				return 1
 			}
 		}
@@ -233,10 +233,10 @@ fn install_opt(opt InstallOptions) !bool {
 	if !loose && !managable() {
 		if !os.is_writable(sdk.root()) {
 			return error(@MOD + '.' + @FN + ' ' +
-				'No permission to write in Android SDK root. Please install manually or ensure write access to "$sdk.root()".')
+				'No permission to write in Android SDK root. Please install manually or ensure write access to "${sdk.root()}".')
 		} else {
 			return error(@MOD + '.' + @FN + ' ' +
-				'The `sdkmanager` seems outdated or incompatible with the Java version used". Please fix your setup manually.\nPath: "$sdkmanager()"\nVersion: $sdkmanager_version()')
+				'The `sdkmanager` seems outdated or incompatible with the Java version used". Please fix your setup manually.\nPath: "${sdkmanager()}"\nVersion: ${sdkmanager_version()}')
 		}
 	}
 
@@ -249,7 +249,7 @@ fn install_opt(opt InstallOptions) !bool {
 		cmd := [
 			'cmd /c',
 			'""' + sdkmanager() + '"',
-			'--sdk_root="$sdk.root()"',
+			'--sdk_root="${sdk.root()}"',
 			'--licenses',
 			'<',
 			'"' + yes_file + '""',
@@ -264,23 +264,23 @@ fn install_opt(opt InstallOptions) !bool {
 	item := opt.item
 
 	if opt.verbosity > 0 {
-		println(@MOD + '.' + @FN + ' installing $opt.dep: "$item"...')
+		println(@MOD + '.' + @FN + ' installing ${opt.dep}: "${item}"...')
 	}
 
 	install_cmd := $if windows {
 		[
 			'cmd /c',
 			'""' + sdkmanager() + '"',
-			'--sdk_root="$sdk.root()"',
-			'"$item""',
+			'--sdk_root="${sdk.root()}"',
+			'"${item}""',
 		]
 	} $else {
 		[
 			'yes',
 			'|',
 			sdkmanager(),
-			'--sdk_root="$sdk.root()"',
-			'"$item"',
+			'--sdk_root="${sdk.root()}"',
+			'"${item}"',
 		]
 	}
 
@@ -309,12 +309,12 @@ fn install_opt(opt InstallOptions) !bool {
 				sv_check := semver.from(version_check) or { panic(err) }
 				comp_sv := semver.from(ndk.min_supported_version) or { panic(err) }
 				if sv_check.lt(comp_sv) {
-					eprintln('Notice: Skipping install. NDK $item is lower than supported ${ndk.min_supported_version}...')
+					eprintln('Notice: Skipping install. NDK ${item} is lower than supported ${ndk.min_supported_version}...')
 					return true
 				}
 			}
 			if opt.verbosity > 0 {
-				println('Installing NDK (Side-by-side) "$item"...')
+				println('Installing NDK (Side-by-side) "${item}"...')
 			}
 
 			util.verbosity_print_cmd(install_cmd, opt.verbosity)
@@ -334,7 +334,7 @@ fn install_opt(opt InstallOptions) !bool {
 				sv_check := semver.from(version_check) or { panic(err) }
 				comp_sv := semver.from(sdk.min_supported_build_tools_version) or { panic(err) }
 				if sv_check.lt(comp_sv) {
-					eprintln('Notice: Skipping install. build-tools "$item" is lower than supported ${sdk.min_supported_build_tools_version}...')
+					eprintln('Notice: Skipping install. build-tools "${item}" is lower than supported ${sdk.min_supported_build_tools_version}...')
 					return true
 				}
 			}
@@ -352,7 +352,7 @@ fn install_opt(opt InstallOptions) !bool {
 		.platforms {
 			api_level := item.all_after('-')
 			if api_level.i16() < sdk.min_supported_api_level.i16() {
-				eprintln('Notice: Skipping install. platform $item is lower than supported android-${sdk.min_supported_api_level}...')
+				eprintln('Notice: Skipping install. platform ${item} is lower than supported android-${sdk.min_supported_api_level}...')
 				return true
 			}
 			util.verbosity_print_cmd(install_cmd, opt.verbosity)
@@ -367,7 +367,7 @@ fn install_opt(opt InstallOptions) !bool {
 			return true
 		}
 	}
-	return error(@MOD + '.' + @FN + ' ' + 'unknown install type $opt.dep')
+	return error(@MOD + '.' + @FN + ' ' + 'unknown install type ${opt.dep}')
 }
 
 fn ensure_sdkmanager(verbosity int) !bool {
@@ -394,16 +394,16 @@ fn ensure_sdkmanager(verbosity int) !bool {
 		file := os.join_path(os.temp_dir(), 'v-android-sdk-cmdltools.tmp.zip')
 		if !os.exists(file) {
 			if verbosity > 1 {
-				println('Downloading `sdkmanager` from "$url"...')
+				println('Downloading `sdkmanager` from "${url}"...')
 			}
 			http.download_file(url, file) or {
 				return error(@MOD + '.' + @FN + ' ' +
-					'failed to download commandline tools needed for bootstrapping: $err')
+					'failed to download commandline tools needed for bootstrapping: ${err}')
 			}
 		}
 		// Install
 		if verbosity > 1 {
-			println('Installing `sdkmanager` to "$dst"...')
+			println('Installing `sdkmanager` to "${dst}"...')
 		}
 		os.mkdir_all(dst)!
 		dst_check := os.join_path(dst, 'tools', 'bin')
@@ -423,11 +423,12 @@ fn ensure_sdkmanager(verbosity int) !bool {
 			}
 			util.run([os.join_path(dst_check, 'sdkmanager')])
 			if verbosity > 1 {
-				println('`sdkmanager` installed in "$dst_check". SDK root reports "$sdk.root()"')
+				println('`sdkmanager` installed in "${dst_check}". SDK root reports "${sdk.root()}"')
 			}
 			return true
 		}
-		return error(@MOD + '.' + @FN + ' ' + 'failed to install commandline tools to "$dst_check".')
+		return error(@MOD + '.' + @FN + ' ' +
+			'failed to install commandline tools to "${dst_check}".')
 	}
 	return false
 }
@@ -443,22 +444,22 @@ fn ensure_bundletool(verbosity int) !bool {
 		file := os.join_path(dst, 'bundletool.jar')
 		if !os.exists(file) {
 			if verbosity > 1 {
-				println('Downloading `bundletool` from "$url"...')
+				println('Downloading `bundletool` from "${url}"...')
 			}
 			http.download_file(url, file) or {
 				return error(@MOD + '.' + @FN + ' ' +
-					'failed to download `bundletool` needed for aab support: $err')
+					'failed to download `bundletool` needed for aab support: ${err}')
 			}
 		}
 		// Install
 		dst_check := os.join_path(dst, 'bundletool.jar')
 		if os.exists(dst_check) {
 			if verbosity > 1 {
-				println('`bundletool` installed in "$dst_check"')
+				println('`bundletool` installed in "${dst_check}"')
 			}
 			return true
 		}
-		return error(@MOD + '.' + @FN + ' ' + 'failed to install `bundletool` to "$dst_check"')
+		return error(@MOD + '.' + @FN + ' ' + 'failed to install `bundletool` to "${dst_check}"')
 	}
 	return false
 }
@@ -734,7 +735,7 @@ pub fn aapt2() string {
 		dot_exe = '.exe'
 	}
 	if !os.exists(aapt2) {
-		aapt2 = os.join_path(util.cache_dir(), 'aapt2$dot_exe')
+		aapt2 = os.join_path(util.cache_dir(), 'aapt2${dot_exe}')
 	}
 	$if !windows {
 		if !os.is_executable(aapt2) {
@@ -762,18 +763,18 @@ fn ensure_aapt2(verbosity int) !bool {
 		// file := os.join_path(dst, 'aapt2.jar')
 		if !os.exists(file) {
 			if verbosity > 1 {
-				println('Downloading `aapt2` from "$url"...')
+				println('Downloading `aapt2` from "${url}"...')
 			}
 			http.download_file(url, file) or {
 				return error(@MOD + '.' + @FN + ' ' +
-					'failed to download `aapt2` needed for aab support: $err')
+					'failed to download `aapt2` needed for aab support: ${err}')
 			}
 		}
 		// Unpack
 		unpack_path := os.join_path(os.temp_dir(), 'vab-aapt2')
 		os.rmdir_all(unpack_path) or {}
 		os.mkdir_all(unpack_path) or {
-			return error(@MOD + '.' + @FN + ' ' + 'failed to install `aapt2`: $err')
+			return error(@MOD + '.' + @FN + ' ' + 'failed to install `aapt2`: ${err}')
 		}
 		util.unzip(file, unpack_path)!
 		// Install
@@ -785,15 +786,15 @@ fn ensure_aapt2(verbosity int) !bool {
 		dst_check := os.join_path(dst, 'aapt2' + dot_exe)
 		os.rm(dst_check) or {}
 		os.cp(aapt2_file, dst_check) or {
-			return error(@MOD + '.' + @FN + ' ' + 'failed to install `aapt2$dot_exe`: $err')
+			return error(@MOD + '.' + @FN + ' ' + 'failed to install `aapt2${dot_exe}`: ${err}')
 		}
 		if os.exists(dst_check) {
 			if verbosity > 1 {
-				println('`aapt2` installed as "$dst_check"')
+				println('`aapt2` installed as "${dst_check}"')
 			}
 			return true
 		}
-		return error(@MOD + '.' + @FN + ' ' + 'failed to install `aapt2` to "$dst_check".')
+		return error(@MOD + '.' + @FN + ' ' + 'failed to install `aapt2` to "${dst_check}".')
 	}
 	return false
 }

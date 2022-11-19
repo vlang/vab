@@ -50,7 +50,7 @@ pub fn vmodules() !string {
 		vmodules_path = os.join_path(os.home_dir(), '.vmodules')
 	}
 	if !os.is_dir(vmodules_path) {
-		return error(@MOD + '.' + @FN + ': no valid v modules path found at "$vmodules_path"')
+		return error(@MOD + '.' + @FN + ': no valid v modules path found at "${vmodules_path}"')
 	}
 	return vmodules_path
 }

@@ -50,7 +50,7 @@ pub fn root() string {
 	if sdk_root != '' && !os.is_dir(sdk_root) {
 		$if debug_sdk ? {
 			eprintln(@MOD + '.' + @FN +
-				' Warning: SDK found via ANDROID_SDK_ROOT "$sdk_root" is not a directory.')
+				' Warning: SDK found via ANDROID_SDK_ROOT "${sdk_root}" is not a directory.')
 		}
 		sdk_root = ''
 	}
@@ -60,7 +60,7 @@ pub fn root() string {
 		if sdk_root != '' && !os.is_dir(sdk_root) {
 			$if debug_sdk ? {
 				eprintln(@MOD + '.' + @FN +
-					' Warning: SDK found via ANDROID_HOME "$sdk_root" is not a directory.')
+					' Warning: SDK found via ANDROID_HOME "${sdk_root}" is not a directory.')
 			}
 			sdk_root = ''
 		}
@@ -78,7 +78,7 @@ pub fn root() string {
 		for dir in dirs {
 			if os.exists(dir) && os.is_dir(dir) {
 				$if debug_sdk ? {
-					eprintln(@MOD + '.' + @FN + ' found SDK in hardcoded paths at "$dir"')
+					eprintln(@MOD + '.' + @FN + ' found SDK in hardcoded paths at "${dir}"')
 				}
 				sdk_root = dir
 				cache.set_string(@MOD + '.' + @FN, sdk_root)
@@ -99,7 +99,7 @@ pub fn root() string {
 						sdk_root = ''
 					}
 					$if debug_sdk ? {
-						eprintln(@MOD + '.' + @FN + ' found by adb in "$sdk_root"')
+						eprintln(@MOD + '.' + @FN + ' found by adb in "${sdk_root}"')
 					}
 				}
 			}
@@ -119,7 +119,7 @@ pub fn root() string {
 			sdkm_path = os.join_path(cache_dir(), 'cmdline-tools', 'tools', 'bin', 'sdkmanager')
 			if os.is_executable(sdkm_path) {
 				$if debug_sdk ? {
-					eprintln(@MOD + '.' + @FN + ' found by sdkmanager in cache "$cache_dir()"')
+					eprintln(@MOD + '.' + @FN + ' found by sdkmanager in cache "${cache_dir()}"')
 				}
 				sdk_root = cache_dir()
 				cache.set_string(@MOD + '.' + @FN, sdk_root)
@@ -147,12 +147,12 @@ pub fn root() string {
 	}
 	if !os.is_dir(sdk_root) {
 		$if debug_sdk ? {
-			eprintln(@MOD + '.' + @FN + ' Warning: "$sdk_root" is not a dir')
+			eprintln(@MOD + '.' + @FN + ' Warning: "${sdk_root}" is not a dir')
 		}
 		sdk_root = ''
 	} else {
 		$if debug_sdk ? {
-			eprintln(@MOD + '.' + @FN + ' found SDK in "$sdk_root"')
+			eprintln(@MOD + '.' + @FN + ' found SDK in "${sdk_root}"')
 		}
 	}
 	sdk_root = sdk_root.trim_right(r'\/')
@@ -168,7 +168,7 @@ pub fn cache_dir() string {
 	cache_dir := os.join_path(util.cache_dir(), 'sdk')
 	if !os.exists(cache_dir) {
 		os.mkdir_all(cache_dir) or {
-			panic(@MOD + '.' + @FN + ' error making cache directory "$cache_dir". $err')
+			panic(@MOD + '.' + @FN + ' error making cache directory "${cache_dir}". ${err}')
 		}
 	}
 	return cache_dir

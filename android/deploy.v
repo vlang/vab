@@ -71,11 +71,11 @@ pub fn deploy_apk(opt DeployOptions) ! {
 
 	adb := env.adb()
 	if !os.is_executable(adb) {
-		return error('$error_tag: Couldn\'t locate "adb". Please make sure it\'s installed.')
+		return error('${error_tag}: Couldn\'t locate "adb". Please make sure it\'s installed.')
 	}
 
 	devices := get_device_list(opt.verbosity) or {
-		return error('$error_tag: Failed getting device list.\n$err')
+		return error('${error_tag}: Failed getting device list.\n${err}')
 	}
 
 	if device_id == 'auto' {
@@ -86,17 +86,17 @@ pub fn deploy_apk(opt DeployOptions) ! {
 		device_id = auto_device
 
 		if device_id == '' {
-			return error("$error_tag: Couldn't find any connected devices.")
+			return error("${error_tag}: Couldn't find any connected devices.")
 		}
 	}
 	// Deploy
 	if device_id != '' {
 		if device_id !in devices {
-			return error('$error_tag: Couldn\'t connect to device "$device_id".')
+			return error('${error_tag}: Couldn\'t connect to device "${device_id}".')
 		}
 
 		if opt.verbosity > 0 {
-			println('Deploying $opt.format package to "$device_id"')
+			println('Deploying ${opt.format} package to "${device_id}"')
 		}
 
 		if opt.kill_adb {
@@ -107,14 +107,14 @@ pub fn deploy_apk(opt DeployOptions) ! {
 
 		adb_logcat_clear_cmd := [
 			adb,
-			'-s "$device_id"',
+			'-s "${device_id}"',
 			'logcat',
 			'-c',
 		]
 		if opt.clear_device_log || (opt.run != '' && opt.device_log) {
 			// Clear logs first
 			if opt.verbosity > 0 {
-				println('Clearing log buffer on device "$device_id"')
+				println('Clearing log buffer on device "${device_id}"')
 			}
 			util.verbosity_print_cmd(adb_logcat_clear_cmd, opt.verbosity)
 			util.run_or_error(adb_logcat_clear_cmd)!
@@ -122,7 +122,7 @@ pub fn deploy_apk(opt DeployOptions) ! {
 
 		adb_cmd := [
 			adb,
-			'-s "$device_id"',
+			'-s "${device_id}"',
 			'install',
 			'-r',
 			opt.deploy_file,
@@ -132,11 +132,11 @@ pub fn deploy_apk(opt DeployOptions) ! {
 
 		if opt.run != '' {
 			if opt.verbosity > 0 {
-				println('Running "$opt.run" on "$device_id"')
+				println('Running "${opt.run}" on "${device_id}"')
 			}
 			adb_run_cmd := [
 				adb,
-				'-s "$device_id"',
+				'-s "${device_id}"',
 				'shell',
 				'am',
 				'start',
@@ -167,11 +167,11 @@ pub fn deploy_aab(opt DeployOptions) ! {
 	bundletool := env.bundletool() // Run with "java -jar ..."
 
 	if !os.is_executable(adb) {
-		return error('$error_tag: Couldn\'t locate "adb". Please make sure it\'s installed.')
+		return error('${error_tag}: Couldn\'t locate "adb". Please make sure it\'s installed.')
 	}
 
 	devices := get_device_list(opt.verbosity) or {
-		return error('$error_tag: Failed getting device list.\n$err')
+		return error('${error_tag}: Failed getting device list.\n${err}')
 	}
 
 	if device_id == 'auto' {
@@ -182,13 +182,13 @@ pub fn deploy_aab(opt DeployOptions) ! {
 		device_id = auto_device
 
 		if device_id == '' {
-			return error("$error_tag: Couldn't find any connected devices.")
+			return error("${error_tag}: Couldn't find any connected devices.")
 		}
 	}
 	// Deploy
 	if device_id != '' {
 		if opt.verbosity > 0 {
-			println('Building APKs from "$opt.deploy_file"')
+			println('Building APKs from "${opt.deploy_file}"')
 		}
 
 		apks_path := os.join_path(opt.work_dir,
@@ -214,11 +214,11 @@ pub fn deploy_aab(opt DeployOptions) ! {
 		util.run_or_error(bundletool_apks_cmd)!
 
 		if device_id !in devices {
-			return error('$error_tag: Couldn\'t connect to device "$device_id".')
+			return error('${error_tag}: Couldn\'t connect to device "${device_id}".')
 		}
 
 		if opt.verbosity > 0 {
-			println('Deploying $opt.format package to "$device_id"')
+			println('Deploying ${opt.format} package to "${device_id}"')
 		}
 
 		if opt.kill_adb {
@@ -229,14 +229,14 @@ pub fn deploy_aab(opt DeployOptions) ! {
 
 		adb_logcat_clear_cmd := [
 			adb,
-			'-s "$device_id"',
+			'-s "${device_id}"',
 			'logcat',
 			'-c',
 		]
 		if opt.clear_device_log || (opt.run != '' && opt.device_log) {
 			// Clear logs first
 			if opt.verbosity > 0 {
-				println('Clearing log buffer on device "$device_id"')
+				println('Clearing log buffer on device "${device_id}"')
 			}
 			util.verbosity_print_cmd(adb_logcat_clear_cmd, opt.verbosity)
 			util.run_or_error(adb_logcat_clear_cmd)!
@@ -248,7 +248,7 @@ pub fn deploy_aab(opt DeployOptions) ! {
 			'-jar',
 			bundletool,
 			'install-apks',
-			'--device-id $device_id',
+			'--device-id ${device_id}',
 			'--apks="' + apks_path + '"',
 		]
 		util.verbosity_print_cmd(bundletool_install_apks_cmd, opt.verbosity)
@@ -256,11 +256,11 @@ pub fn deploy_aab(opt DeployOptions) ! {
 
 		if opt.run != '' {
 			if opt.verbosity > 0 {
-				println('Running "$opt.run" on "$device_id"')
+				println('Running "${opt.run}" on "${device_id}"')
 			}
 			adb_run_cmd := [
 				adb,
-				'-s "$device_id"',
+				'-s "${device_id}"',
 				'shell',
 				'am',
 				'start',
@@ -288,7 +288,7 @@ fn adb_detect_and_report_crashes(opt DeployOptions, device_id string) !bool {
 	adb_logcat_cmd := [
 		adb,
 		'-s',
-		'$device_id',
+		'${device_id}',
 		'logcat',
 		'--buffer=crash',
 		'-d',
@@ -307,13 +307,13 @@ fn adb_log_step(opt DeployOptions, device_id string) ! {
 	adb := env.adb()
 	mut crash_mode := false
 	if opt.verbosity > 0 {
-		println('Showing log output from device "$device_id"')
+		println('Showing log output from device "${device_id}"')
 	}
 	println('Ctrl+C to cancel logging')
 	mut adb_logcat_cmd := [
 		adb,
 		'-s',
-		'$device_id',
+		'${device_id}',
 		'logcat',
 	]
 
@@ -332,13 +332,13 @@ fn adb_log_step(opt DeployOptions, device_id string) ! {
 			if !tag.contains(':') {
 				tag += ':V'
 			}
-			adb_logcat_cmd << '$tag'
+			adb_logcat_cmd << '${tag}'
 		}
 		adb_logcat_cmd << [
 			'V:V',
 			// 'System.out:D', // Used by many other Android libs - so it's noisy
 			// 'System.err:D',
-			'$opt.activity_name:V',
+			'${opt.activity_name}:V',
 		]
 		// if !is_debug_build {
 		adb_logcat_cmd << '*:S'
@@ -360,19 +360,19 @@ fn adb_log_step(opt DeployOptions, device_id string) ! {
 		if b <= 0 {
 			break
 		}
-		print('$s')
+		print('${s}')
 		os.flush()
 	}
 	if !crash_mode {
 		rest := p.stdout_slurp()
 		p.wait()
-		println('$rest')
+		println('${rest}')
 	}
 }
 
 fn kill_adb_on_exit(signum os.Signal) {
 	uos := os.user_os()
-	println('Killing adb on signal $signum')
+	println('Killing adb on signal ${signum}')
 	if uos == 'windows' {
 		// os.system('Taskkill /IM adb.exe /F') // TODO Untested
 	} else {
