@@ -20,22 +20,22 @@ pub fn doctor(opt Options) {
 	if sdkm == '' {
 		eprintln('No "sdkmanager" could be detected.\n')
 		if env_managable {
-			eprintln('You can run `$exe_short_name install cmdline-tools` to install it.')
+			eprintln('You can run `${exe_short_name} install cmdline-tools` to install it.')
 		}
-		eprintln('You can set the SDKMANAGER env variable or try your luck with `$exe_short_name install auto`.')
+		eprintln('You can set the SDKMANAGER env variable or try your luck with `${exe_short_name} install auto`.')
 		eprintln('Please see https://stackoverflow.com/a/61176718/1904615 for more help.\n')
 	} else {
 		if !env_managable {
 			sdk_is_writable := os.is_writable(sdk.root())
 			if !sdk_is_writable {
-				eprintln('The SDK at "$sdk.root()" is not writable.')
-				eprintln("`$exe_short_name` is not able to control the SDK and it's dependencies.")
+				eprintln('The SDK at "${sdk.root()}" is not writable.')
+				eprintln("`${exe_short_name}` is not able to control the SDK and it's dependencies.")
 			} else {
 				eprintln('The detected `sdkmanager` seems outdated or incompatible with the Java version used.')
-				eprintln("For `$exe_short_name` to control it's own dependencies, please update `sdkmanager` found in:")
-				eprintln('"$sdkm"')
+				eprintln("For `${exe_short_name}` to control it's own dependencies, please update `sdkmanager` found in:")
+				eprintln('"${sdkm}"')
 				eprintln('or use a Java version that is compatible with your `sdkmanager`.')
-				eprintln('You can set the SDKMANAGER env variable or try your luck with `$exe_short_name install auto`.')
+				eprintln('You can set the SDKMANAGER env variable or try your luck with `${exe_short_name} install auto`.')
 				eprintln('Please see https://stackoverflow.com/a/61176718/1904615 for more help.\n')
 			}
 		}
@@ -61,15 +61,15 @@ pub fn doctor(opt Options) {
 	}
 
 	// vab section
-	println('$exe_short_name
-	Version $exe_version $exe_git_hash
-	Path "$exe_dir"
-	Base files "$default_base_files_path"')
+	println('${exe_short_name}
+	Version ${exe_version} ${exe_git_hash}
+	Path "${exe_dir}"
+	Base files "${default_base_files_path}"')
 
 	// Shell environment
 	print_var_if_set := fn (vars map[string]string, var_name string) {
 		if var_name in vars {
-			println('\t$var_name=' + os.getenv(var_name))
+			println('\t${var_name}=' + os.getenv(var_name))
 		}
 	}
 	println('env')
@@ -81,60 +81,60 @@ pub fn doctor(opt Options) {
 	// Java section
 	println('Java
 	JDK
-		Version $java.jdk_version()
-		Path "$java.jdk_root()"
-		Keytool "$keytool"')
+		Version ${java.jdk_version()}
+		Path "${java.jdk_root()}"
+		Keytool "${keytool}"')
 
 	// Android section
 	println('Android
 	ENV
-		sdkmanager "$sdkm"
-		sdkmanager.version "$env.sdkmanager_version()"
-		Managable $env_managable
+		sdkmanager "${sdkm}"
+		sdkmanager.version "${env.sdkmanager_version()}"
+		Managable ${env_managable}
 	SDK
-		Path "$sdk.root()"
+		Path "${sdk.root()}"
 		Writable ${os.is_writable(sdk.root())}
-		APIs available $sdk.apis_available()
+		APIs available ${sdk.apis_available()}
 	NDK
-		Version $opt.ndk_version
-		Path "$ndk.root()"
-		Side-by-side $ndk.is_side_by_side()
+		Version ${opt.ndk_version}
+		Path "${ndk.root()}"
+		Side-by-side ${ndk.is_side_by_side()}
 		min API level available ${ndk.min_api_available(opt.ndk_version)}
 		max API level available ${ndk.max_api_available(opt.ndk_version)}')
 	apis_by_arch := ndk.available_apis_by_arch(opt.ndk_version)
 	for arch, api_levels in apis_by_arch {
-		println('\t\t${arch:-11} $api_levels')
+		println('\t\t${arch:-11} ${api_levels}')
 	}
 	println('\tBuild
-		API $opt.api_level
-		Build-tools $opt.build_tools
+		API ${opt.api_level}
+		Build-tools ${opt.build_tools}
 	Packaging
-		Format $opt.package_format')
+		Format ${opt.package_format}')
 
 	if env.has_bundletool() {
-		println('\t\tBundletool "$env.bundletool()"')
+		println('\t\tBundletool "${env.bundletool()}"')
 	}
 	if env.has_aapt2() {
-		println('\t\tAAPT2 "$env.aapt2()"')
+		println('\t\tAAPT2 "${env.aapt2()}"')
 	}
 
 	if opt.keystore != '' || opt.keystore_alias != '' {
 		println('\tKeystore')
-		println('\t\tFile $opt.keystore')
-		println('\t\tAlias $opt.keystore_alias')
+		println('\t\tFile ${opt.keystore}')
+		println('\t\tAlias ${opt.keystore_alias}')
 	}
 	// Product section
 	println('Product
-	Name "$opt.app_name"
-	Package ID "$opt.package_id"
-	Output "$opt.output"')
+	Name "${opt.app_name}"
+	Package ID "${opt.package_id}"
+	Output "${opt.output}"')
 
 	// V section
 	println('V
-	Version $vxt.version() $vxt.version_commit_hash()
-	Path "$vxt.home()"')
+	Version ${vxt.version()} ${vxt.version_commit_hash()}
+	Path "${vxt.home()}"')
 	if opt.v_flags.len > 0 {
-		println('\tFlags $opt.v_flags')
+		println('\tFlags ${opt.v_flags}')
 	}
 	// Print output of `v doctor` if v is found
 	if vxt.found() {
@@ -146,7 +146,7 @@ pub fn doctor(opt Options) {
 		v_res := os.execute(v_cmd.join(' '))
 		out_lines := v_res.output.split('\n')
 		for line in out_lines {
-			println('\t$line')
+			println('\t${line}')
 		}
 	}
 }

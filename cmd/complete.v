@@ -153,12 +153,12 @@ fn auto_complete(args []string) {
 					println(setup_for_shell(shell_name))
 					exit(0)
 				}
-				eprintln('Unknown shell ${shell_name}. Supported shells are: $auto_complete_shells')
+				eprintln('Unknown shell ${shell_name}. Supported shells are: ${auto_complete_shells}')
 				exit(1)
 			}
 			eprintln('auto completion require arguments to work.')
 		} else {
-			eprintln('auto completion failed for "$args".')
+			eprintln('auto completion failed for "${args}".')
 		}
 		exit(1)
 	}
@@ -167,7 +167,7 @@ fn auto_complete(args []string) {
 	match sub {
 		'setup' {
 			if sub_args.len <= 1 || sub_args[1] !in auto_complete_shells {
-				eprintln('please specify a shell to setup auto completion for ($auto_complete_shells).')
+				eprintln('please specify a shell to setup auto completion for (${auto_complete_shells}).')
 				exit(1)
 			}
 			shell := sub_args[1]
@@ -180,7 +180,7 @@ fn auto_complete(args []string) {
 			mut lines := []string{}
 			list := auto_complete_request(sub_args[1..])
 			for entry in list {
-				lines << "COMPREPLY+=('$entry')"
+				lines << "COMPREPLY+=('${entry}')"
 			}
 			println(lines.join('\n'))
 		}
@@ -191,7 +191,7 @@ fn auto_complete(args []string) {
 			mut lines := []string{}
 			list := auto_complete_request(sub_args[1..])
 			for entry in list {
-				lines << '$entry'
+				lines << '${entry}'
 			}
 			println(lines.join('\n'))
 		}
@@ -202,7 +202,7 @@ fn auto_complete(args []string) {
 			mut lines := []string{}
 			list := auto_complete_request(sub_args[1..])
 			for entry in list {
-				lines << 'compadd -U -S' + '""' + ' -- ' + "'$entry';"
+				lines << 'compadd -U -S' + '""' + ' -- ' + "'${entry}';"
 			}
 			println(lines.join('\n'))
 		}
@@ -370,7 +370,7 @@ _vab_completions() {
 	local limit
 	# Send all words up to the word the cursor is currently on
 	let limit=1+\$COMP_CWORD
-	src=\$($vabexe complete bash \$(printf "%s\\n" \${COMP_WORDS[@]: 0:\$limit}))
+	src=\$(${vabexe} complete bash \$(printf "%s\\n" \${COMP_WORDS[@]: 0:\$limit}))
 	if [[ \$? == 0 ]]; then
 		eval \${src}
 		#echo \${src}
@@ -384,7 +384,7 @@ complete -o nospace -F _vab_completions vab
 			setup = '
 function __vab_completions
 	# Send all words up to the one before the cursor
-	$vabexe complete fish (commandline -cop)
+	${vabexe} complete fish (commandline -cop)
 end
 complete -f -c vab -a "(__vab_completions)"
 '
@@ -395,7 +395,7 @@ complete -f -c vab -a "(__vab_completions)"
 _vab() {
 	local src
 	# Send all words up to the word the cursor is currently on
-	src=\$($vabexe complete zsh \$(printf "%s\\n" \${(@)words[1,\$CURRENT]}))
+	src=\$(${vabexe} complete zsh \$(printf "%s\\n" \${(@)words[1,\$CURRENT]}))
 	if [[ \$? == 0 ]]; then
 		eval \${src}
 		#echo \${src}
@@ -408,7 +408,7 @@ compdef _vab vab
 			setup = '
 Register-ArgumentCompleter -Native -CommandName v -ScriptBlock {
 	param(\$commandName, \$wordToComplete, \$cursorPosition)
-		$vabexe complete powershell "\$wordToComplete" | ForEach-Object {
+		${vabexe} complete powershell "\$wordToComplete" | ForEach-Object {
 			[System.Management.Automation.CompletionResult]::new(\$_, \$_, \'ParameterValue\', \$_)
 		}
 }

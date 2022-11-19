@@ -41,7 +41,7 @@ pub fn cache_dir() string {
 	cache_dir = os.join_path(os.cache_dir(), 'v', 'android')
 	if !os.exists(cache_dir) {
 		os.mkdir_all(cache_dir) or {
-			panic(@MOD + '.' + @FN + ' error making cache directory "$cache_dir". $err')
+			panic(@MOD + '.' + @FN + ' error making cache directory "${cache_dir}". ${err}')
 		}
 	}
 	cache.set_string(@MOD + '.' + @FN, cache_dir)
@@ -65,7 +65,7 @@ pub fn is_version(str string) bool {
 pub fn verbosity_print_cmd(args []string, verbosity int) {
 	if args.len > 0 && verbosity > 1 {
 		cmd_short := args[0].all_after_last(os.path_separator)
-		mut output := 'Running $cmd_short From: $os.getwd()'
+		mut output := 'Running ${cmd_short} From: ${os.getwd()}'
 		if verbosity > 2 {
 			output += '\n' + args.join(' ')
 		}
@@ -75,7 +75,7 @@ pub fn verbosity_print_cmd(args []string, verbosity int) {
 
 pub fn exit_on_bad_result(res os.Result, error_message string) {
 	if res.exit_code != 0 {
-		eprintln('$error_message')
+		eprintln('${error_message}')
 		eprintln(res.output)
 		exit(1)
 	}
@@ -83,14 +83,14 @@ pub fn exit_on_bad_result(res os.Result, error_message string) {
 
 pub fn run_or_exit(args []string) string {
 	res := run(args)
-	exit_on_bad_result(res, '${args[0]} failed with return code $res.exit_code')
+	exit_on_bad_result(res, '${args[0]} failed with return code ${res.exit_code}')
 	return res.output
 }
 
 pub fn run_or_error(args []string) !string {
 	res := run(args)
 	if res.exit_code != 0 {
-		return error('${args.join(' ')} failed with return code $res.exit_code:\n$res.output')
+		return error('${args.join(' ')} failed with return code ${res.exit_code}:\n${res.output}')
 	}
 	return res.output
 }

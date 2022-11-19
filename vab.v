@@ -17,14 +17,14 @@ fn main() {
 	mut fp := &flag.FlagParser(0)
 
 	opt = cli.options_from_env(opt) or {
-		eprintln('Error while parsing `VAB_FLAGS`: $err')
-		eprintln('Use `$cli.exe_short_name -h` to see all flags')
+		eprintln('Error while parsing `VAB_FLAGS`: ${err}')
+		eprintln('Use `${cli.exe_short_name} -h` to see all flags')
 		exit(1)
 	}
 
 	opt, fp = cli.args_to_options(os.args, opt) or {
-		eprintln('Error while parsing `os.args`: $err')
-		eprintln('Use `$cli.exe_short_name -h` to see all flags')
+		eprintln('Error while parsing `os.args`: ${err}')
+		eprintln('Use `${cli.exe_short_name} -h` to see all flags')
 		exit(1)
 	}
 
@@ -41,7 +41,7 @@ fn main() {
 
 	if opt.list_ndks {
 		if !ndk.found() {
-			eprintln('No NDK could be found. Please use `$cli.exe_short_name doctor` to get more information.')
+			eprintln('No NDK could be found. Please use `${cli.exe_short_name} doctor` to get more information.')
 			exit(1)
 		}
 		for ndk_v in ndk.versions_available() {
@@ -52,7 +52,7 @@ fn main() {
 
 	if opt.list_apis {
 		if !sdk.found() {
-			eprintln('No SDK could be found. Please use `$cli.exe_short_name doctor` to get more information.')
+			eprintln('No SDK could be found. Please use `${cli.exe_short_name} doctor` to get more information.')
 			exit(1)
 		}
 		for api in sdk.apis_available() {
@@ -63,7 +63,7 @@ fn main() {
 
 	if opt.list_build_tools {
 		if !sdk.found() {
-			eprintln('No SDK could be found. Please use `$cli.exe_short_name doctor` to get more information.')
+			eprintln('No SDK could be found. Please use `${cli.exe_short_name} doctor` to get more information.')
 			exit(1)
 		}
 		for btv in sdk.build_tools_available() {
@@ -84,7 +84,7 @@ fn main() {
 			res := env.install(install_arg, opt.verbosity)
 			if res == 0 && opt.verbosity > 0 {
 				if install_arg != 'auto' {
-					println('Installed $install_arg successfully.')
+					println('Installed ${install_arg} successfully.')
 				} else {
 					println('Installed all dependencies successfully.')
 				}
@@ -109,7 +109,7 @@ fn main() {
 
 	input := fp.args.last()
 	cli.validate_input(input) or {
-		eprintln('$cli.exe_short_name: $err')
+		eprintln('${cli.exe_short_name}: ${err}')
 		exit(1)
 	}
 	opt.input = input
@@ -125,12 +125,12 @@ fn main() {
 
 	// Keystore file
 	keystore := opt.resolve_keystore() or {
-		eprintln('$cli.exe_short_name: could not resolve keystore: $err')
+		eprintln('${cli.exe_short_name}: could not resolve keystore: ${err}')
 		exit(1)
 	}
 
 	ado := opt.as_android_deploy_options() or {
-		eprintln('Could not create deploy options.\n$err')
+		eprintln('Could not create deploy options.\n${err}')
 		exit(1)
 	}
 	deploy_opt := android.DeployOptions{
@@ -139,7 +139,7 @@ fn main() {
 	}
 
 	if opt.verbosity > 1 {
-		println('Output will be signed with keystore at "$deploy_opt.keystore.path"')
+		println('Output will be signed with keystore at "${deploy_opt.keystore.path}"')
 	}
 
 	input_ext := os.file_ext(opt.input)
@@ -158,7 +158,7 @@ fn main() {
 		cache_key: if os.is_dir(input) || input_ext == '.v' { opt.input } else { '' }
 	}
 	android.compile(comp_opt) or {
-		eprintln('$cli.exe_short_name compiling didn\'t succeed.\n$err')
+		eprintln('${cli.exe_short_name} compiling didn\'t succeed.\n${err}')
 		exit(1)
 	}
 
@@ -168,7 +168,7 @@ fn main() {
 		keystore: keystore
 	}
 	android.package(pck_opt) or {
-		eprintln("Packaging didn't succeed.\n$err")
+		eprintln("Packaging didn't succeed.\n${err}")
 		exit(1)
 	}
 
@@ -177,21 +177,21 @@ fn main() {
 	} else {
 		if opt.verbosity > 0 {
 			println('Generated ${os.real_path(opt.output)}')
-			println('Use `$cli.exe_short_name --device <id> ${os.real_path(opt.output)}` to deploy package')
+			println('Use `${cli.exe_short_name} --device <id> ${os.real_path(opt.output)}` to deploy package')
 		}
 	}
 }
 
 fn deploy(deploy_opt android.DeployOptions) {
 	android.deploy(deploy_opt) or {
-		eprintln('$cli.exe_short_name deployment didn\'t succeed.\n$err')
+		eprintln('${cli.exe_short_name} deployment didn\'t succeed.\n${err}')
 		if deploy_opt.kill_adb {
 			cli.kill_adb()
 		}
 		exit(1)
 	}
 	if deploy_opt.verbosity > 0 {
-		println('Deployed to $deploy_opt.device_id successfully')
+		println('Deployed to ${deploy_opt.device_id} successfully')
 	}
 	if deploy_opt.kill_adb {
 		cli.kill_adb()

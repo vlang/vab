@@ -57,7 +57,7 @@ pub fn root() string {
 	if ndk_root != '' && !os.is_dir(ndk_root) {
 		$if debug_ndk ? {
 			eprintln(@MOD + '.' + @FN +
-				' Warning: NDK found via ANDROID_NDK_ROOT "$ndk_root" is not a directory.')
+				' Warning: NDK found via ANDROID_NDK_ROOT "${ndk_root}" is not a directory.')
 		}
 		ndk_root = ''
 	}
@@ -79,7 +79,7 @@ pub fn root() string {
 		for dir in dirs {
 			if os.exists(dir) && os.is_dir(dir) {
 				$if debug_ndk ? {
-					eprintln(@MOD + '.' + @FN + ' found NDK in hardcoded paths at "$dir"')
+					eprintln(@MOD + '.' + @FN + ' found NDK in hardcoded paths at "${dir}"')
 				}
 				ndk_root = dir
 				cache.set_string(@MOD + '.' + @FN, ndk_root)
@@ -99,7 +99,7 @@ pub fn root() string {
 					if !os.is_dir(ndk_root) {
 						$if debug_ndk ? {
 							eprintln(@MOD + '.' + @FN +
-								' ndk-which was in PATH but containing dir is no more "$ndk_root"')
+								' ndk-which was in PATH but containing dir is no more "${ndk_root}"')
 						}
 						ndk_root = ''
 					}
@@ -109,7 +109,7 @@ pub fn root() string {
 	}
 	if !os.is_dir(ndk_root) {
 		$if debug_ndk ? {
-			eprintln(@MOD + '.' + @FN + ' Warning: "$ndk_root" is not a dir')
+			eprintln(@MOD + '.' + @FN + ' Warning: "${ndk_root}" is not a dir')
 		}
 		ndk_root = ''
 	}
@@ -255,7 +255,7 @@ pub fn compiler_min_api(lang_type CompilerLanguageType, ndk_version string, arch
 	}
 	// Something must be wrong with the NDK
 	return error(@MOD + '.' + @FN +
-		' couldn\'t locate $lang_type compiler for architecture "$arch". Available compilers: ${available_compilers}. The NDK might be corrupt.')
+		' couldn\'t locate ${lang_type} compiler for architecture "${arch}". Available compilers: ${available_compilers}. The NDK might be corrupt.')
 }
 
 // compiler_max_api returns a compiler with the highest API level available for `arch` in `ndk_version`.
@@ -268,7 +268,7 @@ pub fn compiler_max_api(lang_type CompilerLanguageType, ndk_version string, arch
 	}
 	// Something must be wrong with the NDK
 	return error(@MOD + '.' + @FN +
-		' couldn\'t locate $lang_type compiler for architecture "$arch". Available compilers: ${available_compilers}. The NDK might be corrupt.')
+		' couldn\'t locate ${lang_type} compiler for architecture "${arch}". Available compilers: ${available_compilers}. The NDK might be corrupt.')
 }
 
 pub fn compiler(lang_type CompilerLanguageType, ndk_version string, arch string, api_level string) ?string {
@@ -281,10 +281,10 @@ pub fn compiler(lang_type CompilerLanguageType, ndk_version string, arch string,
 	// what the default NDK supports - report a descriptive error.
 	mut other_api_level_supported_hint := '.'
 	if available_compilers.len > 0 {
-		other_api_level_supported_hint = ' use compiler_(min/max)_api() or use another API level (--api <level>).\nNDK "$ndk_version" supports API levels: $available_compilers.keys()'
+		other_api_level_supported_hint = ' use compiler_(min/max)_api() or use another API level (--api <level>).\nNDK "${ndk_version}" supports API levels: ${available_compilers.keys()}'
 	}
 	return error(@MOD + '.' + @FN +
-		' couldn\'t locate C compiler for architecture "$arch" at API level "$api_level". You could try with a NDK version > "$ndk_version"$other_api_level_supported_hint')
+		' couldn\'t locate C compiler for architecture "${arch}" at API level "${api_level}". You could try with a NDK version > "${ndk_version}"${other_api_level_supported_hint}')
 }
 
 fn available_ndk_compilers_by_api(lang_type CompilerLanguageType, ndk_version string, arch string) map[string]string {
@@ -297,7 +297,7 @@ fn available_ndk_compilers_by_api(lang_type CompilerLanguageType, ndk_version st
 		if to > from {
 			for level in from .. to {
 				mut compiler := os.join_path(compiler_bin_path, compiler_triplet(arch) +
-					'$level-clang')
+					'${level}-clang')
 				if lang_type == .cpp {
 					compiler += '++'
 				}
@@ -305,7 +305,7 @@ fn available_ndk_compilers_by_api(lang_type CompilerLanguageType, ndk_version st
 					compiler += '.cmd'
 				}
 				if os.is_file(compiler) {
-					compilers['$level'] = compiler
+					compilers['${level}'] = compiler
 				}
 			}
 		}
@@ -324,7 +324,7 @@ pub fn tool(tool_type Tool, ndk_version string, arch string) ?string {
 			}
 			path := bin_path(ndk_version)
 			if os.is_dir(path) {
-				mut ar := os.join_path(path, arch_is + '-linux-android$eabi-ar')
+				mut ar := os.join_path(path, arch_is + '-linux-android${eabi}-ar')
 				$if windows {
 					ar += '.cmd' // TODO validate if this is correct
 				}
@@ -335,7 +335,7 @@ pub fn tool(tool_type Tool, ndk_version string, arch string) ?string {
 		}
 	}
 	return error(@MOD + '.' + @FN +
-		' couldn\'t locate "$tool_type" tool for architecture "$arch". You could try with a NDK version > "$ndk_version"')
+		' couldn\'t locate "${tool_type}" tool for architecture "${arch}". You could try with a NDK version > "${ndk_version}"')
 }
 
 pub fn compiler_triplet(arch string) string {
@@ -344,7 +344,7 @@ pub fn compiler_triplet(arch string) string {
 	if arch == 'armeabi-v7a' {
 		eabi = 'eabi'
 	}
-	return arch_is + '-linux-android$eabi'
+	return arch_is + '-linux-android${eabi}'
 }
 
 [inline]
@@ -375,7 +375,7 @@ pub fn libs_path(ndk_version string, arch string, api_level string) ?string {
 	*/
 	if !os.is_dir(libs_path) {
 		return error(@MOD + '.' + @FN +
-			' couldn\'t locate libraries path "$libs_path". You could try with a newer NDK version.')
+			' couldn\'t locate libraries path "${libs_path}". You could try with a newer NDK version.')
 	}
 
 	return libs_path
@@ -389,7 +389,7 @@ pub fn sysroot_path(ndk_version string) ?string {
 
 	if !os.is_dir(sysroot_path) {
 		return error(@MOD + '.' + @FN +
-			' couldn\'t locate sysroot at "$sysroot_path". You could try with a newer NDK version (>= r19).')
+			' couldn\'t locate sysroot at "${sysroot_path}". You could try with a newer NDK version (>= r19).')
 	}
 
 	return sysroot_path
@@ -424,18 +424,18 @@ pub fn available_apis_by_arch(ndk_version string) map[string][]string {
 			for arch in ndk.supported_archs {
 				for level in from .. to {
 					mut compiler := os.join_path(compiler_bin_path, compiler_triplet(arch) +
-						'$level-clang')
+						'${level}-clang')
 					if os.is_file(compiler) {
-						arch_apis['$arch'] << level
+						arch_apis['${arch}'] << level
 					}
 				}
-				arch_apis['$arch'].sort(a > b)
+				arch_apis['${arch}'].sort(a > b)
 			}
 		}
 	}
 	mut arch_apis_result := map[string][]string{}
 	for arch, apis in arch_apis {
-		arch_apis_result['$arch'] = apis.map(it.str())
+		arch_apis_result['${arch}'] = apis.map(it.str())
 	}
 	return arch_apis_result
 }
@@ -448,7 +448,7 @@ pub fn meta_dir(version string) string {
 }
 
 fn read_platforms_json(version string) ?map[string]json2.Any {
-	mut platforms_json_file := cache.get_string(@MOD + '.' + @FN + '$version')
+	mut platforms_json_file := cache.get_string(@MOD + '.' + @FN + '${version}')
 	if platforms_json_file != '' {
 		platforms_json := json2.raw_decode(platforms_json_file) or { return none }
 		platforms := platforms_json.as_map()
@@ -458,7 +458,7 @@ fn read_platforms_json(version string) ?map[string]json2.Any {
 	platforms_json_file = os.read_file(platforms_json_path) or { return none }
 	platforms_json := json2.raw_decode(platforms_json_file) or { return none }
 	platforms := platforms_json.as_map()
-	cache.set_string(@MOD + '.' + @FN + '$version', platforms_json_file)
+	cache.set_string(@MOD + '.' + @FN + '${version}', platforms_json_file)
 	return platforms
 }
 

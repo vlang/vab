@@ -74,17 +74,17 @@ fn get_default_base_files_path() string {
 pub fn package(opt PackageOptions) ! {
 	error_tag := @MOD + '.' + @FN
 	if opt.verbosity > 0 {
-		println('Preparing package "$opt.package_id"...')
+		println('Preparing package "${opt.package_id}"...')
 	}
 	// Validate package_id to our best effort
 	is_valid_package_id(opt.package_id) or {
-		return error('$error_tag: "$opt.package_id" is not a valid package id:\n${err}.
+		return error('${error_tag}: "${opt.package_id}" is not a valid package id:\n${err}.
 Please consult the Android documentation for details:
 https://developer.android.com/studio/build/application-id')
 	}
 	if opt.is_prod && opt.package_id == android.default_package_id {
-		return error('$error_tag: Package id "$opt.package_id" is used by the V team.
-Please do not deploy to app stores using package id "$android.default_package_id".')
+		return error('${error_tag}: Package id "${opt.package_id}" is used by the V team.
+Please do not deploy to app stores using package id "${android.default_package_id}".')
 	}
 	// Build APK
 	match opt.format {
@@ -110,32 +110,32 @@ fn package_apk(opt PackageOptions) ! {
 	// Remove any previous extra libs
 	if os.is_dir(libs_extra_path) {
 		os.rmdir_all(libs_extra_path) or {
-			return error('$error_tag: could not remove "$libs_extra_path":\n$err')
+			return error('${error_tag}: could not remove "${libs_extra_path}":\n${err}')
 		}
 	}
 	for supported_lib_folder in android.supported_lib_folders {
 		supported_lib_folder_path := os.join_path(libs_extra_path, 'lib', supported_lib_folder)
 		os.mkdir_all(supported_lib_folder_path) or {
-			return error('$error_tag: error while making directory "$supported_lib_folder_path":\n$err')
+			return error('${error_tag}: error while making directory "${supported_lib_folder_path}":\n${err}')
 		}
 	}
 
 	// Remove any previous artifacts libs
 	os.rmdir_all(artifacts_path) or {}
 	os.mkdir_all(artifacts_path) or {
-		return error('$error_tag: error while making directory "$artifacts_path":\n$err')
+		return error('${error_tag}: error while making directory "${artifacts_path}":\n${err}')
 	}
 
 	// Used for various bug workarounds below
 	build_tools_semantic_version := semver.from(opt.build_tools) or {
-		return error('$error_tag:' + @LINE +
-			' error converting build-tools version "$opt.build_tools" to semantic version.\nsemver: $err')
+		return error('${error_tag}:' + @LINE +
+			' error converting build-tools version "${opt.build_tools}" to semantic version.\nsemver: ${err}')
 	}
 
 	// Used for various bug workarounds below
 	jdk_semantic_version := semver.from(java.jdk_version()) or {
-		return error('$error_tag:' + @LINE +
-			' error converting jdk_version "$java.jdk_version()" to semantic version.\nsemver: $err')
+		return error('${error_tag}:' + @LINE +
+			' error converting jdk_version "${java.jdk_version()}" to semantic version.\nsemver: ${err}')
 	}
 
 	javac := os.join_path(java.jdk_bin_path(), 'javac')
@@ -176,11 +176,11 @@ fn package_apk(opt PackageOptions) ! {
 
 	obj_path := os.join_path(package_path, 'obj')
 	os.mkdir_all(obj_path) or {
-		return error('$error_tag: error while making directory "$obj_path":\n$err')
+		return error('${error_tag}: error while making directory "${obj_path}":\n${err}')
 	}
 	bin_path := os.join_path(package_path, 'bin')
 	os.mkdir_all(bin_path) or {
-		return error('$error_tag: error while making directory "$bin_path":\n$err')
+		return error('${error_tag}: error while making directory "${bin_path}":\n${err}')
 	}
 
 	mut aapt_cmd := [
@@ -199,7 +199,7 @@ fn package_apk(opt PackageOptions) ! {
 	util.run_or_error(aapt_cmd)!
 
 	os.chdir(package_path) or {
-		return error('$error_tag: error while changing work directory to "$package_path":\n$err')
+		return error('${error_tag}: error while changing work directory to "${package_path}":\n${err}')
 	}
 
 	// Compile java sources
@@ -239,7 +239,7 @@ fn package_apk(opt PackageOptions) ! {
 						patched_dx = dx
 					}
 					if opt.verbosity > 1 {
-						println('Using patched dx ($patched_dx)')
+						println('Using patched dx (${patched_dx})')
 					}
 				}
 				dx = patched_dx
@@ -257,7 +257,7 @@ fn package_apk(opt PackageOptions) ! {
 						patched_d8 = d8
 					}
 					if opt.verbosity > 1 {
-						println('Using patched d8 ($patched_d8)')
+						println('Using patched d8 (${patched_d8})')
 					}
 				}
 				d8 = patched_d8
@@ -271,14 +271,14 @@ fn package_apk(opt PackageOptions) ! {
 		mut class_files := os.walk_ext('obj', '.class')
 		class_files = class_files.map(fn (e string) string {
 			$if windows {
-				return '"$e"'
+				return '"${e}"'
 			}
-			return "'$e'" // NOTE inclosing with ' is important since the files can contain `$` chars
+			return "'${e}'" // NOTE inclosing with ' is important since the files can contain `$` chars
 		})
 		mut dex_type := if opt.is_prod { '--release' } else { '--debug' }
 		mut d8_cmd := [
 			d8,
-			'--min-api $opt.min_sdk_version',
+			'--min-api ${opt.min_sdk_version}',
 			dex_type,
 			'--lib "' + android_runtime + '"',
 			'--classpath obj',
@@ -288,7 +288,7 @@ fn package_apk(opt PackageOptions) ! {
 		util.verbosity_print_cmd(d8_cmd, opt.verbosity)
 		util.run_or_error(d8_cmd)!
 		util.unzip('classes.zip', 'bin') or {
-			return error('$error_tag:' + @LINE + ' error unzipping classes.zip to bin: $err')
+			return error('${error_tag}:' + @LINE + ' error unzipping classes.zip to bin: ${err}')
 		}
 		os.cp('classes.zip', os.join_path(artifacts_path, 'classes.zip')) or {
 			return error(err.msg())
@@ -338,7 +338,7 @@ fn package_apk(opt PackageOptions) ! {
 	util.run_or_error(aapt_cmd)!
 
 	if opt.verbosity > 1 {
-		println('Adding libs to "$tmp_unaligned_product"...')
+		println('Adding libs to "${tmp_unaligned_product}"...')
 	}
 	// Add libs to product
 	mut collected_libs := map[string][]string{}
@@ -350,7 +350,7 @@ fn package_apk(opt PackageOptions) ! {
 			for path_part in path_split {
 				if path_part in android.supported_lib_folders {
 					if opt.verbosity > 2 {
-						println('Adding extra lib "$collected_extra_lib"...')
+						println('Adding extra lib "${collected_extra_lib}"...')
 					}
 					os.cp(collected_extra_lib, os.join_path(libs_extra_path, 'lib', path_part,
 						os.file_name(collected_extra_lib))) or { return error(err.msg()) }
@@ -383,7 +383,7 @@ fn package_apk(opt PackageOptions) ! {
 	}
 
 	os.chdir(pwd) or {
-		return error('$error_tag: error while changing work directory to "$pwd":\n$err')
+		return error('${error_tag}: error while changing work directory to "${pwd}":\n${err}')
 	}
 
 	zipalign_cmd := [
@@ -419,7 +419,7 @@ fn package_apk(opt PackageOptions) ! {
 					patched_apksigner = apksigner
 				}
 				if opt.verbosity > 1 {
-					println('Using patched apksigner ($patched_apksigner)')
+					println('Using patched apksigner (${patched_apksigner})')
 				}
 			}
 			apksigner = patched_apksigner
@@ -451,19 +451,19 @@ fn package_apk(opt PackageOptions) ! {
 
 	if os.is_file(opt.output_file) {
 		if opt.verbosity > 1 {
-			println('Removing previous output "$opt.output_file"')
+			println('Removing previous output "${opt.output_file}"')
 		}
 		os.rm(opt.output_file) or {
-			return error('$error_tag: error while removing "$opt.output_file":\n$err')
+			return error('${error_tag}: error while removing "${opt.output_file}":\n${err}')
 		}
 	}
 
 	if opt.verbosity > 1 {
-		println('Moving product from "$tmp_product" to "$opt.output_file"')
+		println('Moving product from "${tmp_product}" to "${opt.output_file}"')
 	}
 
 	os.mv_by_cp(tmp_product, opt.output_file) or {
-		return error('$error_tag: error while moving product "$tmp_product" to "$opt.output_file": $err')
+		return error('${error_tag}: error while moving product "${tmp_product}" to "${opt.output_file}": ${err}')
 	}
 }
 
@@ -485,20 +485,20 @@ fn package_aab(opt PackageOptions) ! {
 	for supported_lib_folder in android.supported_lib_folders {
 		supported_lib_folder_path := os.join_path(libs_extra_path, 'lib', supported_lib_folder)
 		os.mkdir_all(supported_lib_folder_path) or {
-			return error('$error_tag: error while making directory "$supported_lib_folder_path":\n$err')
+			return error('${error_tag}: error while making directory "${supported_lib_folder_path}":\n${err}')
 		}
 	}
 
 	// Used for various bug workarounds below
 	build_tools_semantic_version := semver.from(opt.build_tools) or {
-		return error('$error_tag' + ':' + @LINE +
-			' error converting build-tools version "$opt.build_tools" to semantic version.\nsemver: $err')
+		return error('${error_tag}' + ':' + @LINE +
+			' error converting build-tools version "${opt.build_tools}" to semantic version.\nsemver: ${err}')
 	}
 
 	// Used for various bug workarounds below
 	jdk_semantic_version := semver.from(java.jdk_version()) or {
-		return error('$error_tag' + ':' + @LINE +
-			' error converting jdk_version "$java.jdk_version()" to semantic version.\nsemver: $err')
+		return error('${error_tag}' + ':' + @LINE +
+			' error converting jdk_version "${java.jdk_version()}" to semantic version.\nsemver: ${err}')
 	}
 
 	java_exe := os.join_path(java.jre_bin_path(), 'java')
@@ -532,14 +532,14 @@ fn package_aab(opt PackageOptions) ! {
 
 	classes_path := os.join_path(package_path, 'classes')
 	os.mkdir_all(classes_path) or {
-		return error('$error_tag: error while making directory "$classes_path":\n$err')
+		return error('${error_tag}: error while making directory "${classes_path}":\n${err}')
 	}
 	staging_path := os.join_path(package_path, 'staging')
 	// os.mkdir_all(staging_path) or { panic(err) }
 	os.rmdir(staging_path) or {}
 
 	os.chdir(package_path) or {
-		return error('$error_tag: error while changing work directory to "$package_path":\n$err')
+		return error('${error_tag}: error while changing work directory to "${package_path}":\n${err}')
 	}
 
 	if opt.verbosity > 1 {
@@ -562,7 +562,7 @@ fn package_aab(opt PackageOptions) ! {
 		util.verbosity_print_cmd(aapt2_cmd, opt.verbosity)
 		util.run_or_error(aapt2_cmd)!
 		util.unzip('compiled_resources.tmp.zip', compiled_resources_path) or {
-			return error('$error_tag: error while unpacking compiled_resources.tmp.zip to "$compiled_resources_path":\n$err')
+			return error('${error_tag}: error while unpacking compiled_resources.tmp.zip to "${compiled_resources_path}":\n${err}')
 		}
 	} $else {
 		mut files := []string{}
@@ -576,7 +576,7 @@ fn package_aab(opt PackageOptions) ! {
 			aapt2_cmd := [
 				aapt2,
 				'compile',
-				'"$file"',
+				'"${file}"',
 				'-o',
 				compiled_resources_path,
 			]
@@ -618,7 +618,7 @@ fn package_aab(opt PackageOptions) ! {
 		})
 		mut file_args := ''
 		for file in files {
-			file_args += '"$file" '
+			file_args += '"${file}" '
 		}
 		file_args = file_args.trim(' ')
 		aapt2_link_cmd := [
@@ -668,15 +668,15 @@ fn package_aab(opt PackageOptions) ! {
 
 	// unzip temporary.apk -d staging
 	util.unzip('temporary.apk', staging_path) or {
-		return error('$error_tag: error while unpacking temporary.apk to "$staging_path":\n$err')
+		return error('${error_tag}: error while unpacking temporary.apk to "${staging_path}":\n${err}')
 	}
 
 	manifest_dir := os.join_path(staging_path, 'manifest')
 	os.mkdir_all(manifest_dir) or {
-		return error('$error_tag: error while making directory "$manifest_dir":\n$err')
+		return error('${error_tag}: error while making directory "${manifest_dir}":\n${err}')
 	}
 	os.mv(os.join_path(staging_path, 'AndroidManifest.xml'), manifest_dir) or {
-		return error('$error_tag: error while moving AndroidManifest from "$staging_path" to "$manifest_dir":\n$err')
+		return error('${error_tag}: error while moving AndroidManifest from "${staging_path}" to "${manifest_dir}":\n${err}')
 	}
 
 	if opt.verbosity > 1 {
@@ -692,7 +692,7 @@ fn package_aab(opt PackageOptions) ! {
 			for path_part in path_split {
 				if path_part in android.supported_lib_folders {
 					if opt.verbosity > 2 {
-						println('Adding extra lib "$collected_extra_lib"...')
+						println('Adding extra lib "${collected_extra_lib}"...')
 					}
 					os.cp(collected_extra_lib, os.join_path(libs_extra_path, 'lib', path_part,
 						os.file_name(collected_extra_lib))) or { panic(err) }
@@ -708,12 +708,12 @@ fn package_aab(opt PackageOptions) ! {
 		for lib in libs {
 			lib_base := lib.replace(lib_path + os.path_separator, '')
 			os.mkdir_all(os.join_path(staging_path, os.dir(lib_base))) or {
-				return error('$error_tag: error while making directory to "${os.join_path(staging_path,
-					os.dir(lib_base))}":\n$err')
+				return error('${error_tag}: error while making directory to "${os.join_path(staging_path,
+					os.dir(lib_base))}":\n${err}')
 			}
 			os.cp_all(lib, os.join_path(staging_path, lib_base), true) or {
-				return error('$error_tag:' + @LINE +
-					' error copying "$lib" to ${os.join_path(staging_path, lib_base)}:\n$err')
+				return error('${error_tag}:' + @LINE +
+					' error copying "${lib}" to ${os.join_path(staging_path, lib_base)}:\n${err}')
 			}
 		}
 	}
@@ -735,7 +735,7 @@ fn package_aab(opt PackageOptions) ! {
 						patched_dx = dx
 					}
 					if opt.verbosity > 1 {
-						println('Using patched dx ($patched_dx)')
+						println('Using patched dx (${patched_dx})')
 					}
 				}
 				dx = patched_dx
@@ -753,7 +753,7 @@ fn package_aab(opt PackageOptions) ! {
 						patched_d8 = d8
 					}
 					if opt.verbosity > 1 {
-						println('Using patched d8 ($patched_d8)')
+						println('Using patched d8 (${patched_d8})')
 					}
 				}
 				d8 = patched_d8
@@ -764,7 +764,7 @@ fn package_aab(opt PackageOptions) ! {
 
 	dex_output_path := os.join_path(staging_path, 'dex')
 	os.mkdir_all(dex_output_path) or {
-		return error('$error_tag: could not make directory "$dex_output_path":\n$err')
+		return error('${error_tag}: could not make directory "${dex_output_path}":\n${err}')
 	}
 
 	// Dex either with `dx` or `d8`
@@ -772,7 +772,7 @@ fn package_aab(opt PackageOptions) ! {
 		mut class_files := os.walk_ext('classes', '.class')
 		class_files = class_files.filter(!it.contains('$')) // Filter out R$xxx.class files
 		class_files = class_files.map(fn (e string) string {
-			return '"$e"'
+			return '"${e}"'
 		})
 		mut dex_type := if opt.is_prod { '--release' } else { '--debug' }
 		mut d8_cmd := [
@@ -786,11 +786,11 @@ fn package_aab(opt PackageOptions) ! {
 		util.verbosity_print_cmd(d8_cmd, opt.verbosity)
 		util.run_or_error(d8_cmd)!
 		util.unzip('classes.zip', dex_output_path) or {
-			return error('$error_tag:' + @LINE +
-				' error unzipping classes.zip to $dex_output_path: $err')
+			return error('${error_tag}:' + @LINE +
+				' error unzipping classes.zip to ${dex_output_path}: ${err}')
 		}
 		os.rm('classes.zip') or {
-			return error('$error_tag: error while removing "classes.zip":\n$err')
+			return error('${error_tag}: error while removing "classes.zip":\n${err}')
 		}
 	} else {
 		// dx --dex --output=staging/dex/classes.dex classes/
@@ -807,13 +807,13 @@ fn package_aab(opt PackageOptions) ! {
 
 	// cd staging; zip -r ../base.zip *
 	os.chdir(staging_path) or {
-		return error('$error_tag: error while changing work directory to "$staging_path":\n$err')
+		return error('${error_tag}: error while changing work directory to "${staging_path}":\n${err}')
 	}
 
 	base_zip_file := os.join_path(package_path, 'base.zip')
 
 	util.zip_folder(staging_path, base_zip_file) or {
-		return error('$error_tag: error while zip packing "$staging_path" as "$base_zip_file":\n$err')
+		return error('${error_tag}: error while zip packing "${staging_path}" as "${base_zip_file}":\n${err}')
 	}
 
 	// TODO Workaround bundletool, Java <= 8 (1.8.0) and ZIP64 BUG - Android development. just. keeps. giving...
@@ -841,7 +841,7 @@ fn package_aab(opt PackageOptions) ! {
 	// Workaround END
 
 	os.chdir(package_path) or {
-		return error('$error_tag: error while changing work directory to "$package_path":\n$err')
+		return error('${error_tag}: error while changing work directory to "${package_path}":\n${err}')
 	}
 
 	// java -jar bundletool build-bundle --modules=base.zip --output=bundle.aab
@@ -857,7 +857,7 @@ fn package_aab(opt PackageOptions) ! {
 	util.run_or_error(bundletool_cmd)!
 
 	os.cp_all(tmp_unsigned_product, tmp_product, true) or {
-		return error('$error_tag: error while copying "$tmp_unsigned_product" to "$tmp_product":\n$err')
+		return error('${error_tag}: error while copying "${tmp_unsigned_product}" to "${tmp_product}":\n${err}')
 	}
 
 	// Make debug signing key if nothing else is provided
@@ -897,14 +897,14 @@ fn package_aab(opt PackageOptions) ! {
 	util.run_or_error(bundletool_validate_cmd)!
 
 	os.chdir(pwd) or {
-		return error('$error_tag: error while changing work directory to "$pwd":\n$err')
+		return error('${error_tag}: error while changing work directory to "${pwd}":\n${err}')
 	}
 
 	if opt.verbosity > 1 {
-		println('Moving product from "$tmp_product" to "$opt.output_file"')
+		println('Moving product from "${tmp_product}" to "${opt.output_file}"')
 	}
 	os.mv_by_cp(tmp_product, opt.output_file) or {
-		return error('$error_tag: error while moving product "$tmp_product" to "$opt.output_file":\n$err')
+		return error('${error_tag}: error while moving product "${tmp_product}" to "${opt.output_file}":\n${err}')
 	}
 }
 
@@ -919,7 +919,7 @@ fn prepare_base(opt PackageOptions) (string, string) {
 	}
 	package_path := os.join_path(opt.work_dir, 'package', format)
 	if opt.verbosity > 0 {
-		println('Removing previous package directory "$package_path"')
+		println('Removing previous package directory "${package_path}"')
 	}
 	os.rmdir_all(package_path) or {}
 	os.mkdir_all(package_path) or { panic(err) }
@@ -927,7 +927,7 @@ fn prepare_base(opt PackageOptions) (string, string) {
 	base_files_path := opt.base_files
 	if os.is_dir(base_files_path) {
 		if opt.verbosity > 0 {
-			println('Copying base files from "$base_files_path" to "$package_path"')
+			println('Copying base files from "${base_files_path}" to "${package_path}"')
 			if opt.verbosity > 2 {
 				os.walk(base_files_path, fn (entry string) {
 					println(entry)
@@ -955,7 +955,7 @@ fn prepare_base(opt PackageOptions) (string, string) {
 	mut is_override := false
 	if os.is_dir(overrides_path) {
 		if opt.verbosity > 0 {
-			println('Copying base file overrides from "$overrides_path" to "$package_path"')
+			println('Copying base file overrides from "${overrides_path}" to "${package_path}"')
 			if opt.verbosity > 2 {
 				os.walk(overrides_path, fn (entry string) {
 					println(entry)
@@ -966,7 +966,7 @@ fn prepare_base(opt PackageOptions) (string, string) {
 		is_override = true
 	} else {
 		if opt.verbosity > 2 {
-			println('No overrides found in "$overrides_path"')
+			println('No overrides found in "${overrides_path}"')
 		}
 	}
 
@@ -977,9 +977,9 @@ fn prepare_base(opt PackageOptions) (string, string) {
 	is_default_pkg_id := opt.package_id == android.default_package_id
 	if opt.is_prod && (is_default_pkg_id || opt.package_id.starts_with(android.default_package_id)) {
 		if opt.package_id.starts_with(android.default_package_id) {
-			panic('Do not deploy to app stores using the default V package id namespace "$android.default_package_id"\nYou can set your own package ID with the --package-id flag')
+			panic('Do not deploy to app stores using the default V package id namespace "${android.default_package_id}"\nYou can set your own package ID with the --package-id flag')
 		} else {
-			panic('Do not deploy to app stores using the default V package id "$android.default_package_id"\nYou can set your own package ID with the --package-id flag')
+			panic('Do not deploy to app stores using the default V package id "${android.default_package_id}"\nYou can set your own package ID with the --package-id flag')
 		}
 	}
 	pkg_id_split := opt.package_id.split('.')
@@ -993,11 +993,11 @@ fn prepare_base(opt PackageOptions) (string, string) {
 	activity_file_name := android.default_activity_name + '.java'
 	native_activity_file := os.join_path(native_activity_path, activity_file_name)
 	$if debug {
-		eprintln('Native activity file: "$native_activity_file"')
+		eprintln('Native activity file: "${native_activity_file}"')
 	}
 	if os.is_file(native_activity_file) {
 		if opt.verbosity > 1 {
-			println('Modifying native activity "$native_activity_file"')
+			println('Modifying native activity "${native_activity_file}"')
 		}
 		mut java_src := os.read_file(native_activity_file) or { panic(err) }
 
@@ -1012,14 +1012,14 @@ fn prepare_base(opt PackageOptions) (string, string) {
 			if start >= 0 && re.groups.len > 0 {
 				if opt.verbosity > 1 {
 					r := java_src[re.groups[0]..re.groups[1]]
-					println('Replacing package id "$r" with "$opt.package_id"')
+					println('Replacing package id "${r}" with "${opt.package_id}"')
 				}
 				java_src = java_src[0..re.groups[0]] + opt.package_id +
 					java_src[re.groups[1]..java_src.len]
 			}
 		} else {
 			if opt.verbosity > 1 {
-				println('Skipping replacing package id since "$opt.package_id" is user provided')
+				println('Skipping replacing package id since "${opt.package_id}" is user provided')
 			}
 		}
 
@@ -1030,7 +1030,7 @@ fn prepare_base(opt PackageOptions) (string, string) {
 		if start >= 0 && re.groups.len > 0 {
 			if opt.verbosity > 1 {
 				r := java_src[re.groups[0]..re.groups[1]]
-				println('Replacing init library "$r" with "$opt.lib_name"')
+				println('Replacing init library "${r}" with "${opt.lib_name}"')
 			}
 			java_src = java_src[0..re.groups[0]] + opt.lib_name +
 				java_src[re.groups[1]..java_src.len]
@@ -1046,7 +1046,7 @@ fn prepare_base(opt PackageOptions) (string, string) {
 				if os.is_dir_empty(os.join_path(package_path, 'src', v_default_package_id.join(os.path_separator))) {
 					if opt.verbosity > 1 {
 						p := os.join_path(package_path, 'src', v_default_package_id.join(os.path_separator))
-						println('Removing default left-over directory "$p"')
+						println('Removing default left-over directory "${p}"')
 					}
 					os.rmdir_all(os.join_path(package_path, 'src', v_default_package_id.join(os.path_separator))) or {
 						panic(err)
@@ -1061,7 +1061,7 @@ fn prepare_base(opt PackageOptions) (string, string) {
 		manifest_path := os.join_path(package_path, 'AndroidManifest.xml')
 		if os.is_file(manifest_path) {
 			if opt.verbosity > 1 {
-				println('Modifying manifest "$manifest_path"')
+				println('Modifying manifest "${manifest_path}"')
 			}
 			mut manifest := os.read_file(manifest_path) or { panic(err) }
 			mut re := regex.regex_opt(r'.*<manifest\s.*\spackage\s*=\s*"(.+)".*>') or { panic(err) }
@@ -1070,7 +1070,7 @@ fn prepare_base(opt PackageOptions) (string, string) {
 			if start >= 0 && re.groups.len > 0 {
 				if opt.verbosity > 1 {
 					r := manifest[re.groups[0]..re.groups[1]]
-					println('Replacing package id "$r" with "$opt.package_id"')
+					println('Replacing package id "${r}" with "${opt.package_id}"')
 				}
 				manifest = manifest[0..re.groups[0]] + opt.package_id +
 					manifest[re.groups[1]..manifest.len]
@@ -1083,7 +1083,7 @@ fn prepare_base(opt PackageOptions) (string, string) {
 			if start >= 0 && re.groups.len > 0 {
 				if opt.verbosity > 1 {
 					r := manifest[re.groups[0]..re.groups[1]]
-					println('Replacing version code "$r" with "$opt.version_code"')
+					println('Replacing version code "${r}" with "${opt.version_code}"')
 				}
 				manifest = manifest[0..re.groups[0]] + opt.version_code.str() +
 					manifest[re.groups[1]..manifest.len]
@@ -1098,7 +1098,7 @@ fn prepare_base(opt PackageOptions) (string, string) {
 			if start >= 0 && re.groups.len > 0 {
 				if opt.verbosity > 1 {
 					r := manifest[re.groups[0]..re.groups[1]]
-					println('Replacing debuggable "$r" with "$is_debug_build"')
+					println('Replacing debuggable "${r}" with "${is_debug_build}"')
 				}
 				manifest = manifest[0..re.groups[0]] + is_debug_build.str() +
 					manifest[re.groups[1]..manifest.len]
@@ -1116,7 +1116,7 @@ fn prepare_base(opt PackageOptions) (string, string) {
 			if start >= 0 && re.groups.len > 0 {
 				if opt.verbosity > 1 {
 					r := manifest[re.groups[0]..re.groups[1]]
-					println('Replacing minimum SDK version "$r" with "$opt.min_sdk_version"')
+					println('Replacing minimum SDK version "${r}" with "${opt.min_sdk_version}"')
 				}
 				manifest = manifest[0..re.groups[0]] + opt.min_sdk_version.str() +
 					manifest[re.groups[1]..manifest.len]
@@ -1127,7 +1127,7 @@ fn prepare_base(opt PackageOptions) (string, string) {
 			if start >= 0 && re.groups.len > 0 {
 				if opt.verbosity > 1 {
 					r := manifest[re.groups[0]..re.groups[1]]
-					println('Replacing target SDK version "$r" with "$opt.api_level"')
+					println('Replacing target SDK version "${r}" with "${opt.api_level}"')
 				}
 				manifest = manifest[0..re.groups[0]] + opt.api_level +
 					manifest[re.groups[1]..manifest.len]
@@ -1141,7 +1141,7 @@ fn prepare_base(opt PackageOptions) (string, string) {
 				gles_version_hex := '0x000' + opt.gles_version.str() + '0000'
 				if opt.verbosity > 1 {
 					r := manifest[re.groups[0]..re.groups[1]]
-					println('Replacing declaration of OpenGL ES version "$r" with "$gles_version_hex"')
+					println('Replacing declaration of OpenGL ES version "${r}" with "${gles_version_hex}"')
 				}
 				manifest = manifest[0..re.groups[0]] + gles_version_hex +
 					manifest[re.groups[1]..manifest.len]
@@ -1153,7 +1153,7 @@ fn prepare_base(opt PackageOptions) (string, string) {
 				fq_activity_name := opt.package_id + '.' + opt.activity_name
 				if opt.verbosity > 1 {
 					r := manifest[re.groups[0]..re.groups[1]]
-					println('Replacing activity name "$r" with "$fq_activity_name"')
+					println('Replacing activity name "${r}" with "${fq_activity_name}"')
 				}
 				manifest = manifest[0..re.groups[0]] + fq_activity_name +
 					manifest[re.groups[1]..manifest.len]
@@ -1230,7 +1230,7 @@ fn prepare_base(opt PackageOptions) (string, string) {
 	assets_by_side := os.join_path(assets_by_side_path, 'assets')
 	if os.is_dir(assets_by_side) {
 		if opt.verbosity > 0 {
-			println('Including assets from "$assets_by_side"')
+			println('Including assets from "${assets_by_side}"')
 		}
 		os.cp_all(assets_by_side, assets_path, false) or { panic(err) }
 		included_asset_paths << os.real_path(assets_by_side)
@@ -1242,11 +1242,11 @@ fn prepare_base(opt PackageOptions) (string, string) {
 		if os.is_dir(assets_above) {
 			if os.real_path(assets_above) in included_asset_paths {
 				if opt.verbosity > 1 {
-					println('Skipping "$assets_above" since it\'s already included')
+					println('Skipping "${assets_above}" since it\'s already included')
 				}
 			} else {
 				if opt.verbosity > 0 {
-					println('Including assets from "$assets_above"')
+					println('Including assets from "${assets_above}"')
 				}
 				os.cp_all(assets_above, assets_path, false) or { panic(err) }
 				included_asset_paths << os.real_path(assets_by_side)
@@ -1259,11 +1259,11 @@ fn prepare_base(opt PackageOptions) (string, string) {
 		assets_in_dir_resolved := os.real_path(os.join_path(os.getwd(), assets_in_dir))
 		if assets_in_dir_resolved in included_asset_paths {
 			if opt.verbosity > 1 {
-				println('Skipping "$assets_in_dir" since it\'s already included')
+				println('Skipping "${assets_in_dir}" since it\'s already included')
 			}
 		} else {
 			if opt.verbosity > 0 {
-				println('Including assets from "$assets_in_dir"')
+				println('Including assets from "${assets_in_dir}"')
 			}
 			os.cp_all(assets_in_dir, assets_path, false) or { panic(err) }
 			included_asset_paths << assets_in_dir_resolved
@@ -1275,18 +1275,18 @@ fn prepare_base(opt PackageOptions) (string, string) {
 			user_asset_resolved := os.real_path(user_asset)
 			if user_asset_resolved in included_asset_paths {
 				if opt.verbosity > 1 {
-					println('Skipping "$user_asset" since it\'s already included')
+					println('Skipping "${user_asset}" since it\'s already included')
 				}
 			} else {
 				if opt.verbosity > 0 {
-					println('Including assets from "$user_asset"')
+					println('Including assets from "${user_asset}"')
 				}
 				os.cp_all(user_asset, assets_path, false) or { panic(err) }
 				included_asset_paths << user_asset_resolved
 			}
 		} else {
 			os.cp(user_asset, assets_path) or {
-				eprintln('Skipping invalid or non-existent asset file "$user_asset"')
+				eprintln('Skipping invalid or non-existent asset file "${user_asset}"')
 			}
 		}
 	}
@@ -1300,27 +1300,27 @@ pub fn is_valid_package_id(id string) ! {
 	raw_segments := id.split('.')
 	if '' in raw_segments {
 		// no empty (a..b.c) segments
-		return error('"$id" has one or more empty segments')
+		return error('"${id}" has one or more empty segments')
 	}
 	segments := raw_segments.filter(it != '')
 	if segments.len < 2 {
 		// No top-level names
-		return error('"$id" has too few segments')
+		return error('"${id}" has too few segments')
 	}
 	first := segments.first()
 	first_char := first[0]
 	if first_char.is_digit() {
 		// 1st segment can't start with a digit
-		return error('first segment in "$id" can not start with a digit')
+		return error('first segment in "${id}" can not start with a digit')
 	}
 	if !(first_char >= `a` && first_char <= `z`) {
 		// 1st segment can't start with any other than a small letter
-		return error('first segment in "$id" should start with a small letter')
+		return error('first segment in "${id}" should start with a small letter')
 	}
 	// segment can't be a java keyword
 	for segment in segments {
 		if segment in java.keywords {
-			return error('"$segment" in "$id" is a keyword')
+			return error('"${segment}" in "${id}" is a keyword')
 		}
 	}
 	last := segments.last()
@@ -1334,14 +1334,14 @@ pub fn is_valid_package_id(id string) ! {
 	}
 	if is_all_digits {
 		// Last segment can't be all digits
-		return error('"$id" last segment can not be all digits')
+		return error('"${id}" last segment can not be all digits')
 	}
 
 	for segment in segments {
 		for c in segment {
 			// is not [a-z0-9_]
 			if !((c >= `a` && c <= `z`) || (c >= `0` && c <= `9`) || c == `_`) {
-				return error('"$c.ascii_str()" in "$id" is not allowed')
+				return error('"${c.ascii_str()}" in "${id}" is not allowed')
 			}
 		}
 	}

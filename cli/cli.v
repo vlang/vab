@@ -69,7 +69,7 @@ pub fn args_to_options(arguments []string, defaults Options) !(Options, &flag.Fl
 		if special_flag in args {
 			if special_flag == '-gc' {
 				gc_type := args[(args.index(special_flag)) + 1]
-				v_flags << special_flag + ' $gc_type'
+				v_flags << special_flag + ' ${gc_type}'
 				args.delete(args.index(special_flag) + 1)
 			} else if special_flag.starts_with('-') {
 				v_flags << special_flag
@@ -101,8 +101,8 @@ pub fn args_to_options(arguments []string, defaults Options) !(Options, &flag.Fl
 		//
 		no_printf_hijack: fp.bool('no-printf-hijack', 0, defaults.no_printf_hijack, 'DEPRECATED NOT NEEDED ANYMORE. Do not let V redefine printf for log output (aka. do not define V_ANDROID_LOG_PRINT)')
 		c_flags: fp.string_multi('cflag', `c`, 'Additional flags for the C compiler')
-		archs: fp.string('archs', 0, defaults.archs.join(','), 'Comma separated string with any of $android.default_archs').split(',')
-		gles_version: fp.int('gles', 0, defaults.gles_version, 'GLES version to use from any of $android.supported_gles_versions')
+		archs: fp.string('archs', 0, defaults.archs.join(','), 'Comma separated string with any of ${android.default_archs}').split(',')
+		gles_version: fp.int('gles', 0, defaults.gles_version, 'GLES version to use from any of ${android.supported_gles_versions}')
 		//
 		device_id: fp.string('device', `d`, defaults.device_id, 'Deploy to device <id>. Use "auto" to use first available.')
 		run: 'run' in cmd_flags // fp.bool('run', `r`, false, 'Run the app on the device after successful deployment.')
@@ -121,7 +121,7 @@ pub fn args_to_options(arguments []string, defaults Options) !(Options, &flag.Fl
 		package_id: fp.string('package-id', 0, defaults.package_id, 'App package ID (e.g. "org.company.app")')
 		package_overrides_path: fp.string('package-overrides', 0, defaults.package_overrides_path,
 			'Package file overrides path (e.g. "/tmp/java")')
-		package_format: fp.string('package', `p`, defaults.package_format, 'App package format. Any of $android.supported_package_formats')
+		package_format: fp.string('package', `p`, defaults.package_format, 'App package format. Any of ${android.supported_package_formats}')
 		activity_name: fp.string('activity-name', 0, defaults.activity_name, 'The name of the main activity (e.g. "VActivity")')
 		icon: fp.string('icon', 0, defaults.icon, 'App icon')
 		version_code: fp.int('version-code', 0, defaults.version_code, 'Build version code (android:versionCode)')
@@ -150,7 +150,7 @@ pub fn args_to_options(arguments []string, defaults Options) !(Options, &flag.Fl
 	}
 
 	opt.additional_args = fp.finalize() or {
-		return error(@FN + ': flag parser failed finalizing: $err')
+		return error(@FN + ': flag parser failed finalizing: ${err}')
 	}
 
 	mut c_flags := []string{}
@@ -205,13 +205,13 @@ pub fn check_essentials(exit_on_error bool) {
 
 	// Validate keytool
 	keytool := java.jdk_keytool() or {
-		eprintln('Warning: could not locate `keytool`: $err')
+		eprintln('Warning: could not locate `keytool`: ${err}')
 		''
 	}
 	if keytool == '' {
-		eprintln('$cli.exe_short_name will not be able to sign any packages.')
+		eprintln('${cli.exe_short_name} will not be able to sign any packages.')
 		if javac := java.jdk_javac() {
-			eprintln('It looks like you have a Java compiler ($javac) but no `keytool`')
+			eprintln('It looks like you have a Java compiler (${javac}) but no `keytool`')
 			eprintln('you probably have Java JRE installed but no JDK.')
 		}
 		eprintln('Please install Java JDK >= 8 or provide a valid path via JAVA_HOME')
@@ -224,7 +224,7 @@ pub fn check_essentials(exit_on_error bool) {
 	if !sdk.found() {
 		eprintln('No Android SDK could be detected.')
 		eprintln('Please provide a valid path via ANDROID_SDK_ROOT')
-		eprintln('or run `$cli.exe_short_name install auto`')
+		eprintln('or run `${cli.exe_short_name} install auto`')
 		if exit_on_error {
 			exit(1)
 		}
@@ -233,7 +233,7 @@ pub fn check_essentials(exit_on_error bool) {
 	if !ndk.found() {
 		eprintln('No Android NDK could be detected.')
 		eprintln('Please provide a valid path via ANDROID_NDK_ROOT')
-		eprintln('or run `$cli.exe_short_name install ndk`')
+		eprintln('or run `${cli.exe_short_name} install ndk`')
 		if exit_on_error {
 			exit(1)
 		}
@@ -279,13 +279,13 @@ pub fn launch_cmd(args []string) int {
 			]
 			res := os.execute(v_cmd.join(' '))
 			if res.exit_code < 0 {
-				panic(@MOD + '.' + @FN + ' failed compiling "$cmd": $res.output')
+				panic(@MOD + '.' + @FN + ' failed compiling "${cmd}": ${res.output}')
 			}
 			if res.exit_code == 0 {
 				os.write_file(hash_file, cli.exe_git_hash) or {}
 			} else {
 				vcmd := v_cmd.join(' ')
-				eprintln(@MOD + '.' + @FN + ' "$vcmd" failed.')
+				eprintln(@MOD + '.' + @FN + ' "${vcmd}" failed.')
 				eprintln(res.output)
 				return 1
 			}
@@ -294,10 +294,10 @@ pub fn launch_cmd(args []string) int {
 	if os.is_executable(tool_exe) {
 		os.setenv('VAB_EXE', os.join_path(cli.exe_dir, cli.exe_name), true)
 		$if windows {
-			exit(os.system('${os.quoted_path(tool_exe)} $tool_args'))
+			exit(os.system('${os.quoted_path(tool_exe)} ${tool_args}'))
 		} $else $if js {
 			// no way to implement os.execvp in JS backend
-			exit(os.system('$tool_exe $tool_args'))
+			exit(os.system('${tool_exe} ${tool_args}'))
 		} $else {
 			os.execvp(tool_exe, args) or { panic(err) }
 		}
@@ -305,7 +305,7 @@ pub fn launch_cmd(args []string) int {
 	}
 	exec := (tool_exe + ' ' + tool_args.join(' ')).trim_right(' ')
 	v_message := if !os.is_executable(v) { ' (v was not found)' } else { '' }
-	eprintln(@MOD + '.' + @FN + ' failed executing "$exec"$v_message')
+	eprintln(@MOD + '.' + @FN + ' failed executing "${exec}"${v_message}')
 	return 1
 }
 
@@ -345,7 +345,7 @@ pub fn string_to_args(input string) ![]string {
 	}
 	if in_string {
 		return error(@FN +
-			': could not parse input, missing closing string delimiter `$delim.ascii_str()`')
+			': could not parse input, missing closing string delimiter `${delim.ascii_str()}`')
 	}
 	return args
 }

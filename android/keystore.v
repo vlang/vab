@@ -51,7 +51,7 @@ pub fn default_keystore(cache_directory string) !Keystore {
 	keystore_dir := os.join_path(cache_directory, 'keystore')
 	if !os.is_dir(keystore_dir) {
 		os.mkdir_all(keystore_dir) or {
-			return error('Could make directory for debug keystore.\n$err')
+			return error('Could make directory for debug keystore.\n${err}')
 		}
 	}
 	debug_keystore_path := os.join_path(keystore_dir, 'debug.keystore')

@@ -76,7 +76,7 @@ pub fn (f FlagGen) flags(flag_config FlagConfig) ![]string {
 				flags << '-nostdinc++'
 			}
 			else {
-				return error('Invalid Android STL: $cnf.stl')
+				return error('Invalid Android STL: ${cnf.stl}')
 			}
 		}
 		if cnf.stl.starts_with('c++_') && cnf.arch.starts_with('armeabi') {
@@ -85,9 +85,9 @@ pub fn (f FlagGen) flags(flag_config FlagConfig) ![]string {
 		if cnf.cpp_features.len > 0 {
 			for cpp_feature in cnf.cpp_features {
 				if cpp_feature !in ndk.ndk_supported_cpp_features {
-					return error('Invalid Android C++ feature: $cpp_feature')
+					return error('Invalid Android C++ feature: ${cpp_feature}')
 				}
-				flags << '-f$cpp_feature'
+				flags << '-f${cpp_feature}'
 			}
 		}
 	}
@@ -116,7 +116,7 @@ pub fn (f FlagGen) flags(flag_config FlagConfig) ![]string {
 			}
 			'arm' {}
 			else {
-				return error('Invalid Android ARM mode: $cnf.arm_mode')
+				return error('Invalid Android ARM mode: ${cnf.arm_mode}')
 			}
 		}
 		if cnf.arch == 'armeabi-v7a' && !cnf.neon {
@@ -169,7 +169,7 @@ pub fn (f FlagGen) ld_flags(flag_config FlagConfig) ![]string {
 				ld_flags << '-nostdlib++'
 			}
 			else {
-				return error('Invalid Android STL: $cnf.stl')
+				return error('Invalid Android STL: ${cnf.stl}')
 			}
 		}
 	}

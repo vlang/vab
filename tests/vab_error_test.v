@@ -39,9 +39,9 @@ fn test_all() {
 	for job_res in pp.get_results<TOMLTestJobResult>() {
 		if !job_res.success {
 			println('============')
-			println('failed cmd: `$job_res.command`')
-			println('expected_out_path: $job_res.expected_out_path')
-			println('job file: $job_res.job.job_file')
+			println('failed cmd: `${job_res.command}`')
+			println('expected_out_path: ${job_res.expected_out_path}')
+			println('job file: ${job_res.job.job_file}')
 
 			println('============')
 			if job_res.expected != job_res.found {
@@ -53,11 +53,11 @@ fn test_all() {
 				println('============\n')
 				diff_content(job_res.expected, job_res.found)
 			} else {
-				println('exit code from running `$job_res.command` did not match the expected. Expected: $job_res.expected_exit_code, got: $job_res.exit_code')
+				println('exit code from running `${job_res.command}` did not match the expected. Expected: ${job_res.expected_exit_code}, got: ${job_res.exit_code}')
 			}
 			println('============\n')
 			job_file_contents := os.read_file(job_res.job.job_file) or { panic(err) }
-			println('$job_file_contents')
+			println('${job_file_contents}')
 			println('============')
 			assert false
 		}
@@ -149,9 +149,9 @@ fn sync_run(job TOMLTestJob) &TOMLTestJobResult {
 }
 
 fn compile_vab() string {
-	res := os.execute([vexe, '"$vab_home"'].join(' '))
+	res := os.execute([vexe, '"${vab_home}"'].join(' '))
 	if res.exit_code != 0 {
-		panic('command failed building vab in "$vab_home":\n$res.output')
+		panic('command failed building vab in "${vab_home}":\n${res.output}')
 	}
 	return os.join_path(vab_home, 'vab')
 }

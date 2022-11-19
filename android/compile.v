@@ -66,7 +66,7 @@ pub fn (opt CompileOptions) archs() ![]string {
 				archs << arch
 			} else {
 				return error(@MOD + '.' + @FN +
-					': Architechture "$arch" not one of $android.default_archs')
+					': Architechture "${arch}" not one of ${android.default_archs}')
 			}
 		}
 	}
@@ -104,7 +104,7 @@ fn (err CompileError) msg() string {
 			'.o to .so'
 		}
 	}
-	return 'failed to compile $enum_to_text:\n$err.err'
+	return 'failed to compile ${enum_to_text}:\n${err.err}'
 }
 
 // compile_v_to_c compiles V sources to their Android compatible C counterpart.
@@ -113,13 +113,13 @@ fn (err CompileError) msg() string {
 pub fn compile_v_to_c(opt CompileOptions) !VMetaInfo {
 	err_sig := @MOD + '.' + @FN
 	os.mkdir_all(opt.work_dir) or {
-		return error('$err_sig: failed making directory "$opt.work_dir". $err')
+		return error('${err_sig}: failed making directory "${opt.work_dir}". ${err}')
 	}
 
 	if opt.verbosity > 0 {
 		println('Compiling V to C')
 		if opt.v_flags.len > 0 {
-			println('V flags: `$opt.v_flags`')
+			println('V flags: `${opt.v_flags}`')
 		}
 	}
 
@@ -135,7 +135,7 @@ pub fn compile_v_to_c(opt CompileOptions) !VMetaInfo {
 	imported_modules := v_meta_dump.imports
 
 	if imported_modules.len == 0 {
-		return error('$err_sig: empty module dump.')
+		return error('${err_sig}: empty module dump.')
 	}
 
 	v_output_file := os.join_path(opt.work_dir, 'v_android.c')
@@ -143,7 +143,7 @@ pub fn compile_v_to_c(opt CompileOptions) !VMetaInfo {
 	// Boehm-Demers-Weiser Garbage Collector (bdwgc / libgc)
 	uses_gc := opt.uses_gc()
 	if opt.verbosity > 1 {
-		println('Garbage collecting is $uses_gc')
+		println('Garbage collecting is ${uses_gc}')
 	}
 
 	vexe := vxt.vexe()
@@ -165,7 +165,7 @@ pub fn compile_v_to_c(opt CompileOptions) !VMetaInfo {
 	}
 	v_cmd << opt.v_flags
 	v_cmd << [
-		'-o "$v_output_file"',
+		'-o "${v_output_file}"',
 	]
 	v_cmd << opt.input
 
@@ -180,7 +180,7 @@ pub fn compile_v_to_c(opt CompileOptions) !VMetaInfo {
 pub fn compile(opt CompileOptions) ! {
 	err_sig := @MOD + '.' + @FN
 	os.mkdir_all(opt.work_dir) or {
-		return error('$err_sig: failed making directory "$opt.work_dir". $err')
+		return error('${err_sig}: failed making directory "${opt.work_dir}". ${err}')
 	}
 	build_dir := opt.build_directory()!
 
@@ -203,16 +203,16 @@ pub fn compile(opt CompileOptions) ! {
 	hash_file := os.join_path(opt.work_dir, 'v_android.hash')
 	if opt.cache && os.exists(build_dir) && os.exists(v_output_file) {
 		mut bytes := os.read_bytes(v_output_file) or {
-			return error('$err_sig: failed reading "$v_output_file".\n$err')
+			return error('${err_sig}: failed reading "${v_output_file}".\n${err}')
 		}
-		bytes << '$opt.str()-$opt.cache_key'.bytes()
+		bytes << '${opt.str()}-${opt.cache_key}'.bytes()
 		hash = md5.sum(bytes).hex()
 
 		if os.exists(hash_file) {
 			prev_hash := os.read_file(hash_file) or { '' }
 			if hash == prev_hash {
 				if opt.verbosity > 1 {
-					println('Skipping compile. Hashes match $hash')
+					println('Skipping compile. Hashes match ${hash}')
 				}
 				return
 			}
@@ -221,28 +221,32 @@ pub fn compile(opt CompileOptions) ! {
 
 	if hash != '' && os.exists(v_output_file) {
 		if opt.verbosity > 2 {
-			println('Writing new hash $hash')
+			println('Writing new hash ${hash}')
 		}
 		os.rm(hash_file) or {}
 		mut hash_fh := os.open_file(hash_file, 'w+', 0o700) or {
-			return error('$err_sig: failed opening "$hash_file". $err')
+			return error('${err_sig}: failed opening "${hash_file}". ${err}')
 		}
 		hash_fh.write(hash.bytes()) or {
-			return error('$err_sig: failed writing to "$hash_file".\n$err')
+			return error('${err_sig}: failed writing to "${hash_file}".\n${err}')
 		}
 		hash_fh.close()
 	}
 
 	// Remove any previous builds
 	if os.is_dir(build_dir) {
-		os.rmdir_all(build_dir) or { return error('$err_sig: failed removing "$build_dir": $err') }
+		os.rmdir_all(build_dir) or {
+			return error('${err_sig}: failed removing "${build_dir}": ${err}')
+		}
 	}
-	os.mkdir(build_dir) or { return error('$err_sig: failed making directory "$build_dir".\n$err') }
+	os.mkdir(build_dir) or {
+		return error('${err_sig}: failed making directory "${build_dir}".\n${err}')
+	}
 
 	archs := opt.archs()!
 
 	if opt.verbosity > 0 {
-		println('Compiling V import C dependencies (.c to .o for $archs)' +
+		println('Compiling V import C dependencies (.c to .o for ${archs})' +
 			if opt.parallel { ' in parallel' } else { '' })
 	}
 
@@ -308,13 +312,13 @@ pub fn compile(opt CompileOptions) ! {
 	cflags << ['-Wno-enum-conversion', '-Wno-unused-value', '-Wno-pointer-sign',
 		'-Wno-incompatible-pointer-types']
 
-	defines << '-DAPPNAME="$opt.lib_name"'
-	defines << ['-DANDROID', '-D__ANDROID__', '-DANDROIDVERSION=$opt.api_level']
+	defines << '-DAPPNAME="${opt.lib_name}"'
+	defines << ['-DANDROID', '-D__ANDROID__', '-DANDROIDVERSION=${opt.api_level}']
 
 	// Include NDK headers
 	mut android_includes := []string{}
 	ndk_sysroot := ndk.sysroot_path(opt.ndk_version) or {
-		return error('$err_sig: getting NDK sysroot path.\n$err')
+		return error('${err_sig}: getting NDK sysroot path.\n${err}')
 	}
 	android_includes << '-I"' + os.join_path(ndk_sysroot, 'usr', 'include') + '"'
 	android_includes << '-I"' + os.join_path(ndk_sysroot, 'usr', 'include', 'android') + '"'
@@ -334,7 +338,7 @@ pub fn compile(opt CompileOptions) ! {
 		}
 
 		if opt.verbosity > 1 {
-			println('Using GLES $opt.gles_version')
+			println('Using GLES ${opt.gles_version}')
 		}
 
 		ldflags << '-lEGL'
@@ -366,12 +370,12 @@ pub fn compile(opt CompileOptions) ! {
 	mut arch_libs := map[string]string{}
 	for arch in archs {
 		compiler := ndk.compiler(.c, opt.ndk_version, arch, opt.api_level) or {
-			return error('$err_sig: failed getting NDK compiler.\n$err')
+			return error('${err_sig}: failed getting NDK compiler.\n${err}')
 		}
 		arch_cc[arch] = compiler
 
 		arch_lib := ndk.libs_path(opt.ndk_version, arch, opt.api_level) or {
-			return error('$err_sig: failed getting NDK libs path.\n$err')
+			return error('${err_sig}: failed getting NDK libs path.\n${err}')
 		}
 		arch_libs[arch] = arch_lib
 	}
@@ -383,7 +387,7 @@ pub fn compile(opt CompileOptions) ! {
 	arch_cflags['x86_64'] = cflags_x86_64
 
 	if opt.verbosity > 0 {
-		println('Compiling C output for $archs' + if opt.parallel { ' in parallel' } else { '' })
+		println('Compiling C output for ${archs}' + if opt.parallel { ' in parallel' } else { '' })
 	}
 
 	mut jobs := []job_util.ShellJob{}
@@ -402,7 +406,7 @@ pub fn compile(opt CompileOptions) ! {
 		arch_o_dir := os.join_path(build_dir, 'o', arch)
 		if !os.is_dir(arch_o_dir) {
 			os.mkdir_all(arch_o_dir) or {
-				return error('$err_sig: failed making directory "$arch_o_dir". $err')
+				return error('${err_sig}: failed making directory "${arch_o_dir}". ${err}')
 			}
 		}
 
@@ -415,8 +419,8 @@ pub fn compile(opt CompileOptions) ! {
 			includes.join(' '),
 			defines.join(' '),
 			arch_cflags[arch].join(' '),
-			'-c "$v_output_file"',
-			'-o "$arch_o_file"',
+			'-c "${v_output_file}"',
+			'-o "${arch_o_file}"',
 		]
 
 		o_files[arch] << arch_o_file
@@ -443,16 +447,16 @@ pub fn compile(opt CompileOptions) ! {
 		for arch in archs {
 			arch_lib_dir := os.join_path(build_dir, 'lib', arch)
 			os.mkdir_all(arch_lib_dir) or {
-				return error('$err_sig: failed making directory "$arch_lib_dir".\n$err')
+				return error('${err_sig}: failed making directory "${arch_lib_dir}".\n${err}')
 			}
 
-			arch_o_files := o_files[arch].map('"$it"')
-			arch_a_files := a_files[arch].map('"$it"')
+			arch_o_files := o_files[arch].map('"${it}"')
+			arch_a_files := a_files[arch].map('"${it}"')
 
 			build_cmd := [
 				arch_cc[arch],
 				arch_o_files.join(' '),
-				'-o "$arch_lib_dir/lib${opt.lib_name}.so"',
+				'-o "${arch_lib_dir}/lib${opt.lib_name}.so"',
 				arch_a_files.join(' '),
 				'-L"' + arch_libs[arch] + '"',
 				ldflags.join(' '),
@@ -474,13 +478,13 @@ pub fn compile(opt CompileOptions) ! {
 			// TODO fix DT_NAME crash instead of including a copy of the armeabi-v7a lib
 			armeabi_lib_dir := os.join_path(build_dir, 'lib', 'armeabi')
 			os.mkdir_all(armeabi_lib_dir) or {
-				return error('$err_sig: failed making directory "$armeabi_lib_dir".\n$err')
+				return error('${err_sig}: failed making directory "${armeabi_lib_dir}".\n${err}')
 			}
 
 			armeabi_lib_src := os.join_path(build_dir, 'lib', 'armeabi-v7a', 'lib${opt.lib_name}.so')
 			armeabi_lib_dst := os.join_path(armeabi_lib_dir, 'lib${opt.lib_name}.so')
 			os.cp(armeabi_lib_src, armeabi_lib_dst) or {
-				return error('$err_sig: failed copying "$armeabi_lib_src" to "$armeabi_lib_dst".\n$err')
+				return error('${err_sig}: failed copying "${armeabi_lib_src}" to "${armeabi_lib_dst}".\n${err}')
 			}
 		}
 	}
@@ -521,7 +525,7 @@ pub:
 pub fn v_dump_meta(opt VCompileOptions) !VMetaInfo {
 	err_sig := @MOD + '.' + @FN
 	os.mkdir_all(opt.work_dir) or {
-		return error('$err_sig: failed making directory "$opt.work_dir". $err')
+		return error('${err_sig}: failed making directory "${opt.work_dir}". ${err}')
 	}
 
 	vexe := vxt.vexe()
@@ -547,8 +551,8 @@ pub fn v_dump_meta(opt VCompileOptions) !VMetaInfo {
 	v_cmd << opt.flags
 	v_cmd << [
 		'-cc clang',
-		'-dump-modules "$v_dump_modules_file"',
-		'-dump-c-flags "$v_cflags_file"',
+		'-dump-modules "${v_dump_modules_file}"',
+		'-dump-c-flags "${v_cflags_file}"',
 	]
 	v_cmd << opt.input
 
@@ -567,17 +571,17 @@ pub fn v_dump_meta(opt VCompileOptions) !VMetaInfo {
 	// Read in the dumped cflags
 	cflags := os.read_file(v_cflags_file) or {
 		flat_cmd := v_cmd.join(' ')
-		return error('$err_sig: failed reading C flags to "$v_cflags_file". $err\nCompile output of `$flat_cmd`:\n$v_dump_res')
+		return error('${err_sig}: failed reading C flags to "${v_cflags_file}". ${err}\nCompile output of `${flat_cmd}`:\n${v_dump_res}')
 	}
 
 	// Parse imported modules from dump
 	mut imported_modules := os.read_file(v_dump_modules_file) or {
 		flat_cmd := v_cmd.join(' ')
-		return error('$err_sig: failed reading module dump file "$v_dump_modules_file". $err\nCompile output of `$flat_cmd`:\n$v_dump_res')
+		return error('${err_sig}: failed reading module dump file "${v_dump_modules_file}". ${err}\nCompile output of `${flat_cmd}`:\n${v_dump_res}')
 	}.split('\n').filter(it != '')
 	imported_modules.sort()
 	if opt.verbosity > 2 {
-		println('Imported modules: $imported_modules')
+		println('Imported modules: ${imported_modules}')
 	}
 
 	return VMetaInfo{
@@ -616,7 +620,7 @@ pub fn compile_v_imports_c_dependencies(opt CompileOptions, imported_modules []s
 	mut android_includes := []string{}
 	// Include NDK headers
 	ndk_sysroot := ndk.sysroot_path(opt.ndk_version) or {
-		return error('$err_sig: getting NDK sysroot path.\n$err')
+		return error('${err_sig}: getting NDK sysroot path.\n${err}')
 	}
 	android_includes << '-I"' + os.join_path(ndk_sysroot, 'usr', 'include') + '"'
 	android_includes << '-I"' + os.join_path(ndk_sysroot, 'usr', 'include', 'android') + '"'
@@ -630,17 +634,17 @@ pub fn compile_v_imports_c_dependencies(opt CompileOptions, imported_modules []s
 		arch_o_dir := os.join_path(build_dir, 'o', arch)
 		if !os.is_dir(arch_o_dir) {
 			os.mkdir_all(arch_o_dir) or {
-				return error('$err_sig: failed making directory "$arch_o_dir".\n$err')
+				return error('${err_sig}: failed making directory "${arch_o_dir}".\n${err}')
 			}
 		}
 
 		compiler := ndk.compiler(.c, opt.ndk_version, arch, opt.api_level) or {
-			return error('$err_sig: failed getting NDK compiler.\n$err')
+			return error('${err_sig}: failed getting NDK compiler.\n${err}')
 		}
 
 		if uses_gc {
 			if opt.verbosity > 1 {
-				println('Compiling libgc ($arch) via -gc flag')
+				println('Compiling libgc (${arch}) via -gc flag')
 			}
 
 			mut defines := []string{}
@@ -662,7 +666,7 @@ pub fn compile_v_imports_c_dependencies(opt CompileOptions, imported_modules []s
 				'-I"' + os.join_path(v_thirdparty_dir, 'libgc', 'include') + '"',
 				defines.join(' '),
 				'-c "' + os.join_path(v_thirdparty_dir, 'libgc', 'gc.c') + '"',
-				'-o "$o_file"',
+				'-o "${o_file}"',
 			]
 			util.verbosity_print_cmd(build_cmd, opt.verbosity)
 			o_res := util.run_or_error(build_cmd)!
@@ -680,7 +684,7 @@ pub fn compile_v_imports_c_dependencies(opt CompileOptions, imported_modules []s
 		// stb_image via `stbi` module
 		if 'stbi' in imported_modules {
 			if opt.verbosity > 1 {
-				println('Compiling stb_image ($arch) via stbi module')
+				println('Compiling stb_image (${arch}) via stbi module')
 			}
 
 			o_file := os.join_path(arch_o_dir, 'stbi.o')
@@ -690,7 +694,7 @@ pub fn compile_v_imports_c_dependencies(opt CompileOptions, imported_modules []s
 				'-Wno-sign-compare',
 				'-I"' + os.join_path(v_thirdparty_dir, 'stb_image') + '"',
 				'-c "' + os.join_path(v_thirdparty_dir, 'stb_image', 'stbi.c') + '"',
-				'-o "$o_file"',
+				'-o "${o_file}"',
 			]
 
 			o_files[arch] << o_file
@@ -703,7 +707,7 @@ pub fn compile_v_imports_c_dependencies(opt CompileOptions, imported_modules []s
 		// cJson via `json` module
 		if 'json' in imported_modules {
 			if opt.verbosity > 1 {
-				println('Compiling cJSON ($arch) via json module')
+				println('Compiling cJSON (${arch}) via json module')
 			}
 			o_file := os.join_path(arch_o_dir, 'cJSON.o')
 			build_cmd := [
@@ -711,7 +715,7 @@ pub fn compile_v_imports_c_dependencies(opt CompileOptions, imported_modules []s
 				cflags.join(' '),
 				'-I"' + os.join_path(v_thirdparty_dir, 'cJSON') + '"',
 				'-c "' + os.join_path(v_thirdparty_dir, 'cJSON', 'cJSON.c') + '"',
-				'-o "$o_file"',
+				'-o "${o_file}"',
 			]
 
 			o_files[arch] << o_file
