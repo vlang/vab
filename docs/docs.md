@@ -285,10 +285,10 @@ See [`ndk.v`](https://github.com/vlang/vab/blob/master/android/ndk/ndk.v) for mo
 # Debugging
 
 A prerequisite to debugging any Android device is a persistent connection to your target device.
-A persistent connection can be established either by [USB-cable or via Wi-Fi](https://developer.android.com/studio/debug/dev-options#debugging)
+A persistent connection can be established either by [USB-cable or via Wi-Fi](https://developer.android.com/studio/debug/dev-options#debugging).
 
 The supported way of debugging a V-based Android app is via V's `println()` and `eprintln()` functions,
-which are also used when V [`panic`s](https://github.com/vlang/v/blob/master/doc/docs.md#optionresult-types-and-error-handling).
+which are also used when V [`panics`](https://github.com/vlang/v/blob/master/doc/docs.md#optionresult-types-and-error-handling).
 
 By default, V is setup to redirect `STDOUT` (`println()`) and `STDERR` (`eprintln()`) to the Android device logs.
 
@@ -319,9 +319,11 @@ An example:
 You have a device connected via [USB or Wi-Fi and have enabled developer debugging on the device itself](https://developer.android.com/studio/debug/dev-options#debugging).
 
 Change working directory to V's install root:
+
 `cd ~/path/to/v`
 
 Compile, run and stream log output, of a V example app, via `vab` in one go:
+
 `vab --log run examples/gg/mandelbrot.v`
 
 `vab` should now stream all log output from the running app to your terminal.
