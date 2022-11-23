@@ -15,6 +15,7 @@ Welcome - and have a productive time using V and `vab`!
 - [Compile V code to Android Compatible C code](#compile-v-code-to-android-compatible-c-code)
 - [Compile C code to Android shared library (.so)](#compile-c-code-to-android-shared-library-so)
 - [Find and Invoke NDK Compiler Manually](#find-and-invoke-ndk-compiler-manually)
+- [Debugging](#debugging)
 
 # Introduction
 
@@ -32,7 +33,7 @@ This fact makes everything a bit harder than it ought to be.
 So - for us to target the majority, we need the Android SDK and NDK that are
 both proprietary licensed in such a way that they prevent developers from
 modifying and re-distributing them - thus forcing developers to use Google's
-official (rather large) distributions of these developement kits.
+official (rather large) distributions of these development kits.
 
 For historical reasons - the job of locating and using all the tools in the
 development kits is actually harder than it might appear at first sight
@@ -279,3 +280,52 @@ os.execute('${compiler} ${flags} -my-other-flags -c input.c -o out.o')
 ```
 
 See [`ndk.v`](https://github.com/vlang/vab/blob/master/android/ndk/ndk.v) for more functions.
+
+
+# Debugging
+
+A prerequisite to debugging any Android device is a persistent connection to your target device.
+A persistent connection can be established either by [USB-cable or via Wi-Fi](https://developer.android.com/studio/debug/dev-options#debugging).
+
+The supported way of debugging a V-based Android app is via V's
+`println()` and `eprintln()` functions, which are also used when V [`panics`](https://github.com/vlang/v/blob/master/doc/docs.md#optionresult-types-and-error-handling).
+
+By default, V is setup to redirect `STDOUT` (`println()`) and `STDERR` (`eprintln()`)
+to the Android device logs.
+
+Technically this is done via the `__android_log_vprint()` C functions found in `<android/log.h>`.
+Interested developers can find the implementation logic in [v/thirdparty/android/android.h](https://github.com/vlang/v/blob/a987f84b1553dc77d70d27a31155c3bef34ecb8f/thirdparty/android/android.h)
+and the usage in V's builtin `println()` and `eprintln()` can be found
+around the lines in [v/vlib/builtin/builtin.c.v#L163](https://github.com/vlang/v/blob/a987f84b1553dc77d70d27a31155c3bef34ecb8f/vlib/builtin/builtin.c.v#L163).
+
+To access the, extremely verbose, Android device logs, you normally have to use the
+`adb logcat ...` command line application with various, at times cryptic, combinations of flags
+to get a clear overview of your application's output.
+ADB is also known as the Android Debug Bridge.
+
+If you wish, you can use `adb logcat` to debug your V app but we recommended to use `vab`'s built-in
+capabilities instead for a more integrated experience.
+
+To ease the debug process, `vab` has a few flags and options to help you
+grab relevant log lines from the otherwise verbose device logs.
+
+The relevant flags are:
+
+* `--log` that enables device logging after deployment.
+* `--log-raw` that enables unfiltered, full device logging after deployment.
+* `--log-clear` that clears the log buffer on the device before deployment.
+* `--log-tag` that let you add additional tags to include in the output when using `--log`.
+
+An example:
+You have a device connected via [USB or Wi-Fi and have enabled developer debugging on the device](https://developer.android.com/studio/debug/dev-options#debugging).
+
+Change working directory to V's install root:
+
+`cd ~/path/to/v`
+
+Compile, run and stream log output, of a V example app, via `vab` in one go:
+
+`vab --log run examples/gg/mandelbrot.v`
+
+`vab` should now stream all log output from the running app to your terminal.
+Use Ctrl + C in the terminal to stop the output and disconnect from the device.
