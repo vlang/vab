@@ -327,5 +327,13 @@ Compile, run and stream log output, of a V example app, via `vab` in one go:
 
 `vab --log run examples/gg/mandelbrot.v`
 
-`vab` should now stream all log output from the running app to your terminal.
-Use Ctrl + C in the terminal to stop the output and disconnect from the device.
+`vab` should now stream all log output from the running app to your terminal, similar to this:
+```
+Showing log output from device
+Ctrl+C to cancel logging
+--------- beginning of main
+--------- beginning of system
+11-23 13:14:02.742 18291 20348 I v_test_app:  7 threads; 156 ms / frame; scale:    1
+```
+Use Ctrl + C in the terminal to stop the output and disconnect from the device,
+leaving the app running on the device.
