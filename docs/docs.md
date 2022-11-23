@@ -287,26 +287,27 @@ See [`ndk.v`](https://github.com/vlang/vab/blob/master/android/ndk/ndk.v) for mo
 A prerequisite to debugging any Android device is a persistent connection to your target device.
 A persistent connection can be established either by [USB-cable or via Wi-Fi](https://developer.android.com/studio/debug/dev-options#debugging).
 
-The supported way of debugging a V-based Android app is via V's `println()` and `eprintln()` functions,
-which are also used when V [`panics`](https://github.com/vlang/v/blob/master/doc/docs.md#optionresult-types-and-error-handling).
+The supported way of debugging a V-based Android app is via V's
+`println()` and `eprintln()` functions, which are also used when V [`panics`](https://github.com/vlang/v/blob/master/doc/docs.md#optionresult-types-and-error-handling).
 
-By default, V is setup to redirect `STDOUT` (`println()`) and `STDERR` (`eprintln()`) to the Android device logs.
+By default, V is setup to redirect `STDOUT` (`println()`) and `STDERR` (`eprintln()`)
+to the Android device logs.
 
-Technically this is done via the `__android_log_vprint()` C functions found in `<android/log.h>` - for interested
-developers the implementation logic can be found in
-[v/thirdparty/android/android.h](https://github.com/vlang/v/blob/a987f84b1553dc77d70d27a31155c3bef34ecb8f/thirdparty/android/android.h)
-and the usage in V's builtin `println()` and `eprintln()` can be found around
-[v/vlib/builtin/builtin.c.v#L163](https://github.com/vlang/v/blob/a987f84b1553dc77d70d27a31155c3bef34ecb8f/vlib/builtin/builtin.c.v#L163).
+Technically this is done via the `__android_log_vprint()` C functions found in `<android/log.h>`.
+Interested developers can find the implementation logic in [v/thirdparty/android/android.h](https://github.com/vlang/v/blob/a987f84b1553dc77d70d27a31155c3bef34ecb8f/thirdparty/android/android.h)
+and the usage in V's builtin `println()` and `eprintln()` can be found
+around the lines in [v/vlib/builtin/builtin.c.v#L163](https://github.com/vlang/v/blob/a987f84b1553dc77d70d27a31155c3bef34ecb8f/vlib/builtin/builtin.c.v#L163).
 
 To access the, extremely verbose, Android device logs, you normally have to use the
 `adb logcat ...` command line application with various, at times cryptic, combinations of flags
-to get a clear overview of your application's output. ADB is also known as the Android Debug Bridge.
+to get a clear overview of your application's output.
+ADB is also known as the Android Debug Bridge.
 
 If you wish, you can use `adb logcat` to debug your V app but we recommended to use `vab`'s built-in
 capabilities instead for a more integrated experience.
 
-To ease the debug process, `vab` has a few flags and options to help you grab relevant log lines from the otherwise
-verbose device logs.
+To ease the debug process, `vab` has a few flags and options to help you
+grab relevant log lines from the otherwise verbose device logs.
 
 The relevant flags are:
 
@@ -316,7 +317,7 @@ The relevant flags are:
 * `--log-tag` that let you add additional tags to include in the output when using `--log`.
 
 An example:
-You have a device connected via [USB or Wi-Fi and have enabled developer debugging on the device itself](https://developer.android.com/studio/debug/dev-options#debugging).
+You have a device connected via [USB or Wi-Fi and have enabled developer debugging on the device](https://developer.android.com/studio/debug/dev-options#debugging).
 
 Change working directory to V's install root:
 
