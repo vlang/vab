@@ -7,26 +7,6 @@ import semver
 import vab.cache
 import vab.android.util
 
-const (
-	home = os.home_dir()
-)
-
-// Possible default locations of the SDK
-// https://stackoverflow.com/a/47630714/1904615
-const (
-	possible_sdk_paths_windows = [
-		os.join_path(os.getenv('LOCALAPPDATA'), 'Local\\Android\\sdk'),
-		os.join_path(home, 'AppData\\Local\\Android\\sdk'),
-	]
-	possible_sdk_paths_macos   = [
-		os.join_path(home, 'Library/Android/sdk'),
-	]
-	possible_sdk_paths_linux   = [
-		os.join_path(home, 'Android/Sdk'),
-		'/usr/local/lib/android/sdk',
-	]
-)
-
 pub const (
 	default_api_level                 = os.file_name(default_platforms_dir()).all_after('android-')
 	default_build_tools_version       = os.file_name(default_build_tools_dir())
@@ -38,6 +18,41 @@ enum Component {
 	ndk
 	api_level
 	build_tools
+}
+
+fn possible_platform_sdk_paths() []string {
+	// Possible default locations of the SDK
+	// https://stackoverflow.com/a/47630714/1904615
+	//
+	// NOTE These can not be `const`s in this module since, on some platforms/setups, it
+	// can interfere with the bootstrapping process that detects the const `default_api_level = ...`.
+	// It's essentially a const initialization race condition.
+	// See https://github.com/vlang/vab/issues/244
+	//
+	home := os.home_dir()
+	// Detect OS type at run-time - in case we're in some exotic environment
+	return match os.user_os() {
+		'windows' {
+			[
+				os.join_path(os.getenv('LOCALAPPDATA'), 'Local\\Android\\sdk'),
+				os.join_path(home, 'AppData\\Local\\Android\\sdk'),
+			]
+		}
+		'macos' {
+			[
+				os.join_path(home, 'Library/Android/sdk'),
+			]
+		}
+		'linux' {
+			[
+				os.join_path(home, 'Android/Sdk'),
+				'/usr/local/lib/android/sdk',
+			]
+		}
+		else {
+			[]string{}
+		}
+	}
 }
 
 // root will try to detect where the Android SDK is installed. Otherwise return an empty string
@@ -67,14 +82,7 @@ pub fn root() string {
 	}
 
 	if sdk_root == '' {
-		// Detect OS type at runtime - in case we're in some exotic environment
-		dirs := match os.user_os() {
-			'windows' { sdk.possible_sdk_paths_windows }
-			'macos' { sdk.possible_sdk_paths_macos }
-			'linux' { sdk.possible_sdk_paths_linux }
-			else { []string{} }
-		}
-
+		dirs := possible_platform_sdk_paths()
 		for dir in dirs {
 			if os.exists(dir) && os.is_dir(dir) {
 				$if debug_sdk ? {
