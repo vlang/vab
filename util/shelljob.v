@@ -26,7 +26,7 @@ pub:
 
 // async_run runs all the ShellJobs in `pp` asynchronously.
 fn async_run(mut pp pool.PoolProcessor, idx int, wid int) &ShellJobResult {
-	job := pp.get_item<ShellJob>(idx)
+	job := pp.get_item[ShellJob](idx)
 	return sync_run(job)
 }
 
@@ -53,7 +53,7 @@ pub fn run_jobs(jobs []ShellJob, parallel bool, verbosity int) ! {
 	if parallel {
 		mut pp := pool.new_pool_processor(callback: async_run)
 		pp.work_on_items(jobs)
-		for job_res in pp.get_results<ShellJobResult>() {
+		for job_res in pp.get_results[ShellJobResult]() {
 			verbosity_print_cmd(job_res.job.cmd, verbosity)
 			if verbosity > 2 {
 				println('${job_res.result.output}')

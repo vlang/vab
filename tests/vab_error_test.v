@@ -36,7 +36,7 @@ fn test_all() {
 
 	mut pp := pool.new_pool_processor(maxjobs: runtime.nr_cpus() - 1, callback: async_run)
 	pp.work_on_items(jobs)
-	for job_res in pp.get_results<TOMLTestJobResult>() {
+	for job_res in pp.get_results[TOMLTestJobResult]() {
 		if !job_res.success {
 			println('============')
 			println('failed cmd: `${job_res.command}`')
@@ -82,7 +82,7 @@ pub struct TOMLTestJobResult {
 }
 
 fn async_run(mut pp pool.PoolProcessor, idx int, wid int) &TOMLTestJobResult {
-	item := pp.get_item<TOMLTestJob>(idx)
+	item := pp.get_item[TOMLTestJob](idx)
 	return sync_run(item)
 }
 
