@@ -124,7 +124,7 @@ jobs:
 
         # Output test
         echo "Testing if v/examples/tetris can run..."
-        vab --package-id "io.v.ci.vab.apk.examples.tetris" run v/examples/tetris
+        vab -g --package-id "io.v.ci.vab.apk.examples.tetris" run v/examples/tetris
         sleep 5
         adb -e logcat -d > /tmp/logcat.dump.txt
         echo "Looking for traces of SOKOL_APP ok ..."
@@ -161,7 +161,7 @@ jobs:
 
         # Output test
         echo "Testing if ui/examples/calculator can run..."
-        vab --package-id "io.v.ui.ci.examples.calculator" run ui/examples/calculator.v
+        vab -g --package-id "io.v.ui.ci.examples.calculator" run ui/examples/calculator.v
         sleep 5
         adb -e logcat -d > /tmp/logcat.dump.txt
         echo "Looking for traces of SOKOL_APP ok ..."

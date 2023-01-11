@@ -178,6 +178,10 @@ fn main() {
 		if opt.verbosity > 0 {
 			println('Generated ${os.real_path(opt.output)}')
 			println('Use `${cli.exe_short_name} --device <id> ${os.real_path(opt.output)}` to deploy package')
+			println('Use `${cli.exe_short_name} --device <id> run ${os.real_path(opt.output)}` to both deploy and run the package')
+			if deploy_opt.run != '' {
+				println('Use `adb -s "<DEVICE ID>" shell am start -n "${deploy_opt.run}"` to run the app on the device, via adb')
+			}
 		}
 	}
 }
