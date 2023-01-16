@@ -31,27 +31,35 @@ pub enum LogMode {
 	raw
 }
 
-pub fn device_list() []string {
-	return get_device_list(0) or { return []string{} }
-}
-
-fn get_device_list(verbosity int) ![]string {
-	adb := env.adb()
-	adb_list_cmd := [
-		adb,
-		'devices',
-		'-l',
-	]
-	util.verbosity_print_cmd(adb_list_cmd, verbosity) // opt.verbosity
-	output := util.run_or_error(adb_list_cmd)!
-	mut device_list := []string{}
-	for device in output.split('\n') {
-		if !device.contains(' model:') {
-			continue
+fn (do DeployOptions) gen_logcat_filters() []string {
+	mut filters := []string{}
+	// Only filter output in "normal" log mode
+	if do.log_mode == .filtered {
+		is_debug_build := '-cg' in do.v_flags || '-g' in do.v_flags
+		if is_debug_build {
+			// Sokol
+			filters << 'SOKOL_APP:V'
+			// Boehm-Demers-Weiser Garbage Collector (bdwgc / libgc)
+			filters << 'BDWGC:V'
 		}
-		device_list << device.all_before(' ')
+		// Include caller log tags
+		for log_tag in do.log_tags {
+			mut tag := log_tag
+			if !tag.contains(':') {
+				tag += ':V'
+			}
+			filters << '${tag}'
+		}
+		filters << [
+			'V:V',
+			// 'System.out:D', // Used by many other Android libs - so it's noisy
+			// 'System.err:D',
+			'${do.activity_name}:V',
+		]
+		// if !is_debug_build {
+		filters << '*:S'
 	}
-	return device_list
+	return filters
 }
 
 pub fn deploy(opt DeployOptions) ! {
@@ -67,34 +75,18 @@ pub fn deploy(opt DeployOptions) ! {
 
 pub fn deploy_apk(opt DeployOptions) ! {
 	error_tag := @MOD + '.' + @FN
-	mut device_id := opt.device_id
 
+	if !env.has_adb() {
+		return error('${error_tag}: Could not locate "adb". Please make sure it is installed.')
+	}
 	adb := env.adb()
-	if !os.is_executable(adb) {
-		return error('${error_tag}: Couldn\'t locate "adb". Please make sure it\'s installed.')
+
+	mut device_id := ensure_device_id(opt.device_id, opt.verbosity) or {
+		return error('${error_tag}:\n${err}')
 	}
 
-	devices := get_device_list(opt.verbosity) or {
-		return error('${error_tag}: Failed getting device list.\n${err}')
-	}
-
-	if device_id == 'auto' {
-		mut auto_device := ''
-		if devices.len > 0 {
-			auto_device = devices.first()
-		}
-		device_id = auto_device
-
-		if device_id == '' {
-			return error("${error_tag}: Couldn't find any connected devices.")
-		}
-	}
 	// Deploy
 	if device_id != '' {
-		if device_id !in devices {
-			return error('${error_tag}: Couldn\'t connect to device "${device_id}".')
-		}
-
 		if opt.verbosity > 0 {
 			println('Deploying ${opt.format} package to "${device_id}"')
 		}
@@ -118,6 +110,8 @@ pub fn deploy_apk(opt DeployOptions) ! {
 			}
 			util.verbosity_print_cmd(adb_logcat_clear_cmd, opt.verbosity)
 			util.run_or_error(adb_logcat_clear_cmd)!
+			// Give adb/Android/connection time to settle... *sigh*
+			time.sleep(100 * time.millisecond)
 		}
 
 		adb_cmd := [
@@ -129,6 +123,9 @@ pub fn deploy_apk(opt DeployOptions) ! {
 		]
 		util.verbosity_print_cmd(adb_cmd, opt.verbosity)
 		util.run_or_error(adb_cmd)!
+
+		// Give adb/Android/connection time to settle... *sigh*
+		time.sleep(100 * time.millisecond)
 
 		if opt.run != '' {
 			if opt.verbosity > 0 {
@@ -160,31 +157,18 @@ pub fn deploy_apk(opt DeployOptions) ! {
 
 pub fn deploy_aab(opt DeployOptions) ! {
 	error_tag := @MOD + '.' + @FN
-	mut device_id := opt.device_id
-
+	if !env.has_adb() {
+		return error('${error_tag}: Could not locate "adb". Please make sure it is installed.')
+	}
 	adb := env.adb()
+
+	mut device_id := ensure_device_id(opt.device_id, opt.verbosity) or {
+		return error('${error_tag}:\n${err}')
+	}
+
 	java_exe := os.join_path(java.jre_bin_path(), 'java')
 	bundletool := env.bundletool() // Run with "java -jar ..."
 
-	if !os.is_executable(adb) {
-		return error('${error_tag}: Couldn\'t locate "adb". Please make sure it\'s installed.')
-	}
-
-	devices := get_device_list(opt.verbosity) or {
-		return error('${error_tag}: Failed getting device list.\n${err}')
-	}
-
-	if device_id == 'auto' {
-		mut auto_device := ''
-		if devices.len > 0 {
-			auto_device = devices.first()
-		}
-		device_id = auto_device
-
-		if device_id == '' {
-			return error("${error_tag}: Couldn't find any connected devices.")
-		}
-	}
 	// Deploy
 	if device_id != '' {
 		if opt.verbosity > 0 {
@@ -213,10 +197,6 @@ pub fn deploy_aab(opt DeployOptions) ! {
 		util.verbosity_print_cmd(bundletool_apks_cmd, opt.verbosity)
 		util.run_or_error(bundletool_apks_cmd)!
 
-		if device_id !in devices {
-			return error('${error_tag}: Couldn\'t connect to device "${device_id}".')
-		}
-
 		if opt.verbosity > 0 {
 			println('Deploying ${opt.format} package to "${device_id}"')
 		}
@@ -240,6 +220,8 @@ pub fn deploy_aab(opt DeployOptions) ! {
 			}
 			util.verbosity_print_cmd(adb_logcat_clear_cmd, opt.verbosity)
 			util.run_or_error(adb_logcat_clear_cmd)!
+			// Give adb/Android/connection time to settle... *sigh*
+			time.sleep(100 * time.millisecond)
 		}
 
 		// java -jar bundletool.jar install-apks --apks=/MyApp/my_app.apks
@@ -253,6 +235,9 @@ pub fn deploy_aab(opt DeployOptions) ! {
 		]
 		util.verbosity_print_cmd(bundletool_install_apks_cmd, opt.verbosity)
 		util.run_or_error(bundletool_install_apks_cmd)!
+
+		// Give adb/Android/connection time to settle... *sigh*
+		time.sleep(100 * time.millisecond)
 
 		if opt.run != '' {
 			if opt.verbosity > 0 {
@@ -317,32 +302,7 @@ fn adb_log_step(opt DeployOptions, device_id string) ! {
 		'logcat',
 	]
 
-	// Only filter output in "normal" log mode
-	if opt.log_mode == .filtered {
-		is_debug_build := '-cg' in opt.v_flags || '-g' in opt.v_flags
-		if is_debug_build {
-			// Sokol
-			adb_logcat_cmd << 'SOKOL_APP:V'
-			// Boehm-Demers-Weiser Garbage Collector (bdwgc / libgc)
-			adb_logcat_cmd << 'BDWGC:V'
-		}
-		// Include caller log tags
-		for log_tag in opt.log_tags {
-			mut tag := log_tag
-			if !tag.contains(':') {
-				tag += ':V'
-			}
-			adb_logcat_cmd << '${tag}'
-		}
-		adb_logcat_cmd << [
-			'V:V',
-			// 'System.out:D', // Used by many other Android libs - so it's noisy
-			// 'System.err:D',
-			'${opt.activity_name}:V',
-		]
-		// if !is_debug_build {
-		adb_logcat_cmd << '*:S'
-	}
+	adb_logcat_cmd << opt.gen_logcat_filters()
 
 	// log_cmd := adb_logcat_cmd.join(' ')
 	// println('Use "$log_cmd" to view logs...')

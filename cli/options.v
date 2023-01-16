@@ -29,6 +29,11 @@ pub:
 	list_ndks        bool
 	list_apis        bool
 	list_build_tools bool
+	// screenshot functionality
+	screenshot                string // /path/to/screenshot.png
+	screenshot_delay          f64
+	screenshot_on_log         string
+	screenshot_on_log_timeout f64 = -1.0
 pub mut:
 	// I/O
 	input           string
@@ -582,4 +587,16 @@ pub fn (opt &Options) as_android_package_options() android.PackageOptions {
 		overrides_path: opt.package_overrides_path
 	}
 	return pck_opt
+}
+
+// as_android_screenshot_options returns `android.ScreenshotOptions` based on the fields in `Options`.
+pub fn (opt &Options) as_android_screenshot_options(deploy_opts android.DeployOptions) android.ScreenshotOptions {
+	screenshot_opt := android.ScreenshotOptions{
+		deploy_options: deploy_opts
+		path: opt.screenshot
+		delay: opt.screenshot_delay
+		on_log: opt.screenshot_on_log
+		on_log_timeout: opt.screenshot_on_log_timeout
+	}
+	return screenshot_opt
 }
