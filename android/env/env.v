@@ -651,7 +651,8 @@ pub fn sdkmanager_version() string {
 }
 
 pub fn has_adb() bool {
-	return adb() != ''
+	adb_path := adb()
+	return adb_path != '' && os.is_executable(adb_path)
 }
 
 pub fn adb() string {

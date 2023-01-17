@@ -142,6 +142,11 @@ pub fn args_to_options(arguments []string, defaults Options) !(Options, &flag.Fl
 		list_ndks: fp.bool('list-ndks', 0, defaults.list_ndks, 'List available NDK versions')
 		list_apis: fp.bool('list-apis', 0, defaults.list_apis, 'List available API levels')
 		list_build_tools: fp.bool('list-build-tools', 0, defaults.list_build_tools, 'List available Build-tools versions')
+		//
+		screenshot: fp.string('screenshot', 0, '', 'Take a screenshot on a device and save it to /path/to/file.png or /path/to/directory')
+		screenshot_delay: fp.float('screenshot-delay', 0, 0.0, 'Wait for this amount of seconds before taking screenshot')
+		screenshot_on_log: fp.string('screenshot-on-log', 0, '', 'Wait for this string to appear in the device log before taking a screenshot')
+		screenshot_on_log_timeout: fp.float('screenshot-on-log-timeout', 0, 0.0, 'Timeout after this amount of seconds if --screenshot-on-log string is not detected')
 	}
 
 	// TODO just user facing notice - can be removed after deprecatioon period is over 2023-03-24

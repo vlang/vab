@@ -71,11 +71,25 @@ fn main() {
 		}
 		exit(0)
 	}
-	// All flags after this requires an input argument
+	// All flags after this requires an input argument, except
+	// doing one-off screenshots on a device
 	if fp.args.len == 0 {
-		eprintln('No arguments given')
-		eprintln('Use `vab -h` to see all flags')
-		exit(1)
+		if opt.screenshot != '' {
+			android.simple_screenshot(
+				verbosity: opt.verbosity
+				device_id: opt.device_id
+				path: opt.screenshot
+				delay: opt.screenshot_delay
+			) or {
+				eprintln('Failed to take screenshot:\n${err}')
+				exit(1)
+			}
+			exit(0)
+		} else {
+			eprintln('No arguments given')
+			eprintln('Use `vab -h` to see all flags')
+			exit(1)
+		}
 	}
 
 	if opt.additional_args.len > 1 {
@@ -142,12 +156,18 @@ fn main() {
 		println('Output will be signed with keystore at "${deploy_opt.keystore.path}"')
 	}
 
+	screenshot_opt := opt.as_android_screenshot_options(deploy_opt)
+
 	input_ext := os.file_ext(opt.input)
 
-	// Early deployment
+	// Early deployment of existing packages.
 	if input_ext in ['.apk', '.aab'] {
 		if deploy_opt.device_id != '' {
 			deploy(deploy_opt)
+			android.screenshot(screenshot_opt) or {
+				eprintln('${cli.exe_short_name} screenshot did not succeed.\n${err}')
+				exit(1)
+			}
 			exit(0)
 		}
 	}
@@ -174,6 +194,10 @@ fn main() {
 
 	if deploy_opt.device_id != '' {
 		deploy(deploy_opt)
+		android.screenshot(screenshot_opt) or {
+			eprintln('${cli.exe_short_name} screenshot did not succeed.\n${err}')
+			exit(1)
+		}
 	} else {
 		if opt.verbosity > 0 {
 			println('Generated ${os.real_path(opt.output)}')
