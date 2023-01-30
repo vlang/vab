@@ -54,6 +54,12 @@ pub const (
 			'bootstrap_url': 'https://dl.google.com/android/maven2/com/android/tools/build/aapt2/7.0.0-alpha07-7087017/aapt2-7.0.0-alpha07-7087017-[XXX].jar'
 		}
 	}
+
+	dot_exe = $if windows {
+		'.exe'
+	} $else {
+		''
+	}
 )
 
 // Possible locations of the `sdkmanager` tool
@@ -658,7 +664,7 @@ pub fn has_adb() bool {
 pub fn adb() string {
 	mut adb_path := os.getenv('ADB')
 	if !os.exists(adb_path) {
-		adb_path = os.join_path(sdk.platform_tools_root(), 'adb')
+		adb_path = os.join_path(sdk.platform_tools_root(), 'adb${env.dot_exe}')
 	}
 	if !os.exists(adb_path) {
 		if os.exists_in_system_path('adb') {
@@ -731,12 +737,8 @@ pub fn has_aapt2() bool {
 
 pub fn aapt2() string {
 	mut aapt2 := os.getenv('AAPT2')
-	mut dot_exe := ''
-	$if windows {
-		dot_exe = '.exe'
-	}
 	if !os.exists(aapt2) {
-		aapt2 = os.join_path(util.cache_dir(), 'aapt2${dot_exe}')
+		aapt2 = os.join_path(util.cache_dir(), 'aapt2${env.dot_exe}')
 	}
 	$if !windows {
 		if !os.is_executable(aapt2) {
@@ -778,16 +780,11 @@ fn ensure_aapt2(verbosity int) !bool {
 			return error(@MOD + '.' + @FN + ' ' + 'failed to install `aapt2`: ${err}')
 		}
 		util.unzip(file, unpack_path)!
-		// Install
-		mut dot_exe := ''
-		$if windows {
-			dot_exe = '.exe'
-		}
-		aapt2_file := os.join_path(unpack_path, 'aapt2' + dot_exe)
-		dst_check := os.join_path(dst, 'aapt2' + dot_exe)
+		aapt2_file := os.join_path(unpack_path, 'aapt2${env.dot_exe}')
+		dst_check := os.join_path(dst, 'aapt2${env.dot_exe}')
 		os.rm(dst_check) or {}
 		os.cp(aapt2_file, dst_check) or {
-			return error(@MOD + '.' + @FN + ' ' + 'failed to install `aapt2${dot_exe}`: ${err}')
+			return error(@MOD + '.' + @FN + ' ' + 'failed to install `aapt2${env.dot_exe}`: ${err}')
 		}
 		if os.exists(dst_check) {
 			if verbosity > 1 {
