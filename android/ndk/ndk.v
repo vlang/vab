@@ -222,6 +222,7 @@ pub fn host_arch() string {
 		'linux' { 'linux-x86_64' }
 		'macos' { 'darwin-x86_64' }
 		'windows' { 'windows-x86_64' }
+		'termux' {'linux-aarch64'}
 		else { 'unknown' }
 	}
 }
