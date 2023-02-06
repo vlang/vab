@@ -175,7 +175,7 @@ You must install java
 ```bash
 pkg install openjdk-17
 ```
-and configure sdk and ndk from https://github.com/Lzhiyong/termux-ndk/releases
+and configure sdk and ndk from https://github.com/Lzhiyong/termux-ndk/releases into compatible version (`sdkmanager install/uninstall platform-version`) and enjoy
 
 # Notes
 
