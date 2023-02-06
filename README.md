@@ -169,6 +169,14 @@ sudo apt install openjdk-<version>-jdk
 
 E.g.: `sudo apt install openjdk-8-jdk`
 
+### termux !!
+You must install java
+
+```bash
+pkg install openjdk-17
+```
+and configure sdk and ndk from https://github.com/Lzhiyong/termux-ndk/releases
+
 # Notes
 
 `vab` targets as low an API level as possible by default for maximum
