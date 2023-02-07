@@ -245,7 +245,8 @@ pub fn arch_to_instruction_set(arch string) string {
 	}
 }
 
-// bin_path returns absolute path host architecture to android bin
+// bin_path returns the absolute path to the host architecture's `bin` directory.
+// As an example: `/path/to/ndk/toolchains/llvm/prebuilt/linux-x86_64/bin`.
 [inline]
 pub fn bin_path(ndk_version string) string {
 	return os.join_path(root_version(ndk_version), 'toolchains', 'llvm', 'prebuilt', host_arch(),
