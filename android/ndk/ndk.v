@@ -216,7 +216,7 @@ fn min_version_supported_by_vab() string {
 	}
 }
 
-// get path host architecture to android bin
+// get folder on host architecture to android bin
 [inline]
 pub fn host_arch() string {
 	$if linux {
@@ -245,6 +245,7 @@ pub fn arch_to_instruction_set(arch string) string {
 	}
 }
 
+// get absolute path host architecture to android bin
 [inline]
 pub fn bin_path(ndk_version string) string {
 	return os.join_path(root_version(ndk_version), 'toolchains', 'llvm', 'prebuilt', host_arch(),
