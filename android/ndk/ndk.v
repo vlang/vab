@@ -259,7 +259,7 @@ pub fn compiler_min_api(lang_type CompilerLanguageType, ndk_version string, arch
 	keys.sort()
 	if keys.len == 0 {
 		return error(@MOD + '.' + @FN +
-			' couldn\'t locate ${lang_type} compiler for architecture "${arch}". Available compilers: ${available_compilers}. The NDK might be corrupt(keys.len==0).')
+			' could not locate ${lang_type} compiler for architecture "${arch}". Available compilers: ${available_compilers}.')
 	}
 	if compiler := available_compilers[keys.first().str()] {
 		return compiler
