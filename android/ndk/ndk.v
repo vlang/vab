@@ -216,7 +216,7 @@ fn min_version_supported_by_vab() string {
 	}
 }
 
-// get folder on host architecture to android bin
+// host_arch returns the host architecture string for the platform which `vab` was compiled on.
 [inline]
 pub fn host_arch() string {
 	$if linux {
