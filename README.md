@@ -176,7 +176,8 @@ You must install Java 17 and few more things:
 pkg install openjdk-17 aapt apksigner dx ecj
 ```
 Download, unzip and set enviroment variable to sdk and ndk from https://github.com/Lzhiyong/termux-ndk/releases 
-you maybe will have to set sdk version into compatible with ndk (`sdkmanager install/uninstall platform-version`) 
+you will maybe have to set the SDK version to be compatible with the NDK
+(`sdkmanager install/uninstall platform-version`) 
 and enjoy use vab !
 
 # Notes
