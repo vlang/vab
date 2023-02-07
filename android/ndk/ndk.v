@@ -216,13 +216,19 @@ fn min_version_supported_by_vab() string {
 	}
 }
 
+// host_arch returns the host architecture string for the platform which `vab` was compiled on.
 [inline]
 pub fn host_arch() string {
-	return match os.user_os() {
-		'linux' { 'linux-x86_64' }
-		'macos' { 'darwin-x86_64' }
-		'windows' { 'windows-x86_64' }
-		else { 'unknown' }
+	$if linux {
+		return 'linux-x86_64'
+	} $else $if macos {
+		return 'darwin-x86_64'
+	} $else $if windows {
+		return 'windows-x86_64'
+	} $else $if termux {
+		return 'linux-aarch64'
+	} $else {
+		return 'unknown'
 	}
 }
 
@@ -239,6 +245,8 @@ pub fn arch_to_instruction_set(arch string) string {
 	}
 }
 
+// bin_path returns the absolute path to the host architecture's `bin` directory.
+// As an example: `/path/to/ndk/toolchains/llvm/prebuilt/linux-x86_64/bin`.
 [inline]
 pub fn bin_path(ndk_version string) string {
 	return os.join_path(root_version(ndk_version), 'toolchains', 'llvm', 'prebuilt', host_arch(),
@@ -250,6 +258,10 @@ pub fn compiler_min_api(lang_type CompilerLanguageType, ndk_version string, arch
 	available_compilers := available_ndk_compilers_by_api(lang_type, ndk_version, arch)
 	mut keys := available_compilers.keys().map(it.int())
 	keys.sort()
+	if keys.len == 0 {
+		return error(@MOD + '.' + @FN +
+			' could not locate ${lang_type} compiler for architecture "${arch}". Available compilers: ${available_compilers}.')
+	}
 	if compiler := available_compilers[keys.first().str()] {
 		return compiler
 	}
@@ -263,6 +275,10 @@ pub fn compiler_max_api(lang_type CompilerLanguageType, ndk_version string, arch
 	available_compilers := available_ndk_compilers_by_api(lang_type, ndk_version, arch)
 	mut keys := available_compilers.keys().map(it.int())
 	keys.sort()
+	if keys.len == 0 {
+		return error(@MOD + '.' + @FN +
+			' could not locate ${lang_type} compiler for architecture "${arch}". Available compilers: ${available_compilers}.')
+	}
 	if compiler := available_compilers[keys.last().str()] {
 		return compiler
 	}
@@ -289,7 +305,6 @@ pub fn compiler(lang_type CompilerLanguageType, ndk_version string, arch string,
 
 fn available_ndk_compilers_by_api(lang_type CompilerLanguageType, ndk_version string, arch string) map[string]string {
 	mut compilers := map[string]string{}
-
 	compiler_bin_path := bin_path(ndk_version)
 	if os.is_dir(compiler_bin_path) {
 		from := i16(min_api_available(ndk_version).int())
