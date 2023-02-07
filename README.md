@@ -173,9 +173,11 @@ E.g.: `sudo apt install openjdk-8-jdk`
 You must install java
 
 ```bash
-pkg install openjdk-17
+pkg install openjdk-17 aapt apksigner dx ecj
 ```
-and configure sdk and ndk from https://github.com/Lzhiyong/termux-ndk/releases into compatible version (`sdkmanager install/uninstall platform-version`) and enjoy
+and download, unzip and set enviroment variable to sdk and ndk from https://github.com/Lzhiyong/termux-ndk/releases 
+you mayba will have to set sdk version into compatible with ndk (`sdkmanager install/uninstall platform-version`) 
+and enjoy use vab !
 
 # Notes
 
