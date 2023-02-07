@@ -170,7 +170,7 @@ sudo apt install openjdk-<version>-jdk
 E.g.: `sudo apt install openjdk-8-jdk`
 
 ### termux (experimental)
-You must install java-17 and few more thing:
+You must install Java 17 and few more things:
 
 ```bash
 pkg install openjdk-17 aapt apksigner dx ecj
