@@ -178,7 +178,7 @@ pkg install openjdk-17 aapt apksigner dx ecj
 Download, unzip and set enviroment variable to sdk and ndk from https://github.com/Lzhiyong/termux-ndk/releases 
 you will maybe have to set the SDK version to be compatible with the NDK
 (`sdkmanager install/uninstall platform-version`) 
-and enjoy use vab !
+and enjoy using vab!
 
 # Notes
 
