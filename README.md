@@ -169,7 +169,7 @@ sudo apt install openjdk-<version>-jdk
 
 E.g.: `sudo apt install openjdk-8-jdk`
 
-### termux (experimental)
+### termux - experimental, only far arm64 with android 9 above 
 You must install Java 17 and few more things:
 
 ```bash
@@ -179,6 +179,7 @@ Download, unzip and set enviroment variable to sdk and ndk from https://github.c
 you will maybe have to set the SDK version to be compatible with the NDK
 (`sdkmanager install/uninstall platform-version`) 
 and enjoy using vab!
+if you want, you can watch video: https://www.youtube.com/watch?v=7aUh39w_-2Q or look on 
 
 # Notes
 
