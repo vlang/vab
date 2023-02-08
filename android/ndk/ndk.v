@@ -226,7 +226,13 @@ pub fn host_arch() string {
 	} $else $if windows {
 		return 'windows-x86_64'
 	} $else $if termux {
-		return 'linux-aarch64'
+		$if arm64 {
+			return 'linux-aarch64'
+		} $else $if amd64 {
+			return 'linux-x86_64' // TODO try on simulator
+		} $else {
+			return 'unknown'
+		}
 	} $else {
 		return 'unknown'
 	}
