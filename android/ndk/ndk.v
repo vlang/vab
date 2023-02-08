@@ -225,14 +225,10 @@ pub fn host_arch() string {
 		return 'darwin-x86_64'
 	} $else $if windows {
 		return 'windows-x86_64'
-	} $else $if termux {
-		$if arm64 {
-			return 'linux-aarch64'
-		} $else $if amd64 {
-			return 'linux-x86_64' // TODO try on simulator
-		} $else {
-			return 'unknown'
-		}
+	} $else $if termux && arm64 {
+		return 'linux-aarch64'
+	} $else $if termux && amd64 {
+		return 'linux-x86_64' // TODO try on simulator
 	} $else {
 		return 'unknown'
 	}
