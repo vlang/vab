@@ -179,7 +179,7 @@ Download, unzip and set enviroment variable to sdk and ndk from https://github.c
 you will maybe have to set the SDK version to be compatible with the NDK
 (`sdkmanager install/uninstall platform-version`) 
 and enjoy using vab!
-if you want, you can watch video: https://www.youtube.com/watch?v=7aUh39w_-2Q or look on 
+if you want, you can watch video: https://www.youtube.com/watch?v=7aUh39w_-2Q or look on https://github.com/MatejMagat305/vab-termux
 
 # Notes
 
