@@ -169,17 +169,22 @@ sudo apt install openjdk-<version>-jdk
 
 E.g.: `sudo apt install openjdk-8-jdk`
 
-### termux - experimental, only far arm64 with android 9 above 
+### termux (experimental), only for `arm64-v8a` on Android 9 and above
 You must install Java 17 and few more things:
 
 ```bash
 pkg install openjdk-17 aapt apksigner dx ecj
 ```
-Download, unzip and set enviroment variable to sdk and ndk from https://github.com/Lzhiyong/termux-ndk/releases 
-you will maybe have to set the SDK version to be compatible with the NDK
-(`sdkmanager install/uninstall platform-version`) 
-and enjoy using vab!
-if you want, you can watch video: https://www.youtube.com/watch?v=7aUh39w_-2Q or look on https://github.com/MatejMagat305/vab-termux
+
+Download, unzip and set enviroment variables to the SDK and NDK from
+[https://github.com/Lzhiyong/termux-ndk/releases](https://github.com/Lzhiyong/termux-ndk/releases).
+You maybe have to set the SDK version to be compatible with the NDK
+(`sdkmanager install/uninstall platform-version`). Enjoy using vab!
+
+@MatejMagat305 has made a video of the process you can watch at
+[https://www.youtube.com/watch?v=7aUh39w_-2Q](https://www.youtube.com/watch?v=7aUh39w_-2Q).
+The accompaning script used in the video can be found on GitHub:
+[https://github.com/MatejMagat305/vab-termux](https://github.com/MatejMagat305/vab-termux).
 
 # Notes
 
