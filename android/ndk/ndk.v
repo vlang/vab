@@ -221,15 +221,17 @@ fn min_version_supported_by_vab() string {
 pub fn host_arch() string {
 	$if linux {
 		return 'linux-x86_64'
-	} $else $if macos {
-		return 'darwin-x86_64'
-	} $else $if windows {
-		return 'windows-x86_64'
-	} $else $if termux {
-		return 'linux-aarch64'
-	} $else {
-		return 'unknown'
 	}
+	$if macos {
+		return 'darwin-x86_64'
+	}
+	$if windows {
+		return 'windows-x86_64'
+	}
+	$if termux {
+		return 'linux-aarch64'
+	}
+	return 'unknown'
 }
 
 // arch_to_instruction_set maps `arch` to an instruction set
