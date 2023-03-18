@@ -177,28 +177,39 @@ pub fn compile_v_to_c(opt CompileOptions) !VMetaInfo {
 	return v_meta_dump
 }
 
-fn build_raylib(opt CompileOptions,raylib_path string ,arch string) ? {
-	build_path := os.join_path(raylib_path,'build')
-	// check if the library already exists or compile it 
-	if os.exists(os.join_path(build_path,arch,'libraylib.a')){
+fn build_raylib(opt CompileOptions, raylib_path string, arch string) ? {
+	build_path := os.join_path(raylib_path, 'build')
+	// check if the library already exists or compile it
+	if os.exists(os.join_path(build_path, arch, 'libraylib.a')) {
 		return
-		}
-	else {
-		src_path := os.join_path(raylib_path,'src')
+	} else {
+		src_path := os.join_path(raylib_path, 'src')
 		ndk_path := ndk.root()
-		os.execute('make -C $src_path clean')
-		arch_name :=if arch == 'arm64-v8a' {'arm64'} else if arch == 'armeabi-v7a' {'arm'} else if arch in ['x86','x86_64'] {arch}  else {''}
-		if arch_name !in ['arm64','arm','x86','x86_64']{return error('$arch_name is now a known architecture')}
-		os.execute('make -C $src_path PLATFORM=PLATFORM_ANDROID ANDROID_NDK=$ndk_path ANDROID_ARCH=$arch_name ANDROID_API_VERSION=$opt.api_level ')
-		taget_path := os.join_path(build_path,arch)
-		os.mkdir_all(taget_path) or {return error('failed making directory "$taget_path"')}
-		os.mv(os.join_path(src_path,'libraylib.a'),taget_path) or {return error('failed to move .a file from $src_path to $taget_path')}
+		os.execute('make -C ${src_path} clean')
+		arch_name := if arch == 'arm64-v8a' {
+			'arm64'
+		} else if arch == 'armeabi-v7a' {
+			'arm'
+		} else if arch in ['x86', 'x86_64'] {
+			arch
+		} else {
+			''
+		}
+		if arch_name !in ['arm64', 'arm', 'x86', 'x86_64'] {
+			return error('${arch_name} is now a known architecture')
+		}
+		os.execute('make -C ${src_path} PLATFORM=PLATFORM_ANDROID ANDROID_NDK=${ndk_path} ANDROID_ARCH=${arch_name} ANDROID_API_VERSION=${opt.api_level} ')
+		taget_path := os.join_path(build_path, arch)
+		os.mkdir_all(taget_path) or { return error('failed making directory "${taget_path}"') }
+		os.mv(os.join_path(src_path, 'libraylib.a'), taget_path) or {
+			return error('failed to move .a file from ${src_path} to ${taget_path}')
 		}
 	}
+}
 
-fn download_raylib (raylib_path string){
-	//clone raylib from github
-	os.execute('git clone https://github.com/raysan5/raylib.git $raylib_path') 
+fn download_raylib(raylib_path string) {
+	// clone raylib from github
+	os.execute('git clone https://github.com/raysan5/raylib.git ${raylib_path}')
 }
 
 pub fn compile(opt CompileOptions) ! {
@@ -207,32 +218,36 @@ pub fn compile(opt CompileOptions) ! {
 		return error('${err_sig}: failed making directory "${opt.work_dir}". ${err}')
 	}
 	build_dir := opt.build_directory()!
-	
+
 	v_meta_dump := compile_v_to_c(opt) or {
 		return IError(CompileError{
 			kind: .v_to_c
 			err: err.msg()
 		})
 	}
-	
-	is_raylib := 'mohamedlt.vraylib' in v_meta_dump.imports 
 
-	// check if raylib floder is found else clone it 
-	if is_raylib{
-		raylib_path := os.join_path(vxt.vmodules()or{return error('$err_sig:vmodules folder not found')},'vab','raylib')
-		if os.exists(raylib_path){
-				for arch in opt.archs{
-					build_raylib(opt,raylib_path,arch)or { return error('cant build raylib ERROR: $err')}
-					}
-			}		
-		else {
-			download_raylib(raylib_path)
-			for arch in opt.archs{
-				build_raylib(opt,raylib_path,arch)or { return error('cant build raylib ERROR: $err')}
+	is_raylib := 'mohamedlt.vraylib' in v_meta_dump.imports
+
+	// check if raylib floder is found else clone it
+	if is_raylib {
+		raylib_path := os.join_path(vxt.vmodules() or {
+			return error('${err_sig}:vmodules folder not found')
+		}, 'vab', 'raylib')
+		if os.exists(raylib_path) {
+			for arch in opt.archs {
+				build_raylib(opt, raylib_path, arch) or {
+					return error('cant build raylib ERROR: ${err}')
 				}
 			}
-		
+		} else {
+			download_raylib(raylib_path)
+			for arch in opt.archs {
+				build_raylib(opt, raylib_path, arch) or {
+					return error('cant build raylib ERROR: ${err}')
+				}
+			}
 		}
+	}
 
 	v_cflags := v_meta_dump.c_flags
 	imported_modules := v_meta_dump.imports
@@ -369,15 +384,13 @@ pub fn compile(opt CompileOptions) ! {
 
 	is_debug_build := opt.is_debug_build()
 
-
 	// add needed flags for raylib
-	if is_raylib{
+	if is_raylib {
 		ldflags << '-lEGL'
 		ldflags << '-lGLESv2'
 		ldflags << '-u ANativeActivity_onCreate'
-		ldflags<< '-lOpenSLES'
-		
-		}
+		ldflags << '-lOpenSLES'
+	}
 
 	// Sokol sapp
 	if 'sokol.sapp' in imported_modules {
@@ -517,8 +530,10 @@ pub fn compile(opt CompileOptions) ! {
 			]
 			// add the compiled raylib libraries for each arch
 			if is_raylib {
-				build_cmd<< '-L ${os.join_path(vxt.vmodules()or{return error('$err_sig:vmodules folder not found')},'vab','raylib','build',arch)}'
-				}
+				build_cmd << '-L ${os.join_path(vxt.vmodules() or {
+					return error('${err_sig}:vmodules folder not found')
+				}, 'vab', 'raylib', 'build', arch)}'
+			}
 
 			jobs << job_util.ShellJob{
 				cmd: build_cmd
