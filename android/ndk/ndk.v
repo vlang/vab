@@ -256,7 +256,7 @@ pub fn bin_path(ndk_version string) string {
 }
 
 // compiler_min_api returns a compiler with the lowest API level available for `arch` in `ndk_version`.
-pub fn compiler_min_api(lang_type CompilerLanguageType, ndk_version string, arch string) ?string {
+pub fn compiler_min_api(lang_type CompilerLanguageType, ndk_version string, arch string) !string {
 	available_compilers := available_ndk_compilers_by_api(lang_type, ndk_version, arch)
 	mut keys := available_compilers.keys().map(it.int())
 	keys.sort()
@@ -273,7 +273,7 @@ pub fn compiler_min_api(lang_type CompilerLanguageType, ndk_version string, arch
 }
 
 // compiler_max_api returns a compiler with the highest API level available for `arch` in `ndk_version`.
-pub fn compiler_max_api(lang_type CompilerLanguageType, ndk_version string, arch string) ?string {
+pub fn compiler_max_api(lang_type CompilerLanguageType, ndk_version string, arch string) !string {
 	available_compilers := available_ndk_compilers_by_api(lang_type, ndk_version, arch)
 	mut keys := available_compilers.keys().map(it.int())
 	keys.sort()
@@ -289,7 +289,7 @@ pub fn compiler_max_api(lang_type CompilerLanguageType, ndk_version string, arch
 		' couldn\'t locate ${lang_type} compiler for architecture "${arch}". Available compilers: ${available_compilers}. The NDK might be corrupt.')
 }
 
-pub fn compiler(lang_type CompilerLanguageType, ndk_version string, arch string, api_level string) ?string {
+pub fn compiler(lang_type CompilerLanguageType, ndk_version string, arch string, api_level string) !string {
 	available_compilers := available_ndk_compilers_by_api(lang_type, ndk_version, arch)
 	if compiler := available_compilers[api_level] {
 		return compiler
@@ -330,7 +330,7 @@ fn available_ndk_compilers_by_api(lang_type CompilerLanguageType, ndk_version st
 	return compilers
 }
 
-pub fn tool(tool_type Tool, ndk_version string, arch string) ?string {
+pub fn tool(tool_type Tool, ndk_version string, arch string) !string {
 	match tool_type {
 		.ar {
 			mut eabi := ''
@@ -365,7 +365,7 @@ pub fn compiler_triplet(arch string) string {
 }
 
 [inline]
-pub fn libs_path(ndk_version string, arch string, api_level string) ?string {
+pub fn libs_path(ndk_version string, arch string, api_level string) !string {
 	mut host_architecture := host_arch()
 	mut arch_is := arch_to_instruction_set(arch)
 
@@ -399,7 +399,7 @@ pub fn libs_path(ndk_version string, arch string, api_level string) ?string {
 }
 
 [inline]
-pub fn sysroot_path(ndk_version string) ?string {
+pub fn sysroot_path(ndk_version string) !string {
 	// NOTE "$ndk_root/sysroot/usr/include" was deprecated since NDK r19
 	mut sysroot_path := os.join_path(root_version(ndk_version), 'toolchains', 'llvm',
 		'prebuilt', host_arch(), 'sysroot')
