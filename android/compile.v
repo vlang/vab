@@ -177,7 +177,7 @@ pub fn compile_v_to_c(opt CompileOptions) !VMetaInfo {
 	return v_meta_dump
 }
 
-fn build_raylib(opt CompileOptions, raylib_path string, arch string) ? {
+fn build_raylib(opt CompileOptions, raylib_path string, arch string) ! {
 	build_path := os.join_path(raylib_path, 'build')
 	// check if the library already exists or compile it
 	if os.exists(os.join_path(build_path, arch, 'libraylib.a')) {
