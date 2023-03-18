@@ -528,11 +528,13 @@ pub fn compile(opt CompileOptions) ! {
 				'-L"' + arch_libs[arch] + '"',
 				ldflags.join(' '),
 			]
+			lflags := os.join_path(vxt.vmodules() or {
+				return error('${err_sig}:vmodules folder not found')
+			}, 'vab', 'raylib', 'build', arch)
+
 			// add the compiled raylib libraries for each arch
 			if is_raylib {
-				build_cmd << '-L ${os.join_path(vxt.vmodules() or {
-					return error('${err_sig}:vmodules folder not found')
-				}, 'vab', 'raylib', 'build', arch)}'
+				build_cmd << '-L ${lflags}'
 			}
 
 			jobs << job_util.ShellJob{
