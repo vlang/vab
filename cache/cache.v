@@ -13,7 +13,7 @@ const (
 )
 
 pub fn get_string(key string) string {
-	mut c := &Cache(0)
+	mut c := &Cache(unsafe { nil })
 	unsafe {
 		c = cache.global_cache
 	}
@@ -26,7 +26,7 @@ pub fn get_string(key string) string {
 }
 
 pub fn set_string(key string, data string) {
-	mut c := &Cache(0)
+	mut c := &Cache(unsafe { nil })
 	unsafe {
 		c = cache.global_cache
 	}
@@ -35,7 +35,7 @@ pub fn set_string(key string, data string) {
 }
 
 pub fn get_string_array(key string) []string {
-	mut c := &Cache(0)
+	mut c := &Cache(unsafe { nil })
 	unsafe {
 		c = cache.global_cache
 	}
@@ -48,7 +48,7 @@ pub fn get_string_array(key string) []string {
 }
 
 pub fn set_string_array(key string, data []string) {
-	mut c := &Cache(0)
+	mut c := &Cache(unsafe { nil })
 	unsafe {
 		c = cache.global_cache
 	}
