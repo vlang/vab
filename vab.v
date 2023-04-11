@@ -14,7 +14,7 @@ fn main() {
 	// Collect user flags in an extended manner.
 	// Start with defaults -> overwrite by VAB_FLAGS -> overwrite by commandline flags -> extend by .vab file entries.
 	mut opt := cli.Options{}
-	mut fp := &flag.FlagParser(0)
+	mut fp := &flag.FlagParser(unsafe { nil })
 
 	opt = cli.options_from_env(opt) or {
 		eprintln('Error while parsing `VAB_FLAGS`: ${err}')
