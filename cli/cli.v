@@ -155,7 +155,7 @@ pub fn args_to_options(arguments []string, defaults Options) !(Options, &flag.Fl
 	}
 
 	opt.additional_args = fp.finalize() or {
-		return error(@FN + ': flag parser failed finalizing: ${err}')
+		return error(@FN + ': flag parser failed finalizing: ${err.msg()}')
 	}
 
 	mut c_flags := []string{}

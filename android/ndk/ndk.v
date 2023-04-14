@@ -364,7 +364,6 @@ pub fn compiler_triplet(arch string) string {
 	return arch_is + '-linux-android${eabi}'
 }
 
-[inline]
 pub fn libs_path(ndk_version string, arch string, api_level string) !string {
 	mut host_architecture := host_arch()
 	mut arch_is := arch_to_instruction_set(arch)
@@ -398,7 +397,6 @@ pub fn libs_path(ndk_version string, arch string, api_level string) !string {
 	return libs_path
 }
 
-[inline]
 pub fn sysroot_path(ndk_version string) !string {
 	// NOTE "$ndk_root/sysroot/usr/include" was deprecated since NDK r19
 	mut sysroot_path := os.join_path(root_version(ndk_version), 'toolchains', 'llvm',
