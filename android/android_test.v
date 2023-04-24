@@ -1,6 +1,6 @@
 // Copyright(C) 2019-2022 Lars Pontoppidan. All rights reserved.
 // Use of this source code is governed by an MIT license file distributed with this software package
-import android
+import vab.android
 
 const (
 	valid_ids   = [
