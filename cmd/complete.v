@@ -244,7 +244,6 @@ fn auto_complete_request(args []string) []string {
 	request := args.join(split_by)
 	mut do_home_expand := false
 	mut list := []string{}
-	// new_part := request.ends_with('\n\n')
 	mut parts := request.trim_right(' ').split(split_by)
 	if parts.len <= 1 { // 'v <tab>' -> top level commands.
 		for command in auto_complete_commands {
@@ -432,6 +431,5 @@ Register-ArgumentCompleter -Native -CommandName v -ScriptBlock {
 
 fn main() {
 	args := os.args[1..]
-	// println('"$args"')
 	auto_complete(args)
 }
