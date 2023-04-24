@@ -8,6 +8,7 @@ Welcome - and have a productive time using V and `vab`!
 # Contents
 
 - [Introduction](#introduction)
+- [Developing `vab`](#developing-vab)
 - [The V to Android App Development Cycle](#the-v-to-android-app-development-cycle)
 - [Using `vab` from the command line](#using-vab-from-the-command-line)
 - [Using `vab` programmatically](#using-vab-programmatically)
@@ -49,6 +50,26 @@ completely eliminate the need to use Android Studio in V development.
 
 With all this in mind `vab` was born to make life easier for V developers.
 You can install it by following the instructions [in the README.md](https://github.com/vlang/vab#install).
+
+# Developing `vab`
+
+Helping out the development of `vab` is easy but currently requires you to install `vab`
+via `git` so your repository works as expected.
+
+To install `vab` via `git` you need to first remove any existing `vab` module picked
+up by V. For example if you previously have installed `vab` [the official way](https://github.com/vlang/vab/#install)
+you need to remove `vab` from your V modules directory.
+
+Once any previous installed versions of `vab` is uninstalled you should do:
+
+`git clone git@github.com:vlang/vab.git ~/.vmodules/vab` on Unix-like systems,
+or
+`git clone git@github.com:vlang/vab.git %USERPROFILE%\.vmodules\vab` on Windows.
+
+Once cloned you should be able to build the `vab` CLI tool like [described in README.md](https://github.com/vlang/vab/#install).
+
+Developing and Pull Requests in `vab` follows the same setup and process as described
+in [V's official docs on example workflow for contributing](https://github.com/vlang/v/blob/master/CONTRIBUTING.md#example-workflow-for-contributing).
 
 # The V to Android App Development Cycle
 
