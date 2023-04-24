@@ -186,12 +186,6 @@ pub fn has_version(version string) bool {
 	return version in versions_available()
 }
 
-/*
-pub fn versions_dir() []string {
-	return util.find_sorted(root())
-}
-*/
-
 [deprecated: 'Please use the min_version_supported const instead']
 [deprecated_after: '2022-10-01']
 pub fn min_version() string {
@@ -378,17 +372,6 @@ pub fn libs_path(ndk_version string, arch string, api_level string) !string {
 		host_architecture, 'sysroot', 'usr', 'lib', arch_is + '-linux-android' + eabi,
 		api_level)
 
-	/*
-	if !os.is_dir(libs_path) {
-		toolchains := util.ls_sorted(os.join_path(root_version(ndk_version),'toolchains'))
-		for toolchain in toolchains {
-			if toolchain.starts_with('llvm') {
-				libs_path = os.join_path(root_version(ndk_version),'toolchains',toolchain,'prebuilt',host_architecture,'sysroot','usr','lib',arch_is+'-linux-android'+eabi,api_level)
-				break
-			}
-		}
-	}
-	*/
 	if !os.is_dir(libs_path) {
 		return error(@MOD + '.' + @FN +
 			' couldn\'t locate libraries path "${libs_path}". You could try with a newer NDK version.')
