@@ -304,8 +304,6 @@ fn adb_log_step(opt DeployOptions, device_id string) ! {
 
 	adb_logcat_cmd << opt.gen_logcat_filters()
 
-	// log_cmd := adb_logcat_cmd.join(' ')
-	// println('Use "$log_cmd" to view logs...')
 	util.verbosity_print_cmd(adb_logcat_cmd, opt.verbosity)
 	mut p := os.new_process(adb_logcat_cmd[0])
 	p.set_args(adb_logcat_cmd[1..])
