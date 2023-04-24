@@ -4,7 +4,6 @@ import rand
 import toml
 import sync.pool
 import v.util.diff
-// import v.util.vtest
 import vab.vxt
 import runtime
 
