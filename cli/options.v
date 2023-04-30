@@ -29,6 +29,7 @@ pub:
 	list_ndks        bool
 	list_apis        bool
 	list_build_tools bool
+	list_devices     bool
 	// screenshot functionality
 	screenshot                string // /path/to/screenshot.png
 	screenshot_delay          f64
