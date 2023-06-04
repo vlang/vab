@@ -488,7 +488,6 @@ pub fn compile(opt CompileOptions) ! {
 			}
 		}
 	}
-	// !opt.no_so_build
 }
 
 pub struct VCompileOptions {

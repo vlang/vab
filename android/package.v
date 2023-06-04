@@ -152,9 +152,6 @@ fn package_apk(opt PackageOptions) ! {
 		apksigner += '.bat'
 	}
 
-	// work_dir := opt.work_dir
-	// VAPK_OUT=${VAPK}/..
-
 	// Prepare and modify package skeleton shipped with vab
 	// Copy assets etc.
 	package_path, assets_path := prepare_base(opt)
@@ -654,9 +651,7 @@ fn package_aab(opt PackageOptions) ! {
 		javac,
 		'-source 1.7',
 		'-target 1.7',
-		//'-bootclasspath ' + os.join_path(java.jre_root(),'lib','rt.jar')
 		'-bootclasspath "' + android_runtime + '"',
-		//'-classpath ' + android_runtime,
 		'-d classes',
 		'-classpath .',
 	]
@@ -1190,8 +1185,7 @@ fn prepare_base(opt PackageOptions) (string, string) {
 		if start >= 0 && re.groups.len > 0 {
 			content = content[0..re.groups[0]] + opt.package_id + content[re.groups[1]..content.len]
 		}
-		// println(content)
-		// println(strings_path)
+
 		os.write_file(strings_path, content) or { panic(err) }
 	}
 

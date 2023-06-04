@@ -532,11 +532,9 @@ pub fn (opt &Options) as_android_compile_options() android.CompileOptions {
 	comp_opt := android.CompileOptions{
 		verbosity: opt.verbosity
 		cache: opt.cache
-		// cache_key: compile_cache_key
 		parallel: opt.parallel
 		is_prod: opt.is_prod
 		gles_version: opt.gles_version
-		// no_printf_hijack: opt.no_printf_hijack // deprecated and not part of V codebase anymore, can be removed after 2023-03-24
 		v_flags: opt.v_flags
 		c_flags: opt.c_flags
 		archs: opt.archs
@@ -582,8 +580,6 @@ pub fn (opt &Options) as_android_package_options() android.PackageOptions {
 		assets_extra: opt.assets_extra
 		libs_extra: opt.libs_extra
 		output_file: opt.output
-		// keystore: keystore
-		// base_files: // resolved in android.default_base_files_path
 		overrides_path: opt.package_overrides_path
 	}
 	return pck_opt
