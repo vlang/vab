@@ -320,7 +320,7 @@ pub fn string_to_args(input string) ![]string {
 	mut args := []string{}
 	mut buf := ''
 	mut in_string := false
-	mut delim := byte(` `)
+	mut delim := u8(` `)
 	for ch in input {
 		if ch in [`"`, `'`] {
 			if !in_string {
