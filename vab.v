@@ -71,6 +71,17 @@ fn main() {
 		}
 		exit(0)
 	}
+
+	if opt.list_devices {
+		devices := android.adb_get_device_list(opt.verbosity) or {
+			eprintln('Error getting device list: ${err}')
+			exit(1)
+		}
+		println('Device IDs:\n')
+		println(devices.join('\n'))
+		exit(0)
+	}
+
 	// All flags after this requires an input argument, except
 	// doing one-off screenshots on a device
 	if fp.args.len == 0 {
