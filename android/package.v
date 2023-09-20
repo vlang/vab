@@ -190,7 +190,7 @@ fn package_apk(opt PackageOptions) ! {
 		'-S "' + res_path + '"',
 		'-J "' + src_path + '"',
 		'-A "' + assets_path + '"',
-		'-I "' + android_runtime + '"' /* '--target-sdk-version ${ANDROIDTARGET}' */,
+		'-I "' + android_runtime + '"', // TODO use '--target-sdk-version ${ANDROIDTARGET}' ?
 	]
 	util.verbosity_print_cmd(aapt_cmd, opt.verbosity)
 	util.run_or_error(aapt_cmd)!
@@ -207,7 +207,7 @@ fn package_apk(opt PackageOptions) ! {
 
 	mut javac_cmd := [
 		javac,
-		'-d obj', /* +obj_path, */
+		'-d obj', // NOTE `+obj_path` can be specified
 		'-source 1.7',
 		'-target 1.7',
 		'-classpath .',
@@ -297,7 +297,7 @@ fn package_apk(opt PackageOptions) ! {
 			'--verbose',
 			'--dex',
 			'--output=' + os.join_path('bin', 'classes.dex'),
-			'obj' /* obj_path, */,
+			'obj', // TODO specify obj_path ?
 		]
 		util.verbosity_print_cmd(dx_cmd, opt.verbosity)
 		util.run_or_error(dx_cmd)!
@@ -329,7 +329,7 @@ fn package_apk(opt PackageOptions) ! {
 		'-A "' + assets_path + '"',
 		'-I "' + android_runtime + '"',
 		'-F "' + tmp_unaligned_product + '"',
-		'bin' /* bin_path */,
+		'bin', // TODO specify bin_path ?
 	]
 	util.verbosity_print_cmd(aapt_cmd, opt.verbosity)
 	util.run_or_error(aapt_cmd)!
