@@ -161,8 +161,10 @@ pub fn install(components string, verbosity int) int {
 		}
 
 		if !is_auto && version == '' {
-			eprintln(@MOD + ' ' + @FN + ' install component "${component}" has no version.')
-			return 1
+			if component != 'platform-tools' {
+				eprintln(@MOD + ' ' + @FN + ' install component "${component}" has no version.')
+				return 1
+			}
 		}
 
 		item := if version != '' { component + ';' + version } else { component }
