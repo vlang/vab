@@ -40,3 +40,9 @@ export SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
 "$SDKMANAGER" --version # test that sdkmanager works
 "$SDKMANAGER" "platform-tools" "build-tools;34.0.0" "platforms;android-33" "ndk;22.1.7171670" # install ADB etc., build-tools, a platform and the NDK in one go
 ```
+
+For a persistent setup you could add the following lines to your `.profile` or `.bash_profile`:
+
+```bash
+echo 'export PATH=${PATH}:'"$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools" >> "$HOME/.profile"
+```
