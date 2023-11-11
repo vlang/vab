@@ -17,8 +17,6 @@ pub:
 	parallel     bool = true // Run, what can be run, in parallel
 	cache        bool // defaults to false in os.args/flag parsing phase
 	gles_version int = android.default_gles_version
-	// Build specifics
-	no_printf_hijack bool [deprecated: 'No longer supported since https://github.com/vlang/v/pull/14984'; deprecated_after: '2023-03-24'] // Do not let V redefine printf for log output aka. V_ANDROID_LOG_PRINT
 	// Deploy specifics
 	run              bool
 	device_log       bool

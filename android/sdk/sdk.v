@@ -239,12 +239,6 @@ pub fn platforms_available() []string {
 	return platforms_dir_filter(util.ls_sorted(platforms_root()))
 }
 
-[deprecated: 'Please use platforms_available() instead']
-[deprecated_after: '2022-01-01']
-pub fn api_dirs() []string {
-	return platforms_available()
-}
-
 pub fn apis_available() []string {
 	mut apis := []string{}
 	for api in platforms_available() {

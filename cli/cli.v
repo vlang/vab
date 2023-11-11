@@ -99,7 +99,6 @@ pub fn args_to_options(arguments []string, defaults Options) !(Options, &flag.Fl
 		libs_extra: fp.string_multi('libs', `a`, 'Lib dir(s) to include in build')
 		v_flags: fp.string_multi('flag', `f`, 'Additional flags for the V compiler')
 		//
-		no_printf_hijack: fp.bool('no-printf-hijack', 0, defaults.no_printf_hijack, 'DEPRECATED NOT NEEDED ANYMORE. Do not let V redefine printf for log output (aka. do not define V_ANDROID_LOG_PRINT)')
 		c_flags: fp.string_multi('cflag', `c`, 'Additional flags for the C compiler')
 		archs: fp.string('archs', 0, defaults.archs.join(','), 'Comma separated string with any of ${android.default_archs}').split(',')
 		gles_version: fp.int('gles', 0, defaults.gles_version, 'GLES version to use from any of ${android.supported_gles_versions}')
@@ -148,11 +147,6 @@ pub fn args_to_options(arguments []string, defaults Options) !(Options, &flag.Fl
 		screenshot_delay: fp.float('screenshot-delay', 0, 0.0, 'Wait for this amount of seconds before taking screenshot')
 		screenshot_on_log: fp.string('screenshot-on-log', 0, '', 'Wait for this string to appear in the device log before taking a screenshot')
 		screenshot_on_log_timeout: fp.float('screenshot-on-log-timeout', 0, 0.0, 'Timeout after this amount of seconds if --screenshot-on-log string is not detected')
-	}
-
-	// TODO just user facing notice - can be removed after deprecatioon period is over 2023-03-24
-	if opt.no_printf_hijack {
-		println('--no-printf-hijack is DEPRECATED - it has no effect anymore. See: https://github.com/vlang/v/pull/14984')
 	}
 
 	opt.additional_args = fp.finalize() or {

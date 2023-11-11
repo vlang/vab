@@ -186,12 +186,6 @@ pub fn has_version(version string) bool {
 	return version in versions_available()
 }
 
-[deprecated: 'Please use the min_version_supported const instead']
-[deprecated_after: '2022-10-01']
-pub fn min_version() string {
-	return min_version_supported_by_vab()
-}
-
 fn min_version_supported_by_vab() string {
 	uos := os.user_os()
 	return match uos {
