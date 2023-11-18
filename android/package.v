@@ -832,7 +832,9 @@ fn package_aab(opt PackageOptions) ! {
 	// com.android.tools.build.bundletool.model.exceptions.CommandExecutionException: File 'base.zip' does not seem to be a valid ZIP file.
 	// ...
 	// Caused by: java.util.zip.ZipException: invalid CEN header (bad signature)
-	if jdk_semantic_version.le(semver.build(1, 8, 0)) {
+	if jdk_semantic_version.le(semver.build(1, 8, 0))
+		|| (jdk_semantic_version.ge(semver.build(20, 0, 0))
+		&& jdk_semantic_version.lt(semver.build(21, 0, 0))) {
 		$if !windows {
 			if opt.verbosity > 1 {
 				println('Working around Java/bundletool/ZIP64 BUG...')
