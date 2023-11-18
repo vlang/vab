@@ -199,17 +199,24 @@ fn package_apk(opt PackageOptions) ! {
 		return error('${error_tag}: error while changing work directory to "${package_path}":\n${err}')
 	}
 
+	mut javac_source_version := '1.7'
+	mut javac_target_version := '1.7'
+	if jdk_semantic_version.ge(semver.build(20, 0, 0)) {
+		javac_source_version = '1.8'
+		javac_target_version = '1.8'
+	}
+
 	// Compile java sources
 	if opt.verbosity > 1 {
-		println('Compiling java sources')
+		println('Compiling java sources ${javac_source_version}/${javac_target_version}')
 	}
 	java_sources := os.walk_ext(os.join_path(package_path, 'src'), '.java')
 
 	mut javac_cmd := [
 		javac,
 		'-d obj', // NOTE `+obj_path` can be specified
-		'-source 1.7',
-		'-target 1.7',
+		'-source ${javac_source_version}',
+		'-target ${javac_target_version}',
 		'-classpath .',
 		'-sourcepath src',
 		'-bootclasspath "' + android_runtime + '"',
@@ -635,8 +642,16 @@ fn package_aab(opt PackageOptions) ! {
 		util.run_or_error(aapt2_link_cmd)!
 	}
 
+	mut javac_source_version := '1.7'
+	mut javac_target_version := '1.7'
+	if jdk_semantic_version.ge(semver.build(20, 0, 0)) {
+		javac_source_version = '1.8'
+		javac_target_version = '1.8'
+	}
+
+	// Compile java sources
 	if opt.verbosity > 1 {
-		println('Compiling java sources')
+		println('Compiling java sources ${javac_source_version}/${javac_target_version}')
 	}
 	java_sources := os.walk_ext(src_path, '.java')
 	java_gen_sources := os.walk_ext(os.join_path(package_path, 'gen'), '.java')
@@ -649,8 +664,8 @@ fn package_aab(opt PackageOptions) ! {
 
 	mut javac_cmd := [
 		javac,
-		'-source 1.7',
-		'-target 1.7',
+		'-source ${javac_source_version}',
+		'-target ${javac_target_version}',
 		'-bootclasspath "' + android_runtime + '"',
 		'-d classes',
 		'-classpath .',
