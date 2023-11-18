@@ -10,13 +10,13 @@ const (
 	ndk_supported_cpp_features      = ['rtti', 'exceptions', 'no-rtti', 'no-exceptions']
 )
 
-[params]
+@[params]
 pub struct FlagConfig {
 pub:
 	pic                          bool = true // TODO
 	debug                        bool = true // false = release
 	platform_level               int  = 21
-	arch                         string               [required]
+	arch                         string               @[required]
 	neon                         bool
 	arm_mode                     string = 'thumb' // or 'arm'
 	lang                         CompilerLanguageType = .c
@@ -29,7 +29,7 @@ pub:
 
 pub struct FlagGen {
 pub:
-	ndk_version string [required]
+	ndk_version string @[required]
 }
 
 pub struct FlagResult {

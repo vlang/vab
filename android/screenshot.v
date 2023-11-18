@@ -8,7 +8,7 @@ import vab.util as vabutil
 import vab.android.env
 import vab.android.util
 
-[params]
+@[params]
 pub struct SimpleScreenshotOptions {
 pub:
 	verbosity int
