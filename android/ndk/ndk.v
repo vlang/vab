@@ -205,7 +205,7 @@ fn min_version_supported_by_vab() string {
 }
 
 // host_arch returns the host architecture string for the platform which `vab` was compiled on.
-[inline]
+@[inline]
 pub fn host_arch() string {
 	$if linux {
 		return 'linux-x86_64'
@@ -224,7 +224,7 @@ pub fn host_arch() string {
 
 // arch_to_instruction_set maps `arch` to an instruction set
 // Example: assert ndk.arch_to_instruction_set('x86') == 'i686'
-[inline]
+@[inline]
 pub fn arch_to_instruction_set(arch string) string {
 	return match arch {
 		'armeabi-v7a' { 'armv7a' }
@@ -237,7 +237,7 @@ pub fn arch_to_instruction_set(arch string) string {
 
 // bin_path returns the absolute path to the host architecture's `bin` directory.
 // As an example: `/path/to/ndk/toolchains/llvm/prebuilt/linux-x86_64/bin`.
-[inline]
+@[inline]
 pub fn bin_path(ndk_version string) string {
 	return os.join_path(root_version(ndk_version), 'toolchains', 'llvm', 'prebuilt', host_arch(),
 		'bin')
