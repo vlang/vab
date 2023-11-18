@@ -127,8 +127,8 @@ jobs:
         vab -g --package-id "io.v.ci.vab.apk.examples.tetris" run v/examples/tetris
         sleep 5
         adb -e logcat -d > /tmp/logcat.dump.txt
-        echo "Looking for traces of SOKOL_APP ok ..."
-        cat /tmp/logcat.dump.txt | grep -q 'SOKOL_APP: ... ok'; if [ ! $? -eq 0 ]; then cat /tmp/logcat.dump.txt; fi
+        echo "Looking for traces of BDWGC"
+        cat /tmp/logcat.dump.txt | grep -q 'BDWGC   : Grow'; if [ ! $? -eq 0 ]; then cat /tmp/logcat.dump.txt; fi
 
         # Remove app in case cache is run
         echo "Uninstalling v/examples/tetris"
@@ -164,8 +164,8 @@ jobs:
         vab -g --package-id "io.v.ui.ci.examples.calculator" run ui/examples/calculator.v
         sleep 5
         adb -e logcat -d > /tmp/logcat.dump.txt
-        echo "Looking for traces of SOKOL_APP ok ..."
-        cat /tmp/logcat.dump.txt | grep -q 'SOKOL_APP: ... ok'; if [ ! $? -eq 0 ]; then cat /tmp/logcat.dump.txt; fi
+        echo "Looking for traces of BDWGC"
+        cat /tmp/logcat.dump.txt | grep -q 'BDWGC   : Grow'; if [ ! $? -eq 0 ]; then cat /tmp/logcat.dump.txt; fi
 
         # Remove app in case cache is run
         echo "Uninstalling ui/examples/calculator"
