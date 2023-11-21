@@ -201,7 +201,7 @@ fn package_apk(opt PackageOptions) ! {
 
 	mut javac_source_version := '1.7'
 	mut javac_target_version := '1.7'
-	if jdk_semantic_version.ge(semver.build(20, 0, 0)) {
+	if jdk_semantic_version >= semver.build(20, 0, 0) {
 		javac_source_version = '1.8'
 		javac_target_version = '1.8'
 	}
@@ -230,7 +230,7 @@ fn package_apk(opt PackageOptions) ! {
 		// TODO Workaround dx and Java > 8 (1.8.0) BUG
 		// Error message we are trying to prevent:
 		// -Djava.ext.dirs=C:<path>lib is not supported.  Use -classpath instead.
-		if jdk_semantic_version.gt(semver.build(1, 8, 0)) {
+		if jdk_semantic_version > semver.build(1, 8, 0) {
 			if os.exists(dx) {
 				mut patched_dx := os.join_path(os.dir(dx), os.file_name(dx).all_before_last('.') +
 					'_patched.bat')
@@ -271,7 +271,7 @@ fn package_apk(opt PackageOptions) ! {
 	}
 
 	// Dex either with `dx` or `d8`
-	if build_tools_semantic_version.ge(semver.build(28, 0, 1)) {
+	if build_tools_semantic_version >= semver.build(28, 0, 1) {
 		mut class_files := os.walk_ext('obj', '.class')
 		class_files = class_files.map(fn (e string) string {
 			$if windows {
@@ -411,7 +411,7 @@ fn package_apk(opt PackageOptions) ! {
 		// TODO Workaround apksigner and Java > 8 (1.8.0) BUG
 		// Error message we are trying to prevent:
 		// -Djava.ext.dirs=C:<path>lib is not supported.  Use -classpath instead.
-		if jdk_semantic_version.gt(semver.build(1, 8, 0)) && os.exists(apksigner) {
+		if jdk_semantic_version > semver.build(1, 8, 0) && os.exists(apksigner) {
 			mut patched_apksigner := os.join_path(os.dir(apksigner),
 				os.file_name(apksigner).all_before_last('.') + '_patched.bat')
 			if !os.exists(patched_apksigner) {
@@ -644,7 +644,7 @@ fn package_aab(opt PackageOptions) ! {
 
 	mut javac_source_version := '1.7'
 	mut javac_target_version := '1.7'
-	if jdk_semantic_version.ge(semver.build(20, 0, 0)) {
+	if jdk_semantic_version >= semver.build(20, 0, 0) {
 		javac_source_version = '1.8'
 		javac_target_version = '1.8'
 	}
@@ -732,7 +732,7 @@ fn package_aab(opt PackageOptions) ! {
 		// TODO Workaround dx and Java > 8 (1.8.0) BUG
 		// Error message we are trying to prevent:
 		// -Djava.ext.dirs=C:<path>lib is not supported.  Use -classpath instead.
-		if jdk_semantic_version.gt(semver.build(1, 8, 0)) {
+		if jdk_semantic_version > semver.build(1, 8, 0) {
 			if os.exists(dx) {
 				mut patched_dx := os.join_path(os.dir(dx), os.file_name(dx).all_before_last('.') +
 					'_patched.bat')
@@ -778,7 +778,7 @@ fn package_aab(opt PackageOptions) ! {
 	}
 
 	// Dex either with `dx` or `d8`
-	if build_tools_semantic_version.ge(semver.build(28, 0, 1)) {
+	if build_tools_semantic_version >= semver.build(28, 0, 1) {
 		mut class_files := os.walk_ext('classes', '.class')
 		class_files = class_files.filter(!it.contains('$')) // Filter out R$xxx.class files
 		class_files = class_files.map(fn (e string) string {
@@ -832,9 +832,9 @@ fn package_aab(opt PackageOptions) ! {
 	// com.android.tools.build.bundletool.model.exceptions.CommandExecutionException: File 'base.zip' does not seem to be a valid ZIP file.
 	// ...
 	// Caused by: java.util.zip.ZipException: invalid CEN header (bad signature)
-	if jdk_semantic_version.le(semver.build(1, 8, 0))
-		|| (jdk_semantic_version.ge(semver.build(20, 0, 0))
-		&& jdk_semantic_version.lt(semver.build(21, 0, 0))) {
+	if jdk_semantic_version <= semver.build(1, 8, 0)
+		|| (jdk_semantic_version >= semver.build(20, 0, 0)
+		&& jdk_semantic_version < semver.build(21, 0, 0)) {
 		$if !windows {
 			if opt.verbosity > 1 {
 				println('Working around Java/bundletool/ZIP64 BUG...')
