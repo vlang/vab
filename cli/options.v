@@ -215,7 +215,7 @@ pub fn (opt &Options) validate_env() {
 		panic(@MOD + '.' + @FN + ':' + @LINE +
 			' error converting jdk_version "${jdk_version}" to semantic version.\nsemver: ${err}')
 	}
-	if !jdk_semantic_version.ge(semver.build(1, 8, 0)) { // NOTE When did this break:.satisfies('1.8.*') ???
+	if !(jdk_semantic_version >= semver.build(1, 8, 0)) { // NOTE When did this break:.satisfies('1.8.*') ???
 		// Some Android tools like `sdkmanager` in cmdline-tools;1.0 only worked with Java 8 JDK (1.8.x).
 		// (Absolute mess, yes)
 		eprintln('Java JDK version ${jdk_version} is not supported')
@@ -254,7 +254,7 @@ pub fn (opt &Options) validate_env() {
 		// The NDK version is sniffed from the directory it resides in (which can be anything)
 		// So we only report back if the verion can be read
 		if ndk_semantic_version := semver.from(opt.ndk_version) {
-			if ndk_semantic_version.lt(semver.build(21, 1, 0)) {
+			if ndk_semantic_version < semver.build(21, 1, 0) {
 				eprintln('Android NDK >= 21.1.x is currently needed. "${opt.ndk_version}" is too low.')
 				eprintln('Please provide a valid path via ANDROID_NDK_ROOT')
 				eprintln('or run `${exe_short_name} install "ndk;<version>"`')
