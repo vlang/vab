@@ -3,7 +3,7 @@
 module util
 
 import os
-import szip
+import compress.szip
 import vab.cache
 
 // Utility functions
