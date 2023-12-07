@@ -14,6 +14,7 @@ pub const exe_short_name = os.file_name(os.executable()).replace('.exe', '')
 pub const exe_dir = os.dir(os.real_path(os.executable()))
 pub const exe_args_description = 'input
 or:    vab <sub-command> [options] input'
+
 pub const exe_description = 'V Android Bootstrapper.
 Compile, package and deploy graphical V apps for Android.
 
@@ -23,6 +24,7 @@ The following flags does the same as if they were passed to the "v" compiler:
 
 Sub-commands:
   doctor                    Display useful info about your system for bug reports'
+
 pub const exe_git_hash = vab_commit_hash()
 pub const work_directory = vab_tmp_work_dir()
 pub const cache_directory = vab_cache_dir()
