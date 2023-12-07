@@ -9,16 +9,14 @@ import v.util.diff
 import vab.vxt
 import runtime
 
-const (
-	vab_home       = os.real_path(os.dir(os.dir(@FILE)))
-	vab_test_dirs  = [
-		os.join_path(vab_home, 'tests'),
-	]
-	vexe           = vxt.vexe()
-	vab_exe        = compile_vab()
-	should_autofix = os.getenv('VAUTOFIX') != ''
-	empty_toml_map = map[string]toml.Any{}
-)
+const vab_home = os.real_path(os.dir(os.dir(@FILE)))
+const vab_test_dirs = [
+	os.join_path(vab_home, 'tests'),
+]
+const vexe = vxt.vexe()
+const vab_exe = compile_vab()
+const should_autofix = os.getenv('VAUTOFIX') != ''
+const empty_toml_map = map[string]toml.Any{}
 
 fn test_all() {
 	mut jobs := []TOMLTestJob{}

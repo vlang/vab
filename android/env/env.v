@@ -10,69 +10,65 @@ import vab.android.sdk
 import vab.android.ndk
 import vab.android.util
 
-pub const (
-	accepted_components = ['auto', 'cmdline-tools', 'platform-tools', 'ndk', 'platforms',
-		'build-tools', 'bundletool', 'aapt2']
-	// 6858069 = cmdline-tools;3.0 <- zip structure changes *sigh*
-	// 6609375 = cmdline-tools;2.1 <- latest that support `sdkmanager --version` *sigh*
-	// cmdline-tools-bootstrap-url - Replace [XXX] with linux/mac/win
-	// cmdline-tools - Latest more or less sane version that works with java versions >= 8 ...
-	// sdk - Latest
-	// ndk - Works with android.compile(...)
-	// platform - Google Play minimum
-	// build-tools - Version where apksigner is included from
-	default_components  = {
-		'cmdline-tools':  {
-			'name':          'cmdline-tools'
-			'version':       '2.1'
-			'bootstrap_url': 'https://dl.google.com/android/repository/commandlinetools-[XXX]-6609375_latest.zip'
-		}
-		'platform-tools': {
-			'name':    'platform-tools'
-			'version': ''
-		}
-		'ndk':            {
-			'name':    'ndk'
-			'version': ndk.min_supported_version
-		}
-		'platforms':      {
-			'name':    'platforms'
-			'version': 'android-' + sdk.min_supported_api_level
-		}
-		'build-tools':    {
-			'name':    'build-tools'
-			'version': sdk.min_supported_build_tools_version
-		}
-		'bundletool':     {
-			'name':          'bundletool'
-			'version':       '1.5.0'
-			'bootstrap_url': 'https://github.com/google/bundletool/releases/download/1.5.0/bundletool-all-1.5.0.jar'
-		}
-		'aapt2':          {
-			'name':          'aapt2'
-			'version':       '7.0.0'
-			'bootstrap_url': 'https://dl.google.com/android/maven2/com/android/tools/build/aapt2/7.0.0-alpha07-7087017/aapt2-7.0.0-alpha07-7087017-[XXX].jar'
-		}
+pub const accepted_components = ['auto', 'cmdline-tools', 'platform-tools', 'ndk', 'platforms',
+	'build-tools', 'bundletool', 'aapt2']
+// 6858069 = cmdline-tools;3.0 <- zip structure changes *sigh*
+// 6609375 = cmdline-tools;2.1 <- latest that support `sdkmanager --version` *sigh*
+// cmdline-tools-bootstrap-url - Replace [XXX] with linux/mac/win
+// cmdline-tools - Latest more or less sane version that works with java versions >= 8 ...
+// sdk - Latest
+// ndk - Works with android.compile(...)
+// platform - Google Play minimum
+// build-tools - Version where apksigner is included from
+pub const default_components = {
+	'cmdline-tools':  {
+		'name':          'cmdline-tools'
+		'version':       '2.1'
+		'bootstrap_url': 'https://dl.google.com/android/repository/commandlinetools-[XXX]-6609375_latest.zip'
 	}
+	'platform-tools': {
+		'name':    'platform-tools'
+		'version': ''
+	}
+	'ndk':            {
+		'name':    'ndk'
+		'version': ndk.min_supported_version
+	}
+	'platforms':      {
+		'name':    'platforms'
+		'version': 'android-' + sdk.min_supported_api_level
+	}
+	'build-tools':    {
+		'name':    'build-tools'
+		'version': sdk.min_supported_build_tools_version
+	}
+	'bundletool':     {
+		'name':          'bundletool'
+		'version':       '1.5.0'
+		'bootstrap_url': 'https://github.com/google/bundletool/releases/download/1.5.0/bundletool-all-1.5.0.jar'
+	}
+	'aapt2':          {
+		'name':          'aapt2'
+		'version':       '7.0.0'
+		'bootstrap_url': 'https://dl.google.com/android/maven2/com/android/tools/build/aapt2/7.0.0-alpha07-7087017/aapt2-7.0.0-alpha07-7087017-[XXX].jar'
+	}
+}
 
-	dot_exe = $if windows {
-		'.exe'
-	} $else {
-		''
-	}
-)
+pub const dot_exe = $if windows {
+	'.exe'
+} $else {
+	''
+}
 
 // Possible locations of the `sdkmanager` tool
 // https://stackoverflow.com/a/61176718
-const (
-	possible_relative_to_sdk_sdkmanager_paths = [
-		os.join_path('cmdline-tools', 'latest', 'bin'),
-		os.join_path('tools', 'latest', 'bin'),
-		os.join_path('cmdline-tools', 'tools', 'bin'),
-		os.join_path('tools', 'bin'),
-	]
-	work_path                                 = os.join_path(os.temp_dir(), 'vab', 'tmp')
-)
+const possible_relative_to_sdk_sdkmanager_paths = [
+	os.join_path('cmdline-tools', 'latest', 'bin'),
+	os.join_path('tools', 'latest', 'bin'),
+	os.join_path('cmdline-tools', 'tools', 'bin'),
+	os.join_path('tools', 'bin'),
+]
+const work_path = os.join_path(os.temp_dir(), 'vab', 'tmp')
 
 pub enum Dependency {
 	platform_tools

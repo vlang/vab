@@ -2,13 +2,11 @@
 // Use of this source code is governed by an MIT license file distributed with this software package
 module ndk
 
-const (
-	ndk_21_default_general_flags    = ['-g', '-DANDROID', '-fdata-sections', '-ffunction-sections',
-		'-funwind-tables', '-fstack-protector-strong', '-no-canonical-prefixes']
-	ndk_21_default_general_ld_flags = ['-Wl,--exclude-libs,libgcc.a',
-		'-Wl,--exclude-libs,libgcc_real.a', '-Wl,--exclude-libs,libatomic.a']
-	ndk_supported_cpp_features      = ['rtti', 'exceptions', 'no-rtti', 'no-exceptions']
-)
+const ndk_21_default_general_flags = ['-g', '-DANDROID', '-fdata-sections', '-ffunction-sections',
+	'-funwind-tables', '-fstack-protector-strong', '-no-canonical-prefixes']
+const ndk_21_default_general_ld_flags = ['-Wl,--exclude-libs,libgcc.a',
+	'-Wl,--exclude-libs,libgcc_real.a', '-Wl,--exclude-libs,libatomic.a']
+const ndk_supported_cpp_features = ['rtti', 'exceptions', 'no-rtti', 'no-exceptions']
 
 @[params]
 pub struct FlagConfig {

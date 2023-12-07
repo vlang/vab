@@ -8,14 +8,10 @@ import vab.cache
 import vab.android.sdk
 import vab.android.util
 
-const (
-	home = os.home_dir()
-)
+const home = os.home_dir()
 
-pub const (
-	supported_archs       = ['arm64-v8a', 'armeabi-v7a', 'x86', 'x86_64']
-	min_supported_version = min_version_supported_by_vab()
-)
+pub const supported_archs = ['arm64-v8a', 'armeabi-v7a', 'x86', 'x86_64']
+pub const min_supported_version = min_version_supported_by_vab()
 
 pub enum CompilerLanguageType {
 	c
@@ -31,20 +27,18 @@ pub enum Tool {
 // However ANDROID_NDK_ROOT is widely used and the `sdkmanager` has support
 // for installing the NDK - and it will do so in a sub-folder (/ndk) of the SDK root.
 // This is also referred to as a "Side by side" install.
-const (
-	possible_ndk_paths_windows = [
-		os.join_path(sdk.root(), 'ndk'),
-		os.join_path(sdk.root(), 'ndk-bundle'),
-	]
-	possible_ndk_paths_macos   = [
-		os.join_path(sdk.root(), 'ndk'),
-		os.join_path(sdk.root(), 'ndk-bundle'),
-	]
-	possible_ndk_paths_linux   = [
-		os.join_path(sdk.root(), 'ndk'),
-		os.join_path(sdk.root(), 'ndk-bundle'),
-	]
-)
+const possible_ndk_paths_windows = [
+	os.join_path(sdk.root(), 'ndk'),
+	os.join_path(sdk.root(), 'ndk-bundle'),
+]
+const possible_ndk_paths_macos = [
+	os.join_path(sdk.root(), 'ndk'),
+	os.join_path(sdk.root(), 'ndk-bundle'),
+]
+const possible_ndk_paths_linux = [
+	os.join_path(sdk.root(), 'ndk'),
+	os.join_path(sdk.root(), 'ndk-bundle'),
+]
 
 // root will try to detect where the Android NDK is installed. Otherwise return blank
 pub fn root() string {

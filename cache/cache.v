@@ -8,9 +8,7 @@ mut:
 	string_array_cache map[string][]string
 }
 
-const (
-	global_cache = &Cache{}
-)
+const global_cache = &Cache{}
 
 pub fn get_string(key string) string {
 	mut c := &Cache(unsafe { nil })

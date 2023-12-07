@@ -8,14 +8,14 @@ import vab.android
 import vab.android.sdk
 import vab.android.ndk
 
-pub const (
-	exe_version          = version()
-	exe_name             = os.file_name(os.executable())
-	exe_short_name       = os.file_name(os.executable()).replace('.exe', '')
-	exe_dir              = os.dir(os.real_path(os.executable()))
-	exe_args_description = 'input
+pub const exe_version = version()
+pub const exe_name = os.file_name(os.executable())
+pub const exe_short_name = os.file_name(os.executable()).replace('.exe', '')
+pub const exe_dir = os.dir(os.real_path(os.executable()))
+pub const exe_args_description = 'input
 or:    vab <sub-command> [options] input'
-	exe_description = 'V Android Bootstrapper.
+
+pub const exe_description = 'V Android Bootstrapper.
 Compile, package and deploy graphical V apps for Android.
 
 The following flags does the same as if they were passed to the "v" compiler:
@@ -24,13 +24,13 @@ The following flags does the same as if they were passed to the "v" compiler:
 
 Sub-commands:
   doctor                    Display useful info about your system for bug reports'
-	exe_git_hash         = vab_commit_hash()
-	work_directory       = vab_tmp_work_dir()
-	cache_directory      = vab_cache_dir()
-	rip_vflags           = ['-autofree', '-gc', '-g', '-cg', '-prod', 'run', '-showcc']
-	subcmds              = ['complete', 'test-cleancode']
-	accepted_input_files = ['.v', '.apk', '.aab']
-)
+
+pub const exe_git_hash = vab_commit_hash()
+pub const work_directory = vab_tmp_work_dir()
+pub const cache_directory = vab_cache_dir()
+pub const rip_vflags = ['-autofree', '-gc', '-g', '-cg', '-prod', 'run', '-showcc']
+pub const subcmds = ['complete', 'test-cleancode']
+pub const accepted_input_files = ['.v', '.apk', '.aab']
 
 pub const vab_env_vars = [
 	'VAB_FLAGS',

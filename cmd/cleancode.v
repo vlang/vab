@@ -5,10 +5,8 @@ module main
 import os
 import vab.vxt
 
-const (
-	exe_name = os.file_name(os.executable())
-	exe_dir  = os.dir(os.real_path(os.executable()))
-)
+const exe_name = os.file_name(os.executable())
+const exe_dir = os.dir(os.real_path(os.executable()))
 
 pub fn run(args []string) os.Result {
 	return os.execute(args.join(' '))
