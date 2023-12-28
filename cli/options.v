@@ -302,8 +302,14 @@ pub fn (mut opt Options) resolve_output() {
 		output_file = opt.output
 		opt.package_format = output_file_ext // apk / aab
 	} else { // Generate from defaults: vab [-o <output>] <input>
-		default_file_name := opt.app_name.replace(os.path_separator.str(), '').replace(' ',
+		mut default_file_name := ''
+		if opt.app_name == android.default_app_name {
+			default_file_name = os.getwd().all_after_last('/').replace(os.path_separator.str(), '').replace(' ',
 			'_').to_lower()
+		} else {
+			default_file_name = opt.app_name.replace(os.path_separator.str(), '').replace(' ',
+			'_').to_lower()
+		}
 		if opt.output != '' {
 			ext := os.file_ext(opt.output)
 			if ext != '' {
