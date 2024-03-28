@@ -688,6 +688,7 @@ pub fn compile_v_imports_c_dependencies(opt CompileOptions, imported_modules []s
 			build_cmd := [
 				compiler,
 				cflags.join(' '),
+				'-mfpu=neon-vfpv4',
 				'-Wno-sign-compare',
 				'-I"' + os.join_path(v_thirdparty_dir, 'stb_image') + '"',
 				'-c "' + os.join_path(v_thirdparty_dir, 'stb_image', 'stbi.c') + '"',
