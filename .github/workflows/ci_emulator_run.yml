@@ -22,7 +22,7 @@ jobs:
     - uses: actions/setup-java@v2
       with:
         distribution: 'adopt'
-        java-version: 8
+        java-version: 11
 
     - name: Install V
       uses: vlang/setup-v@v1
@@ -69,12 +69,12 @@ jobs:
           /Users/runner/Library/Android/sdk/system-images/android-30
         key: ${{ runner.os }}-android-emulator-${{ hashFiles('/Users/runner/.android/avd') }}
 
-    - name: Prepare emulator
-      if: steps.cache-emulator.outputs.cache-hit != 'true'
-      run: |
-        export ANDROID_SDK_ROOT="$HOME/Library/Android/sdk"
-        echo yes | $ANDROID_SDK_ROOT/tools/bin/sdkmanager 'system-images;android-30;google_apis;x86_64'
-        echo no | $ANDROID_SDK_ROOT/tools/bin/avdmanager create avd --force --name test --abi google_apis/x86_64 --package 'system-images;android-30;google_apis;x86_64'
+    # - name: Prepare emulator
+    #   if: steps.cache-emulator.outputs.cache-hit != 'true'
+    #   run: |
+    #     export ANDROID_SDK_ROOT="$HOME/Library/Android/sdk"
+    #     echo yes | $ANDROID_SDK_ROOT/tools/bin/sdkmanager 'system-images;android-30;google_apis;x86_64'
+    #     echo no | $ANDROID_SDK_ROOT/tools/bin/avdmanager create avd --force --name test --abi google_apis/x86_64 --package 'system-images;android-30;google_apis;x86_64'
 
     - name: Install and run V + V UI examples as APK and AAB
       run: |
