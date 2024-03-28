@@ -342,10 +342,10 @@ jobs:
       VAB_FLAGS: -cg -v 3 --api 30 --build-tools 30.0.3
     steps:
 
-    #- uses: actions/setup-java@v2
-      #with:
-        #distribution: 'adopt'
-        #java-version: 15
+    - uses: actions/setup-java@v2
+      with:
+        distribution: 'adopt'
+        java-version: 11
 
     - name: Install V
       uses: vlang/setup-v@v1
