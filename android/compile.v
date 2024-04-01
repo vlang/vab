@@ -683,12 +683,17 @@ pub fn compile_v_imports_c_dependencies(opt CompileOptions, imported_modules []s
 			if opt.verbosity > 1 {
 				println('Compiling stb_image (${arch}) via stbi module')
 			}
+			if arch == 'armeabi-v7a' {
+				cflags << '-mfpu=neon-vfpv4'
+				$if gcc {
+					cflags << '-mfp16-format=ieee'
+				}
+			}
 
 			o_file := os.join_path(arch_o_dir, 'stbi.o')
 			build_cmd := [
 				compiler,
 				cflags.join(' '),
-				'-mfpu=neon-vfpv4',
 				'-Wno-sign-compare',
 				'-I"' + os.join_path(v_thirdparty_dir, 'stb_image') + '"',
 				'-c "' + os.join_path(v_thirdparty_dir, 'stb_image', 'stbi.c') + '"',
