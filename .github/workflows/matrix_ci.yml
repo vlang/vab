@@ -18,7 +18,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-20.04]
-        java-version: [8,11,15,20]
+        java-version: [11, 15, 20]
         android-api: [27, 30]
       fail-fast: false
     timeout-minutes: 20
@@ -96,7 +96,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-20.04]
-        java-version: [8, 15, 20]
+        java-version: [15, 20]
         android-api: [27, 30]
     timeout-minutes: 20
     env:
