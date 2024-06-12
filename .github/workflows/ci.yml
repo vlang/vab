@@ -383,6 +383,10 @@ jobs:
     - name: Run vab --help
       run: vab --help
 
+    - name: Install Java 8 matching build-tools
+      run: |
+        vab install "build-tools;30.0.3"
+
     - name: Install AAB dependencies
       run: |
         vab install bundletool
