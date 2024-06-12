@@ -125,6 +125,7 @@ pub const default_components_ge_java_9 = {
 	}
 }
 
+// get_default_components returns the default components map based on what Java version is being used
 pub fn get_default_components() !map[string]map[string]string {
 	jdk_semantic_version := semver.from(java.jdk_version()) or {
 		error_tag := '${@MOD}.${@FN}'
