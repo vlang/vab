@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   macos-legacy-run-v-examples:
-    runs-on: macos-13
+    runs-on: macos-12
     timeout-minutes: 45
     env:
       VAB_FLAGS: -cg -f '-d no_load_styles' -v 3 --api 30 --build-tools 29.0.0 --device auto --log-clear --archs x86_64

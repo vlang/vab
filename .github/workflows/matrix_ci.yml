@@ -160,7 +160,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-20.04]
-        java-version: [8,9]
+        java-version: [8,10]
         android-api: [27, 30]
       fail-fast: false
     timeout-minutes: 20
