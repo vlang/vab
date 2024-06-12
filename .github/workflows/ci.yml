@@ -103,9 +103,9 @@ jobs:
 
     - name: Run 'vab install auto'
       run: |
-        export ANDROID_SDK_ROOT="" # These are set in the CI by default
-        export ANDROID_HOME=""
-        export ANDROID_NDK_ROOT=""
+        unset ANDROID_SDK_ROOT # These are set in the CI by default
+        unset ANDROID_HOME
+        unset ANDROID_NDK_ROOT
         vab install auto
 
     - name: Run vab doctor
