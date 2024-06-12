@@ -507,9 +507,17 @@ fn ensure_sdkmanager(verbosity int) !bool {
 			fixed_path := os.join_path(dst, def_components['cmdline-tools']['version'])
 			os.mv(os.join_path(dst, 'cmdline-tools'), fixed_path)!
 			dst_check = os.join_path(dst, fixed_path, 'bin')
+			if verbosity > 1 {
+				println('Fixed `cmdline-tools` path to "${fixed_path}"...')
+			}
 		}
 
-		os.chmod(os.join_path(dst_check, 'sdkmanager'), 0o755)!
+		os.chmod(os.join_path(dst_check, 'sdkmanager'), 0o755) or {
+			println('---FAIL---')
+			println(os.ls(os.join_path(dst, 'cmdline-tools'))!)
+			// println(os.ls(os.join_path(dst, 'cmdline-tools'))!)
+			return err
+		}
 
 		if os.is_executable(os.join_path(dst_check, 'sdkmanager')) {
 			$if linux {
