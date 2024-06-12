@@ -83,7 +83,7 @@ jobs:
 
         # Don't set Java > 8 here (emulator can't be started otherwise, lol) #export JAVA_HOME=$JAVA_HOME_11_X64
         #pgrep emulator >/dev/null 2>&1 ||
-        $ANDROID_SDK_ROOT/emulator/emulator -avd test -no-snapshot -no-window -no-boot-anim -camera-back emulated -camera-front emulated -gpu swiftshader_indirect &
+        arch -x86_64 $ANDROID_SDK_ROOT/emulator/emulator -avd test -no-snapshot -no-window -no-boot-anim -camera-back emulated -camera-front emulated -gpu swiftshader_indirect &
         adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed) ]]; do sleep 1; done;'
 
         # Remove packages here if cache is run, and emulator failed
