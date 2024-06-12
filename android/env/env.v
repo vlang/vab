@@ -504,7 +504,9 @@ fn ensure_sdkmanager(verbosity int) !bool {
 
 		util.unzip(file, dst)!
 		if os.is_dir(os.join_path(dst, 'cmdline-tools', 'bin')) {
-			os.mv(os.join_path(dst, 'cmdline-tools'), os.join_path(dst, def_components['cmdline-tools']['version']))!
+			fixed_path := os.join_path(dst, def_components['cmdline-tools']['version'])
+			os.mv(os.join_path(dst, 'cmdline-tools'), fixed_path)!
+			dst_check = os.join_path(dst, fixed_path, 'bin')
 		}
 
 		os.chmod(os.join_path(dst_check, 'sdkmanager'), 0o755)!
