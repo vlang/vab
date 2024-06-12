@@ -20,6 +20,8 @@ pub const accepted_components = ['auto', 'cmdline-tools', 'platform-tools', 'ndk
 // ndk - Works with android.compile(...)
 // platform - Google Play minimum
 // build-tools - Version where apksigner is included from
+
+@[deprecated: 'use get_default_components() instead']
 pub const default_components = {
 	'cmdline-tools':  {
 		'name':          'cmdline-tools'
@@ -52,6 +54,45 @@ pub const default_components = {
 		'version':       '7.0.0'
 		'bootstrap_url': 'https://dl.google.com/android/maven2/com/android/tools/build/aapt2/7.0.0-alpha07-7087017/aapt2-7.0.0-alpha07-7087017-[XXX].jar'
 	}
+}
+
+pub const default_components_eq_java_8 = {
+	'cmdline-tools':  {
+		'name':          'cmdline-tools'
+		'version':       '2.1'
+		'bootstrap_url': 'https://dl.google.com/android/repository/commandlinetools-[XXX]-6609375_latest.zip'
+	}
+	'platform-tools': {
+		'name':    'platform-tools'
+		'version': ''
+	}
+	'ndk':            {
+		'name':    'ndk'
+		'version': ndk.min_supported_version
+	}
+	'platforms':      {
+		'name':    'platforms'
+		'version': 'android-' + sdk.min_supported_api_level
+	}
+	'build-tools':    {
+		'name':    'build-tools'
+		'version': sdk.min_supported_build_tools_version
+	}
+	'bundletool':     {
+		'name':          'bundletool'
+		'version':       '1.5.0'
+		'bootstrap_url': 'https://github.com/google/bundletool/releases/download/1.5.0/bundletool-all-1.5.0.jar'
+	}
+	'aapt2':          {
+		'name':          'aapt2'
+		'version':       '7.0.0'
+		'bootstrap_url': 'https://dl.google.com/android/maven2/com/android/tools/build/aapt2/7.0.0-alpha07-7087017/aapt2-7.0.0-alpha07-7087017-[XXX].jar'
+	}
+}
+
+// get_default_components returns the default components map based on what Java version is being used
+pub fn get_default_components() !map[string]map[string]string {
+	return env.default_components_eq_java_8
 }
 
 pub const dot_exe = $if windows {
@@ -141,8 +182,12 @@ pub fn install(components string, verbosity int) int {
 		mut version := ''
 		is_auto := component.contains('auto')
 
+		def_components := get_default_components() or {
+			eprintln(err)
+			return 1
+		}
 		if !is_auto {
-			version = env.default_components[component]['version'] // Set default version
+			version = def_components[component]['version'] // Set default version
 			if component.contains(';') { // If user has specified a version, use that
 				cs := component.split(';')
 				component = cs.first()
@@ -167,15 +212,14 @@ pub fn install(components string, verbosity int) int {
 
 		match component {
 			'auto' {
-				cmdline_tools_comp := env.default_components['cmdline-tools']['name'] + ';' +
-					env.default_components['cmdline-tools']['version']
-				platform_tools_comp := env.default_components['platform-tools']['name'] //+ ';' + env.default_components['platform-tools']['version']
-				ndk_comp := env.default_components['ndk']['name'] + ';' +
-					env.default_components['ndk']['version']
-				build_tools_comp := env.default_components['build-tools']['name'] + ';' +
-					env.default_components['build-tools']['version']
-				platforms_comp := env.default_components['platforms']['name'] + ';' +
-					env.default_components['platforms']['version']
+				cmdline_tools_comp := def_components['cmdline-tools']['name'] + ';' +
+					def_components['cmdline-tools']['version']
+				platform_tools_comp := def_components['platform-tools']['name'] //+ ';' + def_components['platform-tools']['version']
+				ndk_comp := def_components['ndk']['name'] + ';' + def_components['ndk']['version']
+				build_tools_comp := def_components['build-tools']['name'] + ';' +
+					def_components['build-tools']['version']
+				platforms_comp := def_components['platforms']['name'] + ';' +
+					def_components['platforms']['version']
 				iopts = [
 					InstallOptions{.cmdline_tools, cmdline_tools_comp, verbosity},
 					InstallOptions{.platform_tools, platform_tools_comp, verbosity},
@@ -391,10 +435,10 @@ fn ensure_sdkmanager(verbosity int) !bool {
 		if verbosity > 0 {
 			println('No `sdkmanager` found. Bootstrapping...')
 		}
+		def_components := get_default_components()!
 		// Download
 		uos := os.user_os().replace('windows', 'win').replace('macos', 'mac')
-		url := env.default_components['cmdline-tools']['bootstrap_url'].replace('[XXX]',
-			uos)
+		url := def_components['cmdline-tools']['bootstrap_url'].replace('[XXX]', uos)
 		file := os.join_path(os.temp_dir(), 'v-android-sdk-cmdltools.tmp.zip')
 		if !os.exists(file) {
 			if verbosity > 1 {
@@ -410,9 +454,17 @@ fn ensure_sdkmanager(verbosity int) !bool {
 			println('Installing `sdkmanager` to "${dst}"...')
 		}
 		os.mkdir_all(dst)!
-		dst_check := os.join_path(dst, 'tools', 'bin')
+		mut dst_check := os.join_path(dst, 'tools', 'bin')
 
 		util.unzip(file, dst)!
+		if os.is_dir(os.join_path(dst, 'cmdline-tools', 'bin')) {
+			fixed_path := os.join_path(dst, def_components['cmdline-tools']['version'])
+			os.mv(os.join_path(dst, 'cmdline-tools'), fixed_path)!
+			dst_check = os.join_path(fixed_path, 'bin')
+			if verbosity > 1 {
+				println('Fixed `cmdline-tools` path to "${fixed_path}"...')
+			}
+		}
 
 		os.chmod(os.join_path(dst_check, 'sdkmanager'), 0o755)!
 
@@ -427,7 +479,8 @@ fn ensure_sdkmanager(verbosity int) !bool {
 			}
 			util.run([os.join_path(dst_check, 'sdkmanager')])
 			if verbosity > 1 {
-				println('`sdkmanager` installed in "${dst_check}". SDK root reports "${sdk.root()}"')
+				sdkm_version := sdkmanager_version()
+				println('`sdkmanager` v${sdkm_version} installed in "${dst_check}". SDK root reports "${sdk.root()}"')
 			}
 			return true
 		}
@@ -443,8 +496,9 @@ fn ensure_bundletool(verbosity int) !bool {
 		if verbosity > 0 {
 			println('No `bundletool` found. Bootstrapping...')
 		}
+		def_components := get_default_components()!
 		// Download
-		url := env.default_components['bundletool']['bootstrap_url']
+		url := def_components['bundletool']['bootstrap_url']
 		file := os.join_path(dst, 'bundletool.jar')
 		if !os.exists(file) {
 			if verbosity > 1 {
@@ -756,10 +810,11 @@ fn ensure_aapt2(verbosity int) !bool {
 		if verbosity > 0 {
 			println('No `aapt2` found. Bootstrapping...')
 		}
+		def_components := get_default_components()!
 		// Download
 		// https://maven.google.com/web/index.html -> com.android.tools.build -> aapt2
 		uos := os.user_os().replace('macos', 'osx')
-		url := env.default_components['aapt2']['bootstrap_url'].replace('[XXX]', uos)
+		url := def_components['aapt2']['bootstrap_url'].replace('[XXX]', uos)
 		file := os.join_path(os.temp_dir(), 'aapt2.jar')
 		// file := os.join_path(dst, 'aapt2.jar')
 		if !os.exists(file) {
