@@ -427,7 +427,8 @@ fn ensure_sdkmanager(verbosity int) !bool {
 			}
 			util.run([os.join_path(dst_check, 'sdkmanager')])
 			if verbosity > 1 {
-				println('`sdkmanager` installed in "${dst_check}". SDK root reports "${sdk.root()}"')
+				sdkm_version := sdkmanager_version()
+				println('`sdkmanager` v${sdkm_version} installed in "${dst_check}". SDK root reports "${sdk.root()}"')
 			}
 			return true
 		}
