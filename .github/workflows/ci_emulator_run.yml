@@ -52,6 +52,10 @@ jobs:
     - name: Run vab --help
       run: vab --help
 
+    - name: Install build-tools 29
+      run: |
+        vab install "build-tools;29.0.0"
+
     - name: Install AAB dependencies
       run: |
         vab install bundletool
