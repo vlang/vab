@@ -131,16 +131,6 @@ pub fn root() string {
 				cache.set_string(@MOD + '.' + @FN, sdk_root)
 				return sdk_root
 			}
-			sdkm_path = os.join_path(cache_dir(), 'cmdline-tools', '3.0', 'bin', 'sdkmanager')
-			if os.is_executable(sdkm_path) {
-				$if debug_sdk ? {
-					eprintln(@MOD + '.' + @FN +
-						' found by sdkmanager (3.0) in cache "${cache_dir()}"')
-				}
-				sdk_root = cache_dir()
-				cache.set_string(@MOD + '.' + @FN, sdk_root)
-				return sdk_root
-			}
 		}
 		if !os.is_executable(sdkm_path) {
 			sdkm_path = ''

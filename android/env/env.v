@@ -6,7 +6,6 @@ import os
 import semver
 import net.http
 import vab.cache
-import vab.java
 import vab.android.sdk
 import vab.android.ndk
 import vab.android.util
@@ -91,54 +90,9 @@ pub const default_components_eq_java_8 = {
 	}
 }
 
-pub const default_components_ge_java_9 = {
-	'cmdline-tools':  {
-		'name':          'cmdline-tools'
-		'version':       '3.0'
-		'bootstrap_url': 'https://dl.google.com/android/repository/commandlinetools-[XXX]-6858069_latest.zip'
-	}
-	'platform-tools': {
-		'name':    'platform-tools'
-		'version': ''
-	}
-	'ndk':            {
-		'name':    'ndk'
-		'version': ndk.min_supported_version
-	}
-	'platforms':      {
-		'name':    'platforms'
-		'version': 'android-' + sdk.min_supported_api_level
-	}
-	'build-tools':    {
-		'name':    'build-tools'
-		'version': sdk.min_supported_build_tools_version
-	}
-	'bundletool':     {
-		'name':          'bundletool'
-		'version':       '1.5.0'
-		'bootstrap_url': 'https://github.com/google/bundletool/releases/download/1.5.0/bundletool-all-1.5.0.jar'
-	}
-	'aapt2':          {
-		'name':          'aapt2'
-		'version':       '7.0.0'
-		'bootstrap_url': 'https://dl.google.com/android/maven2/com/android/tools/build/aapt2/7.0.0-alpha07-7087017/aapt2-7.0.0-alpha07-7087017-[XXX].jar'
-	}
-}
-
 // get_default_components returns the default components map based on what Java version is being used
 pub fn get_default_components() !map[string]map[string]string {
-	jdk_semantic_version := semver.from(java.jdk_version()) or {
-		error_tag := '${@MOD}.${@FN}'
-		return error('${error_tag}' + ':' + @LINE +
-			' error converting jdk_version "${java.jdk_version()}" to semantic version.\nsemver: ${err}')
-	}
-	// Use newer commandline tools on Java >= 9+
-	components := if jdk_semantic_version >= semver.build(9, 0, 0) {
-		env.default_components_ge_java_9
-	} else {
-		env.default_components_eq_java_8
-	}
-	return components
+	return env.default_components_eq_java_8
 }
 
 pub const dot_exe = $if windows {
