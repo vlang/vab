@@ -499,9 +499,12 @@ fn ensure_sdkmanager(verbosity int) !bool {
 			println('Installing `sdkmanager` to "${dst}"...')
 		}
 		os.mkdir_all(dst)!
-		dst_check := os.join_path(dst, 'tools', 'bin')
+		mut dst_check := os.join_path(dst, 'tools', 'bin')
 
 		util.unzip(file, dst)!
+		if os.is_dir(os.join_path(dst, 'cmdline-tools', 'bin')) {
+			os.mv(os.join_path(dst, 'cmdline-tools'), os.join_path(dst, 'tools'))!
+		}
 
 		os.chmod(os.join_path(dst_check, 'sdkmanager'), 0o755)!
 
