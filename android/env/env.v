@@ -514,7 +514,8 @@ fn ensure_sdkmanager(verbosity int) !bool {
 
 		os.chmod(os.join_path(dst_check, 'sdkmanager'), 0o755) or {
 			println('---FAIL---')
-			println(os.ls(os.join_path(dst, 'cmdline-tools'))!)
+			println(os.ls(dst)!)
+			println(os.ls(dst_check)!)
 			// println(os.ls(os.join_path(dst, 'cmdline-tools'))!)
 			return err
 		}
