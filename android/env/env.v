@@ -512,14 +512,7 @@ fn ensure_sdkmanager(verbosity int) !bool {
 			}
 		}
 
-		os.chmod(os.join_path(dst_check, 'sdkmanager'), 0o755) or {
-			println('---FAIL---')
-			println(os.ls(dst)!)
-			println(os.ls(os.join_path(dst, '3.0'))!)
-			// println(os.ls(dst_check)!)
-			// println(os.ls(os.join_path(dst, 'cmdline-tools'))!)
-			return err
-		}
+		os.chmod(os.join_path(dst_check, 'sdkmanager'), 0o755)!
 
 		if os.is_executable(os.join_path(dst_check, 'sdkmanager')) {
 			$if linux {
