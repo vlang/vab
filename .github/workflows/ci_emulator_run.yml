@@ -13,8 +13,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  macos-latest-run-v-examples:
-    runs-on: macOS-latest
+  macos-legacy-run-v-examples:
+    runs-on: macos-13
     timeout-minutes: 45
     env:
       VAB_FLAGS: -cg -f '-d no_load_styles' -v 3 --api 30 --build-tools 29.0.0 --device auto --log-clear --archs x86_64
@@ -83,7 +83,7 @@ jobs:
 
         # Don't set Java > 8 here (emulator can't be started otherwise, lol) #export JAVA_HOME=$JAVA_HOME_11_X64
         #pgrep emulator >/dev/null 2>&1 ||
-        arch -x86_64 $ANDROID_SDK_ROOT/emulator/emulator -avd test -no-snapshot -no-window -no-boot-anim -camera-back emulated -camera-front emulated -gpu swiftshader_indirect &
+        $ANDROID_SDK_ROOT/emulator/emulator -avd test -no-snapshot -no-window -no-boot-anim -camera-back emulated -camera-front emulated -gpu swiftshader_indirect &
         adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed) ]]; do sleep 1; done;'
 
         # Remove packages here if cache is run, and emulator failed
