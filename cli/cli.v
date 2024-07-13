@@ -96,7 +96,7 @@ pub fn args_to_options(arguments []string, defaults Options) !(Options, &flag.Fl
 
 	mut opt := Options{
 		assets_extra: fp.string_multi('assets', `a`, 'Asset dir(s) to include in build')
-		libs_extra: fp.string_multi('libs', `a`, 'Lib dir(s) to include in build')
+		libs_extra: fp.string_multi('libs', `l`, 'Lib dir(s) to include in build')
 		v_flags: fp.string_multi('flag', `f`, 'Additional flags for the V compiler')
 		//
 		c_flags: fp.string_multi('cflag', `c`, 'Additional flags for the C compiler')
