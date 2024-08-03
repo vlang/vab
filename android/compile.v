@@ -605,14 +605,14 @@ pub fn compile_v_imports_c_dependencies(opt CompileOptions, imported_modules []s
 	is_debug_build := opt.is_debug_build()
 
 	// For all compilers
-	mut cflags := opt.c_flags.clone()
+	mut cflags_common := opt.c_flags.clone()
 	if opt.is_prod {
-		cflags << ['-Os']
+		cflags_common << ['-Os']
 	} else {
-		cflags << ['-O0']
+		cflags_common << ['-O0']
 	}
-	cflags << ['-fPIC']
-	cflags << ['-Wall', '-Wextra']
+	cflags_common << ['-fPIC']
+	cflags_common << ['-Wall', '-Wextra']
 
 	mut android_includes := []string{}
 	// Include NDK headers
@@ -628,6 +628,7 @@ pub fn compile_v_imports_c_dependencies(opt CompileOptions, imported_modules []s
 
 	mut jobs := []job_util.ShellJob{}
 	for arch in archs {
+		mut cflags := cflags_common.clone()
 		arch_o_dir := os.join_path(build_dir, 'o', arch)
 		if !os.is_dir(arch_o_dir) {
 			os.mkdir_all(arch_o_dir) or {

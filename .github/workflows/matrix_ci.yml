@@ -19,7 +19,7 @@ jobs:
       matrix:
         os: [ubuntu-20.04]
         java-version: [11,15,20]
-        android-api: [27, 30]
+        android-api: [31, 33]
       fail-fast: false
     timeout-minutes: 20
     env:
@@ -97,7 +97,7 @@ jobs:
       matrix:
         os: [ubuntu-20.04]
         java-version: [11, 15, 20]
-        android-api: [27, 30]
+        android-api: [31, 33]
     timeout-minutes: 20
     env:
       VAB_FLAGS: -v 3 -gc none --build-tools 29.0.0
@@ -161,7 +161,7 @@ jobs:
       matrix:
         os: [ubuntu-20.04]
         java-version: [8] # 9, 10 is in a bad state currently
-        android-api: [27, 30]
+        android-api: [31, 33]
       fail-fast: false
     timeout-minutes: 20
     env:
