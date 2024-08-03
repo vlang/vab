@@ -139,41 +139,42 @@ jobs:
         adb uninstall io.v.ci.vab.apk.examples.tetris
 
         # V UI
-        echo "Installing V UI"
-        git clone --depth 1 https://github.com/vlang/ui
-        cd ui ; mkdir -p ~/.vmodules ; ln -s $(pwd) ~/.vmodules/ui ; cd ..
-
-        declare -a v_ui_examples=('rectangles.v')
-
-        echo "Compiling examples ${v_ui_examples[@]}"
-        for example in "${v_ui_examples[@]}"; do
-          package_id=$( echo "$example" | sed 's%/%%' | sed 's%\.%%' )
-          package_id=$( echo "v$package_id" )
-
-          # APK
-          echo "Compiling apk from ui/examples/$example ($package_id)"
-          vab --package-id "io.v.apk.ui.$package_id" run ui/examples/$example
-
-          # AAB
-          echo "Compiling aab from ui/examples/$example ($package_id)"
-          vab --package aab --package-id "io.v.aab.ui.$package_id" run ui/examples/$example
-
-          # Remove app in case cache is run
-          adb uninstall "io.v.apk.ui.$package_id"
-          adb uninstall "io.v.aab.ui.$package_id"
-        done
-
-        # Output test
-        echo "Testing if ui/examples/calculator can run..."
-        vab -g --package-id "io.v.ui.ci.examples.calculator" run ui/examples/calculator.v
-        sleep 5
-        adb -e logcat -d > /tmp/logcat.dump.txt
-        echo "Looking for traces of BDWGC"
-        cat /tmp/logcat.dump.txt | grep -q 'BDWGC   : Grow'; if [ ! $? -eq 0 ]; then cat /tmp/logcat.dump.txt; fi
-
-        # Remove app in case cache is run
-        echo "Uninstalling ui/examples/calculator"
-        adb uninstall io.v.ui.ci.examples.calculator
+        # V UI is currently not in a state where it can be compiled for Android
+        # echo "Installing V UI"
+        # git clone --depth 1 https://github.com/vlang/ui
+        # cd ui ; mkdir -p ~/.vmodules ; ln -s $(pwd) ~/.vmodules/ui ; cd ..
+        #
+        # declare -a v_ui_examples=('rectangles.v')
+        #
+        # echo "Compiling examples ${v_ui_examples[@]}"
+        # for example in "${v_ui_examples[@]}"; do
+        #   package_id=$( echo "$example" | sed 's%/%%' | sed 's%\.%%' )
+        #   package_id=$( echo "v$package_id" )
+        #
+        #   # APK
+        #   echo "Compiling apk from ui/examples/$example ($package_id)"
+        #   vab --package-id "io.v.apk.ui.$package_id" run ui/examples/$example
+        #
+        #   # AAB
+        #   echo "Compiling aab from ui/examples/$example ($package_id)"
+        #   vab --package aab --package-id "io.v.aab.ui.$package_id" run ui/examples/$example
+        #
+        #   # Remove app in case cache is run
+        #   adb uninstall "io.v.apk.ui.$package_id"
+        #   adb uninstall "io.v.aab.ui.$package_id"
+        # done
+        #
+        # # Output test
+        # echo "Testing if ui/examples/calculator can run..."
+        # vab -g --package-id "io.v.ui.ci.examples.calculator" run ui/examples/calculator.v
+        # sleep 5
+        # adb -e logcat -d > /tmp/logcat.dump.txt
+        # echo "Looking for traces of BDWGC"
+        # cat /tmp/logcat.dump.txt | grep -q 'BDWGC   : Grow'; if [ ! $? -eq 0 ]; then cat /tmp/logcat.dump.txt; fi
+        #
+        # # Remove app in case cache is run
+        # echo "Uninstalling ui/examples/calculator"
+        # adb uninstall io.v.ui.ci.examples.calculator
 
         echo "Killing emulator"
         adb -s emulator-5554 emu kill
