@@ -14,13 +14,13 @@ pub:
 	pic                          bool = true // TODO
 	debug                        bool = true // false = release
 	platform_level               int  = 21
-	arch                         string               @[required]
+	arch                         string @[required]
 	neon                         bool
-	arm_mode                     string = 'thumb' // or 'arm'
+	arm_mode                     string               = 'thumb' // or 'arm'
 	lang                         CompilerLanguageType = .c
-	ld                           string   = 'lld'
-	stl                          string   = 'c++_static' // or 'c++_shared' 'none' 'system'
-	cpp_features                 []string = ['rtti', 'exceptions']
+	ld                           string               = 'lld'
+	stl                          string               = 'c++_static' // or 'c++_shared' 'none' 'system'
+	cpp_features                 []string             = ['rtti', 'exceptions']
 	allow_undefined_symbols      bool
 	disable_format_string_checks bool
 }

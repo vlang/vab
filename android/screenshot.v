@@ -21,7 +21,7 @@ pub struct ScreenshotOptions {
 pub:
 	deploy_options DeployOptions // This should be copy of the deploy options used to deploy the app
 	path           string        // /path/to/screenshot.png
-	delay          f64 // delay this many seconds before taking the shot
+	delay          f64           // delay this many seconds before taking the shot
 	on_log         string
 	on_log_timeout f64 // Values <= 0 means no timeout
 }
