@@ -284,9 +284,9 @@ compiler := ndk.compiler(.c, ndk_version, 'arm64-v8a', '21') or { panic(err) }
 // Get recommended, Android specific, flags (also used by e.g. Gradle) for the compiler
 // Make sure they fit the compiler you're targeting.
 compiler_flags := ndk.compiler_flags_from_config(ndk_version,
-	arch: 'arm64-v8a'
-	lang: .c
-	debug: true // false = if you want production flags (-prod)
+	arch:         'arm64-v8a'
+	lang:         .c
+	debug:        true // false = if you want production flags (-prod)
 	cpp_features: ['no-rtti', 'no-exceptions'] // Special features available for C++ compilers, ignored for C compilers
 ) or { panic(err) }
 

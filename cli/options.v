@@ -464,9 +464,9 @@ pub fn (mut opt Options) resolve(exit_on_error bool) {
 // resolve_keystore returns an `android.Keystore` resolved from `Options`.
 pub fn (opt &Options) resolve_keystore() !android.Keystore {
 	mut keystore := android.Keystore{
-		path: opt.keystore
-		password: opt.keystore_password
-		alias: opt.keystore_alias
+		path:           opt.keystore
+		password:       opt.keystore_password
+		alias:          opt.keystore_alias
 		alias_password: opt.keystore_alias_password
 	}
 	if !os.is_file(keystore.path) {
@@ -508,19 +508,23 @@ pub fn (opt &Options) as_android_deploy_options() !android.DeployOptions {
 
 	deploy_opt := android.DeployOptions{
 		verbosity: opt.verbosity
-		format: format
+		format:    format
 		// keystore: keystore
-		activity_name: opt.activity_name
-		work_dir: opt.work_dir
-		v_flags: opt.v_flags
-		device_id: opt.device_id
-		deploy_file: opt.output
-		kill_adb: os.getenv('VAB_KILL_ADB') != ''
+		activity_name:    opt.activity_name
+		work_dir:         opt.work_dir
+		v_flags:          opt.v_flags
+		device_id:        opt.device_id
+		deploy_file:      opt.output
+		kill_adb:         os.getenv('VAB_KILL_ADB') != ''
 		clear_device_log: opt.clear_device_log
-		device_log: opt.device_log || opt.device_log_raw
-		log_mode: if opt.device_log_raw { android.LogMode.raw } else { android.LogMode.filtered }
+		device_log:       opt.device_log || opt.device_log_raw
+		log_mode:         if opt.device_log_raw {
+			android.LogMode.raw
+		} else {
+			android.LogMode.filtered
+		}
 		log_tags: log_tags
-		run: run
+		run:      run
 	}
 
 	return deploy_opt
@@ -529,19 +533,19 @@ pub fn (opt &Options) as_android_deploy_options() !android.DeployOptions {
 // as_android_compile_options returns `android.CompileOptions` based on the fields in `Options`.
 pub fn (opt &Options) as_android_compile_options() android.CompileOptions {
 	comp_opt := android.CompileOptions{
-		verbosity: opt.verbosity
-		cache: opt.cache
-		parallel: opt.parallel
-		is_prod: opt.is_prod
-		gles_version: opt.gles_version
-		v_flags: opt.v_flags
-		c_flags: opt.c_flags
-		archs: opt.archs
-		work_dir: opt.work_dir
-		input: opt.input
-		ndk_version: opt.ndk_version
-		lib_name: opt.lib_name
-		api_level: opt.api_level
+		verbosity:       opt.verbosity
+		cache:           opt.cache
+		parallel:        opt.parallel
+		is_prod:         opt.is_prod
+		gles_version:    opt.gles_version
+		v_flags:         opt.v_flags
+		c_flags:         opt.c_flags
+		archs:           opt.archs
+		work_dir:        opt.work_dir
+		input:           opt.input
+		ndk_version:     opt.ndk_version
+		lib_name:        opt.lib_name
+		api_level:       opt.api_level
 		min_sdk_version: opt.min_sdk_version
 	}
 	return comp_opt
@@ -560,26 +564,26 @@ pub fn (opt &Options) as_android_package_options() android.PackageOptions {
 	}
 
 	pck_opt := android.PackageOptions{
-		verbosity: opt.verbosity
-		work_dir: opt.work_dir
-		is_prod: opt.is_prod
-		api_level: opt.api_level
+		verbosity:       opt.verbosity
+		work_dir:        opt.work_dir
+		is_prod:         opt.is_prod
+		api_level:       opt.api_level
 		min_sdk_version: opt.min_sdk_version
-		gles_version: opt.gles_version
-		build_tools: opt.build_tools
-		app_name: opt.app_name
-		lib_name: opt.lib_name
-		package_id: opt.package_id
-		format: format
-		activity_name: opt.activity_name
-		icon: opt.icon
-		version_code: opt.version_code
-		v_flags: opt.v_flags
-		input: opt.input
-		assets_extra: opt.assets_extra
-		libs_extra: opt.libs_extra
-		output_file: opt.output
-		overrides_path: opt.package_overrides_path
+		gles_version:    opt.gles_version
+		build_tools:     opt.build_tools
+		app_name:        opt.app_name
+		lib_name:        opt.lib_name
+		package_id:      opt.package_id
+		format:          format
+		activity_name:   opt.activity_name
+		icon:            opt.icon
+		version_code:    opt.version_code
+		v_flags:         opt.v_flags
+		input:           opt.input
+		assets_extra:    opt.assets_extra
+		libs_extra:      opt.libs_extra
+		output_file:     opt.output
+		overrides_path:  opt.package_overrides_path
 	}
 	return pck_opt
 }
@@ -588,9 +592,9 @@ pub fn (opt &Options) as_android_package_options() android.PackageOptions {
 pub fn (opt &Options) as_android_screenshot_options(deploy_opts android.DeployOptions) android.ScreenshotOptions {
 	screenshot_opt := android.ScreenshotOptions{
 		deploy_options: deploy_opts
-		path: opt.screenshot
-		delay: opt.screenshot_delay
-		on_log: opt.screenshot_on_log
+		path:           opt.screenshot
+		delay:          opt.screenshot_delay
+		on_log:         opt.screenshot_on_log
 		on_log_timeout: opt.screenshot_on_log_timeout
 	}
 	return screenshot_opt

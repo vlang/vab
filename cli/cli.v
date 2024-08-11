@@ -96,56 +96,56 @@ pub fn args_to_options(arguments []string, defaults Options) !(Options, &flag.Fl
 
 	mut opt := Options{
 		assets_extra: fp.string_multi('assets', `a`, 'Asset dir(s) to include in build')
-		libs_extra: fp.string_multi('libs', `l`, 'Lib dir(s) to include in build')
-		v_flags: fp.string_multi('flag', `f`, 'Additional flags for the V compiler')
+		libs_extra:   fp.string_multi('libs', `l`, 'Lib dir(s) to include in build')
+		v_flags:      fp.string_multi('flag', `f`, 'Additional flags for the V compiler')
 		//
-		c_flags: fp.string_multi('cflag', `c`, 'Additional flags for the C compiler')
-		archs: fp.string('archs', 0, defaults.archs.join(','), 'Comma separated string with any of ${android.default_archs}').split(',')
+		c_flags:      fp.string_multi('cflag', `c`, 'Additional flags for the C compiler')
+		archs:        fp.string('archs', 0, defaults.archs.join(','), 'Comma separated string with any of ${android.default_archs}').split(',')
 		gles_version: fp.int('gles', 0, defaults.gles_version, 'GLES version to use from any of ${android.supported_gles_versions}')
 		//
-		device_id: fp.string('device', `d`, defaults.device_id, 'Deploy to device <id>. Use "auto" to use first available.')
-		run: 'run' in cmd_flags // fp.bool('run', `r`, false, 'Run the app on the device after successful deployment.')
-		device_log: fp.bool('log', 0, defaults.device_log, 'Enable device logging after deployment.')
-		device_log_raw: fp.bool('log-raw', 0, defaults.device_log_raw, 'Enable unfiltered, full device logging after deployment.')
+		device_id:        fp.string('device', `d`, defaults.device_id, 'Deploy to device <id>. Use "auto" to use first available.')
+		run:              'run' in cmd_flags // fp.bool('run', `r`, false, 'Run the app on the device after successful deployment.')
+		device_log:       fp.bool('log', 0, defaults.device_log, 'Enable device logging after deployment.')
+		device_log_raw:   fp.bool('log-raw', 0, defaults.device_log_raw, 'Enable unfiltered, full device logging after deployment.')
 		clear_device_log: fp.bool('log-clear', 0, defaults.clear_device_log, 'Clear the log buffer on the device before deployment.')
-		log_tags: fp.string_multi('log-tag', 0, 'Additional tags to include in output when using --log')
+		log_tags:         fp.string_multi('log-tag', 0, 'Additional tags to include in output when using --log')
 		//
-		keystore: fp.string('keystore', 0, defaults.keystore, 'Use this keystore file to sign the package')
+		keystore:       fp.string('keystore', 0, defaults.keystore, 'Use this keystore file to sign the package')
 		keystore_alias: fp.string('keystore-alias', 0, defaults.keystore_alias, 'Use this keystore alias from the keystore file to sign the package')
 		//
 		dump_usage: fp.bool('help', `h`, defaults.dump_usage, 'Show this help message and exit')
-		cache: !fp.bool('nocache', 0, defaults.cache, 'Do not use build cache')
+		cache:      !fp.bool('nocache', 0, defaults.cache, 'Do not use build cache')
 		//
-		app_name: fp.string('name', 0, defaults.app_name, 'Pretty app name')
-		package_id: fp.string('package-id', 0, defaults.package_id, 'App package ID (e.g. "org.company.app")')
+		app_name:               fp.string('name', 0, defaults.app_name, 'Pretty app name')
+		package_id:             fp.string('package-id', 0, defaults.package_id, 'App package ID (e.g. "org.company.app")')
 		package_overrides_path: fp.string('package-overrides', 0, defaults.package_overrides_path,
 			'Package file overrides path (e.g. "/tmp/java")')
 		package_format: fp.string('package', `p`, defaults.package_format, 'App package format. Any of ${android.supported_package_formats}')
-		activity_name: fp.string('activity-name', 0, defaults.activity_name, 'The name of the main activity (e.g. "VActivity")')
-		icon: fp.string('icon', 0, defaults.icon, 'App icon')
-		version_code: fp.int('version-code', 0, defaults.version_code, 'Build version code (android:versionCode)')
+		activity_name:  fp.string('activity-name', 0, defaults.activity_name, 'The name of the main activity (e.g. "VActivity")')
+		icon:           fp.string('icon', 0, defaults.icon, 'App icon')
+		version_code:   fp.int('version-code', 0, defaults.version_code, 'Build version code (android:versionCode)')
 		//
 		output: fp.string('output', `o`, defaults.output, 'Path to output (dir/file)')
 		//
 		verbosity: verbosity
-		parallel: !fp.bool('no-parallel', 0, false, 'Do not run tasks in parallel.')
+		parallel:  !fp.bool('no-parallel', 0, false, 'Do not run tasks in parallel.')
 		//
-		build_tools: fp.string('build-tools', 0, defaults.build_tools, 'Version of build-tools to use (--list-build-tools)')
-		api_level: fp.string('api', 0, defaults.api_level, 'Android API level to use (--list-apis)')
+		build_tools:     fp.string('build-tools', 0, defaults.build_tools, 'Version of build-tools to use (--list-build-tools)')
+		api_level:       fp.string('api', 0, defaults.api_level, 'Android API level to use (--list-apis)')
 		min_sdk_version: fp.int('min-sdk-version', 0, defaults.min_sdk_version, 'Minimum SDK version version code (android:minSdkVersion)')
 		//
 		ndk_version: fp.string('ndk-version', 0, defaults.ndk_version, 'Android NDK version to use (--list-ndks)')
 		//
 		work_dir: defaults.work_dir
 		//
-		list_ndks: fp.bool('list-ndks', 0, defaults.list_ndks, 'List available NDK versions')
-		list_apis: fp.bool('list-apis', 0, defaults.list_apis, 'List available API levels')
+		list_ndks:        fp.bool('list-ndks', 0, defaults.list_ndks, 'List available NDK versions')
+		list_apis:        fp.bool('list-apis', 0, defaults.list_apis, 'List available API levels')
 		list_build_tools: fp.bool('list-build-tools', 0, defaults.list_build_tools, 'List available Build-tools versions')
-		list_devices: fp.bool('list-devices', 0, defaults.list_devices, 'List available device IDs (including running emulators)')
+		list_devices:     fp.bool('list-devices', 0, defaults.list_devices, 'List available device IDs (including running emulators)')
 		//
-		screenshot: fp.string('screenshot', 0, '', 'Take a screenshot on a device and save it to /path/to/file.png or /path/to/directory')
-		screenshot_delay: fp.float('screenshot-delay', 0, 0.0, 'Wait for this amount of seconds before taking screenshot')
-		screenshot_on_log: fp.string('screenshot-on-log', 0, '', 'Wait for this string to appear in the device log before taking a screenshot')
+		screenshot:                fp.string('screenshot', 0, '', 'Take a screenshot on a device and save it to /path/to/file.png or /path/to/directory')
+		screenshot_delay:          fp.float('screenshot-delay', 0, 0.0, 'Wait for this amount of seconds before taking screenshot')
+		screenshot_on_log:         fp.string('screenshot-on-log', 0, '', 'Wait for this string to appear in the device log before taking a screenshot')
 		screenshot_on_log_timeout: fp.float('screenshot-on-log-timeout', 0, 0.0, 'Timeout after this amount of seconds if --screenshot-on-log string is not detected')
 	}
 
