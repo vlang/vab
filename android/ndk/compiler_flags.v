@@ -48,8 +48,8 @@ pub fn compiler_flag_generator(ndk_version string) FlagGen {
 pub fn compiler_flags_from_config(ndk_version string, flag_config FlagConfig) !FlagResult {
 	gen := compiler_flag_generator(ndk_version)
 	return FlagResult{
-		flags: gen.flags(flag_config)!
-		ld_flags: gen.ld_flags(flag_config)!
+		flags:        gen.flags(flag_config)!
+		ld_flags:     gen.ld_flags(flag_config)!
 		ld_flags_exe: gen.ld_flags_exe(flag_config)!
 	}
 }

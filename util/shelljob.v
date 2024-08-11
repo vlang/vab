@@ -43,7 +43,7 @@ fn sync_run(job ShellJob) &ShellJobResult {
 	}
 	res := run(job.cmd)
 	return &ShellJobResult{
-		job: job
+		job:    job
 		result: res
 	}
 }

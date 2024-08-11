@@ -123,10 +123,10 @@ pub fn compile_v_to_c(opt CompileOptions) !VMetaInfo {
 
 	v_compile_opt := VCompileOptions{
 		verbosity: opt.verbosity
-		cache: opt.cache
-		flags: opt.v_flags
-		work_dir: os.join_path(opt.work_dir, 'v')
-		input: opt.input
+		cache:     opt.cache
+		flags:     opt.v_flags
+		work_dir:  os.join_path(opt.work_dir, 'v')
+		input:     opt.input
 	}
 
 	v_meta_dump := v_dump_meta(v_compile_opt)!
@@ -185,7 +185,7 @@ pub fn compile(opt CompileOptions) ! {
 	v_meta_dump := compile_v_to_c(opt) or {
 		return IError(CompileError{
 			kind: .v_to_c
-			err: err.msg()
+			err:  err.msg()
 		})
 	}
 	v_cflags := v_meta_dump.c_flags
@@ -251,7 +251,7 @@ pub fn compile(opt CompileOptions) ! {
 	vicd := compile_v_imports_c_dependencies(opt, imported_modules) or {
 		return IError(CompileError{
 			kind: .c_to_o
-			err: err.msg()
+			err:  err.msg()
 		})
 	}
 	mut o_files := vicd.o_files.clone()
@@ -431,7 +431,7 @@ pub fn compile(opt CompileOptions) ! {
 	job_util.run_jobs(jobs, opt.parallel, opt.verbosity) or {
 		return IError(CompileError{
 			kind: .c_to_o
-			err: err.msg()
+			err:  err.msg()
 		})
 	}
 	jobs.clear()
@@ -468,7 +468,7 @@ pub fn compile(opt CompileOptions) ! {
 		job_util.run_jobs(jobs, opt.parallel, opt.verbosity) or {
 			return IError(CompileError{
 				kind: .o_to_so
-				err: err.msg()
+				err:  err.msg()
 			})
 		}
 

@@ -89,8 +89,8 @@ fn main() {
 			android.simple_screenshot(
 				verbosity: opt.verbosity
 				device_id: opt.device_id
-				path: opt.screenshot
-				delay: opt.screenshot_delay
+				path:      opt.screenshot
+				delay:     opt.screenshot_delay
 			) or {
 				eprintln('Failed to take screenshot:\n${err}')
 				exit(1)

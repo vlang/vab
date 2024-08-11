@@ -136,14 +136,14 @@ fn sync_run(job TOMLTestJob) &TOMLTestJobResult {
 	}
 
 	return &TOMLTestJobResult{
-		success: success
-		job: job
-		command: execute
-		expected: expected
-		expected_out_path: expected_out_path
-		found: found
+		success:            success
+		job:                job
+		command:            execute
+		expected:           expected
+		expected_out_path:  expected_out_path
+		found:              found
 		expected_exit_code: expect_exit_code
-		exit_code: res.exit_code
+		exit_code:          res.exit_code
 	}
 }
 
