@@ -323,9 +323,18 @@ pub fn tool(tool_type Tool, ndk_version string, arch string) !string {
 			}
 			path := bin_path(ndk_version)
 			if os.is_dir(path) {
+				// NOTE: these *linux-android*-ar tools was deprecated in NDK r22 and removed in r23
 				mut ar := os.join_path(path, arch_is + '-linux-android${eabi}-ar')
 				$if windows {
 					ar += '.cmd' // TODO validate if this is correct
+				}
+				if os.is_file(ar) {
+					return ar
+				}
+				// Try `llvm-ar` which was introduced as default in NDK r22 (https://github.com/android/ndk/wiki/Changelog-r22)
+				ar = os.join_path(path, 'llvm-ar')
+				$if windows {
+					ar += '.exe'
 				}
 				if os.is_file(ar) {
 					return ar
