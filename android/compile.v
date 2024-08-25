@@ -718,8 +718,8 @@ pub fn compile_v_c_dependencies(opt CompileOptions, v_meta_info VMetaInfo) !VImp
 		}
 
 		// Compile all detected `#flag /path/to/xxx.o` V source code entires that matches an imported module.
-		// NOTE: currently there's no way in V source to pass flags for specific architectures to these flags need
-		// to be added specially here. It should probably be supported as compile options from commandline?
+		// NOTE: currently there's no way in V source to pass flags for specific architectures so these flags need
+		// to be added specially here. It should probably be supported as compile options from commandline...
 		for module_name, mod_compile_lines in v_module_o_files {
 			if opt.verbosity > 1 {
 				println('Compiling .o files from module ${module_name} for arch ${arch}...')
