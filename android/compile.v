@@ -248,7 +248,7 @@ pub fn compile(opt CompileOptions) ! {
 			if opt.parallel { ' in parallel' } else { '' })
 	}
 
-	vicd := compile_v_imports_c_dependencies(opt, imported_modules) or {
+	vicd := compile_v_c_dependencies(opt, v_meta_dump) or {
 		return IError(CompileError{
 			kind: .c_to_o
 			err:  err.msg()
@@ -593,7 +593,198 @@ pub:
 	a_files map[string][]string
 }
 
+// compile_v_c_dependencies compiles the C dependencies in the V code.
+pub fn compile_v_c_dependencies(opt CompileOptions, v_meta_info VMetaInfo) !VImportCDeps {
+	err_sig := @MOD + '.' + @FN
+
+	imported_modules := v_meta_info.imports
+
+	// The following detects `#flag /path/to/file.o` entries in V source code that matches a module.
+	//
+	// Find all "*.o" entries in the C flags dump (obtained via `-dump-c-flags`).
+	// Match the (file)name of these .o files with what modules are actually imported
+	// (imports are obtained via `-dump-modules`)
+	// If they are module .o files - look for the corresponding `.o.description.txt` that V produces
+	// as `~/.vmodules/cache/<hex>/<hash>.o.description.txt`.
+	// If the file exists read in it's contents to obtain the exact flags passed to the C compiler.
+	mut v_module_o_files := map[string][][]string{}
+	for line in v_meta_info.c_flags {
+		line_trimmed := line.trim('\'"')
+		if line_trimmed.contains('.module.') && line_trimmed.ends_with('.o') {
+			module_name := line_trimmed.all_after('.module.').all_before_last('.o')
+			if module_name in imported_modules {
+				description_file := line_trimmed.all_before_last('.o') + '.description.txt'
+				if os.is_file(description_file) {
+					if description_contents := os.read_file(description_file) {
+						desc := description_contents.split(' ').map(it.trim_space()).filter(it != '')
+						index_of_at := desc.index('@')
+						index_of_o := desc.index('-o')
+						index_of_c := desc.index('-c')
+						if desc.len <= 3 || index_of_at <= 0 || index_of_o <= 0 || index_of_c <= 0 {
+							if opt.verbosity > 2 {
+								println('Description file "${description_file}" does not seem to have valid contents for object file generation')
+								println('Description file contents:\n---\n"${description_contents}"\n---')
+							}
+							continue
+						}
+						v_module_o_files[module_name] << (desc[index_of_at + 2..])
+					}
+				}
+			}
+		}
+	}
+
+	mut o_files := map[string][]string{}
+	mut a_files := map[string][]string{}
+
+	uses_gc := opt.uses_gc()
+	build_dir := opt.build_directory()!
+	is_debug_build := opt.is_debug_build()
+
+	// For all compilers
+	mut cflags_common := opt.c_flags.clone()
+	if opt.is_prod {
+		cflags_common << ['-Os']
+	} else {
+		cflags_common << ['-O0']
+	}
+	cflags_common << ['-fPIC']
+	cflags_common << ['-Wall', '-Wextra']
+
+	mut android_includes := []string{}
+	// Include NDK headers
+	ndk_sysroot := ndk.sysroot_path(opt.ndk_version) or {
+		return error('${err_sig}: getting NDK sysroot path.\n${err}')
+	}
+	android_includes << '-I"' + os.join_path(ndk_sysroot, 'usr', 'include') + '"'
+	android_includes << '-I"' + os.join_path(ndk_sysroot, 'usr', 'include', 'android') + '"'
+
+	v_thirdparty_dir := os.join_path(vxt.home(), 'thirdparty')
+
+	archs := opt.archs()!
+
+	mut jobs := []job_util.ShellJob{}
+	for arch in archs {
+		mut cflags := cflags_common.clone()
+		arch_o_dir := os.join_path(build_dir, 'o', arch)
+		if !os.is_dir(arch_o_dir) {
+			os.mkdir_all(arch_o_dir) or {
+				return error('${err_sig}: failed making directory "${arch_o_dir}".\n${err}')
+			}
+		}
+
+		compiler := ndk.compiler(.c, opt.ndk_version, arch, opt.api_level) or {
+			return error('${err_sig}: failed getting NDK compiler.\n${err}')
+		}
+
+		// libgc is a builtin feature that currently can not be detected via any `-dump-xxx` flags.
+		if uses_gc {
+			if opt.verbosity > 1 {
+				println('Compiling libgc (${arch}) via -gc flag')
+			}
+
+			mut defines := []string{}
+			if is_debug_build {
+				defines << '-DGC_ASSERTIONS'
+				defines << '-DGC_ANDROID_LOG'
+			}
+			defines << '-DGC_THREADS=1'
+			defines << '-DGC_BUILTIN_ATOMIC=1'
+			defines << '-D_REENTRANT'
+			// NOTE it's currently a little unclear why this is needed.
+			// V UI can crash and with when the gc is built into the exe and started *without* GC_INIT() the error would occur:
+			defines << '-DUSE_MMAP' // Will otherwise crash with a message with a path to the lib in GC_unix_mmap_get_mem+528
+
+			o_file := os.join_path(arch_o_dir, 'gc.o')
+			build_cmd := [
+				compiler,
+				cflags.join(' '),
+				'-I"' + os.join_path(v_thirdparty_dir, 'libgc', 'include') + '"',
+				defines.join(' '),
+				'-c "' + os.join_path(v_thirdparty_dir, 'libgc', 'gc.c') + '"',
+				'-o "${o_file}"',
+			]
+			util.verbosity_print_cmd(build_cmd, opt.verbosity)
+			o_res := util.run_or_error(build_cmd)!
+			if opt.verbosity > 2 {
+				eprintln(o_res)
+			}
+
+			o_files[arch] << o_file
+
+			jobs << job_util.ShellJob{
+				cmd: build_cmd
+			}
+		}
+
+		// Compile all detected `#flag /path/to/xxx.o` V source code entires that matches an imported module.
+		// NOTE: currently there's no way in V source to pass flags for specific architectures to these flags need
+		// to be added specially here. It should probably be supported as compile options from commandline?
+		for module_name, mod_compile_lines in v_module_o_files {
+			if opt.verbosity > 1 {
+				println('Compiling .o files from module ${module_name} for arch ${arch}...')
+			}
+
+			if module_name == 'stbi' && arch == 'armeabi-v7a' {
+				if opt.verbosity > 1 {
+					println('Applying fix flag to stb_image_resize2.h (for ${arch}, via stbi module)')
+				}
+				cflags << '-mfpu=neon-vfpv4'
+				$if gcc {
+					cflags << '-mfp16-format=ieee'
+				}
+			}
+
+			for compile_line in mod_compile_lines {
+				index_o_arg := compile_line.index('-o') + 1
+				mut o_file := ''
+				if path := compile_line[index_o_arg] {
+					file_name := os.file_name(path).trim_space().trim('\'"')
+					o_file = os.join_path(arch_o_dir, '${file_name}')
+				}
+				mut build_cmd := [
+					compiler,
+					cflags.join(' '),
+				]
+				for i, entry in compile_line {
+					if i == index_o_arg {
+						build_cmd << '"${o_file}"'
+						continue
+					}
+					build_cmd << entry
+				}
+
+				if opt.verbosity > 1 {
+					println('Compiling "${o_file}" from module ${module_name} for arch ${arch}...')
+				}
+
+				util.verbosity_print_cmd(build_cmd, opt.verbosity)
+				o_res := util.run_or_error(build_cmd)!
+				if opt.verbosity > 2 {
+					eprintln(o_res)
+				}
+
+				o_files[arch] << o_file
+
+				jobs << job_util.ShellJob{
+					cmd: build_cmd
+				}
+			}
+		}
+	}
+
+	job_util.run_jobs(jobs, opt.parallel, opt.verbosity)!
+
+	return VImportCDeps{
+		o_files: o_files
+		a_files: a_files
+	}
+}
+
 // compile_v_imports_c_dependencies compiles the C dependencies of V's module imports.
+// It is replaced by compile_v_c_dependencies that has better support for `#flag /path/to/xxx.o` V source entries.
+@[deprecated: 'use compile_v_c_dependencies() instead']
+@[deprecated_after: '2025-01-01']
 pub fn compile_v_imports_c_dependencies(opt CompileOptions, imported_modules []string) !VImportCDeps {
 	err_sig := @MOD + '.' + @FN
 
