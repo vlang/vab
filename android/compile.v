@@ -677,7 +677,7 @@ pub fn compile_v_c_dependencies(opt CompileOptions, v_meta_info VMetaInfo) !VImp
 			return error('${err_sig}: failed getting NDK compiler.\n${err}')
 		}
 
-		// libgc is a builtin feature that currently can not be detected via any `-dump-xxx` flags.
+		// Support builtin libgc which is enabled by default in V or via explicit passed `-gc` flag.
 		if uses_gc {
 			if opt.verbosity > 1 {
 				println('Compiling libgc (${arch}) via -gc flag')
