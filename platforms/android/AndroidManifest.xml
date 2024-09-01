@@ -4,25 +4,26 @@
 	android:versionCode="0"
 	android:versionName="@string/v_app_name"
 	android:installLocation="auto"
-	package="io.v.android">
+	package="io.v.android"
+>
 
 	<uses-sdk android:minSdkVersion="21" android:targetSdkVersion="21" />
 	<uses-feature android:glEsVersion="0x00020000" android:required="true" />
 
-    <application
+	<application
 		android:debuggable="true"
 		android:hasCode="true"
 		android:label="@string/v_app_name"
 		android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
 		android:icon="@mipmap/icon"
 		tools:replace="android:icon,android:theme,android:allowBackup,label"
-		>
+	>
 
 		<activity android:name="io.v.android.VActivity"
 			android:configChanges="orientation|screenSize|keyboard|keyboardHidden"
 			android:launchMode="singleTask"
 			android:exported="true"
-			>
+		>
 			<meta-data android:name="android.app.lib_name" android:value="@string/v_lib_name"/>
 			<intent-filter>
 				<action android:name="android.intent.action.MAIN"/>
