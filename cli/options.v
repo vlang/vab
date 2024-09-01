@@ -454,8 +454,10 @@ pub fn (mut opt Options) resolve(exit_on_error bool) {
 	mut device_id := opt.device_id
 	if device_id == '' {
 		device_id = os.getenv('ANDROID_SERIAL')
-		if opt.verbosity > 1 && device_id != '' {
-			eprintln('Using device "${device_id}" from ANDROID_SERIAL env variable')
+		if device_id != '' {
+			if opt.verbosity > 1 {
+				eprintln('Using device "${device_id}" from ANDROID_SERIAL env variable')
+			}
 			opt.device_id = device_id
 		}
 	}
