@@ -23,13 +23,20 @@ The following flags does the same as if they were passed to the "v" compiler:
 -autofree, -gc <type>, -g, -cg, -prod, -showcc, -skip-unused
 
 Sub-commands:
-  doctor                    Display useful info about your system for bug reports'
+  doctor                    Display useful info about your system,
+                            (useful for bug reports)
+  install                   Install various components. Example:
+                            `vab install "platforms;android-21"'
 
 pub const exe_git_hash = vab_commit_hash()
 pub const work_directory = vab_tmp_work_dir()
 pub const cache_directory = vab_cache_dir()
-pub const rip_vflags = ['-autofree', '-gc', '-g', '-cg', '-prod', 'run', '-showcc', '-skip-unused']
+pub const rip_vflags = ['-autofree', '-gc', '-g', '-cg', '-prod', 'run', '-showcc', '-skip-unused'] // NOTE this can be removed when the deprecated `cli.args_to_options()` is removed
+pub const special_v_args = ['-autofree', '-gc', '-g', '-cg', '-prod', 'run', '-showcc',
+	'-skip-unused']
+pub const special_flags = ['-v', '--verbosity', '--archs']
 pub const subcmds = ['complete', 'test-cleancode']
+pub const subcmds_builtin = ['doctor', 'install']
 pub const accepted_input_files = ['.v', '.apk', '.aab']
 
 pub const vab_env_vars = [
@@ -48,8 +55,33 @@ pub const vab_env_vars = [
 	'VMODULES',
 ]
 
+pub const vab_documentation_config = flag.DocConfig{
+	version:     '${exe_short_name} ${version_full()}'
+	description: exe_description
+	options:     flag.DocOptions{
+		compact: true
+	}
+	fields: {
+		'--gles_version':   'GLES version to use from any of ${android.supported_gles_versions}'
+		'--package_format': 'App package format. Any of ${android.supported_package_formats}'
+		'--archs':          'Comma separated string with any of:\n${android.default_archs}'
+	}
+}
+
+// run_vab_sub_command runs and exits a sub-command if found in `args`
+pub fn run_vab_sub_command(args []string) {
+	// Indentify sub-commands.
+	for subcmd in cli.subcmds {
+		if subcmd in args {
+			// First encountered known sub-command is executed on the spot.
+			exit(launch_cmd(args[args.index(subcmd)..]))
+		}
+	}
+}
+
 // args_to_options returns an `Option` merged from (CLI/Shell) `arguments` using `defaults` as
 // values where no value can be obtained from `arguments`.
+@[deprecated: 'use options_from_arguments and run_vab_sub_command instead']
 pub fn args_to_options(arguments []string, defaults Options) !(Options, &flag.FlagParser) {
 	mut args := arguments.clone()
 
@@ -69,6 +101,9 @@ pub fn args_to_options(arguments []string, defaults Options) !(Options, &flag.Fl
 		if special_flag in args {
 			if special_flag == '-gc' {
 				gc_type := args[(args.index(special_flag)) + 1]
+				if gc_type.starts_with('-') {
+					return error('flag `-gc` requires an non-flag argument')
+				}
 				v_flags << special_flag + ' ${gc_type}'
 				args.delete(args.index(special_flag) + 1)
 			} else if special_flag.starts_with('-') {

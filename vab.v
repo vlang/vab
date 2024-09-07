@@ -11,10 +11,23 @@ import vab.android.ndk
 import vab.android.env
 
 fn main() {
-	// Collect user flags in an extended manner.
-	// Start with defaults -> overwrite by VAB_FLAGS -> overwrite by commandline flags -> extend by .vab file entries.
+	args := arguments()
+
+	// Run any of vab's sub commands if found in `args`.
+	// NOTE: `run_vab_sub_command` executes first matching command, if found; then calls `exit(...)`
+	cli.run_vab_sub_command(args)
+
+	// Get potential input to `vab`.
+	input := args.last()
+
+	// Collect user flags precedented going from most implicit to most explicit.
+	// Start with defaults -> overwrite by .vab file entries -> overwrite by VAB_FLAGS -> overwrite by commandline flags.
 	mut opt := cli.Options{}
-	mut fp := &flag.FlagParser(unsafe { nil })
+
+	opt = cli.options_from_dot_vab(input, opt) or {
+		eprintln('Error while parsing `.vab`: ${err}')
+		exit(1)
+	}
 
 	opt = cli.options_from_env(opt) or {
 		eprintln('Error while parsing `VAB_FLAGS`: ${err}')
@@ -22,20 +35,32 @@ fn main() {
 		exit(1)
 	}
 
-	opt, fp = cli.args_to_options(os.args, opt) or {
+	mut unmatched_args := []string{}
+	opt, unmatched_args = cli.options_from_arguments(args, opt) or {
 		eprintln('Error while parsing `os.args`: ${err}')
 		eprintln('Use `${cli.exe_short_name} -h` to see all flags')
 		exit(1)
 	}
 
+	if unmatched_args.len > 0 {
+		eprintln('Error while parsing arguments could not match ${unmatched_args}')
+		eprintln('Use `${cli.exe_short_name} -h` to see all flags')
+		exit(1)
+	}
+
 	$if vab_debug_options ? {
-		eprintln(opt)
-		eprintln(vab_flags)
-		eprintln(os.args)
+		eprintln('--- ${@FN} ---')
+		dump(os.args)
+		dump(opt)
 	}
 
 	if opt.dump_usage {
-		println(fp.usage())
+		documentation := flag.to_doc[cli.Options](cli.vab_documentation_config) or {
+			eprintln('Error generating usage documentation via `flag.to_doc[cli.Options](...)` this should not happen.')
+			eprintln('Error message: ${err}')
+			exit(1)
+		}
+		println(documentation)
 		exit(0)
 	}
 
@@ -82,57 +107,47 @@ fn main() {
 		exit(0)
 	}
 
+	// Call the doctor at this point
+	if opt.run_builtin_cmd == 'doctor' {
+		// Validate environment
+		cli.check_essentials(false)
+		opt.resolve(false)
+		cli.doctor(opt)
+		exit(0)
+	}
+
 	// All flags after this requires an input argument, except
 	// doing one-off screenshots on a device
-	if fp.args.len == 0 {
-		if opt.screenshot != '' {
-			android.simple_screenshot(
-				verbosity: opt.verbosity
-				device_id: opt.device_id
-				path:      opt.screenshot
-				delay:     opt.screenshot_delay
-			) or {
-				eprintln('Failed to take screenshot:\n${err}')
-				exit(1)
-			}
-			exit(0)
-		} else {
-			eprintln('No arguments given')
-			eprintln('Use `vab -h` to see all flags')
+	if opt.screenshot != '' {
+		android.simple_screenshot(
+			verbosity: opt.verbosity
+			device_id: opt.device_id
+			path:      opt.screenshot
+			delay:     opt.screenshot_delay
+		) or {
+			eprintln('Failed to take screenshot:\n${err}')
 			exit(1)
 		}
+		exit(0)
 	}
 
-	if opt.additional_args.len > 1 {
-		if opt.additional_args[0] == 'install' {
-			install_arg := opt.additional_args[1]
-			res := env.install(install_arg, opt.verbosity)
-			if res == 0 && opt.verbosity > 0 {
-				if install_arg != 'auto' {
-					println('Installed ${install_arg} successfully.')
-				} else {
-					println('Installed all dependencies successfully.')
-				}
+	if opt.run_builtin_cmd == 'install' {
+		install_arg := opt.input
+		res := env.install(install_arg, opt.verbosity)
+		if res == 0 && opt.verbosity > 0 {
+			if install_arg != 'auto' {
+				println('Installed ${install_arg} successfully.')
+			} else {
+				println('Installed all dependencies successfully.')
 			}
-			exit(res)
 		}
+		exit(res)
 	}
 
-	// Call the doctor at this point
-	if opt.additional_args.len > 0 {
-		if opt.additional_args[0] == 'doctor' {
-			// Validate environment
-			cli.check_essentials(false)
-			opt.resolve(false)
-			cli.doctor(opt)
-			exit(0)
-		}
-	}
 	// Validate environment
 	cli.check_essentials(true)
 	opt.resolve(true)
 
-	input := fp.args.last()
 	cli.validate_input(input) or {
 		eprintln('${cli.exe_short_name}: ${err}')
 		exit(1)
@@ -140,8 +155,6 @@ fn main() {
 	opt.input = input
 
 	opt.resolve_output()
-
-	opt.extend_from_dot_vab()
 
 	// Validate environment after options and input has been resolved
 	opt.validate_env()

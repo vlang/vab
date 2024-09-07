@@ -64,7 +64,8 @@ pub fn doctor(opt Options) {
 	println('${exe_short_name}
 	Version ${exe_version} ${exe_git_hash}
 	Path "${exe_dir}"
-	Base files "${default_base_files_path}"')
+	Base files "${default_base_files_path}"
+	os.args: ${os.args}')
 
 	// Shell environment
 	print_var_if_set := fn (vars map[string]string, var_name string) {
