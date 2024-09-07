@@ -18,7 +18,7 @@ fn main() {
 	cli.run_vab_sub_command(args)
 
 	// Get potential input to `vab`.
-	input := args.last()
+	mut input := args.last()
 
 	// Collect user flags precedented going from most implicit to most explicit.
 	// Start with defaults -> overwrite by .vab file entries -> overwrite by VAB_FLAGS -> overwrite by commandline flags.
@@ -43,9 +43,15 @@ fn main() {
 	}
 
 	if unmatched_args.len > 0 {
-		eprintln('Error while parsing arguments could not match ${unmatched_args}')
-		eprintln('Use `${cli.exe_short_name} -h` to see all flags')
-		exit(1)
+		if os.is_dir(unmatched_args[0]) || os.is_file(unmatched_args[0]) {
+			// NOTE: if you use `vab` as a module to make your own tool, do not support this
+			eprintln('notice: passing input as first argument is deprecated. Future versions of `vab` might not support this. Pass input as the *last* argument.')
+			input = unmatched_args[0]
+		} else {
+			eprintln('Error while parsing arguments. Could not match ${unmatched_args}')
+			eprintln('Use `${cli.exe_short_name} -h` to see all flags')
+			exit(1)
+		}
 	}
 
 	$if vab_debug_options ? {
