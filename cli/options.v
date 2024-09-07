@@ -202,6 +202,8 @@ pub fn options_from_dot_vab(input string, defaults Options) !Options {
 	return opts
 }
 
+// options_from_arguments returns an `Option` merged from (CLI/Shell -style) `arguments` using `defaults` as
+// values where no value can be matched in `arguments`.
 pub fn options_from_arguments(arguments []string, defaults Options) !(Options, []string) {
 	mut args := arguments.clone()
 	mut v_flags := []string{}
