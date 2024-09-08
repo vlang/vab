@@ -121,8 +121,8 @@ fn main() {
 		exit(0)
 	}
 
-	// All flags after this requires an input argument, except
-	// doing one-off screenshots on a device
+	// NOTE: All flags after this requires an input argument,
+	// *except* doing one-off screenshots on a device:
 	if opt.screenshot != '' {
 		android.simple_screenshot(
 			verbosity: opt.verbosity
