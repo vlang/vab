@@ -12,18 +12,19 @@ import vab.android.env
 // Options represents all possible configuration that `vab` works with.
 // Most fields can be mapped from commandline flags. The ones that can not
 // are marked with `@[ignore]` and are usually parsed differently or computed at later stages.
+// For fields missing documentation, see the const `vab_documentation_config`.
 pub struct Options {
 pub:
 	// These fields would make little sense to change during a run
 	verbosity       int    @[short: v; xdoc: 'Verbosity level (1-3)']
 	work_dir        string = work_directory @[ignore]
-	run_builtin_cmd string @[ignore] // run a command from subcmd_builtin
+	run_builtin_cmd string @[ignore] // run a command from subcmd_builtin (e.g. `vab doctor`)
 	// Build, packaging and deployment
 	parallel     bool = true @[long: 'no-parallel'; xdoc: 'Do not run tasks in parallel.']
 	cache        bool = true @[long: 'nocache'; xdoc: 'Do not use build cache']
 	gles_version int  = android.default_gles_version  @[long: gles; xdoc: 'GLES version to use']
 	// Deploy specifics
-	run              bool @[ignore]
+	run              bool @[ignore] // run is handled separately in argument parsing
 	device_log       bool @[long: 'log'; xdoc: 'Enable device logging after deployment.']
 	device_log_raw   bool @[long: 'log-raw'; xdoc: 'Enable unfiltered, full device logging after deployment.']
 	clear_device_log bool @[long: 'log-clear'; xdoc: 'Clear the log buffer on the device before deployment.']
@@ -40,9 +41,9 @@ pub:
 	screenshot_on_log_timeout f64 = -1.0    @[xdoc: 'Timeout after this amount of seconds if --screenshot-on-log string is not detected']
 pub mut:
 	// I/O
-	input           string   @[tail] // handled separately
+	input           string   @[tail] // NOTE: vab also supports passing input as *first* argument
 	output          string   @[short: o; xdoc: 'Path to output (dir/file)']
-	additional_args []string @[ignore] // additional_args passed via os.args
+	additional_args []string @[ignore] // additional_args collects arguments (*not* flags) that could not be parsed
 	// App essentials
 	app_name               string = android.default_app_name @[long: name; xdoc: 'Pretty app name']
 	icon                   string @[xdoc: 'App icon']
@@ -52,10 +53,10 @@ pub mut:
 	package_overrides_path string @[long: 'package-overrides'; xdoc: 'Package file overrides path (e.g. "/tmp/java")']
 	// Build and packaging
 	archs                   []string = android.default_archs @[ignore] // Compile for these archs. (parsed specially to support "arch,arch,arch")
-	is_prod                 bool     @[ignore] // Parsed from V specific flags
+	is_prod                 bool     @[ignore] // Parsed and inferred from V specific flags
 	c_flags                 []string @[long: 'cflag'; short: c; xdoc: 'Additional flags for the C compiler']
 	v_flags                 []string @[long: 'flag'; short: f; xdoc: 'Additional flags for the V compiler']
-	lib_name                string   @[ignore] // Generated field depending on input/flags
+	lib_name                string   @[ignore] // Generated field depending on names in input/flags
 	assets_extra            []string @[long: 'assets'; short: a; xdoc: 'Asset dir(s) to include in build']
 	libs_extra              []string @[long: 'libs'; short: l; xdoc: 'Lib dir(s) to include in build']
 	version_code            int      @[xdoc: 'Build version code (android:versionCode)']
