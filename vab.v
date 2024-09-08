@@ -13,14 +13,18 @@ import vab.android.env
 fn main() {
 	mut args := arguments()
 
-	// NOTE: `run_vab_sub_command` executes first matching vab sub-command, if found; then `exit(...)`
+	// Run any of vab's sub commands if found in `args`.
+	// NOTE: `run_vab_sub_command` executes first matching command, if found; then `exit(...)`
 	cli.run_vab_sub_command(args)
 
-	// Get *potential* input. This allows to support flags from `.vab` files residing next to `input`
+	// Get *potential* input.
+	// This allows to support flags from `.vab` files residing next to `input`
 	mut input := ''
 	if args.len > 1 {
+		// Tail arguments are supported per default and handled by the flag parser.
 		input = args.last()
-		// NOTE: this is to support input as *first* argument. Example: `vab /path/to/code -o /path/to/output.apk`
+
+		// NOTE: this is to support passing input as *first* argument. Example: `vab /path/to/code -o /path/to/output.apk`
 		if os.is_dir(args[1]) || os.is_file(args[1]) {
 			input = args[1]
 			args.delete(1) // will otherwise end up in `unmatched_args`
