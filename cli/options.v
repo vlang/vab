@@ -231,7 +231,7 @@ pub fn options_from_arguments(arguments []string, defaults Options) !(Options, [
 
 	// Handle sub-commands and a few oddities that `vab` has supported historically
 	mut verbosity := defaults.verbosity
-	mut archs := []string{}
+	mut archs := defaults.archs.clone()
 	mut run_builtin_cmd := defaults.run_builtin_cmd
 
 	for i := 0; i < args.len; i++ {
