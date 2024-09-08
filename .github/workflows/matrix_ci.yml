@@ -25,13 +25,13 @@ jobs:
     env:
       VAB_FLAGS: -v 3 --build-tools 29.0.0
     steps:
-    - uses: actions/setup-java@v2
+    - uses: actions/setup-java@v4
       with:
         distribution: 'adopt'
         java-version: ${{ matrix.java-version }}
 
     - name: Checkout V
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         repository: vlang/v
 
@@ -39,7 +39,7 @@ jobs:
       run: make -j2
 
     - name: Checkout vab
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         path: vab
 
@@ -102,13 +102,13 @@ jobs:
     env:
       VAB_FLAGS: -v 3 -gc none --build-tools 29.0.0
     steps:
-    - uses: actions/setup-java@v2
+    - uses: actions/setup-java@v4
       with:
         distribution: 'adopt'
         java-version: ${{ matrix.java-version }}
 
     - name: Checkout V
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         repository: vlang/v
 
@@ -116,7 +116,7 @@ jobs:
       run: make -j2
 
     - name: Checkout vab
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         path: vab
 
@@ -167,13 +167,13 @@ jobs:
     env:
       VAB_FLAGS: -v 3 --build-tools 29.0.0
     steps:
-    - uses: actions/setup-java@v2
+    - uses: actions/setup-java@v4
       with:
         distribution: 'adopt'
         java-version: ${{ matrix.java-version }}
 
     - name: Checkout V
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         repository: vlang/v
 
@@ -181,7 +181,7 @@ jobs:
       run: make -j2
 
     - name: Checkout vab
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         path: vab
 

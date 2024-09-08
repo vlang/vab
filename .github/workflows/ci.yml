@@ -20,7 +20,7 @@ jobs:
       VFLAGS: -cc tcc
     steps:
     - name: Checkout V
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         repository: vlang/v
 
@@ -28,7 +28,7 @@ jobs:
       run: make -j4 && sudo ./v symlink
 
     - name: Checkout vab
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         path: vab
 
@@ -64,7 +64,7 @@ jobs:
       VAB_FLAGS: -v 3
     steps:
     - name: Checkout V
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         repository: vlang/v
 
@@ -72,7 +72,7 @@ jobs:
       run: make -j4 && sudo ./v symlink
 
     - name: Checkout vab
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         path: vab
 
@@ -131,7 +131,7 @@ jobs:
       VAB_FLAGS: -v 3
     steps:
     - name: Checkout V
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         repository: vlang/v
 
@@ -139,7 +139,7 @@ jobs:
       run: make -j4 && sudo ./v symlink
 
     - name: Checkout vab
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         path: vab
 
@@ -196,7 +196,7 @@ jobs:
       VAB_FLAGS: -v 3
     steps:
     - name: Checkout V
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         repository: vlang/v
 
@@ -204,7 +204,7 @@ jobs:
       run: make -j4 && sudo ./v symlink
 
     - name: Checkout vab
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         path: vab
 
@@ -241,7 +241,7 @@ jobs:
     timeout-minutes: 10
     steps:
     - name: Checkout V
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         repository: vlang/v
 
@@ -249,7 +249,7 @@ jobs:
       run: make -j4 && sudo ./v symlink
 
     - name: Checkout vab
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         path: vab
 
@@ -279,7 +279,7 @@ jobs:
     #timeout-minutes: 10
     #steps:
     #- name: Checkout V
-      #uses: actions/checkout@v2
+      #uses: actions/checkout@v4
       #with:
         #repository: vlang/v
 
@@ -287,7 +287,7 @@ jobs:
       #run: make -j4
 
     #- name: Checkout vab
-      #uses: actions/checkout@v2
+      #uses: actions/checkout@v4
       #with:
         #path: vab
 
@@ -342,7 +342,7 @@ jobs:
       VAB_FLAGS: -cg -v 3 --api 31 --build-tools 30.0.3
     steps:
 
-    #- uses: actions/setup-java@v2
+    #- uses: actions/setup-java@v4
       #with:
         #distribution: 'adopt'
         #java-version: 15
@@ -354,13 +354,13 @@ jobs:
 
     # TODO https://github.com/vlang/setup-v/issues
     - name: Checkout V examples
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         repository: vlang/v
         path: v
 
     - name: Checkout vab
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         path: vab
 
