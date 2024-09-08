@@ -11,18 +11,31 @@ import vab.android.ndk
 import vab.android.env
 
 fn main() {
-	args := arguments()
+	mut args := arguments()
 
 	// Run any of vab's sub commands if found in `args`.
-	// NOTE: `run_vab_sub_command` executes first matching command, if found; then calls `exit(...)`
+	// NOTE: `run_vab_sub_command` executes first matching command, if found; then `exit(...)`
 	cli.run_vab_sub_command(args)
 
-	// Get potential input to `vab`.
-	mut input := args.last()
+	// Get *potential* input.
+	// This allows to support flags from `.vab` files residing next to `input`
+	mut input := ''
+	if args.len > 1 {
+		// Tail arguments are supported per default and handled by the flag parser.
+		input = args.last()
+
+		// NOTE: this is to support passing input as *first* argument. Example: `vab /path/to/code -o /path/to/output.apk`
+		if os.is_dir(args[1]) || os.is_file(args[1]) {
+			input = args[1]
+			args.delete(1) // will otherwise end up in `unmatched_args`
+		}
+	}
 
 	// Collect user flags precedented going from most implicit to most explicit.
-	// Start with defaults -> overwrite by .vab file entries -> overwrite by VAB_FLAGS -> overwrite by commandline flags.
-	mut opt := cli.Options{}
+	// Start with defaults -> overwrite by .vab file entries -> overwrite by $VAB_FLAGS -> overwrite by command-line flags.
+	mut opt := cli.Options{
+		input: input
+	}
 
 	opt = cli.options_from_dot_vab(input, opt) or {
 		eprintln('Error while parsing `.vab`: ${err}')
@@ -43,14 +56,9 @@ fn main() {
 	}
 
 	if unmatched_args.len > 0 {
-		if os.is_dir(unmatched_args[0]) || os.is_file(unmatched_args[0]) {
-			// NOTE: this is to support passing input as *first* argument. Example: `vab /path/to/code` -o /path/to/output.apk`
-			input = unmatched_args[0]
-		} else {
-			eprintln('Error while parsing arguments. Could not match ${unmatched_args}')
-			eprintln('Use `${cli.exe_short_name} -h` to see all flags')
-			exit(1)
-		}
+		eprintln('Error while parsing arguments. Could not match ${unmatched_args}')
+		eprintln('Use `${cli.exe_short_name} -h` to see all flags')
+		exit(1)
 	}
 
 	$if vab_debug_options ? {
@@ -153,11 +161,10 @@ fn main() {
 	cli.check_essentials(true)
 	opt.resolve(true)
 
-	cli.validate_input(input) or {
+	cli.validate_input(opt.input) or {
 		eprintln('${cli.exe_short_name}: ${err}')
 		exit(1)
 	}
-	opt.input = input
 
 	opt.resolve_output()
 
