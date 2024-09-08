@@ -44,8 +44,7 @@ fn main() {
 
 	if unmatched_args.len > 0 {
 		if os.is_dir(unmatched_args[0]) || os.is_file(unmatched_args[0]) {
-			// NOTE: if you use `vab` as a module to make your own tool, do not support this
-			eprintln('notice: passing input as first argument is deprecated. Future versions of `vab` might not support this. Pass input as the *last* argument.')
+			// NOTE: this is to support passing input as *first* argument. Example: `vab /path/to/code` -o /path/to/output.apk`
 			input = unmatched_args[0]
 		} else {
 			eprintln('Error while parsing arguments. Could not match ${unmatched_args}')
