@@ -110,7 +110,7 @@ cli.doctor(...)
 
 On top, it's *recommended* that you have some experience with Android development already,
 as some terms and situations can be resolved more quickly with knowledge about the different
-areas and implications of Android developement.
+areas and implications of Android development.
 
 In some situations, calling `vab` from the command line might not fit
 a specific project, setup or problem at hand. You usually want more control
