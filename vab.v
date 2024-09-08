@@ -13,11 +13,10 @@ import vab.android.env
 fn main() {
 	args := arguments()
 
-	// Run any of vab's sub commands if found in `args`.
-	// NOTE: `run_vab_sub_command` executes first matching command, if found; then calls `exit(...)`
+	// NOTE: `run_vab_sub_command` executes first matching sub-command, if found; then calls `exit(...)`
 	cli.run_vab_sub_command(args)
 
-	// Get potential input to `vab`.
+	// Get *potential* input to `vab`.
 	mut input := args.last()
 
 	// Collect user flags precedented going from most implicit to most explicit.
@@ -44,7 +43,7 @@ fn main() {
 
 	if unmatched_args.len > 0 {
 		if os.is_dir(unmatched_args[0]) || os.is_file(unmatched_args[0]) {
-			// NOTE: this is to support passing input as *first* argument. Example: `vab /path/to/code` -o /path/to/output.apk`
+			// NOTE: this is to support passing input arguments *arbitrarily*. Example: `vab -f "-d ident" /path/to/code -o /path/to/output.apk`
 			input = unmatched_args[0]
 		} else {
 			eprintln('Error while parsing arguments. Could not match ${unmatched_args}')
