@@ -62,8 +62,8 @@ pub const vab_documentation_config = flag.DocConfig{
 		compact: true
 	}
 	fields: {
-		'--gles_version':   'GLES version to use from any of ${android.supported_gles_versions}'
-		'--package_format': 'App package format. Any of ${android.supported_package_formats}'
+		'--gles-version':   'GLES version to use from any of ${android.supported_gles_versions}'
+		'--package-format': 'App package format. Any of ${android.supported_package_formats}'
 		'--archs':          'Comma separated string with any of:\n${android.default_archs}'
 	}
 }
