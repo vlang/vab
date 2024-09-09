@@ -20,18 +20,18 @@ jobs:
       VAB_FLAGS: -cg -f '-d no_load_styles' -v 3 --api 30 --build-tools 29.0.0 --device auto --log-clear --archs x86_64
       VFLAGS: -no-parallel
     steps:
-    - uses: actions/setup-java@v2
+    - uses: actions/setup-java@v4
       with:
         distribution: 'adopt'
         java-version: 8
 
     - name: Install V
-      uses: vlang/setup-v@v1
+      uses: vlang/setup-v@v1.4
       with:
         check-latest: true
 
     - name: Checkout vab
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         path: vab
 
