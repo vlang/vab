@@ -1,6 +1,7 @@
 module cli
 
 import os
+import flag
 import semver
 import vab.java
 import vab.android
@@ -8,81 +9,333 @@ import vab.android.sdk
 import vab.android.ndk
 import vab.android.env
 
+// Options represents all possible configuration that `vab` works with.
+// Most fields can be mapped from commandline flags. The ones that can not
+// are marked with `@[ignore]` and are usually parsed differently or computed at later stages.
+// For fields missing documentation, see the const `vab_documentation_config`.
 pub struct Options {
 pub:
 	// These fields would make little sense to change during a run
-	verbosity int
-	work_dir  string = work_directory
+	verbosity       int    @[short: v; xdoc: 'Verbosity level (1-3)']
+	work_dir        string = work_directory @[ignore]
+	run_builtin_cmd string @[ignore] // run a command from subcmd_builtin (e.g. `vab doctor`)
 	// Build, packaging and deployment
-	parallel     bool = true // Run, what can be run, in parallel
-	cache        bool // defaults to false in os.args/flag parsing phase
-	gles_version int = android.default_gles_version
+	parallel     bool = true @[long: 'no-parallel'; xdoc: 'Do not run tasks in parallel.']
+	cache        bool = true @[long: 'nocache'; xdoc: 'Do not use build cache']
+	gles_version int  = android.default_gles_version  @[long: gles; xdoc: 'GLES version to use']
 	// Deploy specifics
-	run              bool
-	device_log       bool
-	device_log_raw   bool
-	clear_device_log bool // clears the log buffers on the device
+	run              bool @[ignore] // run is handled separately in argument parsing
+	device_log       bool @[long: 'log'; xdoc: 'Enable device logging after deployment.']
+	device_log_raw   bool @[long: 'log-raw'; xdoc: 'Enable unfiltered, full device logging after deployment.']
+	clear_device_log bool @[long: 'log-clear'; xdoc: 'Clear the log buffer on the device before deployment.']
 	// Detected environment
-	dump_usage       bool
-	list_ndks        bool
-	list_apis        bool
-	list_build_tools bool
-	list_devices     bool
+	dump_usage       bool @[long: 'help'; short: h; xdoc: 'Show this help message and exit']
+	list_ndks        bool @[xdoc: 'List available NDK versions']
+	list_apis        bool @[xdoc: 'List available API levels']
+	list_build_tools bool @[xdoc: 'List available Build-tools versions']
+	list_devices     bool @[xdoc: 'List available device IDs (including running emulators)']
 	// screenshot functionality
-	screenshot                string // /path/to/screenshot.png
-	screenshot_delay          f64
-	screenshot_on_log         string
-	screenshot_on_log_timeout f64 = -1.0
+	screenshot                string @[xdoc: 'Take a screenshot on a device and save it to /path/to/file.png or /path/to/directory']
+	screenshot_delay          f64    @[xdoc: 'Wait for this amount of seconds before taking screenshot']
+	screenshot_on_log         string @[xdoc: 'Wait for this string to appear in the device log before taking a screenshot']
+	screenshot_on_log_timeout f64 = -1.0    @[xdoc: 'Timeout after this amount of seconds if --screenshot-on-log string is not detected']
 pub mut:
 	// I/O
-	input           string
-	output          string
-	additional_args []string // additional_args passed via os.args
+	input           string   @[tail] // NOTE: vab also supports passing input as *first* argument
+	output          string   @[short: o; xdoc: 'Path to output (dir/file)']
+	additional_args []string @[ignore] // additional_args collects arguments (*not* flags) that could not be parsed
 	// App essentials
-	app_name               string = android.default_app_name
-	icon                   string
-	package_id             string = android.default_package_id
-	activity_name          string
-	package_format         string = android.default_package_format
-	package_overrides_path string
+	app_name               string = android.default_app_name @[long: name; xdoc: 'Pretty app name']
+	icon                   string @[xdoc: 'App icon']
+	package_id             string = android.default_package_id @[xdoc: 'App package ID (e.g. "org.company.app")']
+	activity_name          string @[xdoc: 'The name of the main activity (e.g. "VActivity")']
+	package_format         string = android.default_package_format @[long: package; xdoc: 'App package format (.apk/.aab)']
+	package_overrides_path string @[long: 'package-overrides'; xdoc: 'Package file overrides path (e.g. "/tmp/java")']
 	// Build and packaging
-	archs                   []string // Compile for these archs
-	is_prod                 bool
-	c_flags                 []string // flags passed to the C compiler(s)
-	v_flags                 []string // flags passed to the V compiler
-	lib_name                string
-	assets_extra            []string
-	libs_extra              []string
-	version_code            int
-	keystore                string // Path to keystore file
-	keystore_alias          string // Alias to use in keystore file
-	keystore_password       string
-	keystore_alias_password string
+	archs                   []string = android.default_archs @[ignore] // Compile for these archs. (parsed specially to support "arch,arch,arch")
+	is_prod                 bool     @[ignore] // Parsed and inferred from V specific flags
+	c_flags                 []string @[long: 'cflag'; short: c; xdoc: 'Additional flags for the C compiler']
+	v_flags                 []string @[long: 'flag'; short: f; xdoc: 'Additional flags for the V compiler']
+	lib_name                string   @[ignore] // Generated field depending on names in input/flags
+	assets_extra            []string @[long: 'assets'; short: a; xdoc: 'Asset dir(s) to include in build']
+	libs_extra              []string @[long: 'libs'; short: l; xdoc: 'Lib dir(s) to include in build']
+	version_code            int      @[xdoc: 'Build version code (android:versionCode)']
+	keystore                string   @[xdoc: 'Use this keystore file to sign the package']
+	keystore_alias          string   @[xdoc: 'Use this keystore alias from the keystore file to sign the package']
+	keystore_password       string   @[ignore] // Resolved at runtime via env var see: Options.resolve()
+	keystore_alias_password string   @[ignore] // Resolved at runtime via env var see: Options.resolve()
 	// Build specifics
-	build_tools     string
-	api_level       string
-	ndk_version     string
-	min_sdk_version int = android.default_min_sdk_version
+	build_tools     string @[xdoc: 'Version of build-tools to use (--list-build-tools)']
+	api_level       string @[long: 'api'; xdoc: 'Android API level to use (--list-apis)']
+	ndk_version     string @[xdoc: 'Android NDK version to use (--list-ndks)']
+	min_sdk_version int = android.default_min_sdk_version    @[xdoc: 'Minimum SDK version version code (android:minSdkVersion)']
 	// Deployment
-	device_id string
-	log_tags  []string // extra `--log-tag` log tags to include when running with '--log'
+	device_id string   @[long: 'device'; short: d; xdoc: 'Deploy to device <id>. Use "auto" to use first available.']
+	log_tags  []string @[long: 'log-tag'; xdoc: 'Additional tags to include in output when using --log']
 }
 
 // options_from_env returns an `Option` struct filled with flags set via
 // the `VAB_FLAGS` env variable otherwise it returns a default `Option` struct.
 pub fn options_from_env(defaults Options) !Options {
 	env_vab_flags := os.getenv('VAB_FLAGS')
+	$if vab_debug_options ? {
+		eprintln('--- ${@FN} ---')
+		dump(env_vab_flags)
+	}
 	if env_vab_flags != '' {
 		mut vab_flags := [os.args[0]]
 		vab_flags << string_to_args(env_vab_flags)!
-		opts, _ := args_to_options(vab_flags, defaults)!
+		opts, _ := options_from_arguments(vab_flags, defaults)!
 		return opts
 	}
 	return defaults
 }
 
+// options_from_dot_vab will return `Options` with any content
+// found in any `.vab` config files.
+pub fn options_from_dot_vab(input string, defaults Options) !Options {
+	// Look up values in input .vab file next to input
+	// NOTE: developers bear in mind that `input` is not guaranteed to be valid.
+	dot_vab_file := dot_vab_path(input)
+	dot_vab := if dot_vab_file != '' { os.read_file(dot_vab_file) or { '' } } else { '' }
+	mut opts := defaults
+	if dot_vab.len > 0 {
+		if dot_vab.contains('icon:') {
+			vab_icon := dot_vab.all_after('icon:').all_before('\n').replace("'", '').replace('"',
+				'').trim(' ')
+			if vab_icon != '' {
+				$if vab_debug_options ? {
+					println('Using icon "vab_icon" from .vab file "${dot_vab_file}"')
+				}
+				opts.icon = vab_icon
+			}
+		}
+		if dot_vab.contains('app_name:') {
+			vab_app_name := dot_vab.all_after('app_name:').all_before('\n').replace("'",
+				'').replace('"', '').trim(' ')
+			if vab_app_name != '' {
+				$if vab_debug_options ? {
+					println('Using app name "vab_app_name" from .vab file "${dot_vab_file}"')
+				}
+				opts.app_name = vab_app_name
+			}
+		}
+		if dot_vab.contains('package_id:') {
+			vab_package_id := dot_vab.all_after('package_id:').all_before('\n').replace("'",
+				'').replace('"', '').trim(' ')
+			if vab_package_id != '' {
+				$if vab_debug_options ? {
+					println('Using package id "${vab_package_id}" from .vab file "${dot_vab_file}"')
+				}
+				opts.package_id = vab_package_id
+			}
+		}
+
+		if dot_vab.contains('min_sdk_version:') {
+			vab_min_sdk_version := dot_vab.all_after('min_sdk_version:').all_before('\n').replace("'",
+				'').replace('"', '').trim(' ')
+			if vab_min_sdk_version != '' {
+				$if vab_debug_options ? {
+					println('Using minimum SDK version "${vab_min_sdk_version}" from .vab file "${dot_vab_file}"')
+				}
+				opts.min_sdk_version = vab_min_sdk_version.int()
+			}
+		}
+
+		if dot_vab.contains('package_overrides:') {
+			mut vab_package_overrides_path := dot_vab.all_after('package_overrides:').all_before('\n').replace("'",
+				'').replace('"', '').trim(' ')
+			if vab_package_overrides_path != '' {
+				if vab_package_overrides_path in ['.', '..']
+					|| vab_package_overrides_path.starts_with('.' + os.path_separator)
+					|| vab_package_overrides_path.starts_with('..' + os.path_separator) {
+					dot_vab_file_dir := os.dir(dot_vab_file)
+					if vab_package_overrides_path == '.' {
+						vab_package_overrides_path = dot_vab_file_dir
+					} else if vab_package_overrides_path == '..' {
+						vab_package_overrides_path = os.dir(dot_vab_file_dir)
+					} else if vab_package_overrides_path.starts_with('.' + os.path_separator) {
+						vab_package_overrides_path = vab_package_overrides_path.replace_once('.' +
+							os.path_separator, dot_vab_file_dir + os.path_separator)
+					} else {
+						// vab_package_overrides_path.starts_with('..'+os.path_separator)
+						vab_package_overrides_path = vab_package_overrides_path.replace_once('..' +
+							os.path_separator, os.dir(dot_vab_file_dir) + os.path_separator)
+					}
+				}
+				$if vab_debug_options ? {
+					println('Using package overrides in "${vab_package_overrides_path}" from .vab file "${dot_vab_file}"')
+				}
+				opts.package_overrides_path = vab_package_overrides_path
+			}
+		}
+		if dot_vab.contains('activity_name:') {
+			vab_activity := dot_vab.all_after('activity_name:').all_before('\n').replace("'",
+				'').replace('"', '').trim(' ')
+			if vab_activity != '' {
+				$if vab_debug_options ? {
+					println('Using activity name "${vab_activity}" from .vab file "${dot_vab_file}"')
+				}
+				opts.activity_name = vab_activity
+			}
+		}
+		if dot_vab.contains('assets_extra:') {
+			vab_assets_extra := dot_vab.all_after('assets_extra:').all_before('\n').replace("'",
+				'').replace('"', '').trim(' ')
+			if os.is_dir(vab_assets_extra) {
+				$if vab_debug_options ? {
+					println('Appending extra assets at "${vab_assets_extra}" from .vab file "${dot_vab_file}"')
+				}
+				opts.assets_extra << vab_assets_extra
+			}
+		}
+		if dot_vab.contains('libs_extra:') {
+			vab_libs_extra := dot_vab.all_after('libs_extra:').all_before('\n').replace("'",
+				'').replace('"', '').trim(' ')
+			if os.is_dir(vab_libs_extra) {
+				$if vab_debug_options ? {
+					println('Appending extra libs at "${vab_libs_extra}" from .vab file "${dot_vab_file}"')
+				}
+				opts.libs_extra << vab_libs_extra
+			}
+		}
+	}
+	return opts
+}
+
+// options_from_arguments returns an `Option` merged from (CLI/Shell -style) `arguments` using `defaults` as
+// values where no value can be matched in `arguments`.
+pub fn options_from_arguments(arguments []string, defaults Options) !(Options, []string) {
+	mut args := arguments.clone()
+	mut v_flags := []string{}
+	mut cmd_args := []string{}
+
+	// Indentify special V args in args that `vab` supports and remove them
+	// from the input args so they do not cause flag parsing errors below
+	for special_arg in special_v_args {
+		if special_arg in args {
+			if special_arg == '-gc' {
+				gc_type := args[(args.index(special_arg)) + 1]
+				if gc_type.starts_with('-') {
+					return error('flag `-gc` requires an non-flag argument')
+				}
+				v_flags << special_arg + ' ${gc_type}'
+				args.delete(args.index(special_arg) + 1)
+			} else if special_arg.starts_with('-') {
+				v_flags << special_arg
+			} else {
+				cmd_args << special_arg
+			}
+			args.delete(args.index(special_arg))
+		}
+	}
+
+	// Handle sub-commands and a few oddities that `vab` has supported historically
+	mut verbosity := defaults.verbosity
+	mut archs := defaults.archs.clone()
+	mut run_builtin_cmd := defaults.run_builtin_cmd
+
+	for i := 0; i < args.len; i++ {
+		arg := args[i]
+		if i <= 1 && arg in subcmds_builtin {
+			// rip built in sub-commands at the start of the args array
+			run_builtin_cmd = arg
+			args.delete(i)
+		} else if arg in ['-v', '--verbosity'] {
+			// legacy support for `vab -v` (-v *without* an interger)
+			verbosity_arg := args[i + 1] or { '' }
+			if verbosity_arg.starts_with('-') {
+				verbosity = 1
+			} else if verbosity_arg != '' {
+				verbosity = verbosity_arg.int()
+				args.delete(i + 1)
+			}
+			args.delete(i)
+		} else if arg == '--archs' {
+			// rip, validate and convert e.g. 'arm64-v8a, armeabi-v7a,x86' to ['arm64-v8a', 'armeabi-v7a', 'x86']
+			archs_value := args[i + 1] or { '' }
+			if archs_value == '' {
+				return error('flag `--archs` requires an argument')
+			} else if archs_value.starts_with('-') {
+				return error('flag `--archs` requires an non-flag argument')
+			}
+			archs = archs_value.split(',').map(it.trim_space())
+			args.delete(i + 1)
+			args.delete(i)
+		}
+	}
+
+	// Validate archs
+	for arch in archs {
+		if arch !in ndk.supported_archs {
+			return error('arch "${arch}" is not a supported Android CPU architecture')
+		}
+	}
+
+	options, unmatched := flag.using[Options](defaults, args, skip: 1, style: .v_flag_parser)!
+
+	mut c_flags := options.c_flags.clone()
+	for c_flag in defaults.c_flags {
+		if c_flag !in c_flags {
+			c_flags << c_flag
+		}
+	}
+
+	v_flags << options.v_flags
+	for v_flag in defaults.v_flags {
+		if v_flag !in v_flags {
+			v_flags << v_flag
+		}
+	}
+
+	mut log_tags := options.log_tags.clone()
+	for log_tag in defaults.log_tags {
+		if log_tag !in log_tags {
+			log_tags << log_tag
+		}
+	}
+
+	mut additional_args := options.additional_args.clone()
+	for additional_arg in defaults.additional_args {
+		if additional_arg !in additional_args {
+			additional_args << additional_arg
+		}
+	}
+	for additional_arg in unmatched {
+		if additional_arg !in additional_args {
+			additional_args << additional_arg
+		}
+	}
+
+	opt := Options{
+		...options
+		run:             'run' in cmd_args
+		run_builtin_cmd: run_builtin_cmd
+		archs:           archs
+		v_flags:         v_flags
+		c_flags:         c_flags
+		verbosity:       verbosity
+		log_tags:        log_tags
+		additional_args: additional_args
+	}
+
+	$if vab_debug_options ? {
+		eprintln('--- ${@FN} ---')
+		dump(arguments)
+		dump(v_flags)
+		dump(archs)
+		dump(cmd_args)
+		dump(unmatched)
+		dump(args)
+		dump(opt)
+	}
+
+	return opt, unmatched
+}
+
 // extend_from_dot_vab will merge the `Options` with any content
 // found in any `.vab` config files.
+@[deprecated: 'use options_from_dot_vab instead']
 pub fn (mut opt Options) extend_from_dot_vab() {
 	// Look up values in input .vab file next to input if no flags or defaults was set
 	dot_vab_file := dot_vab_path(opt.input)

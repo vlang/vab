@@ -78,9 +78,11 @@ const auto_complete_commands = [
 	// tools in one .v file
 	'complete',
 	'test-cleancode',
-	// commands
+	// special
 	'run',
+	// builtin commands
 	'doctor',
+	'install',
 ]
 // Entries in the flag arrays below should be entered as is:
 // * Short flags, e.g.: "-v", should be entered: '-v'
@@ -94,6 +96,7 @@ const auto_complete_flags = [
 	'-cg',
 	'-prod',
 	'-showcc',
+	'-skip-unused',
 	// vab flags
 	'--verbosity',
 	'-v',
