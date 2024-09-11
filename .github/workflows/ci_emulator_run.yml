@@ -105,8 +105,8 @@ jobs:
         vab --package-id "io.v.ci.vab.apk.deploytest" --name "V DEPLOY TEST APK" v/examples/gg/bezier.v && vab v_deploy_test_apk.apk
         vab --package-id "io.v.ci.vab.aab.deploytest" --name "V DEPLOY TEST AAB" --package aab v/examples/gg/bezier.v && vab v_deploy_test_aab.aab
         # Remove app in case cache is run
-        adb uninstall --user 0 "io.v.ci.vab.apk.deploytest"
-        adb uninstall --user 0 "io.v.ci.vab.aab.deploytest"
+        # adb uninstall --user 0 "io.v.ci.vab.apk.deploytest"
+        # adb uninstall --user 0 "io.v.ci.vab.aab.deploytest"
 
         # 'flappylearning' can build but running is currently broken on Android
         # Skip fireworks for now

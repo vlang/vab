@@ -267,7 +267,6 @@ pub fn options_from_arguments(arguments []string, defaults Options) !(Options, [
 		return error('`run` should only be specified once')
 	}
 
-	mut verbosity := defaults.verbosity
 	mut archs := defaults.archs.clone()
 	mut run_builtin_cmd := defaults.run_builtin_cmd
 
@@ -277,16 +276,13 @@ pub fn options_from_arguments(arguments []string, defaults Options) !(Options, [
 			// rip built in sub-commands at the start of the args array
 			run_builtin_cmd = arg
 			args.delete(i)
+			i--
 		} else if arg in ['-v', '--verbosity'] {
 			// legacy support for `vab -v` (-v *without* an integer)
-			verbosity_arg := args[i + 1] or { '' }
-			if verbosity_arg.starts_with('-') {
-				verbosity = 1
-			} else if verbosity_arg != '' {
-				verbosity = verbosity_arg.int()
-				args.delete(i + 1)
+			if !args[i + 1] or { '' }.is_int() {
+				args.insert(i + 1, '1')
+				i++
 			}
-			args.delete(i)
 		} else if arg == '--archs' {
 			// rip, validate and convert e.g. 'arm64-v8a, armeabi-v7a,x86' to ['arm64-v8a', 'armeabi-v7a', 'x86']
 			archs_value := args[i + 1] or { '' }
@@ -298,6 +294,7 @@ pub fn options_from_arguments(arguments []string, defaults Options) !(Options, [
 			archs = archs_value.split(',').map(it.trim_space())
 			args.delete(i + 1)
 			args.delete(i)
+			i--
 		}
 	}
 
@@ -309,8 +306,13 @@ pub fn options_from_arguments(arguments []string, defaults Options) !(Options, [
 	}
 
 	// Parse remaining args/flags (vab's own/native flags).
-	// vab used `flag.FlagParser` as flag parser so use that parsing style.
-	mut options, unmatched := flag.using[Options](defaults, args, style: .v_flag_parser)!
+	// vab has historically used `flag.FlagParser` to parse it's flags.
+	// All unknown/unmatched input from here is gathered in `additional_args`
+	// to allow the caller to decide what to do with them.
+	mut options, unmatched := flag.using[Options](defaults, args,
+		style: .v_flag_parser
+		mode:  .relaxed
+	)!
 	options.supported_v_flags = supported_v_flags
 
 	// Here we ensure that defaults are kept as a base value and that duplicates are left out
@@ -327,7 +329,6 @@ pub fn options_from_arguments(arguments []string, defaults Options) !(Options, [
 		run:             'run' in cmd_args
 		run_builtin_cmd: run_builtin_cmd
 		archs:           archs
-		verbosity:       verbosity
 	}
 
 	$if vab_debug_options ? {
