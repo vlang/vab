@@ -277,16 +277,14 @@ pub fn options_from_arguments(arguments []string, defaults Options) !(Options, [
 			// rip built in sub-commands at the start of the args array
 			run_builtin_cmd = arg
 			args.delete(i)
+			i--
 		} else if arg in ['-v', '--verbosity'] {
 			// legacy support for `vab -v` (-v *without* an integer)
-			verbosity_arg := args[i + 1] or { '' }
-			if verbosity_arg.starts_with('-') {
+			if !args[i + 1] or { '' }.is_int() {
 				verbosity = 1
-			} else if verbosity_arg != '' {
-				verbosity = verbosity_arg.int()
-				args.delete(i + 1)
+				args.delete(i)
+				i--
 			}
-			args.delete(i)
 		} else if arg == '--archs' {
 			// rip, validate and convert e.g. 'arm64-v8a, armeabi-v7a,x86' to ['arm64-v8a', 'armeabi-v7a', 'x86']
 			archs_value := args[i + 1] or { '' }
@@ -298,6 +296,7 @@ pub fn options_from_arguments(arguments []string, defaults Options) !(Options, [
 			archs = archs_value.split(',').map(it.trim_space())
 			args.delete(i + 1)
 			args.delete(i)
+			i--
 		}
 	}
 
