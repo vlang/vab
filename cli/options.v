@@ -74,6 +74,43 @@ pub mut:
 	log_tags  []string @[long: 'log-tag'; xdoc: 'Additional tags to include in output when using --log']
 }
 
+struct SupportedVFlags {
+pub:
+	autofree    bool
+	gc          string
+	v_debug     bool @[long: g]
+	c_debug     bool @[long: cg]
+	prod        bool
+	showcc      bool
+	skip_unused bool
+}
+
+fn (svf &SupportedVFlags) as_flags() []string {
+	mut v_flags := []string{}
+	if svf.autofree {
+		v_flags << '-autofree'
+	}
+	if svf.gc != '' {
+		v_flags << '-gc ${svf.gc}'
+	}
+	if svf.v_debug {
+		v_flags << '-g'
+	}
+	if svf.c_debug {
+		v_flags << '-cg'
+	}
+	if svf.prod {
+		v_flags << '-prod'
+	}
+	if svf.showcc {
+		v_flags << '-showcc'
+	}
+	if svf.skip_unused {
+		v_flags << '-skip-unused'
+	}
+	return v_flags
+}
+
 // options_from_env returns an `Option` struct filled with flags set via
 // the `VAB_FLAGS` env variable otherwise it returns a default `Option` struct.
 pub fn options_from_env(defaults Options) !Options {
@@ -206,31 +243,27 @@ pub fn options_from_dot_vab(input string, defaults Options) !Options {
 // options_from_arguments returns an `Option` merged from (CLI/Shell -style) `arguments` using `defaults` as
 // values where no value can be matched in `arguments`.
 pub fn options_from_arguments(arguments []string, defaults Options) !(Options, []string) {
-	mut args := arguments.clone()
-	mut v_flags := []string{}
-	mut cmd_args := []string{}
+	// Parse out all V flags that vab supports (-gc none, -skip-unused, etc.)
+	// Flags that could not be parsed are returned as `args` (unmatched) via the the `.relaxed` mode.
+	supported_v_flags, mut args := flag.to_struct[SupportedVFlags](arguments,
+		skip:  1
+		style: .v
+		mode:  .relaxed
+	)!
 
-	// Indentify special V args in args that `vab` supports and remove them
-	// from the input args so they do not cause flag parsing errors below
-	for special_arg in special_v_args {
-		if special_arg in args {
-			if special_arg == '-gc' {
-				gc_type := args[(args.index(special_arg)) + 1]
-				if gc_type.starts_with('-') {
-					return error('flag `-gc` requires an non-flag argument')
-				}
-				v_flags << special_arg + ' ${gc_type}'
-				args.delete(args.index(special_arg) + 1)
-			} else if special_arg.starts_with('-') {
-				v_flags << special_arg
-			} else {
-				cmd_args << special_arg
-			}
-			args.delete(args.index(special_arg))
-		}
+	// Indentify special arguments/flags in `args` that vab supports and remove them
+	// from the input args so they do not cause flag parsing errors below.
+	// Handle builtin sub-commands and a few oddities that vab has supported historically.
+	// Current args/flags that needs attention is: ['run','-v','--verbosity','--archs']
+	mut cmd_args := []string{}
+	if 'run' in args {
+		cmd_args << 'run'
+		args.delete(args.index('run'))
+	}
+	if 'run' in args {
+		return error('`run` should only be specified once')
 	}
 
-	// Handle sub-commands and a few oddities that `vab` has supported historically
 	mut verbosity := defaults.verbosity
 	mut archs := defaults.archs.clone()
 	mut run_builtin_cmd := defaults.run_builtin_cmd
@@ -242,7 +275,7 @@ pub fn options_from_arguments(arguments []string, defaults Options) !(Options, [
 			run_builtin_cmd = arg
 			args.delete(i)
 		} else if arg in ['-v', '--verbosity'] {
-			// legacy support for `vab -v` (-v *without* an interger)
+			// legacy support for `vab -v` (-v *without* an integer)
 			verbosity_arg := args[i + 1] or { '' }
 			if verbosity_arg.starts_with('-') {
 				verbosity = 1
@@ -272,8 +305,13 @@ pub fn options_from_arguments(arguments []string, defaults Options) !(Options, [
 		}
 	}
 
-	options, unmatched := flag.using[Options](defaults, args, skip: 1, style: .v_flag_parser)!
+	// Parse remaining args/flags (vab's own/native flags).
+	// vab used `flag.FlagParser` as flag parser so use that parsing style.
+	options, unmatched := flag.using[Options](defaults, args, style: .v_flag_parser)!
 
+	// Here we ensure that defaults are kept and that duplicates are left out
+	// of the array flag types. A minor inconvenience to support the incremental
+	// collection of Options from .vab -> VAB_FLAGS -> args/flags.
 	mut c_flags := options.c_flags.clone()
 	for c_flag in defaults.c_flags {
 		if c_flag !in c_flags {
@@ -281,7 +319,12 @@ pub fn options_from_arguments(arguments []string, defaults Options) !(Options, [
 		}
 	}
 
-	v_flags << options.v_flags
+	mut v_flags := options.v_flags.clone()
+	for v_flag in supported_v_flags.as_flags() {
+		if v_flag !in v_flags {
+			v_flags << v_flag
+		}
+	}
 	for v_flag in defaults.v_flags {
 		if v_flag !in v_flags {
 			v_flags << v_flag
