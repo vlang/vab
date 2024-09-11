@@ -72,6 +72,8 @@ pub mut:
 	// Deployment
 	device_id string   @[long: 'device'; short: d; xdoc: 'Deploy to device <id>. Use "auto" to use first available.']
 	log_tags  []string @[long: 'log-tag'; xdoc: 'Additional tags to include in output when using --log']
+mut:
+	supported_v_flags SupportedVFlags @[ignore] // vab supports a selected range of V flags, these are parsed and dealt with separately
 }
 
 struct SupportedVFlags {
@@ -245,7 +247,8 @@ pub fn options_from_dot_vab(input string, defaults Options) !Options {
 pub fn options_from_arguments(arguments []string, defaults Options) !(Options, []string) {
 	// Parse out all V flags that vab supports (-gc none, -skip-unused, etc.)
 	// Flags that could not be parsed are returned as `args` (unmatched) via the the `.relaxed` mode.
-	supported_v_flags, mut args := flag.to_struct[SupportedVFlags](arguments,
+	supported_v_flags, mut args := flag.using[SupportedVFlags](defaults.supported_v_flags,
+		arguments,
 		skip:  1
 		style: .v
 		mode:  .relaxed
@@ -307,65 +310,29 @@ pub fn options_from_arguments(arguments []string, defaults Options) !(Options, [
 
 	// Parse remaining args/flags (vab's own/native flags).
 	// vab used `flag.FlagParser` as flag parser so use that parsing style.
-	options, unmatched := flag.using[Options](defaults, args, style: .v_flag_parser)!
+	mut options, unmatched := flag.using[Options](defaults, args, style: .v_flag_parser)!
+	options.supported_v_flags = supported_v_flags
 
-	// Here we ensure that defaults are kept and that duplicates are left out
-	// of the array flag types. A minor inconvenience to support the incremental
+	// Here we ensure that defaults are kept as a base value and that duplicates are left out
+	// of the array(s) flag types. An inconvenience to support the mixin V flags and the incremental
 	// collection of Options from .vab -> VAB_FLAGS -> args/flags.
-	mut c_flags := options.c_flags.clone()
-	for c_flag in defaults.c_flags {
-		if c_flag !in c_flags {
-			c_flags << c_flag
-		}
-	}
-
-	mut v_flags := options.v_flags.clone()
-	for v_flag in supported_v_flags.as_flags() {
-		if v_flag !in v_flags {
-			v_flags << v_flag
-		}
-	}
-	for v_flag in defaults.v_flags {
-		if v_flag !in v_flags {
-			v_flags << v_flag
-		}
-	}
-
-	mut log_tags := options.log_tags.clone()
-	for log_tag in defaults.log_tags {
-		if log_tag !in log_tags {
-			log_tags << log_tag
-		}
-	}
-
-	mut additional_args := options.additional_args.clone()
-	for additional_arg in defaults.additional_args {
-		if additional_arg !in additional_args {
-			additional_args << additional_arg
-		}
-	}
-	for additional_arg in unmatched {
-		if additional_arg !in additional_args {
-			additional_args << additional_arg
-		}
-	}
+	options.merge_c_flags(defaults)
+	options.merge_v_flags(defaults)
+	options.merge_log_tags(defaults)
+	options.merge_additional_args(defaults.additional_args)
+	options.merge_additional_args(unmatched)
 
 	opt := Options{
 		...options
 		run:             'run' in cmd_args
 		run_builtin_cmd: run_builtin_cmd
 		archs:           archs
-		v_flags:         v_flags
-		c_flags:         c_flags
 		verbosity:       verbosity
-		log_tags:        log_tags
-		additional_args: additional_args
 	}
 
 	$if vab_debug_options ? {
 		eprintln('--- ${@FN} ---')
 		dump(arguments)
-		dump(v_flags)
 		dump(archs)
 		dump(cmd_args)
 		dump(unmatched)
@@ -374,6 +341,67 @@ pub fn options_from_arguments(arguments []string, defaults Options) !(Options, [
 	}
 
 	return opt, unmatched
+}
+
+fn (mut o Options) merge_c_flags(defaults Options) {
+	mut c_flags := defaults.c_flags.clone()
+	for c_flag in o.c_flags {
+		if c_flag !in c_flags {
+			c_flags << c_flag
+		}
+	}
+	o.c_flags = c_flags
+}
+
+fn (mut o Options) merge_v_flags(defaults Options) {
+	mut v_flags := defaults.v_flags.clone()
+	for v_flag in o.v_flags {
+		if v_flag.starts_with('-gc') {
+			// -gc has an argument and should only be passed once, ensure that here
+			for v_flag_ex in v_flags {
+				if v_flag_ex.starts_with('-gc') {
+					v_flags.delete(v_flags.index(v_flag_ex))
+				}
+			}
+			v_flags << v_flag
+		} else if v_flag !in v_flags {
+			v_flags << v_flag
+		}
+	}
+	for v_flag in o.supported_v_flags.as_flags() {
+		if v_flag.starts_with('-gc') {
+			// -gc has an argument and should only be passed once, ensure that here
+			for v_flag_ex in v_flags {
+				if v_flag_ex.starts_with('-gc') {
+					v_flags.delete(v_flags.index(v_flag_ex))
+				}
+			}
+			v_flags << v_flag
+		} else if v_flag !in v_flags {
+			v_flags << v_flag
+		}
+	}
+	o.v_flags = v_flags
+}
+
+fn (mut o Options) merge_log_tags(defaults Options) {
+	mut log_tags := defaults.log_tags.clone()
+	for log_tag in o.log_tags {
+		if log_tag !in log_tags {
+			log_tags << log_tag
+		}
+	}
+	o.log_tags = log_tags
+}
+
+fn (mut o Options) merge_additional_args(default_additional_args []string) {
+	mut additional_args := default_additional_args.clone()
+	for additional_arg in o.additional_args {
+		if additional_arg !in additional_args {
+			additional_args << additional_arg
+		}
+	}
+	o.additional_args = additional_args
 }
 
 // extend_from_dot_vab will merge the `Options` with any content
