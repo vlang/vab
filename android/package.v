@@ -32,7 +32,7 @@ pub:
 	work_dir        string
 	is_prod         bool
 	api_level       string
-	min_sdk_version int = android.default_min_sdk_version
+	min_sdk_version int = default_min_sdk_version
 	gles_version    int
 	build_tools     string
 	format          PackageFormat = .apk
@@ -48,7 +48,7 @@ pub:
 	libs_extra      []string
 	output_file     string
 	keystore        Keystore
-	base_files      string = android.default_base_files_path
+	base_files      string = default_base_files_path
 	overrides_path  string // Path to user provided files that will override `base_files`. `java` (and later `kotlin` TODO) subdirs are recognized
 }
 
@@ -80,9 +80,9 @@ pub fn package(opt PackageOptions) ! {
 Please consult the Android documentation for details:
 https://developer.android.com/studio/build/application-id')
 	}
-	if opt.is_prod && opt.package_id == android.default_package_id {
+	if opt.is_prod && opt.package_id == default_package_id {
 		return error('${error_tag}: Package id "${opt.package_id}" is used by the V team.
-Please do not deploy to app stores using package id "${android.default_package_id}".')
+Please do not deploy to app stores using package id "${default_package_id}".')
 	}
 	// Build APK
 	match opt.format {
@@ -111,7 +111,7 @@ fn package_apk(opt PackageOptions) ! {
 			return error('${error_tag}: could not remove "${libs_extra_path}":\n${err}')
 		}
 	}
-	for supported_lib_folder in android.supported_lib_folders {
+	for supported_lib_folder in supported_lib_folders {
 		supported_lib_folder_path := os.join_path(libs_extra_path, 'lib', supported_lib_folder)
 		os.mkdir_all(supported_lib_folder_path) or {
 			return error('${error_tag}: error while making directory "${supported_lib_folder_path}":\n${err}')
@@ -350,7 +350,7 @@ fn package_apk(opt PackageOptions) ! {
 		for collected_extra_lib in collected_extra_libs {
 			path_split := collected_extra_lib.split(os.path_separator)
 			for path_part in path_split {
-				if path_part in android.supported_lib_folders {
+				if path_part in supported_lib_folders {
 					if opt.verbosity > 2 {
 						println('Adding extra lib "${collected_extra_lib}"...')
 					}
@@ -484,7 +484,7 @@ fn package_aab(opt PackageOptions) ! {
 	if os.is_dir(libs_extra_path) {
 		os.rmdir_all(libs_extra_path) or {}
 	}
-	for supported_lib_folder in android.supported_lib_folders {
+	for supported_lib_folder in supported_lib_folders {
 		supported_lib_folder_path := os.join_path(libs_extra_path, 'lib', supported_lib_folder)
 		os.mkdir_all(supported_lib_folder_path) or {
 			return error('${error_tag}: error while making directory "${supported_lib_folder_path}":\n${err}')
@@ -698,7 +698,7 @@ fn package_aab(opt PackageOptions) ! {
 		for collected_extra_lib in collected_extra_libs {
 			path_split := collected_extra_lib.split(os.path_separator)
 			for path_part in path_split {
-				if path_part in android.supported_lib_folders {
+				if path_part in supported_lib_folders {
 					if opt.verbosity > 2 {
 						println('Adding extra lib "${collected_extra_lib}"...')
 					}
@@ -984,23 +984,23 @@ fn prepare_base(opt PackageOptions) (string, string) {
 		println('Modifying base files')
 	}
 
-	is_default_pkg_id := opt.package_id == android.default_package_id
-	if opt.is_prod && (is_default_pkg_id || opt.package_id.starts_with(android.default_package_id)) {
-		if opt.package_id.starts_with(android.default_package_id) {
-			panic('Do not deploy to app stores using the default V package id namespace "${android.default_package_id}"\nYou can set your own package ID with the --package-id flag')
+	is_default_pkg_id := opt.package_id == default_package_id
+	if opt.is_prod && (is_default_pkg_id || opt.package_id.starts_with(default_package_id)) {
+		if opt.package_id.starts_with(default_package_id) {
+			panic('Do not deploy to app stores using the default V package id namespace "${default_package_id}"\nYou can set your own package ID with the --package-id flag')
 		} else {
-			panic('Do not deploy to app stores using the default V package id "${android.default_package_id}"\nYou can set your own package ID with the --package-id flag')
+			panic('Do not deploy to app stores using the default V package id "${default_package_id}"\nYou can set your own package ID with the --package-id flag')
 		}
 	}
 	pkg_id_split := opt.package_id.split('.')
 	package_id_path := pkg_id_split.join(os.path_separator)
 	os.mkdir_all(os.join_path(package_path, 'src', package_id_path)) or { panic(err) }
 
-	default_pkg_id_split := android.default_package_id.split('.')
+	default_pkg_id_split := default_package_id.split('.')
 	default_pkg_id_path := default_pkg_id_split.join(os.path_separator)
 
 	native_activity_path := os.join_path(package_path, 'src', default_pkg_id_path)
-	activity_file_name := android.default_activity_name + '.java'
+	activity_file_name := default_activity_name + '.java'
 	native_activity_file := os.join_path(native_activity_path, activity_file_name)
 	$if debug {
 		eprintln('Native activity file: "${native_activity_file}"')
@@ -1014,7 +1014,7 @@ fn prepare_base(opt PackageOptions) (string, string) {
 		if !is_override {
 			// Change package id in template
 			// r'.*package\s+(io.v.android).*'
-			mut re := regex.regex_opt(r'.*package\s+(' + android.default_package_id + r');') or {
+			mut re := regex.regex_opt(r'.*package\s+(' + default_package_id + r');') or {
 				panic(err)
 			}
 			mut start, _ := re.match_string(java_src)
@@ -1049,7 +1049,7 @@ fn prepare_base(opt PackageOptions) (string, string) {
 			java_src) or { panic(err) }
 
 		// Remove left-overs from vab's copied skeleton
-		if opt.package_id != android.default_package_id {
+		if opt.package_id != default_package_id {
 			os.rm(native_activity_file) or { panic(err) }
 			mut v_default_package_id := default_pkg_id_split.clone()
 			for i := v_default_package_id.len - 1; i >= 0; i-- {

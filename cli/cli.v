@@ -71,7 +71,7 @@ pub const vab_documentation_config = flag.DocConfig{
 // run_vab_sub_command runs and exits a sub-command if found in `args`
 pub fn run_vab_sub_command(args []string) {
 	// Indentify sub-commands.
-	for subcmd in cli.subcmds {
+	for subcmd in subcmds {
 		if subcmd in args {
 			// First encountered known sub-command is executed on the spot.
 			exit(launch_cmd(args[args.index(subcmd)..]))
@@ -86,7 +86,7 @@ pub fn args_to_options(arguments []string, defaults Options) !(Options, &flag.Fl
 	mut args := arguments.clone()
 
 	// Indentify sub-commands.
-	for subcmd in cli.subcmds {
+	for subcmd in subcmds {
 		if subcmd in args {
 			// First encountered known sub-command is executed on the spot.
 			exit(launch_cmd(args[args.index(subcmd)..]))
@@ -97,7 +97,7 @@ pub fn args_to_options(arguments []string, defaults Options) !(Options, &flag.Fl
 	mut cmd_flags := []string{}
 	// Indentify special flags in args before FlagParser ruin them.
 	// E.g. the -autofree flag will result in dump_usage being called for some weird reason???
-	for special_flag in cli.rip_vflags {
+	for special_flag in rip_vflags {
 		if special_flag in args {
 			if special_flag == '-gc' {
 				gc_type := args[(args.index(special_flag)) + 1]
@@ -116,10 +116,10 @@ pub fn args_to_options(arguments []string, defaults Options) !(Options, &flag.Fl
 	}
 
 	mut fp := flag.new_flag_parser(args)
-	fp.application(cli.exe_short_name)
+	fp.application(exe_short_name)
 	fp.version(version_full())
-	fp.description(cli.exe_description)
-	fp.arguments_description(cli.exe_args_description)
+	fp.description(exe_description)
+	fp.arguments_description(exe_args_description)
 
 	fp.skip_executable()
 
@@ -244,7 +244,7 @@ pub fn check_essentials(exit_on_error bool) {
 		''
 	}
 	if keytool == '' {
-		eprintln('${cli.exe_short_name} will not be able to sign any packages.')
+		eprintln('${exe_short_name} will not be able to sign any packages.')
 		if javac := java.jdk_javac() {
 			eprintln('It looks like you have a Java compiler (${javac}) but no `keytool`')
 			eprintln('you probably have Java JRE installed but no JDK.')
@@ -259,7 +259,7 @@ pub fn check_essentials(exit_on_error bool) {
 	if !sdk.found() {
 		eprintln('No Android SDK could be detected.')
 		eprintln('Please provide a valid path via ANDROID_SDK_ROOT')
-		eprintln('or run `${cli.exe_short_name} install auto`')
+		eprintln('or run `${exe_short_name} install auto`')
 		if exit_on_error {
 			exit(1)
 		}
@@ -268,7 +268,7 @@ pub fn check_essentials(exit_on_error bool) {
 	if !ndk.found() {
 		eprintln('No Android NDK could be detected.')
 		eprintln('Please provide a valid path via ANDROID_NDK_ROOT')
-		eprintln('or run `${cli.exe_short_name} install ndk`')
+		eprintln('or run `${exe_short_name} install ndk`')
 		if exit_on_error {
 			exit(1)
 		}
@@ -297,15 +297,15 @@ pub fn launch_cmd(args []string) int {
 		cmd = cmd.all_after('test-')
 	}
 	v := vxt.vexe()
-	tool_exe := os.join_path(cli.exe_dir, 'cmd', cmd)
+	tool_exe := os.join_path(exe_dir, 'cmd', cmd)
 	if os.is_executable(v) {
-		hash_file := os.join_path(cli.exe_dir, 'cmd', '.' + cmd + '.hash')
+		hash_file := os.join_path(exe_dir, 'cmd', '.' + cmd + '.hash')
 
 		mut hash := ''
 		if os.is_file(hash_file) {
 			hash = os.read_file(hash_file) or { '' }
 		}
-		if hash != cli.exe_git_hash {
+		if hash != exe_git_hash {
 			v_cmd := [
 				v,
 				tool_exe + '.v',
@@ -317,7 +317,7 @@ pub fn launch_cmd(args []string) int {
 				panic(@MOD + '.' + @FN + ' failed compiling "${cmd}": ${res.output}')
 			}
 			if res.exit_code == 0 {
-				os.write_file(hash_file, cli.exe_git_hash) or {}
+				os.write_file(hash_file, exe_git_hash) or {}
 			} else {
 				vcmd := v_cmd.join(' ')
 				eprintln(@MOD + '.' + @FN + ' "${vcmd}" failed.')
@@ -327,7 +327,7 @@ pub fn launch_cmd(args []string) int {
 		}
 	}
 	if os.is_executable(tool_exe) {
-		os.setenv('VAB_EXE', os.join_path(cli.exe_dir, cli.exe_name), true)
+		os.setenv('VAB_EXE', os.join_path(exe_dir, exe_name), true)
 		$if windows {
 			exit(os.system('${os.quoted_path(tool_exe)} ${tool_args}'))
 		} $else $if js {
@@ -389,7 +389,7 @@ pub fn string_to_args(input string) ![]string {
 pub fn validate_input(input string) ! {
 	input_ext := os.file_ext(input)
 
-	accepted_input_ext := input_ext in cli.accepted_input_files
+	accepted_input_ext := input_ext in accepted_input_files
 	if !(os.is_dir(input) || accepted_input_ext) {
 		return error('input should be a V file, an APK, AAB or a directory containing V sources')
 	}

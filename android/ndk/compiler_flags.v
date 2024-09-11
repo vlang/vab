@@ -56,7 +56,7 @@ pub fn compiler_flags_from_config(ndk_version string, flag_config FlagConfig) !F
 
 // general_flags returns the general flags for the NDK version.
 pub fn (f FlagGen) general_flags() []string {
-	return ndk.ndk_21_default_general_flags.clone()
+	return ndk_21_default_general_flags.clone()
 }
 
 // flags returns the NDK version's recommended flags for the given `flag_config`.
@@ -82,7 +82,7 @@ pub fn (f FlagGen) flags(flag_config FlagConfig) ![]string {
 		}
 		if cnf.cpp_features.len > 0 {
 			for cpp_feature in cnf.cpp_features {
-				if cpp_feature !in ndk.ndk_supported_cpp_features {
+				if cpp_feature !in ndk_supported_cpp_features {
 					return error('Invalid Android C++ feature: ${cpp_feature}')
 				}
 				flags << '-f${cpp_feature}'
@@ -138,7 +138,7 @@ pub fn (f FlagGen) flags(flag_config FlagConfig) ![]string {
 pub fn (f FlagGen) ld_flags(flag_config FlagConfig) ![]string {
 	cnf := flag_config
 	mut ld_flags := []string{}
-	ld_flags << ndk.ndk_21_default_general_ld_flags.clone()
+	ld_flags << ndk_21_default_general_ld_flags.clone()
 	if flag_config.ld == 'lld' {
 		ld_flags << '-fuse-ld=lld'
 		ld_flags << '-Wl,--build-id=sha1'

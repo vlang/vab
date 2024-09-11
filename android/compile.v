@@ -26,7 +26,7 @@ pub:
 	input    string
 	//
 	is_prod         bool
-	gles_version    int = android.default_gles_version
+	gles_version    int = default_gles_version
 	archs           []string // compile for these CPU architectures
 	v_flags         []string // flags to pass to the v compiler
 	c_flags         []string // flags to pass to the C compiler(s)
@@ -60,11 +60,11 @@ pub fn (opt CompileOptions) archs() ![]string {
 	mut archs := []string{}
 	if opt.archs.len > 0 {
 		for arch in opt.archs.map(it.trim_space()) {
-			if arch in android.default_archs {
+			if arch in default_archs {
 				archs << arch
 			} else {
 				return error(@MOD + '.' + @FN +
-					': Architechture "${arch}" not one of ${android.default_archs}')
+					': Architechture "${arch}" not one of ${default_archs}')
 			}
 		}
 	}

@@ -13,7 +13,7 @@ const global_cache = &Cache{}
 pub fn get_string(key string) string {
 	mut c := &Cache(unsafe { nil })
 	unsafe {
-		c = cache.global_cache
+		c = global_cache
 	}
 	if key in c.string_cache.keys() {
 		return c.string_cache[key]
@@ -25,7 +25,7 @@ pub fn get_string(key string) string {
 pub fn set_string(key string, data string) {
 	mut c := &Cache(unsafe { nil })
 	unsafe {
-		c = cache.global_cache
+		c = global_cache
 	}
 	c.string_cache[key] = data
 }
@@ -33,7 +33,7 @@ pub fn set_string(key string, data string) {
 pub fn get_string_array(key string) []string {
 	mut c := &Cache(unsafe { nil })
 	unsafe {
-		c = cache.global_cache
+		c = global_cache
 	}
 	if key in c.string_array_cache.keys() {
 		return c.string_array_cache[key]
@@ -45,7 +45,7 @@ pub fn get_string_array(key string) []string {
 pub fn set_string_array(key string, data []string) {
 	mut c := &Cache(unsafe { nil })
 	unsafe {
-		c = cache.global_cache
+		c = global_cache
 	}
 	c.string_array_cache[key] = data
 }
