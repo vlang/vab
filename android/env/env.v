@@ -92,7 +92,7 @@ pub const default_components_eq_java_8 = {
 
 // get_default_components returns the default components map based on what Java version is being used
 pub fn get_default_components() !map[string]map[string]string {
-	return env.default_components_eq_java_8
+	return default_components_eq_java_8
 }
 
 pub const dot_exe = $if windows {
@@ -195,9 +195,9 @@ pub fn install(components string, verbosity int) int {
 			}
 		}
 
-		if component !in env.accepted_components {
+		if component !in accepted_components {
 			eprintln(@MOD + ' ' + @FN + ' component "${component}" not recognized.')
-			eprintln('Available components ${env.accepted_components}.')
+			eprintln('Available components ${accepted_components}.')
 			return 1
 		}
 
@@ -290,8 +290,8 @@ fn install_opt(opt InstallOptions) !bool {
 
 	// Accept all SDK licenses
 	$if windows {
-		os.mkdir_all(env.work_path) or {}
-		yes_file := os.join_path(env.work_path, 'yes.txt')
+		os.mkdir_all(work_path) or {}
+		yes_file := os.join_path(work_path, 'yes.txt')
 		os.write_file(yes_file, 'y\r\ny\r\ny\r\ny\r\ny\r\ny\r\ny\r\ny\r\ny\r\ny')!
 
 		cmd := [
@@ -565,7 +565,7 @@ fn sdkmanager_windows() string {
 			sdkmanager = os.join_path(sdk.tools_root(), 'bin', 'sdkmanager.bat')
 		}
 		if !os.exists(sdkmanager) {
-			for relative_path in env.possible_relative_to_sdk_sdkmanager_paths {
+			for relative_path in possible_relative_to_sdk_sdkmanager_paths {
 				sdkmanager = os.join_path(sdk.root(), relative_path, 'sdkmanager.bat')
 				if os.exists(sdkmanager) {
 					break
@@ -634,7 +634,7 @@ pub fn sdkmanager() string {
 			sdkmanager = os.join_path(sdk.tools_root(), 'bin', 'sdkmanager')
 		}
 		if !os.is_executable(sdkmanager) {
-			for relative_path in env.possible_relative_to_sdk_sdkmanager_paths {
+			for relative_path in possible_relative_to_sdk_sdkmanager_paths {
 				sdkmanager = os.join_path(sdk.root(), relative_path, 'sdkmanager')
 				if os.is_executable(sdkmanager) {
 					break
@@ -716,7 +716,7 @@ pub fn has_adb() bool {
 pub fn adb() string {
 	mut adb_path := os.getenv('ADB')
 	if !os.exists(adb_path) {
-		adb_path = os.join_path(sdk.platform_tools_root(), 'adb${env.dot_exe}')
+		adb_path = os.join_path(sdk.platform_tools_root(), 'adb${dot_exe}')
 	}
 	if !os.exists(adb_path) {
 		if os.exists_in_system_path('adb') {
@@ -790,7 +790,7 @@ pub fn has_aapt2() bool {
 pub fn aapt2() string {
 	mut aapt2 := os.getenv('AAPT2')
 	if !os.exists(aapt2) {
-		aapt2 = os.join_path(util.cache_dir(), 'aapt2${env.dot_exe}')
+		aapt2 = os.join_path(util.cache_dir(), 'aapt2${dot_exe}')
 	}
 	$if !windows {
 		if !os.is_executable(aapt2) {
@@ -833,11 +833,11 @@ fn ensure_aapt2(verbosity int) !bool {
 			return error(@MOD + '.' + @FN + ' ' + 'failed to install `aapt2`: ${err}')
 		}
 		util.unzip(file, unpack_path)!
-		aapt2_file := os.join_path(unpack_path, 'aapt2${env.dot_exe}')
-		dst_check := os.join_path(dst, 'aapt2${env.dot_exe}')
+		aapt2_file := os.join_path(unpack_path, 'aapt2${dot_exe}')
+		dst_check := os.join_path(dst, 'aapt2${dot_exe}')
 		os.rm(dst_check) or {}
 		os.cp(aapt2_file, dst_check) or {
-			return error(@MOD + '.' + @FN + ' ' + 'failed to install `aapt2${env.dot_exe}`: ${err}')
+			return error(@MOD + '.' + @FN + ' ' + 'failed to install `aapt2${dot_exe}`: ${err}')
 		}
 		if os.exists(dst_check) {
 			if verbosity > 1 {

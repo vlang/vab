@@ -61,13 +61,13 @@ pub fn root() string {
 		// Detect OS type at runtime - in case we're in some exotic environment
 		uos := os.user_os()
 		if uos == 'windows' {
-			dirs = ndk.possible_ndk_paths_windows.clone()
+			dirs = possible_ndk_paths_windows.clone()
 		}
 		if uos == 'macos' {
-			dirs = ndk.possible_ndk_paths_macos.clone()
+			dirs = possible_ndk_paths_macos.clone()
 		}
 		if uos == 'linux' {
-			dirs = ndk.possible_ndk_paths_linux.clone()
+			dirs = possible_ndk_paths_linux.clone()
 		}
 
 		for dir in dirs {
@@ -416,7 +416,7 @@ pub fn available_apis_by_arch(ndk_version string) map[string][]string {
 		from := i16(min_api_available(ndk_version).int())
 		to := i16(max_api_available(ndk_version).int()) + 1
 		if to > from {
-			for arch in ndk.supported_archs {
+			for arch in supported_archs {
 				for level in from .. to {
 					mut compiler := os.join_path(compiler_bin_path, compiler_triplet(arch) +
 						'${level}-clang')
