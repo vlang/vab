@@ -267,7 +267,6 @@ pub fn options_from_arguments(arguments []string, defaults Options) !(Options, [
 		return error('`run` should only be specified once')
 	}
 
-	mut verbosity := defaults.verbosity
 	mut archs := defaults.archs.clone()
 	mut run_builtin_cmd := defaults.run_builtin_cmd
 
@@ -281,9 +280,8 @@ pub fn options_from_arguments(arguments []string, defaults Options) !(Options, [
 		} else if arg in ['-v', '--verbosity'] {
 			// legacy support for `vab -v` (-v *without* an integer)
 			if !args[i + 1] or { '' }.is_int() {
-				verbosity = 1
-				args.delete(i)
-				i--
+				args.insert(i + 1, '1')
+				i++
 			}
 		} else if arg == '--archs' {
 			// rip, validate and convert e.g. 'arm64-v8a, armeabi-v7a,x86' to ['arm64-v8a', 'armeabi-v7a', 'x86']
@@ -331,7 +329,6 @@ pub fn options_from_arguments(arguments []string, defaults Options) !(Options, [
 		run:             'run' in cmd_args
 		run_builtin_cmd: run_builtin_cmd
 		archs:           archs
-		verbosity:       verbosity
 	}
 
 	$if vab_debug_options ? {
