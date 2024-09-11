@@ -32,9 +32,6 @@ pub const exe_git_hash = vab_commit_hash()
 pub const work_directory = vab_tmp_work_dir()
 pub const cache_directory = vab_cache_dir()
 pub const rip_vflags = ['-autofree', '-gc', '-g', '-cg', '-prod', 'run', '-showcc', '-skip-unused'] // NOTE this can be removed when the deprecated `cli.args_to_options()` is removed
-pub const special_v_args = ['-autofree', '-gc', '-g', '-cg', '-prod', 'run', '-showcc',
-	'-skip-unused']
-pub const special_flags = ['-v', '--verbosity', '--archs']
 pub const subcmds = ['complete', 'test-cleancode']
 pub const subcmds_builtin = ['doctor', 'install']
 pub const accepted_input_files = ['.v', '.apk', '.aab']
@@ -77,6 +74,20 @@ pub fn run_vab_sub_command(args []string) {
 			exit(launch_cmd(args[args.index(subcmd)..]))
 		}
 	}
+}
+
+// input_from_args returns the input argument for `vab` if any, and removes it from `arguments`.
+// This function handles `vab`'s' support for arbitrary input placement:
+// Examples: `vab /input -o /output`, `vab -o /output /input` and `vab --flag "-d xyz" /input -o /output`.
+pub fn input_from_args(arguments []string) (string, []string) {
+	mut args := arguments.clone()
+	opts, unmatched := options_from_arguments(args, Options{}) or { Options{}, args }
+	mut input := opts.input
+	if unmatched.len > 0 && (os.is_dir(unmatched[0]) || os.is_file(unmatched[0])) {
+		input = unmatched[0]
+		args.delete(args.index(input))
+	}
+	return input, args
 }
 
 // args_to_options returns an `Option` merged from (CLI/Shell) `arguments` using `defaults` as
