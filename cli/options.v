@@ -309,8 +309,13 @@ pub fn options_from_arguments(arguments []string, defaults Options) !(Options, [
 	}
 
 	// Parse remaining args/flags (vab's own/native flags).
-	// vab used `flag.FlagParser` as flag parser so use that parsing style.
-	mut options, unmatched := flag.using[Options](defaults, args, style: .v_flag_parser)!
+	// vab has historically used `flag.FlagParser` to parse it's flags.
+	// All unknown/unmatched input from here is gathered in `additional_args`
+	// to allow the caller to decide what to do with them.
+	mut options, unmatched := flag.using[Options](defaults, args,
+		style: .v_flag_parser
+		mode:  .relaxed
+	)!
 	options.supported_v_flags = supported_v_flags
 
 	// Here we ensure that defaults are kept as a base value and that duplicates are left out
