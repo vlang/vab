@@ -86,6 +86,8 @@ pub fn input_from_args(arguments []string) (string, []string) {
 	if unmatched.len > 0 && (os.is_dir(unmatched[0]) || os.is_file(unmatched[0])) {
 		input = unmatched[0]
 		args.delete(args.index(input))
+	} else if opts.input != '' {
+		args.delete(args.index(opts.input))
 	}
 	return input, args
 }

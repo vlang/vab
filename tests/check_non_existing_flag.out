@@ -1,2 +1,2 @@
-Error while parsing `os.args`: args_to_options: flag parser failed finalizing: Unknown flag `--non-existing-flag`
+Error while parsing arguments. Could not match ['--non-existing-flag']
 Use `vab -h` to see all flags
