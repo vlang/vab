@@ -1,3 +1,4 @@
+// vtest vflags: -d vab_no_notices
 import os
 import term
 import rand
