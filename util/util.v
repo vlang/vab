@@ -34,7 +34,7 @@ pub fn ensure_path(path string) ! {
 pub fn vab_error(msg string, details Details) {
 	eprintln('${color(.error, bold('error:'))} ${msg}')
 	if details.details != '' {
-		eprintln('${color(.details, bold('details:'))}\n${details.details}')
+		eprintln('${color(.details, bold('details:'))}\n${format_details(details.details)}')
 	}
 }
 
@@ -42,7 +42,7 @@ pub fn vab_error(msg string, details Details) {
 pub fn vab_warning(msg string, details Details) {
 	eprintln('${color(.warning, bold('warning:'))} ${msg}')
 	if details.details != '' {
-		eprintln('${color(.details, bold('details:'))}\n${details.details}')
+		eprintln('${color(.details, bold('details:'))}\n${format_details(details.details)}')
 	}
 }
 
