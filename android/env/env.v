@@ -128,6 +128,12 @@ pub struct InstallOptions {
 	verbosity int
 }
 
+pub fn (io &InstallOptions) verbose(verbosity_level int, msg string) {
+	if io.verbosity >= verbosity_level {
+		println(msg)
+	}
+}
+
 pub fn managable() bool {
 	sdk_is_writable := os.is_writable(sdk.root())
 	// sdkmanager checks
@@ -312,9 +318,7 @@ fn install_opt(opt InstallOptions) !bool {
 
 	item := opt.item
 
-	if opt.verbosity > 0 {
-		println(@MOD + '.' + @FN + ' installing ${opt.dep}: "${item}"...')
-	}
+	opt.verbose(1, 'installing ${opt.dep}: "${item}"...')
 
 	install_cmd := $if windows {
 		[
@@ -362,9 +366,7 @@ fn install_opt(opt InstallOptions) !bool {
 					return true
 				}
 			}
-			if opt.verbosity > 0 {
-				println('Installing NDK (Side-by-side) "${item}"...')
-			}
+			opt.verbose(1, 'Installing NDK (Side-by-side) "${item}"...')
 
 			util.verbosity_print_cmd(install_cmd, opt.verbosity)
 			cmd_res := $if windows {
