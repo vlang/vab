@@ -128,6 +128,7 @@ pub struct InstallOptions {
 	verbosity int
 }
 
+// verbose prints `msg` to STDOUT if `InstallOptions.verbosity` level is >= `verbosity_level`.
 pub fn (io &InstallOptions) verbose(verbosity_level int, msg string) {
 	if io.verbosity >= verbosity_level {
 		println(msg)

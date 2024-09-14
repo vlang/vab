@@ -386,6 +386,7 @@ fn (mut o Options) merge_v_flags(defaults Options) {
 	o.v_flags = v_flags
 }
 
+// verbose prints `msg` to STDOUT if `Options.verbosity` level is >= `verbosity_level`.
 pub fn (o &Options) verbose(verbosity_level int, msg string) {
 	if o.verbosity >= verbosity_level {
 		println(msg)

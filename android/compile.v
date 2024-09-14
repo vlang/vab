@@ -36,6 +36,7 @@ pub:
 	min_sdk_version int = default_min_sdk_version
 }
 
+// verbose prints `msg` to STDOUT if `CompileOptions.verbosity` level is >= `verbosity_level`.
 pub fn (co &CompileOptions) verbose(verbosity_level int, msg string) {
 	if co.verbosity >= verbosity_level {
 		println(msg)

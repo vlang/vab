@@ -53,6 +53,7 @@ pub:
 	overrides_path  string // Path to user provided files that will override `base_files`. `java` (and later `kotlin` TODO) subdirs are recognized
 }
 
+// verbose prints `msg` to STDOUT if `PackageOptions.verbosity` level is >= `verbosity_level`.
 pub fn (po &PackageOptions) verbose(verbosity_level int, msg string) {
 	if po.verbosity >= verbosity_level {
 		println(msg)

@@ -32,6 +32,7 @@ pub enum LogMode {
 	raw
 }
 
+// verbose prints `msg` to STDOUT if `DeployOptions.verbosity` level is >= `verbosity_level`.
 pub fn (do &DeployOptions) verbose(verbosity_level int, msg string) {
 	if do.verbosity >= verbosity_level {
 		println(msg)
