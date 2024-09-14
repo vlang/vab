@@ -150,7 +150,10 @@ pub fn deploy_apk(opt DeployOptions) ! {
 
 		has_crash_report := adb_detect_and_report_crashes(opt, device_id)!
 		if has_crash_report {
-			eprintln('You can clear all logs by running:\n"' + adb_logcat_clear_cmd.join(' ') + '"')
+			$if !vab_no_notices ? {
+				eprintln('You can clear all logs by running:\n"' + adb_logcat_clear_cmd.join(' ') +
+					'"')
+			}
 		}
 	}
 }
@@ -262,7 +265,10 @@ pub fn deploy_aab(opt DeployOptions) ! {
 
 		has_crash_report := adb_detect_and_report_crashes(opt, device_id)!
 		if has_crash_report {
-			eprintln('You can clear all logs by running:\n"' + adb_logcat_clear_cmd.join(' ') + '"')
+			$if !vab_no_notices ? {
+				eprintln('You can clear all logs by running:\n"' + adb_logcat_clear_cmd.join(' ') +
+					'"')
+			}
 		}
 	}
 }
@@ -330,7 +336,9 @@ fn adb_log_step(opt DeployOptions, device_id string) ! {
 
 fn kill_adb_on_exit(signum os.Signal) {
 	uos := os.user_os()
-	println('Killing adb on signal ${signum}')
+	$if !vab_no_notices ? {
+		eprintln('Killing adb on signal ${signum}')
+	}
 	if uos == 'windows' {
 		// os.system('Taskkill /IM adb.exe /F') // TODO Untested
 	} else {

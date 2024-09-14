@@ -48,9 +48,11 @@ pub fn doctor(opt Options) {
 		if java_version.exit_code == 0 {
 			output := java_version.output
 			if !(output.contains('OpenJDK') || output.contains('Java(TM)')) {
-				eprintln("Notice: The detected Java Runtime Environment may be incompatible with some of the Android SDK tools needed. We recommend using OpenJDK's Temurin release from https://adoptium.net")
-				eprintln('Your Java shows:')
-				eprintln(output)
+				$if !vab_no_notices ? {
+					eprintln("Notice: The detected Java Runtime Environment may be incompatible with some of the Android SDK tools needed. We recommend using OpenJDK's Temurin release from https://adoptium.net")
+					eprintln('Your Java shows:')
+					eprintln(output)
+				}
 			}
 		}
 	}

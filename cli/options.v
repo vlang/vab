@@ -569,9 +569,11 @@ pub fn (opt &Options) validate_env() {
 			exit(1)
 		}
 	} else {
-		// Not blank but not a recognized format (x.y.z)
-		// NOTE It *might* be a SDK managed by the system package manager (apt, pacman etc.) - so we warn about it and go on...
-		eprintln('Notice: Android build-tools version "${sdk.default_build_tools_version}" is unknown to ${exe_short_name}, things might not work as expected.')
+		$if !vab_no_notices ? {
+			// Not blank but not a recognized format (x.y.z)
+			// NOTE It *might* be a SDK managed by the system package manager (apt, pacman etc.) - so we warn about it and go on...
+			eprintln('Notice: Android build-tools version "${sdk.default_build_tools_version}" is unknown to ${exe_short_name}, things might not work as expected.')
+		}
 	}
 
 	// Validate Android NDK requirements
@@ -586,14 +588,18 @@ pub fn (opt &Options) validate_env() {
 				exit(1)
 			}
 		} else {
-			eprintln('Notice: Android NDK version could not be validated from "${opt.ndk_version}"')
-			eprintln('Notice: The NDK is not guaranteed to be compatible with ${exe_short_name}')
+			$if !vab_no_notices ? {
+				eprintln('Notice: Android NDK version could not be validated from "${opt.ndk_version}"')
+				eprintln('Notice: The NDK is not guaranteed to be compatible with ${exe_short_name}')
+			}
 		}
 	}
 
 	// API level
 	if opt.api_level.i16() < sdk.default_api_level.i16() {
-		eprintln('Notice: Android API level ${opt.api_level} is less than the default level (${sdk.default_api_level}).')
+		$if !vab_no_notices ? {
+			eprintln('Notice: Android API level ${opt.api_level} is less than the default level (${sdk.default_api_level}).')
+		}
 	}
 	// AAB format
 	has_bundletool := env.has_bundletool()
@@ -667,9 +673,11 @@ pub fn (mut opt Options) resolve(exit_on_error bool) {
 		if sdk.has_api(opt.api_level) {
 			api_level = opt.api_level
 		} else {
-			// TODO Warnings
-			eprintln('Notice: The requested Android API level "${opt.api_level}" is not available in the SDK.')
-			eprintln('Notice: Falling back to default "${api_level}"')
+			// TODO: Warnings
+			$if !vab_no_notices ? {
+				eprintln('Notice: The requested Android API level "${opt.api_level}" is not available in the SDK.')
+				eprintln('Notice: Falling back to default "${api_level}"')
+			}
 		}
 	}
 	if api_level.i16() < sdk.min_supported_api_level.i16() {
@@ -688,10 +696,12 @@ pub fn (mut opt Options) resolve(exit_on_error bool) {
 		if sdk.has_build_tools(opt.build_tools) {
 			build_tools_version = opt.build_tools
 		} else {
-			// TODO FIX Warnings
-			eprintln('Android build-tools version "${opt.build_tools}" is not available in SDK.')
-			eprintln('(It can be installed with `${exe_short_name} install "build-tools;${opt.build_tools}"`)')
-			eprintln('Falling back to default ${build_tools_version}')
+			// TODO: FIX Warnings
+			$if !vab_no_notices ? {
+				eprintln('Android build-tools version "${opt.build_tools}" is not available in SDK.')
+				eprintln('(It can be installed with `${exe_short_name} install "build-tools;${opt.build_tools}"`)')
+				eprintln('Falling back to default ${build_tools_version}')
+			}
 		}
 	}
 	if build_tools_version == '' {
@@ -720,12 +730,14 @@ pub fn (mut opt Options) resolve(exit_on_error bool) {
 		if ndk.has_version(opt.ndk_version) {
 			ndk_version = opt.ndk_version
 		} else {
-			// TODO FIX Warnings and add install function
-			eprintln('Android NDK version "${opt.ndk_version}" could not be found.')
-			eprintln('If the SDK is working and writable, new NDK versions can be installed with:')
-			eprintln('`${exe_short_name} install "ndk;<NDK VERSION>"`')
-			eprintln('The minimum supported NDK version is "${ndk.min_supported_version}"')
-			eprintln('Falling back to default ${ndk_version}')
+			// TODO: FIX Warnings
+			$if !vab_no_notices ? {
+				eprintln('Android NDK version "${opt.ndk_version}" could not be found.')
+				eprintln('If the SDK is working and writable, new NDK versions can be installed with:')
+				eprintln('`${exe_short_name} install "ndk;<NDK VERSION>"`')
+				eprintln('The minimum supported NDK version is "${ndk.min_supported_version}"')
+				eprintln('Falling back to default ${ndk_version}')
+			}
 		}
 	}
 
@@ -737,12 +749,16 @@ pub fn (mut opt Options) resolve(exit_on_error bool) {
 	if opt.api_level.i16() > max_ndk_api_level.i16()
 		|| opt.api_level.i16() < min_ndk_api_level.i16() {
 		if opt.api_level.i16() > max_ndk_api_level.i16() {
-			eprintln('Notice: Falling back to API level "${max_ndk_api_level}" (SDK API level ${opt.api_level} > highest NDK API level ${max_ndk_api_level}).')
+			$if !vab_no_notices ? {
+				eprintln('Notice: Falling back to API level "${max_ndk_api_level}" (SDK API level ${opt.api_level} > highest NDK API level ${max_ndk_api_level}).')
+			}
 			opt.api_level = max_ndk_api_level
 		}
 		if opt.api_level.i16() < min_ndk_api_level.i16() {
 			if sdk.has_api(min_ndk_api_level) {
-				eprintln('Notice: Falling back to API level "${min_ndk_api_level}" (SDK API level ${opt.api_level} < lowest NDK API level ${max_ndk_api_level}).')
+				$if !vab_no_notices ? {
+					eprintln('Notice: Falling back to API level "${min_ndk_api_level}" (SDK API level ${opt.api_level} < lowest NDK API level ${max_ndk_api_level}).')
+				}
 				opt.api_level = min_ndk_api_level
 			}
 		}
@@ -798,8 +814,10 @@ pub fn (opt &Options) resolve_keystore() !android.Keystore {
 	}
 	if !os.is_file(keystore.path) {
 		if keystore.path != '' {
-			eprintln('Keystore "${keystore.path}" is not a valid file')
-			eprintln('Notice: Signing with debug keystore')
+			$if !vab_no_notices ? {
+				eprintln('Keystore "${keystore.path}" is not a valid file')
+				eprintln('Notice: Signing with debug keystore')
+			}
 		}
 		keystore = android.default_keystore(cache_directory)!
 	} else {

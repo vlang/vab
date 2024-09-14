@@ -1002,7 +1002,7 @@ fn prepare_base(opt PackageOptions) (string, string) {
 	native_activity_path := os.join_path(package_path, 'src', default_pkg_id_path)
 	activity_file_name := default_activity_name + '.java'
 	native_activity_file := os.join_path(native_activity_path, activity_file_name)
-	$if debug {
+	$if !vab_no_notices ? && debug {
 		eprintln('Native activity file: "${native_activity_file}"')
 	}
 	if os.is_file(native_activity_file) {

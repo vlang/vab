@@ -1,5 +1,4 @@
-// vtest flaky: true
-// vtest retry: 3
+// vtest vflags: -d vab_no_notices
 import os
 import term
 import rand
@@ -148,7 +147,8 @@ fn sync_run(job TOMLTestJob) &TOMLTestJobResult {
 }
 
 fn compile_vab() string {
-	res := os.execute([vexe, '"${vab_home}"'].join(' '))
+	// TODO vtest vflags: ??? or env VFLAGS???
+	res := os.execute([vexe, '-d vab_no_notices', '"${vab_home}"'].join(' '))
 	if res.exit_code != 0 {
 		panic('command failed building vab in "${vab_home}":\n${res.output}')
 	}

@@ -132,7 +132,7 @@ fn main() {
 	}
 
 	if opt.run_builtin_cmd == 'install' {
-		install_arg := opt.input
+		install_arg := input
 		res := env.install(install_arg, opt.verbosity)
 		if res == 0 && opt.verbosity > 0 {
 			if install_arg != 'auto' {

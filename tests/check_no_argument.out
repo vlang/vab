@@ -1,2 +1,1 @@
-No arguments given
-Use `vab -h` to see all flags
+vab: input should be a V file, an APK, AAB or a directory containing V sources
