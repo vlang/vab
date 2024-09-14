@@ -30,26 +30,34 @@ pub fn ensure_path(path string) ! {
 	}
 }
 
+// vab_error prints `msg` prefixed with `error:` in red + `details` to STDERR.
 pub fn vab_error(msg string, details Details) {
 	eprintln('${color(.error, bold('error:'))} ${msg}')
 	if details.details != '' {
-		eprintln('${color(.details, 'details:')}\n${details.details}')
+		eprintln('${color(.details, bold('details:'))}\n${details.details}')
 	}
 }
 
+// vab_warning prints `msg` prefixed with `error:` in yellow + `details` to STDERR.
 pub fn vab_warning(msg string, details Details) {
 	eprintln('${color(.warning, bold('warning:'))} ${msg}')
 	if details.details != '' {
-		eprintln('${color(.details, 'details:')}\n${details.details}')
+		eprintln('${color(.details, bold('details:'))}\n${details.details}')
 	}
 }
 
+// vab_notice prints `msg` prefixed with `notice:` in magenta + `details` to STDERR.
+// vab_notice can be disabled with `-d vab_no_notice` at compile time.
 @[if !vab_no_notice ?]
 pub fn vab_notice(msg string, details Details) {
 	println('${color(.notice, bold('notice:'))} ${msg}')
 	if details.details != '' {
-		eprintln('${color(.details, 'details:')}\n${details.details}')
+		eprintln('${color(.details, bold('details:'))}\n${format_details(details.details)}')
 	}
+}
+
+fn format_details(s string) string {
+	return '  ${s.replace('\n', '\n  ')}'
 }
 
 fn bold(msg string) string {
@@ -68,10 +76,10 @@ fn color(kind MessageKind, msg string) string {
 			term.red(msg)
 		}
 		.warning {
-			term.magenta(msg)
+			term.yellow(msg)
 		}
 		.notice {
-			term.yellow(msg)
+			term.magenta(msg)
 		}
 		.details {
 			term.bright_blue(msg)
