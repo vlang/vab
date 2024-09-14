@@ -145,7 +145,7 @@ pub fn options_from_dot_vab(input string, defaults Options) !Options {
 				'').trim(' ')
 			if vab_icon != '' {
 				$if vab_debug_options ? {
-					println('Using icon "vab_icon" from .vab file "${dot_vab_file}"')
+					println('Using icon "${vab_icon}" from .vab file "${dot_vab_file}"')
 				}
 				opts.icon = vab_icon
 			}
@@ -155,7 +155,7 @@ pub fn options_from_dot_vab(input string, defaults Options) !Options {
 				'').replace('"', '').trim(' ')
 			if vab_app_name != '' {
 				$if vab_debug_options ? {
-					println('Using app name "vab_app_name" from .vab file "${dot_vab_file}"')
+					println('Using app name "${vab_app_name}" from .vab file "${dot_vab_file}"')
 				}
 				opts.app_name = vab_app_name
 			}
