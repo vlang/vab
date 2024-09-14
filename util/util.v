@@ -48,7 +48,7 @@ pub fn vab_warning(msg string, details Details) {
 
 // vab_notice prints `msg` prefixed with `notice:` in magenta + `details` to STDERR.
 // vab_notice can be disabled with `-d vab_no_notice` at compile time.
-@[if !vab_no_notice ?]
+@[if !vab_no_notices ?]
 pub fn vab_notice(msg string, details Details) {
 	println('${color(.notice, bold('notice:'))} ${msg}')
 	if details.details != '' {
