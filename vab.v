@@ -5,6 +5,7 @@ module main
 import os
 import flag
 import vab.cli
+import vab.util
 import vab.android
 import vab.android.sdk
 import vab.android.ndk
@@ -25,26 +26,23 @@ fn main() {
 	mut opt := cli.Options{}
 
 	opt = cli.options_from_dot_vab(input, opt) or {
-		eprintln('Error while parsing `.vab`: ${err}')
+		util.vab_error('Could not parse `.vab`: ${err}')
 		exit(1)
 	}
 
 	opt = cli.options_from_env(opt) or {
-		eprintln('Error while parsing `VAB_FLAGS`: ${err}')
-		eprintln('Use `${cli.exe_short_name} -h` to see all flags')
+		util.vab_error('Could not parse `VAB_FLAGS`: ${err}\nUse `${cli.exe_short_name} -h` to see all flags')
 		exit(1)
 	}
 
 	mut unmatched_args := []string{}
 	opt, unmatched_args = cli.options_from_arguments(args, opt) or {
-		eprintln('Error while parsing `os.args`: ${err}')
-		eprintln('Use `${cli.exe_short_name} -h` to see all flags')
+		util.vab_error('Could not parse `os.args`: ${err}\nUse `${cli.exe_short_name} -h` to see all flags')
 		exit(1)
 	}
 
 	if unmatched_args.len > 0 {
-		eprintln('Error while parsing arguments. Could not match ${unmatched_args}')
-		eprintln('Use `${cli.exe_short_name} -h` to see all flags')
+		util.vab_error('Could not parse arguments. No matches for ${unmatched_args}\nUse `${cli.exe_short_name} -h` to see all flags')
 		exit(1)
 	}
 
@@ -56,8 +54,7 @@ fn main() {
 
 	if opt.dump_usage {
 		documentation := flag.to_doc[cli.Options](cli.vab_documentation_config) or {
-			eprintln('Error generating usage documentation via `flag.to_doc[cli.Options](...)` this should not happen.')
-			eprintln('Error message: ${err}')
+			util.vab_error('Could not generate usage documentation via `flag.to_doc[cli.Options](...)` this should not happen.\nError message: ${err}')
 			exit(1)
 		}
 		println(documentation)
@@ -66,7 +63,7 @@ fn main() {
 
 	if opt.list_ndks {
 		if !ndk.found() {
-			eprintln('No NDK could be found. Please use `${cli.exe_short_name} doctor` to get more information.')
+			util.vab_error('No NDK could be found. Please use `${cli.exe_short_name} doctor` to get more information.')
 			exit(1)
 		}
 		for ndk_v in ndk.versions_available() {
@@ -77,7 +74,7 @@ fn main() {
 
 	if opt.list_apis {
 		if !sdk.found() {
-			eprintln('No SDK could be found. Please use `${cli.exe_short_name} doctor` to get more information.')
+			util.vab_error('No SDK could be found. Please use `${cli.exe_short_name} doctor` to get more information.')
 			exit(1)
 		}
 		for api in sdk.apis_available() {
@@ -88,7 +85,7 @@ fn main() {
 
 	if opt.list_build_tools {
 		if !sdk.found() {
-			eprintln('No SDK could be found. Please use `${cli.exe_short_name} doctor` to get more information.')
+			util.vab_error('No SDK could be found. Please use `${cli.exe_short_name} doctor` to get more information.')
 			exit(1)
 		}
 		for btv in sdk.build_tools_available() {
@@ -99,7 +96,7 @@ fn main() {
 
 	if opt.list_devices {
 		devices := android.adb_get_device_list(opt.verbosity) or {
-			eprintln('Error getting device list: ${err}')
+			util.vab_error('Error getting device list: ${err}')
 			exit(1)
 		}
 		println('Device IDs:\n')
@@ -125,7 +122,7 @@ fn main() {
 			path:      opt.screenshot
 			delay:     opt.screenshot_delay
 		) or {
-			eprintln('Failed to take screenshot:\n${err}')
+			util.vab_error('Failed to take screenshot:\n${err}')
 			exit(1)
 		}
 		exit(0)
@@ -136,9 +133,9 @@ fn main() {
 		res := env.install(install_arg, opt.verbosity)
 		if res == 0 && opt.verbosity > 0 {
 			if install_arg != 'auto' {
-				println('Installed ${install_arg} successfully.')
+				opt.verbose(1, 'Installed ${install_arg} successfully.')
 			} else {
-				println('Installed all dependencies successfully.')
+				opt.verbose(1, 'Installed all dependencies successfully.')
 			}
 		}
 		exit(res)
@@ -149,7 +146,7 @@ fn main() {
 	opt.resolve(true)
 
 	cli.validate_input(input) or {
-		eprintln('${cli.exe_short_name}: ${err}')
+		util.vab_error('${cli.exe_short_name}: ${err}')
 		exit(1)
 	}
 	opt.input = input
@@ -163,12 +160,12 @@ fn main() {
 
 	// Keystore file
 	keystore := opt.resolve_keystore() or {
-		eprintln('${cli.exe_short_name}: could not resolve keystore: ${err}')
+		util.vab_error('${cli.exe_short_name}: could not resolve keystore: ${err}')
 		exit(1)
 	}
 
 	ado := opt.as_android_deploy_options() or {
-		eprintln('Could not create deploy options.\n${err}')
+		util.vab_error('Could not create deploy options.\n${err}')
 		exit(1)
 	}
 	deploy_opt := android.DeployOptions{
@@ -176,9 +173,7 @@ fn main() {
 		keystore: keystore
 	}
 
-	if opt.verbosity > 1 {
-		println('Output will be signed with keystore at "${deploy_opt.keystore.path}"')
-	}
+	opt.verbose(2, 'Output will be signed with keystore at "${deploy_opt.keystore.path}"')
 
 	screenshot_opt := opt.as_android_screenshot_options(deploy_opt)
 
@@ -189,7 +184,7 @@ fn main() {
 		if deploy_opt.device_id != '' {
 			deploy(deploy_opt)
 			android.screenshot(screenshot_opt) or {
-				eprintln('${cli.exe_short_name} screenshot did not succeed.\n${err}')
+				util.vab_error('${cli.exe_short_name} screenshot did not succeed.\n${err}')
 				exit(1)
 			}
 			exit(0)
@@ -202,7 +197,7 @@ fn main() {
 		cache_key: if os.is_dir(input) || input_ext == '.v' { opt.input } else { '' }
 	}
 	android.compile(comp_opt) or {
-		eprintln('${cli.exe_short_name} compiling didn\'t succeed.\n${err}')
+		util.vab_error('${cli.exe_short_name} compiling didn\'t succeed.\n${err}')
 		exit(1)
 	}
 
@@ -212,23 +207,23 @@ fn main() {
 		keystore: keystore
 	}
 	android.package(pck_opt) or {
-		eprintln("Packaging didn't succeed.\n${err}")
+		util.vab_error("Packaging didn't succeed.\n${err}")
 		exit(1)
 	}
 
 	if deploy_opt.device_id != '' {
 		deploy(deploy_opt)
 		android.screenshot(screenshot_opt) or {
-			eprintln('${cli.exe_short_name} screenshot did not succeed.\n${err}')
+			util.vab_error('${cli.exe_short_name} screenshot did not succeed.\n${err}')
 			exit(1)
 		}
 	} else {
 		if opt.verbosity > 0 {
-			println('Generated ${os.real_path(opt.output)}')
-			println('Use `${cli.exe_short_name} --device <id> ${os.real_path(opt.output)}` to deploy package')
-			println('Use `${cli.exe_short_name} --device <id> run ${os.real_path(opt.output)}` to both deploy and run the package')
+			opt.verbose(1, 'Generated ${os.real_path(opt.output)}')
+			opt.verbose(1, 'Use `${cli.exe_short_name} --device <id> ${os.real_path(opt.output)}` to deploy package')
+			opt.verbose(1, 'Use `${cli.exe_short_name} --device <id> run ${os.real_path(opt.output)}` to both deploy and run the package')
 			if deploy_opt.run != '' {
-				println('Use `adb -s "<DEVICE ID>" shell am start -n "${deploy_opt.run}"` to run the app on the device, via adb')
+				opt.verbose(1, 'Use `adb -s "<DEVICE ID>" shell am start -n "${deploy_opt.run}"` to run the app on the device, via adb')
 			}
 		}
 	}
@@ -236,15 +231,13 @@ fn main() {
 
 fn deploy(deploy_opt android.DeployOptions) {
 	android.deploy(deploy_opt) or {
-		eprintln('${cli.exe_short_name} deployment didn\'t succeed.\n${err}')
+		util.vab_error('${cli.exe_short_name} deployment didn\'t succeed.\n${err}')
 		if deploy_opt.kill_adb {
 			cli.kill_adb()
 		}
 		exit(1)
 	}
-	if deploy_opt.verbosity > 0 {
-		println('Deployed to ${deploy_opt.device_id} successfully')
-	}
+	deploy_opt.verbose(1, 'Deployed to ${deploy_opt.device_id} successfully')
 	if deploy_opt.kill_adb {
 		cli.kill_adb()
 	}

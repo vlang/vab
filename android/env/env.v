@@ -6,6 +6,7 @@ import os
 import semver
 import net.http
 import vab.cache
+import vab.util as vabutil
 import vab.android.sdk
 import vab.android.ndk
 import vab.android.util
@@ -357,9 +358,7 @@ fn install_opt(opt InstallOptions) !bool {
 				sv_check := semver.from(version_check) or { panic(err) }
 				comp_sv := semver.from(ndk.min_supported_version) or { panic(err) }
 				if sv_check < comp_sv {
-					$if !vab_no_notices ? {
-						eprintln('Notice: Skipping install. NDK ${item} is lower than supported ${ndk.min_supported_version}...')
-					}
+					vabutil.vab_notice('Skipping install. NDK ${item} is lower than supported ${ndk.min_supported_version}...')
 					return true
 				}
 			}
@@ -384,9 +383,7 @@ fn install_opt(opt InstallOptions) !bool {
 				sv_check := semver.from(version_check) or { panic(err) }
 				comp_sv := semver.from(sdk.min_supported_build_tools_version) or { panic(err) }
 				if sv_check < comp_sv {
-					$if !vab_no_notices ? {
-						eprintln('Notice: Skipping install. build-tools "${item}" is lower than supported ${sdk.min_supported_build_tools_version}...')
-					}
+					vabutil.vab_notice('Skipping install. build-tools "${item}" is lower than supported ${sdk.min_supported_build_tools_version}...')
 					return true
 				}
 			}
@@ -404,9 +401,7 @@ fn install_opt(opt InstallOptions) !bool {
 		.platforms {
 			api_level := item.all_after('-')
 			if api_level.i16() < sdk.min_supported_api_level.i16() {
-				$if !vab_no_notices ? {
-					eprintln('Notice: Skipping install. platform ${item} is lower than supported android-${sdk.min_supported_api_level}...')
-				}
+				vabutil.vab_notice('Skipping install. platform ${item} is lower than supported android-${sdk.min_supported_api_level}...')
 				return true
 			}
 			util.verbosity_print_cmd(install_cmd, opt.verbosity)
