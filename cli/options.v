@@ -576,12 +576,15 @@ To use a specific version you can use `${exe_short_name} --build-tools "<version
 		// So we only report back if the verion can be read
 		if ndk_semantic_version := semver.from(opt.ndk_version) {
 			if ndk_semantic_version < semver.build(21, 1, 0) {
-				util.vab_error('Android NDK >= 21.1.x is currently needed. "${opt.ndk_version}" is too low.\nPlease provide a valid path via ANDROID_NDK_ROOT\nor run `${exe_short_name} install "ndk;<version>"`')
+				util.vab_error('Android NDK >= 21.1.x is currently needed.',
+					details: '"${opt.ndk_version}" is too low.\nPlease provide a valid path via ANDROID_NDK_ROOT\nor run `${exe_short_name} install "ndk;<version>"`'
+				)
 				exit(1)
 			}
 		} else {
-			util.vab_notice('Android NDK version could not be validated from "${opt.ndk_version}"')
-			util.vab_notice('The NDK is not guaranteed to be compatible with ${exe_short_name}')
+			util.vab_notice('Android NDK version could not be validated from "${opt.ndk_version}"',
+				details: 'The NDK is not guaranteed to be compatible with ${exe_short_name}'
+			)
 		}
 	}
 
