@@ -1243,7 +1243,7 @@ fn prepare_base(opt PackageOptions) (string, string) {
 			}
 		} else {
 			os.cp(user_asset, assets_path) or {
-				vabutil.vab_warning('Skipping invalid or non-existent asset file "${user_asset}"')
+				vabutil.vab_notice('Skipping invalid or non-existent asset file "${user_asset}"')
 			}
 		}
 	}
