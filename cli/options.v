@@ -425,7 +425,7 @@ pub fn (mut opt Options) extend_from_dot_vab() {
 			vab_icon := dot_vab.all_after('icon:').all_before('\n').replace("'", '').replace('"',
 				'').trim(' ')
 			if vab_icon != '' {
-				opt.verbose(2, 'Using icon "vab_icon" from .vab file "${dot_vab_file}"')
+				opt.verbose(2, 'Using icon "${vab_icon}" from .vab file "${dot_vab_file}"')
 				opt.icon = vab_icon
 			}
 		}
@@ -433,7 +433,7 @@ pub fn (mut opt Options) extend_from_dot_vab() {
 			vab_app_name := dot_vab.all_after('app_name:').all_before('\n').replace("'",
 				'').replace('"', '').trim(' ')
 			if vab_app_name != '' {
-				opt.verbose(2, 'Using app name "vab_app_name" from .vab file "${dot_vab_file}"')
+				opt.verbose(2, 'Using app name "${vab_app_name}" from .vab file "${dot_vab_file}"')
 				opt.app_name = vab_app_name
 			}
 		}
