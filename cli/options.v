@@ -79,13 +79,14 @@ mut:
 
 struct SupportedVFlags {
 pub:
-	autofree    bool
-	gc          string
-	v_debug     bool @[long: g]
-	c_debug     bool @[long: cg]
-	prod        bool
-	showcc      bool
-	skip_unused bool
+	autofree           bool
+	gc                 string
+	v_debug            bool @[long: g]
+	c_debug            bool @[long: cg]
+	prod               bool
+	showcc             bool
+	skip_unused        bool
+	no_bounds_checking bool
 }
 
 fn (svf &SupportedVFlags) as_flags() []string {
@@ -110,6 +111,9 @@ fn (svf &SupportedVFlags) as_flags() []string {
 	}
 	if svf.skip_unused {
 		v_flags << '-skip-unused'
+	}
+	if svf.no_bounds_checking {
+		v_flags << '-no-bounds-checking'
 	}
 	return v_flags
 }
