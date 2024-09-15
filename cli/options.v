@@ -71,7 +71,7 @@ pub mut:
 	ndk_version     string @[xdoc: 'Android NDK version to use (--list-ndks)']
 	min_sdk_version int = android.default_min_sdk_version    @[xdoc: 'Minimum SDK version version code (android:minSdkVersion)']
 	// Deployment
-	device_id string   @[long: 'device'; short: d; xdoc: 'Deploy to device <id>. Use "auto" to use first available.']
+	device_id string = os.getenv('ANDROID_SERIAL')   @[long: 'device'; short: d; xdoc: 'Deploy to device <id>. Use "auto" to use first available.']
 	log_tags  []string @[long: 'log-tag'; xdoc: 'Additional tags to include in output when using --log']
 mut:
 	supported_v_flags SupportedVFlags @[ignore] // vab supports a selected range of V flags, these are parsed and dealt with separately
@@ -780,15 +780,10 @@ The minimum supported NDK version is "${ndk.min_supported_version}"'
 		opt.archs = archs
 	}
 
-	// If no device id has been set at this point,
-	// check for ENV vars
-	mut device_id := opt.device_id
-	if device_id == '' {
-		device_id = os.getenv('ANDROID_SERIAL')
-		if device_id != '' {
-			opt.verbose(2, 'Using device "${device_id}" from ANDROID_SERIAL env variable')
-			opt.device_id = device_id
-		}
+	// Nice to have in verbose output when troubleshooting deployment
+	android_serial := os.getenv('ANDROID_SERIAL')
+	if android_serial != '' && opt.device_id == android_serial {
+		opt.verbose(2, 'Using device "${opt.device_id}" from ANDROID_SERIAL env variable')
 	}
 }
 
