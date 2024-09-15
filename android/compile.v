@@ -148,7 +148,7 @@ pub fn compile_v_to_c(opt CompileOptions) !VMetaInfo {
 	// Boehm-Demers-Weiser Garbage Collector (bdwgc / libgc)
 	uses_gc := opt.uses_gc()
 	if opt.verbosity > 1 {
-		println('Garbage collecting is ${uses_gc}')
+		println('Garbage collection is ${uses_gc}')
 	}
 
 	vexe := vxt.vexe()

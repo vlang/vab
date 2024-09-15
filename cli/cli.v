@@ -20,7 +20,8 @@ Compile, package and deploy graphical V apps for Android.
 
 The following flags does the same as if they were passed to the "v" compiler:
 
--autofree, -gc <type>, -g, -cg, -prod, -showcc, -skip-unused
+-autofree, -gc <type>, -g, -cg, -prod, -showcc,
+-skip-unused, -no-bounds-checking
 
 Sub-commands:
   doctor                    Display useful info about your system,
@@ -31,7 +32,8 @@ Sub-commands:
 pub const exe_git_hash = vab_commit_hash()
 pub const work_directory = vab_tmp_work_dir()
 pub const cache_directory = vab_cache_dir()
-pub const rip_vflags = ['-autofree', '-gc', '-g', '-cg', '-prod', 'run', '-showcc', '-skip-unused'] // NOTE this can be removed when the deprecated `cli.args_to_options()` is removed
+pub const rip_vflags = ['-autofree', '-gc', '-g', '-cg', '-prod', 'run', '-showcc', '-skip-unused',
+	'-no-bounds-checking'] // NOTE this can be removed when the deprecated `cli.args_to_options()` is removed
 pub const subcmds = ['complete', 'test-cleancode']
 pub const subcmds_builtin = ['doctor', 'install']
 pub const accepted_input_files = ['.v', '.apk', '.aab']
