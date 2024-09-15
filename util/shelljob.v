@@ -55,22 +55,22 @@ pub fn run_jobs(jobs []ShellJob, parallel bool, verbosity int) ! {
 		pp.work_on_items(jobs)
 		for job_res in pp.get_results[ShellJobResult]() {
 			verbosity_print_cmd(job_res.job.cmd, verbosity)
+			if job_res.result.exit_code != 0 {
+				return error('${job_res.job.cmd[0]} failed with return code ${job_res.result.exit_code}:\n${job_res.result.output}')
+			}
 			if verbosity > 2 {
 				println('${job_res.result.output}')
-			}
-			if job_res.result.exit_code != 0 {
-				return error('${job_res.job.cmd[0]} failed with return code ${job_res.result.exit_code}')
 			}
 		}
 	} else {
 		for job in jobs {
 			verbosity_print_cmd(job.cmd, verbosity)
 			job_res := sync_run(job)
+			if job_res.result.exit_code != 0 {
+				return error('${job_res.job.cmd[0]} failed with return code ${job_res.result.exit_code}:\n${job_res.result.output}')
+			}
 			if verbosity > 2 {
 				println('${job_res.result.output}')
-			}
-			if job_res.result.exit_code != 0 {
-				return error('${job_res.job.cmd[0]} failed with return code ${job_res.result.exit_code}')
 			}
 		}
 	}
