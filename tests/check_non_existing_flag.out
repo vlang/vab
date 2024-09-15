@@ -1,2 +1,2 @@
-Error while parsing arguments. Could not match ['--non-existing-flag']
+error: Could not parse arguments. No matches for ['--non-existing-flag']
 Use `vab -h` to see all flags

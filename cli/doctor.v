@@ -3,6 +3,7 @@ module cli
 import os
 import vab.vxt
 import vab.java
+import vab.util
 import vab.android
 import vab.android.sdk
 import vab.android.ndk
@@ -18,25 +19,32 @@ pub fn doctor(opt Options) {
 	// Validate Android `sdkmanager` tool
 	// Just warnings/notices as `sdkmanager` isn't used to in the build process.
 	if sdkm == '' {
-		eprintln('No "sdkmanager" could be detected.\n')
-		if env_managable {
-			eprintln('You can run `${exe_short_name} install cmdline-tools` to install it.')
+		extra_details := if env_managable {
+			'You can run `${exe_short_name} install cmdline-tools` to install it.\n'
+		} else {
+			''
 		}
-		eprintln('You can set the SDKMANAGER env variable or try your luck with `${exe_short_name} install auto`.')
-		eprintln('Please see https://stackoverflow.com/a/61176718/1904615 for more help.\n')
+		details := util.Details{
+			details: extra_details +
+				'You can set the `SDKMANAGER` env variable or try your luck with `${exe_short_name} install auto`.
+See https://stackoverflow.com/a/61176718/1904615 for more help.\n'
+		}
+		util.vab_notice('No "sdkmanager" could be detected.', details)
 	} else {
 		if !env_managable {
 			sdk_is_writable := os.is_writable(sdk.root())
 			if !sdk_is_writable {
-				eprintln('The SDK at "${sdk.root()}" is not writable.')
-				eprintln("`${exe_short_name}` is not able to control the SDK and it's dependencies.")
+				util.vab_notice('The SDK at "${sdk.root()}" is not writable.',
+					details: "`${exe_short_name}` is not able to control the SDK and it's dependencies."
+				)
 			} else {
-				eprintln('The detected `sdkmanager` seems outdated or incompatible with the Java version used.')
-				eprintln("For `${exe_short_name}` to control it's own dependencies, please update `sdkmanager` found in:")
-				eprintln('"${sdkm}"')
-				eprintln('or use a Java version that is compatible with your `sdkmanager`.')
-				eprintln('You can set the SDKMANAGER env variable or try your luck with `${exe_short_name} install auto`.')
-				eprintln('Please see https://stackoverflow.com/a/61176718/1904615 for more help.\n')
+				util.vab_notice('The detected `sdkmanager` seems outdated or incompatible with the Java version used.',
+					details: 'For `${exe_short_name}` to control it\'s own dependencies, please update `sdkmanager` found in:
+"${sdkm}"
+or use a Java version that is compatible with your `sdkmanager`.
+You can set the `SDKMANAGER` env variable or try your luck with `${exe_short_name} install auto`.
+See https://stackoverflow.com/a/61176718/1904615 for more help.\n'
+				)
 			}
 		}
 	}
@@ -48,11 +56,9 @@ pub fn doctor(opt Options) {
 		if java_version.exit_code == 0 {
 			output := java_version.output
 			if !(output.contains('OpenJDK') || output.contains('Java(TM)')) {
-				$if !vab_no_notices ? {
-					eprintln("Notice: The detected Java Runtime Environment may be incompatible with some of the Android SDK tools needed. We recommend using OpenJDK's Temurin release from https://adoptium.net")
-					eprintln('Your Java shows:')
-					eprintln(output)
-				}
+				util.vab_notice('The detected Java Runtime Environment may be incompatible with some of the Android SDK tools needed.',
+					details: 'We recommend using OpenJDK\'s Temurin release from https://adoptium.net\nInstalled Java shows:\n${output}\n'
+				)
 			}
 		}
 	}

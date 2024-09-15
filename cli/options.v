@@ -4,6 +4,7 @@ import os
 import flag
 import semver
 import vab.java
+import vab.util
 import vab.android
 import vab.android.sdk
 import vab.android.ndk
@@ -144,7 +145,7 @@ pub fn options_from_dot_vab(input string, defaults Options) !Options {
 				'').trim(' ')
 			if vab_icon != '' {
 				$if vab_debug_options ? {
-					println('Using icon "vab_icon" from .vab file "${dot_vab_file}"')
+					println('Using icon "${vab_icon}" from .vab file "${dot_vab_file}"')
 				}
 				opts.icon = vab_icon
 			}
@@ -154,7 +155,7 @@ pub fn options_from_dot_vab(input string, defaults Options) !Options {
 				'').replace('"', '').trim(' ')
 			if vab_app_name != '' {
 				$if vab_debug_options ? {
-					println('Using app name "vab_app_name" from .vab file "${dot_vab_file}"')
+					println('Using app name "${vab_app_name}" from .vab file "${dot_vab_file}"')
 				}
 				opts.app_name = vab_app_name
 			}
@@ -385,6 +386,13 @@ fn (mut o Options) merge_v_flags(defaults Options) {
 	o.v_flags = v_flags
 }
 
+// verbose prints `msg` to STDOUT if `Options.verbosity` level is >= `verbosity_level`.
+pub fn (o &Options) verbose(verbosity_level int, msg string) {
+	if o.verbosity >= verbosity_level {
+		println(msg)
+	}
+}
+
 fn (mut o Options) merge_log_tags(defaults Options) {
 	mut log_tags := defaults.log_tags.clone()
 	for log_tag in o.log_tags {
@@ -417,9 +425,7 @@ pub fn (mut opt Options) extend_from_dot_vab() {
 			vab_icon := dot_vab.all_after('icon:').all_before('\n').replace("'", '').replace('"',
 				'').trim(' ')
 			if vab_icon != '' {
-				if opt.verbosity > 1 {
-					println('Using icon "vab_icon" from .vab file "${dot_vab_file}"')
-				}
+				opt.verbose(2, 'Using icon "${vab_icon}" from .vab file "${dot_vab_file}"')
 				opt.icon = vab_icon
 			}
 		}
@@ -427,9 +433,7 @@ pub fn (mut opt Options) extend_from_dot_vab() {
 			vab_app_name := dot_vab.all_after('app_name:').all_before('\n').replace("'",
 				'').replace('"', '').trim(' ')
 			if vab_app_name != '' {
-				if opt.verbosity > 1 {
-					println('Using app name "vab_app_name" from .vab file "${dot_vab_file}"')
-				}
+				opt.verbose(2, 'Using app name "${vab_app_name}" from .vab file "${dot_vab_file}"')
 				opt.app_name = vab_app_name
 			}
 		}
@@ -437,9 +441,7 @@ pub fn (mut opt Options) extend_from_dot_vab() {
 			vab_package_id := dot_vab.all_after('package_id:').all_before('\n').replace("'",
 				'').replace('"', '').trim(' ')
 			if vab_package_id != '' {
-				if opt.verbosity > 1 {
-					println('Using package id "${vab_package_id}" from .vab file "${dot_vab_file}"')
-				}
+				opt.verbose(2, 'Using package id "${vab_package_id}" from .vab file "${dot_vab_file}"')
 				opt.package_id = vab_package_id
 			}
 		}
@@ -448,9 +450,7 @@ pub fn (mut opt Options) extend_from_dot_vab() {
 			vab_min_sdk_version := dot_vab.all_after('min_sdk_version:').all_before('\n').replace("'",
 				'').replace('"', '').trim(' ')
 			if vab_min_sdk_version != '' {
-				if opt.verbosity > 1 {
-					println('Using minimum SDK version "${vab_min_sdk_version}" from .vab file "${dot_vab_file}"')
-				}
+				opt.verbose(2, 'Using minimum SDK version "${vab_min_sdk_version}" from .vab file "${dot_vab_file}"')
 				opt.min_sdk_version = vab_min_sdk_version.int()
 			}
 		}
@@ -475,9 +475,7 @@ pub fn (mut opt Options) extend_from_dot_vab() {
 							os.path_separator, os.dir(dot_vab_file_dir) + os.path_separator)
 					}
 				}
-				if opt.verbosity > 1 {
-					println('Using package overrides in "${vab_package_overrides_path}" from .vab file "${dot_vab_file}"')
-				}
+				opt.verbose(2, 'Using package overrides in "${vab_package_overrides_path}" from .vab file "${dot_vab_file}"')
 				opt.package_overrides_path = vab_package_overrides_path
 			}
 		}
@@ -485,9 +483,7 @@ pub fn (mut opt Options) extend_from_dot_vab() {
 			vab_activity := dot_vab.all_after('activity_name:').all_before('\n').replace("'",
 				'').replace('"', '').trim(' ')
 			if vab_activity != '' {
-				if opt.verbosity > 1 {
-					println('Using activity name "${vab_activity}" from .vab file "${dot_vab_file}"')
-				}
+				opt.verbose(2, 'Using activity name "${vab_activity}" from .vab file "${dot_vab_file}"')
 				opt.activity_name = vab_activity
 			}
 		}
@@ -495,9 +491,7 @@ pub fn (mut opt Options) extend_from_dot_vab() {
 			vab_assets_extra := dot_vab.all_after('assets_extra:').all_before('\n').replace("'",
 				'').replace('"', '').trim(' ')
 			if os.is_dir(vab_assets_extra) {
-				if opt.verbosity > 1 {
-					println('Appending extra assets at "${vab_assets_extra}" from .vab file "${dot_vab_file}"')
-				}
+				opt.verbose(2, 'Appending extra assets at "${vab_assets_extra}" from .vab file "${dot_vab_file}"')
 				opt.assets_extra << vab_assets_extra
 			}
 		}
@@ -505,9 +499,7 @@ pub fn (mut opt Options) extend_from_dot_vab() {
 			vab_libs_extra := dot_vab.all_after('libs_extra:').all_before('\n').replace("'",
 				'').replace('"', '').trim(' ')
 			if os.is_dir(vab_libs_extra) {
-				if opt.verbosity > 1 {
-					println('Appending extra libs at "${vab_libs_extra}" from .vab file "${dot_vab_file}"')
-				}
+				opt.verbose(2, 'Appending extra libs at "${vab_libs_extra}" from .vab file "${dot_vab_file}"')
 				opt.libs_extra << vab_libs_extra
 			}
 		}
@@ -531,8 +523,9 @@ pub fn (opt &Options) validate_env() {
 	// Validate JDK
 	jdk_version := java.jdk_version()
 	if jdk_version == '' {
-		eprintln('No Java JDK install(s) could be detected')
-		eprintln('Please install Java JDK >= 8 or provide a valid path via JAVA_HOME')
+		util.vab_error('No Java JDK install(s) could be detected',
+			details: 'Please install Java JDK >= 8 or provide a valid path via `JAVA_HOME`'
+		)
 		exit(1)
 	}
 
@@ -543,15 +536,17 @@ pub fn (opt &Options) validate_env() {
 	if !(jdk_semantic_version >= semver.build(1, 8, 0)) { // NOTE When did this break:.satisfies('1.8.*') ???
 		// Some Android tools like `sdkmanager` in cmdline-tools;1.0 only worked with Java 8 JDK (1.8.x).
 		// (Absolute mess, yes)
-		eprintln('Java JDK version ${jdk_version} is not supported')
-		eprintln('Please install Java JDK >= 8 or provide a valid path via JAVA_HOME')
+		util.vab_error('Java JDK version ${jdk_version} is not supported',
+			details: 'Please install Java JDK >= 8 or provide a valid path via `JAVA_HOME`'
+		)
 		exit(1)
 	}
 
 	// Validate build-tools
 	if sdk.default_build_tools_version == '' {
-		eprintln('No known Android build-tools version(s) could be detected in the SDK.')
-		eprintln('(A vab compatible version can be installed with `${exe_short_name} install "build-tools;${sdk.min_supported_build_tools_version}"`)')
+		util.vab_error('No known Android build-tools version(s) could be detected in the SDK.',
+			details: '(A vab compatible version can be installed with `${exe_short_name} install "build-tools;${sdk.min_supported_build_tools_version}"`)'
+		)
 		exit(1)
 	} else if semver.is_valid(sdk.default_build_tools_version) {
 		build_tools_semantic_version := semver.from(sdk.default_build_tools_version) or {
@@ -562,18 +557,17 @@ pub fn (opt &Options) validate_env() {
 		if !build_tools_semantic_version.satisfies('>=${sdk.min_supported_build_tools_version}') {
 			// Some Android tools we need like `apksigner` is currently only available with build-tools >= 24.0.3.
 			// (Absolute mess, yes)
-			eprintln('Android build-tools version "${sdk.default_build_tools_version}" is not supported by ${exe_short_name}.')
-			eprintln('Please install a build-tools version >= ${sdk.min_supported_build_tools_version} (run `${exe_short_name} install build-tools` to install the default version).')
-			eprintln('You can see available build-tools with `${exe_short_name} --list-build-tools`.')
-			eprintln('To use a specific version you can use `${exe_short_name} --build-tools "<version>"`.')
+			util.vab_error('Android build-tools version "${sdk.default_build_tools_version}" is not supported by ${exe_short_name}.',
+				details: 'Install a build-tools version >= ${sdk.min_supported_build_tools_version} (run `${exe_short_name} install build-tools` to install the default version).
+You can see available build-tools with `${exe_short_name} --list-build-tools`.
+To use a specific version you can use `${exe_short_name} --build-tools "<version>"`.'
+			)
 			exit(1)
 		}
 	} else {
-		$if !vab_no_notices ? {
-			// Not blank but not a recognized format (x.y.z)
-			// NOTE It *might* be a SDK managed by the system package manager (apt, pacman etc.) - so we warn about it and go on...
-			eprintln('Notice: Android build-tools version "${sdk.default_build_tools_version}" is unknown to ${exe_short_name}, things might not work as expected.')
-		}
+		// Not blank but not a recognized format (x.y.z)
+		// NOTE It *might* be a SDK managed by the system package manager (apt, pacman etc.) - so we warn about it and go on...
+		util.vab_notice('Android build-tools version "${sdk.default_build_tools_version}" is unknown to ${exe_short_name}, things might not work as expected.')
 	}
 
 	// Validate Android NDK requirements
@@ -582,38 +576,35 @@ pub fn (opt &Options) validate_env() {
 		// So we only report back if the verion can be read
 		if ndk_semantic_version := semver.from(opt.ndk_version) {
 			if ndk_semantic_version < semver.build(21, 1, 0) {
-				eprintln('Android NDK >= 21.1.x is currently needed. "${opt.ndk_version}" is too low.')
-				eprintln('Please provide a valid path via ANDROID_NDK_ROOT')
-				eprintln('or run `${exe_short_name} install "ndk;<version>"`')
+				util.vab_error('Android NDK >= 21.1.x is currently needed.',
+					details: '"${opt.ndk_version}" is too low.\nPlease provide a valid path via ANDROID_NDK_ROOT\nor run `${exe_short_name} install "ndk;<version>"`'
+				)
 				exit(1)
 			}
 		} else {
-			$if !vab_no_notices ? {
-				eprintln('Notice: Android NDK version could not be validated from "${opt.ndk_version}"')
-				eprintln('Notice: The NDK is not guaranteed to be compatible with ${exe_short_name}')
-			}
+			util.vab_notice('Android NDK version could not be validated from "${opt.ndk_version}"',
+				details: 'The NDK is not guaranteed to be compatible with ${exe_short_name}'
+			)
 		}
 	}
 
 	// API level
 	if opt.api_level.i16() < sdk.default_api_level.i16() {
-		$if !vab_no_notices ? {
-			eprintln('Notice: Android API level ${opt.api_level} is less than the default level (${sdk.default_api_level}).')
-		}
+		util.vab_notice('Android API level ${opt.api_level} is less than the default level (${sdk.default_api_level}).')
 	}
 	// AAB format
 	has_bundletool := env.has_bundletool()
 	has_aapt2 := env.has_aapt2()
 	if opt.package_format == 'aab' && !(has_bundletool && has_aapt2) {
 		if !has_bundletool {
-			eprintln('The tool `bundletool` is needed for AAB package building and deployment.')
-			eprintln('Please install bundletool manually and provide a path to it via BUNDLETOOL')
-			eprintln('or run `${exe_short_name} install bundletool`')
+			util.vab_error('The tool `bundletool` is needed for AAB package building and deployment.',
+				details: 'Please install bundletool manually and provide a path to it via BUNDLETOOL\nor run `${exe_short_name} install bundletool`'
+			)
 		}
 		if !has_aapt2 {
-			eprintln('The tool `aapt2` is needed for AAB package building.')
-			eprintln('Please install aapt2 manually and provide a path to it via AAPT2')
-			eprintln('or run `${exe_short_name} install aapt2`')
+			util.vab_error('The tool `aapt2` is needed for AAB package building.',
+				details: 'Please install aapt2 manually and provide a path to it via AAPT2\nor run `${exe_short_name} install aapt2`'
+			)
 		}
 		exit(1)
 	}
@@ -660,10 +651,11 @@ pub fn (mut opt Options) resolve(exit_on_error bool) {
 	// Validate SDK API level
 	mut api_level := sdk.default_api_level
 	if api_level == '' {
-		eprintln('No Android API levels could be detected in the SDK.')
-		eprintln('If the SDK is working and writable, new platforms can be installed with:')
-		eprintln('`${exe_short_name} install "platforms;android-<API LEVEL>"`')
-		eprintln('You can set a custom SDK with the ANDROID_SDK_ROOT env variable')
+		util.vab_error('No Android API levels could be detected in the SDK.',
+			details: 'If the SDK is working and writable, new platforms can be installed with:
+`${exe_short_name} install "platforms;android-<API LEVEL>"`
+You can set a custom SDK with the ANDROID_SDK_ROOT env variable'
+		)
 		if exit_on_error {
 			exit(1)
 		}
@@ -673,16 +665,14 @@ pub fn (mut opt Options) resolve(exit_on_error bool) {
 		if sdk.has_api(opt.api_level) {
 			api_level = opt.api_level
 		} else {
-			// TODO: Warnings
-			$if !vab_no_notices ? {
-				eprintln('Notice: The requested Android API level "${opt.api_level}" is not available in the SDK.')
-				eprintln('Notice: Falling back to default "${api_level}"')
-			}
+			util.vab_notice('The requested Android API level "${opt.api_level}" is not available in the SDK.')
+			util.vab_notice('Falling back to default "${api_level}"')
 		}
 	}
 	if api_level.i16() < sdk.min_supported_api_level.i16() {
-		eprintln('Android API level "${api_level}" is less than the supported level (${sdk.min_supported_api_level}).')
-		eprintln('A vab compatible version can be installed with `${exe_short_name} install "platforms;android-${sdk.min_supported_api_level}"`')
+		util.vab_error('Android API level "${api_level}" is less than the supported level (${sdk.min_supported_api_level}).',
+			details: 'A vab compatible version can be installed with `${exe_short_name} install "platforms;android-${sdk.min_supported_api_level}"`'
+		)
 		if exit_on_error {
 			exit(1)
 		}
@@ -696,17 +686,16 @@ pub fn (mut opt Options) resolve(exit_on_error bool) {
 		if sdk.has_build_tools(opt.build_tools) {
 			build_tools_version = opt.build_tools
 		} else {
-			// TODO: FIX Warnings
-			$if !vab_no_notices ? {
-				eprintln('Android build-tools version "${opt.build_tools}" is not available in SDK.')
-				eprintln('(It can be installed with `${exe_short_name} install "build-tools;${opt.build_tools}"`)')
-				eprintln('Falling back to default ${build_tools_version}')
-			}
+			util.vab_notice('Android build-tools version "${opt.build_tools}" is not available in SDK.',
+				details: '(It can be installed with `${exe_short_name} install "build-tools;${opt.build_tools}"`)
+Falling back to default ${build_tools_version}'
+			)
 		}
 	}
 	if build_tools_version == '' {
-		eprintln('No known Android build-tools version(s) could be detected in the SDK.')
-		eprintln('(A vab compatible version can be installed with `${exe_short_name} install "build-tools;${sdk.min_supported_build_tools_version}"`)')
+		util.vab_error('No known Android build-tools version(s) could be detected in the SDK.',
+			details: 'A vab compatible version can be installed with `${exe_short_name} install "build-tools;${sdk.min_supported_build_tools_version}"`'
+		)
 		if exit_on_error {
 			exit(1)
 		}
@@ -717,10 +706,11 @@ pub fn (mut opt Options) resolve(exit_on_error bool) {
 	// Validate NDK version
 	mut ndk_version := ndk.default_version()
 	if ndk_version == '' {
-		eprintln('No Android NDK versions could be detected.')
-		eprintln('If the SDK is working and writable, new NDK versions can be installed with:')
-		eprintln('`${exe_short_name} install "ndk;<NDK VERSION>"`')
-		eprintln('The minimum supported NDK version is "${ndk.min_supported_version}"')
+		util.vab_error('No Android NDK versions could be detected.',
+			details: 'If the SDK is working and writable, new NDK versions can be installed with:
+`${exe_short_name} install "ndk;<NDK VERSION>"`
+The minimum supported NDK version is "${ndk.min_supported_version}"'
+		)
 		if exit_on_error {
 			exit(1)
 		}
@@ -730,14 +720,12 @@ pub fn (mut opt Options) resolve(exit_on_error bool) {
 		if ndk.has_version(opt.ndk_version) {
 			ndk_version = opt.ndk_version
 		} else {
-			// TODO: FIX Warnings
-			$if !vab_no_notices ? {
-				eprintln('Android NDK version "${opt.ndk_version}" could not be found.')
-				eprintln('If the SDK is working and writable, new NDK versions can be installed with:')
-				eprintln('`${exe_short_name} install "ndk;<NDK VERSION>"`')
-				eprintln('The minimum supported NDK version is "${ndk.min_supported_version}"')
-				eprintln('Falling back to default ${ndk_version}')
-			}
+			util.vab_notice('Android NDK version "${opt.ndk_version}" could not be found.',
+				details: 'If the SDK is working and writable, new NDK versions can be installed with:
+`${exe_short_name} install "ndk;<NDK VERSION>"`
+The minimum supported NDK version is "${ndk.min_supported_version}"'
+			)
+			util.vab_notice('Falling back to default ${ndk_version}')
 		}
 	}
 
@@ -749,16 +737,16 @@ pub fn (mut opt Options) resolve(exit_on_error bool) {
 	if opt.api_level.i16() > max_ndk_api_level.i16()
 		|| opt.api_level.i16() < min_ndk_api_level.i16() {
 		if opt.api_level.i16() > max_ndk_api_level.i16() {
-			$if !vab_no_notices ? {
-				eprintln('Notice: Falling back to API level "${max_ndk_api_level}" (SDK API level ${opt.api_level} > highest NDK API level ${max_ndk_api_level}).')
-			}
+			util.vab_notice('Falling back to API level "${max_ndk_api_level}"',
+				details: 'SDK API level ${opt.api_level} > highest NDK API level ${max_ndk_api_level}.'
+			)
 			opt.api_level = max_ndk_api_level
 		}
 		if opt.api_level.i16() < min_ndk_api_level.i16() {
 			if sdk.has_api(min_ndk_api_level) {
-				$if !vab_no_notices ? {
-					eprintln('Notice: Falling back to API level "${min_ndk_api_level}" (SDK API level ${opt.api_level} < lowest NDK API level ${max_ndk_api_level}).')
-				}
+				util.vab_notice('Falling back to API level "${min_ndk_api_level}"',
+					details: 'SDK API level ${opt.api_level} < lowest NDK API level ${max_ndk_api_level}.'
+				)
 				opt.api_level = min_ndk_api_level
 			}
 		}
@@ -784,9 +772,7 @@ pub fn (mut opt Options) resolve(exit_on_error bool) {
 	// Compile sources for all Android archs if no valid archs found
 	if archs.len <= 0 {
 		archs = android.default_archs.clone()
-		if opt.verbosity > 1 {
-			eprintln('Setting all architectures: ${archs}')
-		}
+		opt.verbose(2, 'Setting all architectures: ${archs}')
 		opt.archs = archs
 	}
 
@@ -796,9 +782,7 @@ pub fn (mut opt Options) resolve(exit_on_error bool) {
 	if device_id == '' {
 		device_id = os.getenv('ANDROID_SERIAL')
 		if device_id != '' {
-			if opt.verbosity > 1 {
-				eprintln('Using device "${device_id}" from ANDROID_SERIAL env variable')
-			}
+			opt.verbose(2, 'Using device "${device_id}" from ANDROID_SERIAL env variable')
 			opt.device_id = device_id
 		}
 	}
@@ -814,10 +798,8 @@ pub fn (opt &Options) resolve_keystore() !android.Keystore {
 	}
 	if !os.is_file(keystore.path) {
 		if keystore.path != '' {
-			$if !vab_no_notices ? {
-				eprintln('Keystore "${keystore.path}" is not a valid file')
-				eprintln('Notice: Signing with debug keystore')
-			}
+			util.vab_notice('Keystore "${keystore.path}" is not a valid file')
+			util.vab_notice('Signing with debug keystore')
 		}
 		keystore = android.default_keystore(cache_directory)!
 	} else {
@@ -833,9 +815,7 @@ pub fn (opt &Options) as_android_deploy_options() !android.DeployOptions {
 		package_id := opt.package_id
 		activity_name := opt.activity_name
 		run = '${package_id}/${package_id}.${activity_name}'
-		if opt.verbosity > 1 {
-			println('Should run "${package_id}/${package_id}.${activity_name}"')
-		}
+		opt.verbose(2, 'Should run "${package_id}/${package_id}.${activity_name}"')
 	}
 
 	mut log_tags := opt.log_tags.clone()

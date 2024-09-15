@@ -6,6 +6,7 @@ import os
 import regex
 import semver
 import vab.java
+import vab.util as vabutil
 import vab.android.env
 import vab.android.sdk
 import vab.android.util
@@ -52,6 +53,13 @@ pub:
 	overrides_path  string // Path to user provided files that will override `base_files`. `java` (and later `kotlin` TODO) subdirs are recognized
 }
 
+// verbose prints `msg` to STDOUT if `PackageOptions.verbosity` level is >= `verbosity_level`.
+pub fn (po &PackageOptions) verbose(verbosity_level int, msg string) {
+	if po.verbosity >= verbosity_level {
+		println(msg)
+	}
+}
+
 fn get_default_base_files_path() string {
 	// Look next to the executable
 	mut path := os.join_path(os.dir(os.real_path(os.executable())), 'platforms', 'android')
@@ -71,9 +79,7 @@ fn get_default_base_files_path() string {
 // `PackageOptions`
 pub fn package(opt PackageOptions) ! {
 	error_tag := @MOD + '.' + @FN
-	if opt.verbosity > 0 {
-		println('Preparing package "${opt.package_id}"...')
-	}
+	opt.verbose(1, 'Preparing package "${opt.package_id}"...')
 	// Validate package_id to our best effort
 	is_valid_package_id(opt.package_id) or {
 		return error('${error_tag}: "${opt.package_id}" is not a valid package id:\n${err}.
@@ -205,9 +211,7 @@ fn package_apk(opt PackageOptions) ! {
 	}
 
 	// Compile java sources
-	if opt.verbosity > 1 {
-		println('Compiling java sources ${javac_source_version}/${javac_target_version}')
-	}
+	opt.verbose(2, 'Compiling java sources ${javac_source_version}/${javac_target_version}')
 	java_sources := os.walk_ext(os.join_path(package_path, 'src'), '.java')
 
 	mut javac_cmd := [
@@ -240,9 +244,7 @@ fn package_apk(opt PackageOptions) ! {
 					} else {
 						patched_dx = dx
 					}
-					if opt.verbosity > 1 {
-						println('Using patched dx (${patched_dx})')
-					}
+					opt.verbose(2, 'Using patched dx (${patched_dx})')
 				}
 				dx = patched_dx
 			}
@@ -258,9 +260,7 @@ fn package_apk(opt PackageOptions) ! {
 					} else {
 						patched_d8 = d8
 					}
-					if opt.verbosity > 1 {
-						println('Using patched d8 (${patched_d8})')
-					}
+					opt.verbose(2, 'Using patched d8 (${patched_d8})')
 				}
 				d8 = patched_d8
 			}
@@ -339,9 +339,8 @@ fn package_apk(opt PackageOptions) ! {
 	util.verbosity_print_cmd(aapt_cmd, opt.verbosity)
 	util.run_or_error(aapt_cmd)!
 
-	if opt.verbosity > 1 {
-		println('Adding libs to "${tmp_unaligned_product}"...')
-	}
+	opt.verbose(2, 'Adding libs to "${tmp_unaligned_product}"...')
+
 	// Add libs to product
 	mut collected_libs := map[string][]string{}
 	collected_libs[build_path] = os.walk_ext(os.join_path(build_path, 'lib'), '.so')
@@ -351,9 +350,7 @@ fn package_apk(opt PackageOptions) ! {
 			path_split := collected_extra_lib.split(os.path_separator)
 			for path_part in path_split {
 				if path_part in supported_lib_folders {
-					if opt.verbosity > 2 {
-						println('Adding extra lib "${collected_extra_lib}"...')
-					}
+					opt.verbose(3, 'Adding extra lib "${collected_extra_lib}"...')
 					os.cp(collected_extra_lib, os.join_path(libs_extra_path, 'lib', path_part,
 						os.file_name(collected_extra_lib))) or { return error(err.msg()) }
 					break
@@ -402,7 +399,7 @@ fn package_apk(opt PackageOptions) ! {
 	keystore := resolve_keystore(opt.keystore)!
 
 	if opt.is_prod && os.file_name(keystore.path) == 'debug.keystore' {
-		eprintln('Warning: It looks like you are using the debug.keystore file to sign your application built in production mode ("-prod").')
+		vabutil.vab_warning('It looks like you are using the debug.keystore file to sign your application built in production mode ("-prod").')
 	}
 
 	$if windows {
@@ -420,9 +417,7 @@ fn package_apk(opt PackageOptions) ! {
 				} else {
 					patched_apksigner = apksigner
 				}
-				if opt.verbosity > 1 {
-					println('Using patched apksigner (${patched_apksigner})')
-				}
+				opt.verbose(2, 'Using patched apksigner (${patched_apksigner})')
 			}
 			apksigner = patched_apksigner
 		}
@@ -452,17 +447,13 @@ fn package_apk(opt PackageOptions) ! {
 	util.run_or_error(apksigner_cmd)!
 
 	if os.is_file(opt.output_file) {
-		if opt.verbosity > 1 {
-			println('Removing previous output "${opt.output_file}"')
-		}
+		opt.verbose(2, 'Removing previous output "${opt.output_file}"')
 		os.rm(opt.output_file) or {
 			return error('${error_tag}: error while removing "${opt.output_file}":\n${err}')
 		}
 	}
 
-	if opt.verbosity > 1 {
-		println('Moving product from "${tmp_product}" to "${opt.output_file}"')
-	}
+	opt.verbose(2, 'Moving product from "${tmp_product}" to "${opt.output_file}"')
 
 	os.mv_by_cp(tmp_product, opt.output_file) or {
 		return error('${error_tag}: error while moving product "${tmp_product}" to "${opt.output_file}": ${err}')
@@ -544,9 +535,7 @@ fn package_aab(opt PackageOptions) ! {
 		return error('${error_tag}: error while changing work directory to "${package_path}":\n${err}')
 	}
 
-	if opt.verbosity > 1 {
-		println('Compiling resources')
-	}
+	opt.verbose(2, 'Compiling resources...')
 
 	compiled_resources_path := 'compiled_resources'
 	// https://developer.android.com/studio/command-line/aapt2#compile
@@ -587,9 +576,8 @@ fn package_aab(opt PackageOptions) ! {
 		}
 	}
 
-	if opt.verbosity > 1 {
-		println('Preparing resources and assets')
-	}
+	opt.verbose(2, 'Preparing resources and assets...')
+
 	// aapt2 link --proto-format -o temporary.apk \
 	//      -I android_sdk/platforms/android-NN/android.jar \
 	//      --manifest project/app/src/main/AndroidManifest.xml \
@@ -648,9 +636,8 @@ fn package_aab(opt PackageOptions) ! {
 	}
 
 	// Compile java sources
-	if opt.verbosity > 1 {
-		println('Compiling java sources ${javac_source_version}/${javac_target_version}')
-	}
+	opt.verbose(2, 'Compiling java sources ${javac_source_version}/${javac_target_version}...')
+
 	java_sources := os.walk_ext(src_path, '.java')
 	java_gen_sources := os.walk_ext(os.join_path(package_path, 'gen'), '.java')
 
@@ -687,9 +674,8 @@ fn package_aab(opt PackageOptions) ! {
 		return error('${error_tag}: error while moving AndroidManifest from "${staging_path}" to "${manifest_dir}":\n${err}')
 	}
 
-	if opt.verbosity > 1 {
-		println('Adding libs...')
-	}
+	opt.verbose(2, 'Adding libs...')
+
 	// Add libs to product
 	mut collected_libs := map[string][]string{}
 	collected_libs[build_path] = os.walk_ext(os.join_path(build_path, 'lib'), '.so')
@@ -699,9 +685,7 @@ fn package_aab(opt PackageOptions) ! {
 			path_split := collected_extra_lib.split(os.path_separator)
 			for path_part in path_split {
 				if path_part in supported_lib_folders {
-					if opt.verbosity > 2 {
-						println('Adding extra lib "${collected_extra_lib}"...')
-					}
+					opt.verbose(3, 'Adding extra lib "${collected_extra_lib}"...')
 					os.cp(collected_extra_lib, os.join_path(libs_extra_path, 'lib', path_part,
 						os.file_name(collected_extra_lib))) or { panic(err) }
 					break
@@ -742,9 +726,7 @@ fn package_aab(opt PackageOptions) ! {
 					} else {
 						patched_dx = dx
 					}
-					if opt.verbosity > 1 {
-						println('Using patched dx (${patched_dx})')
-					}
+					opt.verbose(2, 'Using patched dx (${patched_dx})')
 				}
 				dx = patched_dx
 			}
@@ -760,9 +742,7 @@ fn package_aab(opt PackageOptions) ! {
 					} else {
 						patched_d8 = d8
 					}
-					if opt.verbosity > 1 {
-						println('Using patched d8 (${patched_d8})')
-					}
+					opt.verbose(2, 'Using patched d8 (${patched_d8})')
 				}
 				d8 = patched_d8
 			}
@@ -834,9 +814,7 @@ fn package_aab(opt PackageOptions) ! {
 		|| (jdk_semantic_version >= semver.build(20, 0, 0)
 		&& jdk_semantic_version < semver.build(21, 0, 0)) {
 		$if !windows {
-			if opt.verbosity > 1 {
-				println('Working around Java/bundletool/ZIP64 BUG...')
-			}
+			opt.verbose(2, 'Working around Java/bundletool/ZIP64 BUG...')
 			os.rm(base_zip_file) or {}
 			zip_cmd := [
 				'zip',
@@ -875,7 +853,7 @@ fn package_aab(opt PackageOptions) ! {
 
 	// Sign the APK
 	if opt.is_prod && os.file_name(keystore.path) == 'debug.keystore' {
-		eprintln('Warning: It looks like you are using the debug.keystore\nfile to sign your application build in production mode ("-prod").')
+		vabutil.vab_warning('It looks like you are using the debug.keystore\nfile to sign your application build in production mode ("-prod").')
 	}
 	// jarsigner -verbose -keystore ~/.android/debug.keystore -storepass android -keypass android path/to/my.apk androiddebugkey
 	jarsigner_cmd := [
@@ -910,9 +888,7 @@ fn package_aab(opt PackageOptions) ! {
 		return error('${error_tag}: error while changing work directory to "${pwd}":\n${err}')
 	}
 
-	if opt.verbosity > 1 {
-		println('Moving product from "${tmp_product}" to "${opt.output_file}"')
-	}
+	opt.verbose(2, 'Moving product from "${tmp_product}" to "${opt.output_file}"')
 	os.mv_by_cp(tmp_product, opt.output_file) or {
 		return error('${error_tag}: error while moving product "${tmp_product}" to "${opt.output_file}":\n${err}')
 	}
@@ -927,17 +903,16 @@ fn prepare_base(opt PackageOptions) (string, string) {
 			'aab'
 		}
 	}
+	opt.verbose(1, 'Preparing ${format} base"')
 	package_path := os.join_path(opt.work_dir, 'package', format)
-	if opt.verbosity > 0 {
-		println('Removing previous package directory "${package_path}"')
-	}
+	opt.verbose(2, 'Removing previous package directory "${package_path}"')
 	os.rmdir_all(package_path) or {}
 	os.mkdir_all(package_path) or { panic(err) }
 
 	base_files_path := opt.base_files
 	if os.is_dir(base_files_path) {
-		if opt.verbosity > 0 {
-			println('Copying base files from "${base_files_path}" to "${package_path}"')
+		if opt.verbosity > 1 {
+			opt.verbose(2, 'Copying base files from "${base_files_path}" to "${package_path}"')
 			if opt.verbosity > 2 {
 				os.walk(base_files_path, fn (entry string) {
 					println(entry)
@@ -964,8 +939,8 @@ fn prepare_base(opt PackageOptions) (string, string) {
 
 	mut is_override := false
 	if os.is_dir(overrides_path) {
-		if opt.verbosity > 0 {
-			println('Copying base file overrides from "${overrides_path}" to "${package_path}"')
+		if opt.verbosity > 1 {
+			opt.verbose(2, 'Copying base file overrides from "${overrides_path}" to "${package_path}"')
 			if opt.verbosity > 2 {
 				os.walk(overrides_path, fn (entry string) {
 					println(entry)
@@ -975,14 +950,10 @@ fn prepare_base(opt PackageOptions) (string, string) {
 		os.cp_all(overrides_path, package_path, true) or { panic(err) }
 		is_override = true
 	} else {
-		if opt.verbosity > 2 {
-			println('No overrides found in "${overrides_path}"')
-		}
+		opt.verbose(3, 'No overrides found in "${overrides_path}"')
 	}
 
-	if opt.verbosity > 0 {
-		println('Modifying base files')
-	}
+	opt.verbose(1, 'Modifying base files...')
 
 	is_default_pkg_id := opt.package_id == default_package_id
 	if opt.is_prod && (is_default_pkg_id || opt.package_id.starts_with(default_package_id)) {
@@ -1002,13 +973,12 @@ fn prepare_base(opt PackageOptions) (string, string) {
 	native_activity_path := os.join_path(package_path, 'src', default_pkg_id_path)
 	activity_file_name := default_activity_name + '.java'
 	native_activity_file := os.join_path(native_activity_path, activity_file_name)
-	$if !vab_no_notices ? && debug {
+	$if debug {
 		eprintln('Native activity file: "${native_activity_file}"')
 	}
 	if os.is_file(native_activity_file) {
-		if opt.verbosity > 1 {
-			println('Modifying native activity "${native_activity_file}"')
-		}
+		opt.verbose(2, 'Modifying native activity "${native_activity_file}"')
+
 		mut java_src := os.read_file(native_activity_file) or { panic(err) }
 
 		if !is_override {
@@ -1022,15 +992,13 @@ fn prepare_base(opt PackageOptions) (string, string) {
 			if start >= 0 && re.groups.len > 0 {
 				if opt.verbosity > 1 {
 					r := java_src[re.groups[0]..re.groups[1]]
-					println('Replacing package id "${r}" with "${opt.package_id}"')
+					opt.verbose(2, 'Replacing package id "${r}" with "${opt.package_id}"')
 				}
 				java_src = java_src[0..re.groups[0]] + opt.package_id +
 					java_src[re.groups[1]..java_src.len]
 			}
 		} else {
-			if opt.verbosity > 1 {
-				println('Skipping replacing package id since "${opt.package_id}" is user provided')
-			}
+			opt.verbose(2, 'Skipping replacing package id since "${opt.package_id}" is user provided')
 		}
 
 		// Set lib_name
@@ -1040,7 +1008,7 @@ fn prepare_base(opt PackageOptions) (string, string) {
 		if start >= 0 && re.groups.len > 0 {
 			if opt.verbosity > 1 {
 				r := java_src[re.groups[0]..re.groups[1]]
-				println('Replacing init library "${r}" with "${opt.lib_name}"')
+				opt.verbose(2, 'Replacing init library "${r}" with "${opt.lib_name}"')
 			}
 			java_src = java_src[0..re.groups[0]] + opt.lib_name +
 				java_src[re.groups[1]..java_src.len]
@@ -1056,7 +1024,7 @@ fn prepare_base(opt PackageOptions) (string, string) {
 				if os.is_dir_empty(os.join_path(package_path, 'src', v_default_package_id.join(os.path_separator))) {
 					if opt.verbosity > 1 {
 						p := os.join_path(package_path, 'src', v_default_package_id.join(os.path_separator))
-						println('Removing default left-over directory "${p}"')
+						opt.verbose(2, 'Removing default left-over directory "${p}"')
 					}
 					os.rmdir_all(os.join_path(package_path, 'src', v_default_package_id.join(os.path_separator))) or {
 						panic(err)
@@ -1070,9 +1038,7 @@ fn prepare_base(opt PackageOptions) (string, string) {
 	if !is_override {
 		manifest_path := os.join_path(package_path, 'AndroidManifest.xml')
 		if os.is_file(manifest_path) {
-			if opt.verbosity > 1 {
-				println('Modifying manifest "${manifest_path}"')
-			}
+			opt.verbose(2, 'Modifying manifest "${manifest_path}"')
 			mut manifest := os.read_file(manifest_path) or { panic(err) }
 			mut re := regex.regex_opt(r'.*<manifest\s.*\spackage\s*=\s*"(.+)".*>') or { panic(err) }
 			mut start, _ := re.match_string(manifest)
@@ -1080,7 +1046,7 @@ fn prepare_base(opt PackageOptions) (string, string) {
 			if start >= 0 && re.groups.len > 0 {
 				if opt.verbosity > 1 {
 					r := manifest[re.groups[0]..re.groups[1]]
-					println('Replacing package id "${r}" with "${opt.package_id}"')
+					opt.verbose(2, 'Replacing package id "${r}" with "${opt.package_id}"')
 				}
 				manifest = manifest[0..re.groups[0]] + opt.package_id +
 					manifest[re.groups[1]..manifest.len]
@@ -1093,7 +1059,7 @@ fn prepare_base(opt PackageOptions) (string, string) {
 			if start >= 0 && re.groups.len > 0 {
 				if opt.verbosity > 1 {
 					r := manifest[re.groups[0]..re.groups[1]]
-					println('Replacing version code "${r}" with "${opt.version_code}"')
+					opt.verbose(2, 'Replacing version code "${r}" with "${opt.version_code}"')
 				}
 				manifest = manifest[0..re.groups[0]] + opt.version_code.str() +
 					manifest[re.groups[1]..manifest.len]
@@ -1108,7 +1074,7 @@ fn prepare_base(opt PackageOptions) (string, string) {
 			if start >= 0 && re.groups.len > 0 {
 				if opt.verbosity > 1 {
 					r := manifest[re.groups[0]..re.groups[1]]
-					println('Replacing debuggable "${r}" with "${is_debug_build}"')
+					opt.verbose(2, 'Replacing debuggable "${r}" with "${is_debug_build}"')
 				}
 				manifest = manifest[0..re.groups[0]] + is_debug_build.str() +
 					manifest[re.groups[1]..manifest.len]
@@ -1126,7 +1092,7 @@ fn prepare_base(opt PackageOptions) (string, string) {
 			if start >= 0 && re.groups.len > 0 {
 				if opt.verbosity > 1 {
 					r := manifest[re.groups[0]..re.groups[1]]
-					println('Replacing minimum SDK version "${r}" with "${opt.min_sdk_version}"')
+					opt.verbose(2, 'Replacing minimum SDK version "${r}" with "${opt.min_sdk_version}"')
 				}
 				manifest = manifest[0..re.groups[0]] + opt.min_sdk_version.str() +
 					manifest[re.groups[1]..manifest.len]
@@ -1137,7 +1103,7 @@ fn prepare_base(opt PackageOptions) (string, string) {
 			if start >= 0 && re.groups.len > 0 {
 				if opt.verbosity > 1 {
 					r := manifest[re.groups[0]..re.groups[1]]
-					println('Replacing target SDK version "${r}" with "${opt.api_level}"')
+					opt.verbose(2, 'Replacing target SDK version "${r}" with "${opt.api_level}"')
 				}
 				manifest = manifest[0..re.groups[0]] + opt.api_level +
 					manifest[re.groups[1]..manifest.len]
@@ -1151,7 +1117,7 @@ fn prepare_base(opt PackageOptions) (string, string) {
 				gles_version_hex := '0x000' + opt.gles_version.str() + '0000'
 				if opt.verbosity > 1 {
 					r := manifest[re.groups[0]..re.groups[1]]
-					println('Replacing declaration of OpenGL ES version "${r}" with "${gles_version_hex}"')
+					opt.verbose(2, 'Replacing declaration of OpenGL ES version "${r}" with "${gles_version_hex}"')
 				}
 				manifest = manifest[0..re.groups[0]] + gles_version_hex +
 					manifest[re.groups[1]..manifest.len]
@@ -1163,7 +1129,7 @@ fn prepare_base(opt PackageOptions) (string, string) {
 				fq_activity_name := opt.package_id + '.' + opt.activity_name
 				if opt.verbosity > 1 {
 					r := manifest[re.groups[0]..re.groups[1]]
-					println('Replacing activity name "${r}" with "${fq_activity_name}"')
+					opt.verbose(2, 'Replacing activity name "${r}" with "${fq_activity_name}"')
 				}
 				manifest = manifest[0..re.groups[0]] + fq_activity_name +
 					manifest[re.groups[1]..manifest.len]
@@ -1204,15 +1170,11 @@ fn prepare_base(opt PackageOptions) (string, string) {
 		os.write_file(strings_path, content) or { panic(err) }
 	}
 
-	if opt.verbosity > 0 {
-		println('Copying assets')
-	}
+	opt.verbose(1, 'Copying assets...')
 
 	if !is_default_pkg_id && os.is_file(opt.icon) && os.file_ext(opt.icon) == '.png' {
 		icon_path := os.join_path(package_path, 'res', 'mipmap', 'icon.png')
-		if opt.verbosity > 0 {
-			println('Copying icon')
-		}
+		opt.verbose(1, 'Copying icon...')
 		os.rm(icon_path) or { panic(err) }
 		os.cp(opt.icon, icon_path) or { panic(err) }
 	}
@@ -1238,9 +1200,7 @@ fn prepare_base(opt PackageOptions) (string, string) {
 	// Look for "assets" dir in same location as input
 	assets_by_side := os.join_path(assets_by_side_path, 'assets')
 	if os.is_dir(assets_by_side) {
-		if opt.verbosity > 0 {
-			println('Including assets from "${assets_by_side}"')
-		}
+		opt.verbose(1, 'Including assets from "${assets_by_side}"')
 		os.cp_all(assets_by_side, assets_path, false) or { panic(err) }
 		included_asset_paths << os.real_path(assets_by_side)
 	}
@@ -1250,13 +1210,9 @@ fn prepare_base(opt PackageOptions) (string, string) {
 		assets_above := os.real_path(os.join_path(assets_by_side_path, '..', 'assets'))
 		if os.is_dir(assets_above) {
 			if os.real_path(assets_above) in included_asset_paths {
-				if opt.verbosity > 1 {
-					println('Skipping "${assets_above}" since it\'s already included')
-				}
+				opt.verbose(2, 'Skipping "${assets_above}" since it\'s already included')
 			} else {
-				if opt.verbosity > 0 {
-					println('Including assets from "${assets_above}"')
-				}
+				opt.verbose(1, 'Including assets from "${assets_above}"')
 				os.cp_all(assets_above, assets_path, false) or { panic(err) }
 				included_asset_paths << os.real_path(assets_by_side)
 			}
@@ -1267,13 +1223,9 @@ fn prepare_base(opt PackageOptions) (string, string) {
 	if os.is_dir(assets_in_dir) {
 		assets_in_dir_resolved := os.real_path(os.join_path(os.getwd(), assets_in_dir))
 		if assets_in_dir_resolved in included_asset_paths {
-			if opt.verbosity > 1 {
-				println('Skipping "${assets_in_dir}" since it\'s already included')
-			}
+			opt.verbose(2, 'Skipping "${assets_in_dir}" since it\'s already included')
 		} else {
-			if opt.verbosity > 0 {
-				println('Including assets from "${assets_in_dir}"')
-			}
+			opt.verbose(1, 'Including assets from "${assets_in_dir}"')
 			os.cp_all(assets_in_dir, assets_path, false) or { panic(err) }
 			included_asset_paths << assets_in_dir_resolved
 		}
@@ -1283,19 +1235,15 @@ fn prepare_base(opt PackageOptions) (string, string) {
 		if os.is_dir(user_asset) {
 			user_asset_resolved := os.real_path(user_asset)
 			if user_asset_resolved in included_asset_paths {
-				if opt.verbosity > 1 {
-					println('Skipping "${user_asset}" since it\'s already included')
-				}
+				opt.verbose(2, 'Skipping "${user_asset}" since it\'s already included')
 			} else {
-				if opt.verbosity > 0 {
-					println('Including assets from "${user_asset}"')
-				}
+				opt.verbose(1, 'Including assets from "${user_asset}"')
 				os.cp_all(user_asset, assets_path, false) or { panic(err) }
 				included_asset_paths << user_asset_resolved
 			}
 		} else {
 			os.cp(user_asset, assets_path) or {
-				eprintln('Skipping invalid or non-existent asset file "${user_asset}"')
+				vabutil.vab_notice('Skipping invalid or non-existent asset file "${user_asset}"')
 			}
 		}
 	}
