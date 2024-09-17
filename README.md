@@ -196,6 +196,10 @@ The accompaning script used in the video can be found here:
 
 [https://github.com/MatejMagat305/vab-termux](https://github.com/MatejMagat305/vab-termux).
 
+# Examples
+
+See [*"Where is the `examples` folder?"*](docs/FAQ.md#where-is-the-examples-folder) in the [FAQ](docs/FAQ.md).
+
 # Notes
 
 `vab` targets as low an API level as possible by default for maximum
@@ -207,5 +211,5 @@ Installed API levels can be listed with `vab --list-apis`.
 # Troubleshooting
 
 Android is a complex ecosystem that has differences between
-build hosts and tool versions - please consult our [FAQ](docs/FAQ.md)
+build hosts and tool versions - consult our [FAQ](docs/FAQ.md)
 for answers to frequently asked questions.
