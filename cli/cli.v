@@ -60,7 +60,7 @@ pub const vab_documentation_config = flag.DocConfig{
 	options:     flag.DocOptions{
 		compact: true
 	}
-	fields: {
+	fields:      {
 		'--gles-version':   'GLES version to use from any of ${android.supported_gles_versions}'
 		'--package-format': 'App package format. Any of ${android.supported_package_formats}'
 		'--archs':          'Comma separated string with any of:\n${android.default_archs}'
@@ -172,10 +172,11 @@ pub fn args_to_options(arguments []string, defaults Options) !(Options, &flag.Fl
 		package_id:             fp.string('package-id', 0, defaults.package_id, 'App package ID (e.g. "org.company.app")')
 		package_overrides_path: fp.string('package-overrides', 0, defaults.package_overrides_path,
 			'Package file overrides path (e.g. "/tmp/java")')
-		package_format: fp.string('package', `p`, defaults.package_format, 'App package format. Any of ${android.supported_package_formats}')
-		activity_name:  fp.string('activity-name', 0, defaults.activity_name, 'The name of the main activity (e.g. "VActivity")')
-		icon:           fp.string('icon', 0, defaults.icon, 'App icon')
-		version_code:   fp.int('version-code', 0, defaults.version_code, 'Build version code (android:versionCode)')
+		package_format:         fp.string('package', `p`, defaults.package_format, 'App package format. Any of ${android.supported_package_formats}')
+		activity_name:          fp.string('activity-name', 0, defaults.activity_name,
+			'The name of the main activity (e.g. "VActivity")')
+		icon:                   fp.string('icon', 0, defaults.icon, 'App icon')
+		version_code:           fp.int('version-code', 0, defaults.version_code, 'Build version code (android:versionCode)')
 		//
 		output: fp.string('output', `o`, defaults.output, 'Path to output (dir/file)')
 		//

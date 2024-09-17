@@ -847,8 +847,8 @@ pub fn (opt &Options) as_android_deploy_options() !android.DeployOptions {
 		} else {
 			android.LogMode.filtered
 		}
-		log_tags: log_tags
-		run:      run
+		log_tags:         log_tags
+		run:              run
 	}
 
 	return deploy_opt
