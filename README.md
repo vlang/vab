@@ -198,7 +198,8 @@ The accompaning script used in the video can be found here:
 
 # Examples
 
-See [*"Where is the `examples` folder?"*](docs/FAQ.md#where-is-the-examples-folder) in the [FAQ](docs/FAQ.md).
+See [*"Where is the `examples` folder?"*](docs/FAQ.md#where-is-the-examples-folder)
+in the [FAQ](docs/FAQ.md).
 
 # Notes
 
