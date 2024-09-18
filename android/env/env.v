@@ -12,7 +12,7 @@ import vab.android.ndk
 import vab.android.util
 
 pub const accepted_components = ['auto', 'cmdline-tools', 'platform-tools', 'ndk', 'platforms',
-	'build-tools', 'bundletool', 'aapt2']
+	'build-tools', 'bundletool', 'aapt2', 'emulator']
 // 6858069 = cmdline-tools;3.0 <- zip structure changes *sigh*
 // 6609375 = cmdline-tools;2.1 <- latest that support `sdkmanager --version` *sigh*
 // cmdline-tools-bootstrap-url - Replace [XXX] with linux/mac/win
@@ -55,6 +55,10 @@ pub const default_components = {
 		'version':       '7.0.0'
 		'bootstrap_url': 'https://dl.google.com/android/maven2/com/android/tools/build/aapt2/7.0.0-alpha07-7087017/aapt2-7.0.0-alpha07-7087017-[XXX].jar'
 	}
+	'emulator':       {
+		'name':    'emulator'
+		'version': ''
+	}
 }
 
 pub const default_components_eq_java_8 = {
@@ -89,6 +93,10 @@ pub const default_components_eq_java_8 = {
 		'version':       '7.0.0'
 		'bootstrap_url': 'https://dl.google.com/android/maven2/com/android/tools/build/aapt2/7.0.0-alpha07-7087017/aapt2-7.0.0-alpha07-7087017-[XXX].jar'
 	}
+	'emulator':       {
+		'name':    'emulator'
+		'version': ''
+	}
 }
 
 // get_default_components returns the default components map based on what Java version is being used
@@ -120,6 +128,7 @@ pub enum Dependency {
 	cmdline_tools
 	bundletool
 	aapt2
+	emulator
 }
 
 pub struct InstallOptions {
@@ -210,7 +219,7 @@ pub fn install(components string, verbosity int) int {
 		}
 
 		if !is_auto && version == '' {
-			if component != 'platform-tools' {
+			if component !in ['platform-tools', 'emulator'] {
 				eprintln(@MOD + ' ' + @FN + ' install component "${component}" has no version.')
 				return 1
 			}
@@ -242,6 +251,9 @@ pub fn install(components string, verbosity int) int {
 			}
 			'platform-tools' {
 				iopts << InstallOptions{.platform_tools, item, verbosity}
+			}
+			'emulator' {
+				iopts << InstallOptions{.emulator, item, verbosity}
 			}
 			'ndk' {
 				iopts << InstallOptions{.ndk, item, verbosity}
@@ -345,7 +357,7 @@ fn install_opt(opt InstallOptions) !bool {
 		.aapt2 {
 			return ensure_aapt2(opt.verbosity)
 		}
-		.cmdline_tools, .platform_tools {
+		.cmdline_tools, .platform_tools, .emulator {
 			util.verbosity_print_cmd(install_cmd, opt.verbosity)
 			cmd_res := $if windows {
 				util.run_raw(install_cmd)
@@ -717,6 +729,7 @@ pub fn has_adb() bool {
 	return adb_path != '' && os.is_executable(adb_path)
 }
 
+// adb returns the full path to the `adb` tool, if found. An empty string otherwise.
 pub fn adb() string {
 	mut adb_path := os.getenv('ADB')
 	if !os.exists(adb_path) {
@@ -732,6 +745,42 @@ pub fn adb() string {
 		}
 	}
 	return adb_path
+}
+
+// avdmanager returns the full path to the `avdmanager` tool, if found. An empty string otherwise.
+pub fn avdmanager() string {
+	mut avdmanager_path := os.getenv('AVDMANAGER')
+	if !os.exists(avdmanager_path) {
+		avdmanager_path = os.join_path(sdk.platform_tools_root(), 'avdmanager${dot_exe}')
+	}
+	if !os.exists(avdmanager_path) {
+		if os.exists_in_system_path('avdmanager') {
+			avdmanager_path = os.find_abs_path_of_executable('avdmanager') or { '' }
+			if avdmanager_path != '' {
+				// adb normally reside in 'path/to/sdk_root/platform-tools/'
+				avdmanager_path = os.real_path(os.join_path(os.dir(avdmanager_path), '..'))
+			}
+		}
+	}
+	return avdmanager_path
+}
+
+// emulator returns the full path to the `emulator` tool, if found. An empty string otherwise.
+pub fn emulator() string {
+	mut emulator_path := os.getenv('EMULATOR')
+	if !os.exists(emulator_path) {
+		emulator_path = os.join_path(sdk.root(), 'emulator', 'emulator${dot_exe}')
+	}
+	if !os.exists(emulator_path) {
+		if os.exists_in_system_path('emulator') {
+			emulator_path = os.find_abs_path_of_executable('emulator') or { '' }
+			if emulator_path != '' {
+				// the emulator normally reside in 'path/to/sdk_root/emulator/'
+				emulator_path = os.real_path(os.join_path(os.dir(emulator_path), '..'))
+			}
+		}
+	}
+	return emulator_path
 }
 
 pub fn has_bundletool() bool {

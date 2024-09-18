@@ -122,6 +122,8 @@ KEYSTORE_ALIAS_PASSWORD  # Password for keystore alias
 BUNDLETOOL               # Absolute path to the bundletool to use
 AAPT2                    # Absolute path to the aapt2 to use
 ADB                      # Absolute path to the adb to use
+AVDMANAGER               # Absolute path to the avdmanager to use
+EMULATOR                 # Absolute path to the emulator to use
 ```
 
 ```bash
