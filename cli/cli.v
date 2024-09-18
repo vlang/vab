@@ -53,6 +53,7 @@ pub const vab_env_vars = [
 	'AAPT2',
 	'JAVA_HOME',
 	'VEXE',
+	'VAB_EXE',
 	'VMODULES',
 ]
 
