@@ -9,7 +9,7 @@ on:
       - "**.md"
 
 concurrency:
-  group: general-${{ github.event.pull_request.number || github.sha }}
+  group: ${{ github.workflow }}-${{ github.ref == 'refs/heads/master' && github.sha || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -79,9 +79,6 @@ jobs:
     - name: Simulate "v install vab"
       run: mv vab ~/.vmodules
 
-    - name: Run tests
-      run: v test ~/.vmodules/vab
-
     - name: Build vab with -prod
       run: v -prod ~/.vmodules/vab
 
@@ -115,12 +112,12 @@ jobs:
       run: |
         [ "$(vab complete bash vab com)" = "COMPREPLY+=('complete')" ]
 
-    - name: Setup env
-      run: |
-        mkdir apks
+    - name: Run tests
+      run: v test ~/.vmodules/vab
 
     - name: Build APK (Default) examples/sokol/particles
       run: |
+        mkdir apks
         vab examples/sokol/particles -o apks/particles.apk
         [ -f apks/particles.apk ]
 
@@ -145,9 +142,6 @@ jobs:
 
     - name: Simulate "v install vab"
       run: mv vab ~/.vmodules
-
-    - name: Run tests
-      run: v test  ~/.vmodules/vab
 
     - name: Build vab with -prod
       run: v -prod  ~/.vmodules/vab
@@ -180,12 +174,12 @@ jobs:
     - name: Run vab doctor
       run: vab doctor
 
-    - name: Setup env
-      run: |
-        mkdir apks
+    - name: Run tests
+      run: v test ~/.vmodules/vab
 
     - name: Build APK (Default) examples/sokol/particles
       run: |
+        mkdir apks
         vab examples/sokol/particles -o apks/particles.apk
         [ -f apks/particles.apk ]
 
@@ -211,9 +205,6 @@ jobs:
     - name: Simulate "v install vab"
       run: mv vab ~/.vmodules
 
-    - name: Run tests
-      run: v test  ~/.vmodules/vab
-
     - name: Build vab
       run: v -g ~/.vmodules/vab
 
@@ -227,12 +218,12 @@ jobs:
     - name: Run 'vab doctor'
       run: /usr/bin/vab doctor
 
-    - name: Setup env
-      run: |
-        mkdir apks
+    - name: Run tests
+      run: v test ~/.vmodules/vab
 
     - name: Build APK (Default) examples/sokol/particles
       run: |
+        mkdir apks
         /usr/bin/vab examples/sokol/particles -o apks/particles.apk
         [ -f apks/particles.apk ]
 
@@ -256,9 +247,6 @@ jobs:
     - name: Simulate "v install vab"
       run: mv vab ~/.vmodules/
 
-    - name: Run tests
-      run: v test  ~/.vmodules/vab
-
     - name: Build vab
       run: v -g ~/.vmodules/vab
 
@@ -273,67 +261,6 @@ jobs:
 
     - name: Check `v -os android` *without* -apk flag
       run: .github/workflows/android_cross_compile.vsh
-
-  #macos-latest-bootstrap:
-    #runs-on: macOS-latest
-    #timeout-minutes: 10
-    #steps:
-    #- name: Checkout V
-      #uses: actions/checkout@v4
-      #with:
-        #repository: vlang/v
-
-    #- name: Build local v
-      #run: make -j4
-
-    #- name: Checkout vab
-      #uses: actions/checkout@v4
-      #with:
-        #path: vab
-
-    #- name: Run tests
-      #run: ./v test vab
-
-    #- name: Build vab with -prod
-      #run: ./v -prod vab/vab.v
-
-    #- name: Build vab
-      #run: ./v -g vab/vab.v
-
-    #- name: Run 'vab --help'
-      #run: vab/vab --help
-
-    #- name: Ruin Android environment on purpose
-      #run: |
-        #sudo rm -fr "$HOME/Library/Android"
-
-    #- name: Run 'vab doctor'
-      #run: |
-        #export VEXE=./v
-        #vab/vab doctor
-
-    #- name: Run 'vab install auto'
-      #run: |
-        #export ANDROID_SDK_ROOT="" # These are set in the CI by default
-        #export ANDROID_HOME=""
-        #export ANDROID_NDK_ROOT=""
-        #export VEXE=./v
-        ## Sometimes this step fails in CI???
-        ##vab/vab -v 3 install auto
-
-    #- name: Run vab doctor
-      #run: |
-        #export VEXE=./v
-        #vab/vab doctor
-
-    #- name: Setup env
-      #run: |
-        #mkdir apks
-
-    #- name: Build APK (Default) examples/sokol/particles
-      #run: |
-        #export VEXE=./v
-        ##vab/vab -v 3 examples/sokol/particles -o apks/particles.apk
 
   windows-latest-build:
     runs-on: windows-latest
@@ -367,9 +294,6 @@ jobs:
     - name: Simulate "v install vab"
       run: Move-Item -Path .\vab -Destination $HOME\.vmodules\vab -force
 
-    - name: Run tests
-      run: v test "$HOME\.vmodules\vab"
-
 # TODO fails on Windows
 #    - name: Build vab with -prod
 #      run: v -prod "$HOME\.vmodules\vab"
@@ -401,12 +325,11 @@ jobs:
         vab --list-build-tools
         vab --list-ndks
 
-    - name: Setup env
-      run: |
-        mkdir apks
-        # TODO mkdir aabs
+    - name: Run tests
+      run: v test "$HOME\.vmodules\vab"
 
     - name: Build APK (Default) v/examples/sokol/particles
       run: |
+        mkdir apks
         vab v\examples\sokol\particles -o apks\particles.apk
         # TODO vab/vab v/examples/sokol/particles -o aabs/particles.aab

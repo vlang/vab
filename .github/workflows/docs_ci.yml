@@ -4,6 +4,10 @@ name: Docs CI
 ### the developers should receive early warning if they break it.
 on: [push, pull_request]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref == 'refs/heads/master' && github.sha || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   check-markdown:
     runs-on: ubuntu-latest

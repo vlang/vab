@@ -9,7 +9,7 @@ on:
       - "**.md"
 
 concurrency:
-  group: matrix-${{ github.event.pull_request.number || github.sha }}
+  group: ${{ github.workflow }}-${{ github.ref == 'refs/heads/master' && github.sha || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -46,9 +46,6 @@ jobs:
     - name: Simulate "v install vab"
       run: mv vab ~/.vmodules
 
-    - name: Run tests
-      run: ./v test ~/.vmodules/vab
-
     - name: Build vab
       run: ./v -g ~/.vmodules/vab
 
@@ -60,6 +57,9 @@ jobs:
 
     - name: Run vab doctor
       run: vab doctor
+
+    - name: Run tests
+      run: ./v test ~/.vmodules/vab
 
     # AAB
     - name: Install AAB dependencies
@@ -98,6 +98,7 @@ jobs:
         os: [ubuntu-20.04]
         java-version: [11, 15, 20]
         android-api: [31, 33]
+      fail-fast: false
     timeout-minutes: 20
     env:
       VAB_FLAGS: -v 3 -gc none --build-tools 29.0.0
@@ -123,9 +124,6 @@ jobs:
     - name: Simulate "v install vab"
       run: mv vab ~/.vmodules
 
-    - name: Run tests
-      run: ./v test ~/.vmodules/vab
-
     - name: Build vab
       run: ./v -g ~/.vmodules/vab
 
@@ -137,6 +135,9 @@ jobs:
 
     - name: Run vab doctor
       run: vab doctor
+
+    - name: Run tests
+      run: ./v test ~/.vmodules/vab
 
     - name: Build examples with garbage collector (Java ${{ matrix.java-version }}) ${{ matrix.android-api }}
       run: |
@@ -188,9 +189,6 @@ jobs:
     - name: Simulate "v install vab"
       run: mv vab ~/.vmodules
 
-    - name: Run tests
-      run: ./v test ~/.vmodules/vab
-
     - name: Build vab
       run: ./v -g ~/.vmodules/vab
 
@@ -216,6 +214,9 @@ jobs:
 
     - name: Run vab doctor
       run: vab doctor
+
+    - name: Run tests
+      run: ./v test ~/.vmodules/vab
 
     # AAB
     - name: Install AAB dependencies
