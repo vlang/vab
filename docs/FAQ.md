@@ -1,5 +1,6 @@
 # Freqently Asked Questions
 
+- [Where is the `examples` folder?](#where-is-the-examples-folder)
 - [`vab` can't find my device when deploying?](#vab-cant-find-my-device-when-deploying)
 - [The app force closes/crashes when I start it?](#the-app-force-closescrashes-when-i-start-it)
 - [`vab` can't find my SDK/NDK/JAVA_HOME?](#vab-cant-find-my-SDKNDKJAVA_HOME)
@@ -7,6 +8,22 @@
 - [How do I load assets embedded in the APK/AAB?](#how-do-i-load-assets-embedded-in-the-apkaab)
 - [I managed to compile some external .so libs,
 how do I include them?](#i-managed-to-compile-some-external-so-libs-how-do-I-include-them)
+
+## Where is the `examples` folder?
+
+`vab` is able to build and run a lot of V's *graphical* examples out of the box.
+
+V's graphical examples are typical those who import either `gg` or `sokol`.
+
+Examples and apps using `$if android {...}` code constructs is typically a
+good indicator of Android support.
+
+Many examples in V's source distribution `examples/gg` and `examples/sokol` works.
+Some examples in the top level `examples` directory also works, like `examples/2048`.
+
+Note that not all of V's examples have been written with Android in mind and
+may thus fail to compile or run properly, pull requests with Android fixes are
+welcome.
 
 ## `vab` can't find my device when deploying?
 
