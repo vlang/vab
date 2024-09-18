@@ -67,7 +67,7 @@ jobs:
 
     - name: Cache emulator
       id: cache-emulator
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         path: |
           /Users/runner/.android/avd
