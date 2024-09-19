@@ -46,7 +46,7 @@ pub fn vabexe() string {
 	return exe
 }
 
-// vmodules returns the path to the `.vmodules` folder if found
+// vmodules returns the path to the `.vmodules` folder if found.
 pub fn vmodules() !string {
 	mut vmodules_path := os.getenv('VMODULES')
 	if !os.is_dir(vmodules_path) {
@@ -58,10 +58,12 @@ pub fn vmodules() !string {
 	return vmodules_path
 }
 
+// found returns `true` if `vab` can found on the system, `false` otherwise.
 pub fn found() bool {
 	return home() != ''
 }
 
+// home returns `vab`'s "home" folder. This is usually the directory containing the `vab` executable.
 pub fn home() string {
 	// credits to @spytheman:
 	// https://discord.com/channels/592103645835821068/592294828432424960/746040606358503484
@@ -83,6 +85,8 @@ pub fn home() string {
 	return ''
 }
 
+// version returns the version of `vab` installed. If `vab` is not installed
+// version returns '0.0.0'.
 pub fn version() string {
 	mut version := ''
 	vab := vabexe()
@@ -102,6 +106,8 @@ pub fn version() string {
 	return '0.0.0'
 }
 
+// version_commit_hash returns the VCS commit hash of the `vab` installed.
+// If `vab` is not installed or found `deadbeef` is returned.
 pub fn version_commit_hash() string {
 	mut hash := ''
 	vab := vabexe()
