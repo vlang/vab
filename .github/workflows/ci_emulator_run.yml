@@ -54,7 +54,7 @@ jobs:
       run: |
         vab install "build-tools;33.0.2"
 
-    - name: Install build-tools 33.0.2
+    - name: Install android-30
       run: |
        vab install "platforms;android-30"
 
