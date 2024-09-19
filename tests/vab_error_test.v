@@ -16,7 +16,6 @@ const vab_test_dirs = [
 const vexe = vxt.vexe()
 const vab_exe = vabxt.vabexe()
 
-compile_vab()
 const should_autofix = os.getenv('VAUTOFIX') != ''
 const empty_toml_map = map[string]toml.Any{}
 
