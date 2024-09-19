@@ -47,6 +47,8 @@ pub const vab_env_vars = [
 	'ANDROID_NDK_ROOT',
 	'SDKMANAGER',
 	'ADB',
+	'AVDMANAGER',
+	'EMULATOR',
 	'BUNDLETOOL',
 	'AAPT2',
 	'JAVA_HOME',
