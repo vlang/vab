@@ -62,9 +62,6 @@ jobs:
     - name: Run vab doctor
       run: vab doctor
 
-    - name: Run tests
-      run: v test ~/.vmodules/vab
-
     - name: Cache emulator
       id: cache-emulator
       uses: actions/cache@v4
@@ -88,10 +85,8 @@ jobs:
 
         # Don't set Java > 8 here (emulator can't be started otherwise, lol) #export JAVA_HOME=$JAVA_HOME_11_X64
         #pgrep emulator >/dev/null 2>&1 ||
-        $ANDROID_SDK_ROOT/emulator/emulator -avd test -no-metrics -no-snapshot -no-window -no-boot-anim -camera-back emulated -camera-front emulated -gpu swiftshader_indirect &
+        $ANDROID_SDK_ROOT/emulator/emulator -avd test -wipe-data -no-metrics -no-snapshot -no-window -no-boot-anim -camera-back emulated -camera-front emulated -gpu swiftshader_indirect &
         adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed) ]]; do sleep 1; done;'
-
-        # Remove packages here if cache is run, and emulator failed
 
         # Debugging
         #export ADB_TAGS="SOKOL_APP:D"
@@ -104,9 +99,6 @@ jobs:
         echo "Testing vab deployment *after* build"
         vab --package-id "io.v.ci.vab.apk.deploytest" --name "V DEPLOY TEST APK" v/examples/gg/bezier.v && vab v_deploy_test_apk.apk
         vab --package-id "io.v.ci.vab.aab.deploytest" --name "V DEPLOY TEST AAB" --package aab v/examples/gg/bezier.v && vab v_deploy_test_aab.aab
-        # Remove app in case cache is run
-        # adb uninstall --user 0 "io.v.ci.vab.apk.deploytest"
-        # adb uninstall --user 0 "io.v.ci.vab.aab.deploytest"
 
         # 'flappylearning' can build but running is currently broken on Android
         # Skip fireworks for now
@@ -125,10 +117,6 @@ jobs:
           # AAB
           echo "Compiling aab from examples/$example ($package_id)"
           vab --package aab --package-id "io.v.aab.$package_id" run v/examples/$example
-
-          # Remove app in case cache is run
-          adb uninstall "io.v.apk.$package_id"
-          adb uninstall "io.v.aab.$package_id"
         done
 
         # Output test
@@ -138,10 +126,6 @@ jobs:
         adb -e logcat -d > /tmp/logcat.dump.txt
         echo "Looking for traces of BDWGC"
         cat /tmp/logcat.dump.txt | grep -q 'BDWGC   : Grow'; if [ ! $? -eq 0 ]; then cat /tmp/logcat.dump.txt; fi
-
-        # Remove app in case cache is run
-        echo "Uninstalling v/examples/tetris"
-        adb uninstall io.v.ci.vab.apk.examples.tetris
 
         # V UI
         echo "Installing V UI"
@@ -162,10 +146,6 @@ jobs:
           # AAB
           echo "Compiling aab from ui/examples/$example ($package_id)"
           vab --package aab --package-id "io.v.aab.ui.$package_id" run ui/examples/$example
-
-          # Remove app in case cache is run
-          adb uninstall "io.v.apk.ui.$package_id"
-          adb uninstall "io.v.aab.ui.$package_id"
         done
 
         # Output test
@@ -175,10 +155,6 @@ jobs:
         adb -e logcat -d > /tmp/logcat.dump.txt
         echo "Looking for traces of BDWGC"
         cat /tmp/logcat.dump.txt | grep -q 'BDWGC   : Grow'; if [ ! $? -eq 0 ]; then cat /tmp/logcat.dump.txt; fi
-
-        # Remove app in case cache is run
-        echo "Uninstalling ui/examples/calculator"
-        adb uninstall io.v.ui.ci.examples.calculator
 
         echo "Killing emulator"
         adb -s emulator-5554 emu kill
