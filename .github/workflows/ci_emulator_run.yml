@@ -25,10 +25,14 @@ jobs:
         distribution: 'adopt'
         java-version: 8
 
-    - name: Install V
-      uses: vlang/setup-v@v1.4
+    - name: Checkout V
+      uses: actions/checkout@v4
       with:
-        check-latest: true
+        repository: vlang/v
+        path: v
+
+    - name: Build and install v
+      run: cd ./v && make -j4 && sudo ./v symlink
 
     - name: Checkout vab
       uses: actions/checkout@v4
@@ -95,9 +99,6 @@ jobs:
         # Debugging
         #export ADB_TAGS="SOKOL_APP:D"
         #export ADB_TAGS="$ADB_TAGS V_ANDROID:D v_test_app:D"
-
-        echo "Installing V examples"
-        git clone --depth 1 https://github.com/vlang/v
 
         # Test deployment of single file *after* build
         echo "Testing vab deployment *after* build"
