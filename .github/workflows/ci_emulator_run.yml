@@ -119,8 +119,8 @@ jobs:
           echo "Compiling apk from examples/$example ($package_id)"
           vab --package-id "io.v.apk.$package_id" run v/examples/$example
 
-          sleep 1 # try catching a small breath
-        
+          sleep 1
+
           # AAB
           echo "Compiling aab from examples/$example ($package_id)"
           vab --package aab --package-id "io.v.aab.$package_id" run v/examples/$example
