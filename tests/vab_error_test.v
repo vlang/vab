@@ -6,6 +6,7 @@ import toml
 import sync.pool
 import v.util.diff
 import vab.vxt
+import vab.vabxt
 import runtime
 
 const vab_home = os.real_path(os.dir(os.dir(@FILE)))
@@ -13,7 +14,8 @@ const vab_test_dirs = [
 	os.join_path(vab_home, 'tests'),
 ]
 const vexe = vxt.vexe()
-const vab_exe = compile_vab()
+const vab_exe = vabxt.vabexe()
+
 const should_autofix = os.getenv('VAUTOFIX') != ''
 const empty_toml_map = map[string]toml.Any{}
 
@@ -108,6 +110,7 @@ fn sync_run(job TOMLTestJob) &TOMLTestJobResult {
 		|| execute.contains('|') {
 		panic('Only single vab commands allowed')
 	}
+	os.unsetenv('ANDROID_SERIAL')
 	res := os.execute(execute.replace_once('vab', vab_exe))
 
 	mut expected := ''
@@ -144,15 +147,6 @@ fn sync_run(job TOMLTestJob) &TOMLTestJobResult {
 		expected_exit_code: expect_exit_code
 		exit_code:          res.exit_code
 	}
-}
-
-fn compile_vab() string {
-	// TODO vtest vflags: ??? or env VFLAGS???
-	res := os.execute([vexe, '-d vab_no_notices', '"${vab_home}"'].join(' '))
-	if res.exit_code != 0 {
-		panic('command failed building vab in "${vab_home}":\n${res.output}')
-	}
-	return os.join_path(vab_home, 'vab')
 }
 
 fn clean_line_endings(s string) string {

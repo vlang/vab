@@ -42,7 +42,7 @@ here](https://github.com/vlang/vab/blob/3091ade4c9792c6a37596ccfa9299fb269d3160e
 In either case the following dependencies is required before `vab` will work
 as intented.
 
-Dependencies:
+## Runtime dependencies
  * V
  * Java (JDK) >= 8 (>= 9 on Windows)
  * Android SDK
@@ -127,7 +127,8 @@ EMULATOR                 # Absolute path to the emulator to use
 ```
 
 ```bash
-VAB_FLAGS                # Use to pass flags to vab. Command-line flags overwrites any flags/values set via VAB_FLAGS.
+VAB_EXE                  # Absolute path to a vab executable (Used in tests and sub-cmd execution)
+VAB_FLAGS                # Used to pass flags to vab. Command-line flags overwrites any flags/values set via VAB_FLAGS.
 VAB_KILL_ADB             # Set to let vab kill adb after use. This is useful on some hosts.
 ```
 
@@ -202,6 +203,12 @@ The accompaning script used in the video can be found here:
 
 See [*"Where is the `examples` folder?"*](docs/FAQ.md#where-is-the-examples-folder)
 in the [FAQ](docs/FAQ.md).
+
+# Tests
+
+`vab`, like many other V modules, can be tested with `v test .`.
+Note that `vab` has *runtime* tests that requires all [runtime dependencies](#runtime-dependencies)
+to be installed in order for the tests to run correctly.
 
 # Notes
 
