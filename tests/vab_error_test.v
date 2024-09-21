@@ -97,6 +97,7 @@ fn sync_run(job TOMLTestJob) &TOMLTestJobResult {
 	}.string()
 	expect_exit_code := doc.value('expect.exit_code').default_to(0).int()
 	diff_from_line := doc.value('compare.output.from_line').default_to(0).int()
+	ignore_lines_starting_with := ['notice:']
 
 	expected_out_path := job.job_file.replace('.toml', '.out')
 
@@ -124,6 +125,20 @@ fn sync_run(job TOMLTestJob) &TOMLTestJobResult {
 		} else {
 			found = lines#[lines.len + diff_from_line..].join('\n')
 		}
+	}
+
+	if ignore_lines_starting_with.len > 0 {
+		mut filtered := []string{}
+		for line in found.split_into_lines() {
+			for ignore_string in ignore_lines_starting_with {
+				if !line.starts_with(ignore_string) {
+					filtered << line
+				} else {
+					println('ignoring line "${line}"')
+				}
+			}
+		}
+		found = filtered.join('\n')
 	}
 
 	success := expected == found && res.exit_code == expect_exit_code
