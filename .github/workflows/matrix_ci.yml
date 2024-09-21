@@ -23,7 +23,6 @@ jobs:
       fail-fast: false
     timeout-minutes: 20
     env:
-      VFLAGS: -d vab_no_notices
       VAB_FLAGS: -v 3 --build-tools 29.0.0
     steps:
     - uses: actions/setup-java@v4
@@ -102,7 +101,6 @@ jobs:
       fail-fast: false
     timeout-minutes: 20
     env:
-      VFLAGS: -d vab_no_notices
       VAB_FLAGS: -v 3 -gc none --build-tools 29.0.0
     steps:
     - uses: actions/setup-java@v4
@@ -168,7 +166,6 @@ jobs:
       fail-fast: false
     timeout-minutes: 20
     env:
-      VFLAGS: -d vab_no_notices
       VAB_FLAGS: -v 3 --build-tools 29.0.0
     steps:
     - uses: actions/setup-java@v4

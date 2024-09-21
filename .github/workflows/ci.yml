@@ -61,7 +61,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
-      VFLAGS: -d vab_no_notices
       VAB_FLAGS: -v 3
     steps:
     - name: Checkout V
@@ -126,7 +125,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      VFLAGS: -d vab_no_notices
       VAB_FLAGS: -v 3
     steps:
     - name: Checkout V
@@ -189,7 +187,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
-      VFLAGS: -d vab_no_notices
       VAB_FLAGS: -v 3
     steps:
     - name: Checkout V
@@ -269,7 +266,6 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 10
     env:
-      VFLAGS: -d vab_no_notices
       VAB_FLAGS: -cg -v 3 --api 31 --build-tools 30.0.3
     steps:
 
