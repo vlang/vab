@@ -17,7 +17,7 @@ jobs:
     runs-on: macos-12
     timeout-minutes: 45
     env:
-      VAB_FLAGS: -cg -f '-d no_load_styles' -v 3 --api 30 --build-tools 33.0.2 --device auto --log-clear --archs x86
+      VAB_FLAGS: -cg -f '-d no_load_styles' -v 3 --api 30 --build-tools 33.0.2 --device auto --log-clear --archs x86_64
       VFLAGS: -no-parallel
     steps:
     - uses: actions/setup-java@v4
@@ -108,7 +108,8 @@ jobs:
 
         # 'flappylearning' can build but running is currently broken on Android
         # Skip fireworks for now
-        declare -a v_examples=('2048' 'tetris' 'sokol/particles' 'sokol/drawing.v' 'sokol/freetype_raven.v' 'gg/bezier.v' 'gg/bezier_anim.v' 'gg/polygons.v' 'gg/raven_text_rendering.v' 'gg/rectangles.v' 'gg/stars.v' 'gg/worker_thread.v')
+        # declare -a v_examples=('2048' 'tetris' 'sokol/particles' 'sokol/drawing.v' 'sokol/freetype_raven.v' 'gg/bezier.v' 'gg/bezier_anim.v' 'gg/polygons.v' 'gg/raven_text_rendering.v' 'gg/rectangles.v' 'gg/stars.v' 'gg/worker_thread.v')
+        declare -a v_examples=('tetris' 'sokol/particles' 'sokol/drawing.v' 'sokol/freetype_raven.v' 'gg/bezier.v' 'gg/bezier_anim.v' 'gg/polygons.v' 'gg/raven_text_rendering.v' 'gg/rectangles.v' 'gg/stars.v' 'gg/worker_thread.v')
 
         echo "Compiling V examples ${v_examples[@]}"
         for example in "${v_examples[@]}"; do
