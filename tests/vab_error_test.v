@@ -130,12 +130,17 @@ fn sync_run(job TOMLTestJob) &TOMLTestJobResult {
 	if ignore_lines_starting_with.len > 0 {
 		mut filtered := []string{}
 		for line in found.split_into_lines() {
+			mut ignore := false
 			for ignore_string in ignore_lines_starting_with {
-				if !line.starts_with(ignore_string) {
-					filtered << line
-				} else {
-					println('ignoring line "${line}"')
+				if line.starts_with(ignore_string) {
+					ignore = true
+					break
 				}
+			}
+			if !ignore {
+				filtered << line
+			} else {
+				println('ignoring line "${line}"')
 			}
 		}
 		found = filtered.join('\n')
