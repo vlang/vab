@@ -97,7 +97,7 @@ fn sync_run(job TOMLTestJob) &TOMLTestJobResult {
 	}.string()
 	expect_exit_code := doc.value('expect.exit_code').default_to(0).int()
 	diff_from_line := doc.value('compare.output.from_line').default_to(0).int()
-	ignore_lines_starting_with := ['notice:']
+	ignore_lines_starting_with := ['notice:', 'details:', ' ']
 
 	expected_out_path := job.job_file.replace('.toml', '.out')
 
