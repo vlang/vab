@@ -83,8 +83,8 @@ jobs:
       if: steps.cache-emulator.outputs.cache-hit != 'true'
       run: |
         export ANDROID_SDK_ROOT="$HOME/Library/Android/sdk"
-        echo yes | $ANDROID_SDK_ROOT/tools/bin/sdkmanager 'system-images;android-30;aosp_atd;x86'
-        echo no | $ANDROID_SDK_ROOT/tools/bin/avdmanager create avd --force --name test --abi aosp_atd/x86 --package 'system-images;android-30;aosp_atd;x86'
+        echo yes | $ANDROID_SDK_ROOT/tools/bin/sdkmanager 'system-images;android-30;aosp_atd;x86_64'
+        echo no | $ANDROID_SDK_ROOT/tools/bin/avdmanager create avd --force --name test --abi aosp_atd/x86_64 --package 'system-images;android-30;aosp_atd;x86_64'
 
     - name: Install and run V + V UI examples as APK and AAB
       run: |
