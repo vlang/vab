@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   code-formatting:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
       VFLAGS: -cc tcc
@@ -228,7 +228,7 @@ jobs:
         [ -f apks/particles.apk ]
 
   v-compiles-os-android:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
     - name: Checkout V
