@@ -130,7 +130,7 @@ jobs:
         # Output test
         echo "Testing if v/examples/tetris can run..."
         vab -g --package-id "io.v.ci.vab.apk.examples.tetris" run v/examples/tetris
-        sleep 5 # give the emulator a little time to start...
+        sleep 5 # give the emulator a little time to start the application...
         adb -e logcat -d > /tmp/logcat.dump.txt
         echo "Looking for traces of BDWGC"
         cat /tmp/logcat.dump.txt | grep -q 'BDWGC   : Grow'; if [ ! $? -eq 0 ]; then cat /tmp/logcat.dump.txt; fi
@@ -161,7 +161,7 @@ jobs:
         # Output test
         echo "Testing if ui/examples/calculator can run..."
         vab -g --package-id "io.v.ui.ci.examples.calculator" run ui/examples/calculator.v
-        sleep 5 # give the emulator a little time to start...
+        sleep 5 # give the emulator a little time to start the application...
         adb -e logcat -d > /tmp/logcat.dump.txt
         echo "Looking for traces of BDWGC"
         cat /tmp/logcat.dump.txt | grep -q 'BDWGC   : Grow'; if [ ! $? -eq 0 ]; then cat /tmp/logcat.dump.txt; fi
