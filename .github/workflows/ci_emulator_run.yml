@@ -83,8 +83,8 @@ jobs:
       if: steps.cache-emulator.outputs.cache-hit != 'true'
       run: |
         export ANDROID_SDK_ROOT="$HOME/Library/Android/sdk"
-        echo yes | $ANDROID_SDK_ROOT/tools/bin/sdkmanager 'system-images;android-30;google_apis;x86_64'
-        echo no | $ANDROID_SDK_ROOT/tools/bin/avdmanager create avd --force --name test --abi google_apis/x86_64 --package 'system-images;android-30;google_apis;x86_64'
+        echo yes | $ANDROID_SDK_ROOT/tools/bin/sdkmanager 'system-images;android-30;aosp_atd;x86_64'
+        echo no | $ANDROID_SDK_ROOT/tools/bin/avdmanager create avd --force --name test --abi aosp_atd/x86_64 --package 'system-images;android-30;aosp_atd;x86_64'
 
     - name: Install and run V + V UI examples as APK and AAB
       run: |
@@ -103,6 +103,7 @@ jobs:
         # Test deployment of single file *after* build
         echo "Testing vab deployment *after* build"
         vab --package-id "io.v.ci.vab.apk.deploytest" --name "V DEPLOY TEST APK" v/examples/gg/bezier.v && vab v_deploy_test_apk.apk
+        sleep 1 # Experience tells us that the emulator likes to catch it's breath...
         vab --package-id "io.v.ci.vab.aab.deploytest" --name "V DEPLOY TEST AAB" --package aab v/examples/gg/bezier.v && vab v_deploy_test_aab.aab
 
         # 'flappylearning' can build but running is currently broken on Android
@@ -119,6 +120,8 @@ jobs:
           echo "Compiling apk from examples/$example ($package_id)"
           vab --package-id "io.v.apk.$package_id" run v/examples/$example
 
+          sleep 1 # Experience tells us that the emulator likes to catch it's breath...
+
           # AAB
           echo "Compiling aab from examples/$example ($package_id)"
           vab --package aab --package-id "io.v.aab.$package_id" run v/examples/$example
@@ -127,7 +130,7 @@ jobs:
         # Output test
         echo "Testing if v/examples/tetris can run..."
         vab -g --package-id "io.v.ci.vab.apk.examples.tetris" run v/examples/tetris
-        sleep 5
+        sleep 5 # give the emulator a little time to start the application...
         adb -e logcat -d > /tmp/logcat.dump.txt
         echo "Looking for traces of BDWGC"
         cat /tmp/logcat.dump.txt | grep -q 'BDWGC   : Grow'; if [ ! $? -eq 0 ]; then cat /tmp/logcat.dump.txt; fi
@@ -148,6 +151,8 @@ jobs:
           echo "Compiling apk from ui/examples/$example ($package_id)"
           vab --package-id "io.v.apk.ui.$package_id" run ui/examples/$example
 
+          sleep 1 # Experience tells us that the emulator likes to catch it's breath...
+
           # AAB
           echo "Compiling aab from ui/examples/$example ($package_id)"
           vab --package aab --package-id "io.v.aab.ui.$package_id" run ui/examples/$example
@@ -156,7 +161,7 @@ jobs:
         # Output test
         echo "Testing if ui/examples/calculator can run..."
         vab -g --package-id "io.v.ui.ci.examples.calculator" run ui/examples/calculator.v
-        sleep 5
+        sleep 5 # give the emulator a little time to start the application...
         adb -e logcat -d > /tmp/logcat.dump.txt
         echo "Looking for traces of BDWGC"
         cat /tmp/logcat.dump.txt | grep -q 'BDWGC   : Grow'; if [ ! $? -eq 0 ]; then cat /tmp/logcat.dump.txt; fi
