@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   code-formatting:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
       VFLAGS: -cc tcc
@@ -95,7 +95,7 @@ jobs:
       run: |
         sudo rm -fr /usr/local/lib/android
 
-    - name: Run 'vab doctor'
+    - name: Run 'vab doctor' before
       run: vab doctor
 
     - name: Run 'vab install auto'
@@ -105,7 +105,7 @@ jobs:
         unset ANDROID_NDK_ROOT
         vab install auto
 
-    - name: Run vab doctor
+    - name: Run 'vab doctor' after
       run: vab doctor
 
     - name: Test vab complete
@@ -228,7 +228,7 @@ jobs:
         [ -f apks/particles.apk ]
 
   v-compiles-os-android:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
     - name: Checkout V
