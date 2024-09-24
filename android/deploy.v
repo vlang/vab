@@ -102,21 +102,6 @@ pub fn deploy_apk(opt DeployOptions) ! {
 			}
 		}
 
-		adb_logcat_clear_cmd := [
-			adb,
-			'-s "${device_id}"',
-			'logcat',
-			'-c',
-		]
-		if opt.clear_device_log || (opt.run != '' && opt.device_log) {
-			// Clear logs first
-			opt.verbose(1, 'Clearing log buffer on device "${device_id}"...')
-			util.verbosity_print_cmd(adb_logcat_clear_cmd, opt.verbosity)
-			util.run_or_error(adb_logcat_clear_cmd)!
-			// Give adb/Android/connection time to settle... *sigh*
-			time.sleep(100 * time.millisecond)
-		}
-
 		adb_cmd := [
 			adb,
 			'-s "${device_id}"',
@@ -127,8 +112,26 @@ pub fn deploy_apk(opt DeployOptions) ! {
 		util.verbosity_print_cmd(adb_cmd, opt.verbosity)
 		util.run_or_error(adb_cmd)!
 
+		// Clearing the logs should be done *after* install so there is actually
+		// something in the logs to clear - otherwise the clear command might fail,
+		// presumably because of low log activity. It seem to happen more often on
+		// devices with low log activity (like the slim `aosp_atd` emulator images).
+		adb_logcat_clear_cmd := [
+			adb,
+			'-s "${device_id}"',
+			'logcat',
+			'-c',
+		]
+		if opt.clear_device_log || (opt.run != '' && opt.device_log) {
+			// Give adb/Android/connection time to settle... *sigh*
+			time.sleep(150 * time.millisecond)
+			// Clear logs first
+			opt.verbose(1, 'Clearing log buffer on device "${device_id}"...')
+			util.verbosity_print_cmd(adb_logcat_clear_cmd, opt.verbosity)
+			util.run_or_error(adb_logcat_clear_cmd)!
+		}
 		// Give adb/Android/connection time to settle... *sigh*
-		time.sleep(100 * time.millisecond)
+		time.sleep(150 * time.millisecond)
 
 		if opt.run != '' {
 			opt.verbose(1, 'Running "${opt.run}" on "${device_id}"...')
@@ -205,21 +208,6 @@ pub fn deploy_aab(opt DeployOptions) ! {
 			}
 		}
 
-		adb_logcat_clear_cmd := [
-			adb,
-			'-s "${device_id}"',
-			'logcat',
-			'-c',
-		]
-		if opt.clear_device_log || (opt.run != '' && opt.device_log) {
-			// Clear logs first
-			opt.verbose(1, 'Clearing log buffer on device "${device_id}"...')
-			util.verbosity_print_cmd(adb_logcat_clear_cmd, opt.verbosity)
-			util.run_or_error(adb_logcat_clear_cmd)!
-			// Give adb/Android/connection time to settle... *sigh*
-			time.sleep(100 * time.millisecond)
-		}
-
 		// java -jar bundletool.jar install-apks --apks=/MyApp/my_app.apks
 		bundletool_install_apks_cmd := [
 			java_exe,
@@ -232,8 +220,27 @@ pub fn deploy_aab(opt DeployOptions) ! {
 		util.verbosity_print_cmd(bundletool_install_apks_cmd, opt.verbosity)
 		util.run_or_error(bundletool_install_apks_cmd)!
 
+		// Clearing the logs should be done *after* install so there is actually
+		// something in the logs to clear - otherwise the clear command might fail,
+		// presumably because of low log activity. It seem to happen more often on
+		// devices with low log activity (like the slim `aosp_atd` emulator images).
+		adb_logcat_clear_cmd := [
+			adb,
+			'-s "${device_id}"',
+			'logcat',
+			'-c',
+		]
+		if opt.clear_device_log || (opt.run != '' && opt.device_log) {
+			// Give adb/Android/connection time to settle... *sigh*
+			time.sleep(150 * time.millisecond)
+			// Clear logs first
+			opt.verbose(1, 'Clearing log buffer on device "${device_id}"...')
+			util.verbosity_print_cmd(adb_logcat_clear_cmd, opt.verbosity)
+			util.run_or_error(adb_logcat_clear_cmd)!
+		}
+
 		// Give adb/Android/connection time to settle... *sigh*
-		time.sleep(100 * time.millisecond)
+		time.sleep(150 * time.millisecond)
 
 		if opt.run != '' {
 			if opt.verbosity > 0 {
