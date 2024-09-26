@@ -77,7 +77,9 @@ SUBCMD:
 const auto_complete_commands = [
 	// tools in one .v file
 	'complete',
+	'test-all',
 	'test-cleancode',
+	'test-runtime',
 	// special
 	'run',
 	// builtin commands

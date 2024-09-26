@@ -9,7 +9,9 @@ const exe_name = os.file_name(os.executable())
 const exe_dir = os.dir(os.real_path(os.executable()))
 
 pub fn run(args []string) os.Result {
-	return os.execute(args.join(' '))
+	cmd := args.join(' ')
+	eprintln('${exe_name} running: ${cmd}')
+	return os.execute(cmd)
 }
 
 fn main() {

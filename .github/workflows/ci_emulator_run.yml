@@ -76,89 +76,20 @@ jobs:
       uses: actions/cache@v4
       with:
         path: |
-          /Users/runner/.android/avd
+          /home/runner/.android/avd
           /usr/local/lib/android/sdk/system-images/android-30
-        key: ${{ runner.os }}-android-emulator-${{ hashFiles('/Users/runner/.android/avd') }}
+        key: ${{ runner.os }}-android-emulator-${{ hashFiles('/home/runner/.android/avd') }}
 
     - name: Prepare emulator
       if: steps.cache-emulator.outputs.cache-hit != 'true'
       run: |
+        export ANDROID_SDK_ROOT="/usr/local/lib/android/sdk"
         echo yes | $ANDROID_SDK_ROOT/tools/bin/sdkmanager 'system-images;android-30;aosp_atd;x86_64'
         echo no | $ANDROID_SDK_ROOT/tools/bin/avdmanager create avd --force --name test --abi aosp_atd/x86_64 --package 'system-images;android-30;aosp_atd;x86_64'
 
-    - name: Install and run V + V UI examples as APK and AAB
+    - name: Run `vab test-all`
       run: |
-        $ANDROID_SDK_ROOT/emulator/emulator -avd test -wipe-data -no-metrics -no-snapshot -no-window -no-boot-anim -camera-back emulated -camera-front emulated &
-        adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed) ]]; do sleep 1; done;'
-
-        # Test deployment of single file *after* build
-        echo "Testing vab deployment *after* build"
-        vab --package-id "io.v.ci.vab.apk.deploytest" --name "V DEPLOY TEST APK" v/examples/gg/bezier.v && vab v_deploy_test_apk.apk
-        sleep 1 # Experience tells us that the emulator likes to catch it's breath...
-        vab --package-id "io.v.ci.vab.aab.deploytest" --name "V DEPLOY TEST AAB" --package aab v/examples/gg/bezier.v && vab v_deploy_test_aab.aab
-
-        # 'flappylearning' can build but running is currently broken on Android
-        # Skip fireworks for now
-        declare -a v_examples=('2048' 'tetris' 'sokol/particles' 'sokol/drawing.v' 'sokol/freetype_raven.v' 'gg/bezier.v' 'gg/bezier_anim.v' 'gg/polygons.v' 'gg/raven_text_rendering.v' 'gg/rectangles.v' 'gg/stars.v' 'gg/worker_thread.v')
-
-        echo "Compiling V examples ${v_examples[@]}"
-        for example in "${v_examples[@]}"; do
-          #path_safe_name=$( echo "$example" | sed 's%/%-%' | sed 's%\.%-%' )
-          package_id=$( echo "$example" | sed 's%/%%' | sed 's%\.%%' )
-          package_id=$( echo "v$package_id" )
-
-          # APK
-          echo "Compiling apk from examples/$example ($package_id)"
-          vab --package-id "io.v.apk.$package_id" run v/examples/$example
-
-          sleep 1 # Experience tells us that the emulator likes to catch it's breath...
-
-          # AAB
-          echo "Compiling aab from examples/$example ($package_id)"
-          vab --package aab --package-id "io.v.aab.$package_id" run v/examples/$example
-        done
-
-        # Output test
-        echo "Testing if v/examples/tetris can run..."
-        vab -g --package-id "io.v.ci.vab.apk.examples.tetris" run v/examples/tetris
-        sleep 5 # give the emulator a little time to start the application...
-        adb -e logcat -d > /tmp/logcat.dump.txt
-        echo "Looking for traces of BDWGC"
-        cat /tmp/logcat.dump.txt | grep -q 'BDWGC   : Grow'; if [ ! $? -eq 0 ]; then cat /tmp/logcat.dump.txt; fi
-
-        # V UI
-        echo "Installing V UI"
-        git clone --depth 1 https://github.com/vlang/ui
-        cd ui ; mkdir -p ~/.vmodules ; ln -s $(pwd) ~/.vmodules/ui ; cd ..
-
-        declare -a v_ui_examples=('rectangles.v')
-
-        echo "Compiling examples ${v_ui_examples[@]}"
-        for example in "${v_ui_examples[@]}"; do
-          package_id=$( echo "$example" | sed 's%/%%' | sed 's%\.%%' )
-          package_id=$( echo "v$package_id" )
-
-          # APK
-          echo "Compiling apk from ui/examples/$example ($package_id)"
-          vab --package-id "io.v.apk.ui.$package_id" run ui/examples/$example
-
-          sleep 1 # Experience tells us that the emulator likes to catch it's breath...
-
-          # AAB
-          echo "Compiling aab from ui/examples/$example ($package_id)"
-          vab --package aab --package-id "io.v.aab.ui.$package_id" run ui/examples/$example
-        done
-
-        # Output test
-        echo "Testing if ui/examples/calculator can run..."
-        vab -g --package-id "io.v.ui.ci.examples.calculator" run ui/examples/calculator.v
-        sleep 5 # give the emulator a little time to start the application...
-        adb -e logcat -d > /tmp/logcat.dump.txt
-        echo "Looking for traces of BDWGC"
-        cat /tmp/logcat.dump.txt | grep -q 'BDWGC   : Grow'; if [ ! $? -eq 0 ]; then cat /tmp/logcat.dump.txt; fi
-
-        echo "Killing emulator"
-        adb -s emulator-5554 emu kill
+        vab test-all
 
   macos-legacy-run-v-examples:
     runs-on: macos-12

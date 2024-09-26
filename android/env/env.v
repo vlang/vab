@@ -747,22 +747,25 @@ pub fn adb() string {
 	return adb_path
 }
 
+// has_avdmanager returns `true` if `avdmanager` can be located on the system.
+pub fn has_avdmanager() bool {
+	return avdmanager() != ''
+}
+
 // avdmanager returns the full path to the `avdmanager` tool, if found. An empty string otherwise.
 pub fn avdmanager() string {
 	mut avdmanager_path := os.getenv('AVDMANAGER')
 	if !os.exists(avdmanager_path) {
-		avdmanager_path = os.join_path(sdk.platform_tools_root(), 'avdmanager${dot_exe}')
-	}
-	if !os.exists(avdmanager_path) {
 		if os.exists_in_system_path('avdmanager') {
 			avdmanager_path = os.find_abs_path_of_executable('avdmanager') or { '' }
-			if avdmanager_path != '' {
-				// adb normally reside in 'path/to/sdk_root/platform-tools/'
-				avdmanager_path = os.real_path(os.join_path(os.dir(avdmanager_path), '..'))
-			}
 		}
 	}
 	return avdmanager_path
+}
+
+// has_emulator returns `true` if `emulator` can be located on the system.
+pub fn has_emulator() bool {
+	return emulator() != ''
 }
 
 // emulator returns the full path to the `emulator` tool, if found. An empty string otherwise.
@@ -772,17 +775,15 @@ pub fn emulator() string {
 		emulator_path = os.join_path(sdk.root(), 'emulator', 'emulator${dot_exe}')
 	}
 	if !os.exists(emulator_path) {
+		emulator_path = ''
 		if os.exists_in_system_path('emulator') {
 			emulator_path = os.find_abs_path_of_executable('emulator') or { '' }
-			if emulator_path != '' {
-				// the emulator normally reside in 'path/to/sdk_root/emulator/'
-				emulator_path = os.real_path(os.join_path(os.dir(emulator_path), '..'))
-			}
 		}
 	}
 	return emulator_path
 }
 
+// has_bundletool returns `true` if `bundletool` can be located on the system.
 pub fn has_bundletool() bool {
 	return bundletool() != ''
 }
