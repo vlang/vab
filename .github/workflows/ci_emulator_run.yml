@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 35
     env:
-      VAB_FLAGS: -cg -f '-d no_load_styles' -v 3 --api 30 --build-tools 33.0.2 --device auto --log-clear --archs x86_64
+      VAB_FLAGS: -cg -f '-d no_load_styles' -v 3 --api 30 --build-tools 33.0.2 --archs x86_64
       VFLAGS: -no-parallel
     steps:
     - uses: actions/setup-java@v4
