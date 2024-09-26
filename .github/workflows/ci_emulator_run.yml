@@ -85,7 +85,7 @@ jobs:
       run: |
         export ANDROID_SDK_ROOT="/usr/local/lib/android/sdk"
         echo yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager 'system-images;android-30;aosp_atd;x86_64'
-        echo no | $ANDROID_SDK_ROOT/tools/bin/avdmanager create avd --force --name test --abi aosp_atd/x86_64 --package 'system-images;android-30;aosp_atd;x86_64'
+        echo no | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/avdmanager create avd --force --name test --abi aosp_atd/x86_64 --package 'system-images;android-30;aosp_atd;x86_64'
 
     - name: Run `vab test-all`
       run: |
