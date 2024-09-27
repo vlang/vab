@@ -49,6 +49,9 @@ See https://stackoverflow.com/a/61176718/1904615 for more help.\n'
 		}
 	}
 
+	avdmanager := env.avdmanager()
+	emulator := env.emulator()
+
 	// Try to warn about broken Java distributions like IBM's Semeru
 	java_exe := java.jre_java_exe()
 	if os.is_executable(java_exe) {
@@ -70,10 +73,10 @@ See https://stackoverflow.com/a/61176718/1904615 for more help.\n'
 
 	// vab section
 	println('${exe_short_name}
-	Version ${exe_version} ${exe_git_hash}
-	Path "${exe_dir}"
+	Version    ${exe_version} ${exe_git_hash}
+	Path       "${exe_dir}"
 	Base files "${default_base_files_path}"
-	os.args: ${os.args}')
+	os.args:   "${os.args}"')
 
 	// Shell environment
 	print_var_if_set := fn (vars map[string]string, var_name string) {
@@ -91,15 +94,21 @@ See https://stackoverflow.com/a/61176718/1904615 for more help.\n'
 	println('Java
 	JDK
 		Version ${java.jdk_version()}
-		Path "${java.jdk_root()}"
+		Path    "${java.jdk_root()}"
 		Keytool "${keytool}"')
 
 	// Android section
 	println('Android
 	ENV
 		sdkmanager "${sdkm}"
-		sdkmanager.version "${env.sdkmanager_version()}"
-		Managable ${env_managable}
+		sdkmanager.version "${env.sdkmanager_version()}"')
+	if avdmanager != '' {
+		println('\t\tavdmanager "${avdmanager}"')
+	}
+	if emulator != '' {
+		println('\t\temulator   "${emulator}"')
+	}
+	println('\t\tManagable ${env_managable}
 	SDK
 		Path "${sdk.root()}"
 		Writable ${os.is_writable(sdk.root())}

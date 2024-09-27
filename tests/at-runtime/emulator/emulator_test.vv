@@ -16,7 +16,7 @@ const env_is_managable = env.managable()
 fn test_run_on_emulator() {
 	ensure_env()
 
-  mut emu := emulator.new()!
+  mut emu := emulator.make()!
   emu.start(
     verbosity: 3
     await_boot: true

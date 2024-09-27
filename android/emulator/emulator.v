@@ -89,8 +89,8 @@ pub fn (o &Options) validate() ! {
 	}
 }
 
-// new returns a new `Emulator` instance.
-pub fn new(config Config) !Emulator {
+// make returns an `Emulator` instance.
+pub fn make(config Config) !Emulator {
 	if !env.has_emulator() {
 		return error('${@MOD}.${@STRUCT}.${@FN}: the `emulator` needs to be installed in the Android SDK. Use `vab install emulator` to install it.')
 	}
@@ -227,6 +227,10 @@ fn (mut e Emulator) run_process(options Options) {
 		if !p.is_alive() {
 			action = 2
 			e.options.verbose(3, 'Emulator process not alive anymore')
+			stdout := p.stdout_slurp()
+			stderr := p.stderr_slurp()
+			println(stdout)
+			eprintln(stderr)
 			e.thread_status = .stopped
 			$if debug {
 				eprintln('> ${@STRUCT}.${@FN}: waiting for process; action: "${action}" status: "${p.status}"')
