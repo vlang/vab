@@ -178,9 +178,11 @@ jobs:
 
         # Test deployment of single file *after* build
         echo "Testing vab deployment *after* build"
-        vab --package-id "io.v.ci.vab.apk.deploytest" --name "V DEPLOY TEST APK" v/examples/gg/bezier.v && vab v_deploy_test_apk.apk
+        vab --package-id "io.v.ci.vab.apk.deploytest" --name "V DEPLOY TEST APK" v/examples/gg/bezier.v
+        vab v_deploy_test_apk.apk
         sleep 1 # Experience tells us that the emulator likes to catch it's breath...
-        v retry -r 2 -- vab --package-id "io.v.ci.vab.aab.deploytest" --name "V DEPLOY TEST AAB" --package aab v/examples/gg/bezier.v && vab v_deploy_test_aab.aab
+        vab --package-id "io.v.ci.vab.aab.deploytest" --name "V DEPLOY TEST AAB" --package aab v/examples/gg/bezier.v
+        v retry -r 2 -- vab v_deploy_test_aab.aab
 
         # 'flappylearning' can build but running is currently broken on Android
         # Skip fireworks for now
