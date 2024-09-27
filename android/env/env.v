@@ -754,13 +754,71 @@ pub fn has_avdmanager() bool {
 
 // avdmanager returns the full path to the `avdmanager` tool, if found. An empty string otherwise.
 pub fn avdmanager() string {
-	mut avdmanager_path := os.getenv('AVDMANAGER')
-	if !os.exists(avdmanager_path) {
-		if os.exists_in_system_path('avdmanager') {
-			avdmanager_path = os.find_abs_path_of_executable('avdmanager') or { '' }
+	mut avdmanager_exe := cache.get_string(@MOD + '.' + @FN)
+	if avdmanager_exe != '' {
+		return avdmanager_exe
+	}
+
+	avdmanager_exe = os.getenv('AVDMANAGER')
+	// Check in cache
+	if !os.is_executable(avdmanager_exe) {
+		avdmanager_exe = os.join_path(util.cache_dir(), 'avdmanager')
+		if !os.is_executable(avdmanager_exe) {
+			avdmanager_exe = os.join_path(sdk.cache_dir(), 'cmdline-tools', '3.0', 'bin',
+				'avdmanager')
+		}
+		if !os.is_executable(avdmanager_exe) {
+			avdmanager_exe = os.join_path(sdk.cache_dir(), 'cmdline-tools', '2.1', 'bin',
+				'avdmanager')
+		}
+		if !os.is_executable(avdmanager_exe) {
+			avdmanager_exe = os.join_path(sdk.cache_dir(), 'cmdline-tools', 'tools', 'bin',
+				'avdmanager')
 		}
 	}
-	return avdmanager_path
+	// Try if one is in PATH
+	if !os.is_executable(avdmanager_exe) {
+		if os.exists_in_system_path('avdmanager') {
+			avdmanager_exe = os.find_abs_path_of_executable('avdmanager') or { '' }
+		}
+	}
+	// Try detecting it in the SDK
+	if sdk.found() {
+		if !os.is_executable(avdmanager_exe) {
+			avdmanager_exe = os.join_path(sdk.root(), 'cmdline-tools', 'tools', 'bin',
+				'avdmanager')
+		}
+		if !os.is_executable(avdmanager_exe) {
+			avdmanager_exe = os.join_path(sdk.tools_root(), 'bin', 'avdmanager')
+		}
+		// It's often found next to `sdkmanager`
+		if !os.is_executable(avdmanager_exe) {
+			for relative_path in possible_relative_to_sdk_sdkmanager_paths {
+				avdmanager_exe = os.join_path(sdk.root(), relative_path, 'avdmanager')
+				if os.is_executable(avdmanager_exe) {
+					break
+				}
+			}
+		}
+		if !os.is_executable(avdmanager_exe) {
+			version_dirs := util.ls_sorted(os.join_path(sdk.root(), 'cmdline-tools')).filter(fn (a string) bool {
+				return util.is_version(a)
+			})
+			for version_dir in version_dirs {
+				avdmanager_exe = os.join_path(sdk.root(), 'cmdline-tools', version_dir,
+					'bin', 'avdmanager')
+				if os.is_executable(avdmanager_exe) {
+					break
+				}
+			}
+		}
+	}
+	// Give up
+	if !os.is_executable(avdmanager_exe) {
+		avdmanager_exe = ''
+	}
+	cache.set_string(@MOD + '.' + @FN, avdmanager_exe)
+	return avdmanager_exe
 }
 
 // has_emulator returns `true` if `emulator` can be located on the system.
