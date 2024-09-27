@@ -13,7 +13,7 @@ const vab_test_avd = 'vab_emulator_tests'
 
 const env_is_managable = env.managable()
 
-const is_ci = os.getenv('CI')
+const is_ci = os.getenv('CI') != ''
 
 fn test_run_on_emulator() {
 	ensure_env()
@@ -22,7 +22,7 @@ fn test_run_on_emulator() {
 	emu.start(
 		verbosity:  3
 		await_boot: true
-		visible: is_ci == '' // show window on desktop
+		visible: !is_ci // show window on desktop
 		avd: vab_test_avd
 		// acceleration: 'off'
 	)!
