@@ -51,20 +51,12 @@ jobs:
     - name: Run vab --help
       run: vab --help
 
-    - name: Install emulator
+    - name: Install SDK dependencies
       run: |
-        vab install emulator
-
-    - name: Install build-tools 33.0.2
-      run: |
+        vab install "platform-tools"
         vab install "build-tools;33.0.2"
-
-    - name: Install platform android-30
-      run: |
-       vab install "platforms;android-30"
-
-    - name: Install AAB dependencies
-      run: |
+        vab install "platforms;android-30"
+        vab install emulator
         vab install bundletool
         vab install aapt2
 
