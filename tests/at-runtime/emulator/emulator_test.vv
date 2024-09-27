@@ -16,13 +16,14 @@ const env_is_managable = env.managable()
 fn test_run_on_emulator() {
 	ensure_env()
 
-  mut emu := emulator.make()!
-  emu.start(
-    verbosity: 3
-    await_boot: true
-    // visible: true // uncomment to show window on desktop
-    avd: vab_test_avd
-  )!
+	mut emu := emulator.make()!
+	emu.start(
+		verbosity:  3
+		await_boot: true
+		// visible: true // uncomment to show window on desktop
+		avd: vab_test_avd
+		// acceleration: 'off'
+	)!
 	// start tests ...
 	// for _ in 0 .. 20 {
 	// 	if recv.try_pop(mut signal) == .success {
@@ -37,17 +38,17 @@ fn test_run_on_emulator() {
 	//
 	// }
 
-  vab, test_dir := setup(@FN)
+	vab, test_dir := setup(@FN)
 
-  vab_cmd := [vab, '--device',emu.name,'run', v_example('2048'), '-o', test_dir]
+	vab_cmd := [vab, '--device', emu.name, 'run', v_example('2048'), '-o', test_dir]
 	res := run(vab_cmd)
-  if res.exit_code != 0 {
-    println('error: ${res.output}')
-  }
+	if res.exit_code != 0 {
+		println('error: ${res.output}')
+	}
 
 	time.sleep(10000 * time.millisecond)
 
-  emu.stop()
+	emu.stop()
 }
 
 fn ensure_env() {

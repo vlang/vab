@@ -56,15 +56,17 @@ pub:
 @[params]
 pub struct Options {
 pub:
-	verbosity  int
-	wipe_data  bool = true
-	avd        string
-	await_boot bool = true // will wait for the device to boot
-	visible    bool // show emulator window on desktop
-	metrics    bool // send metrics to Google... default NO
-	snapshot   SnapshotOptions
-	boot_anim  bool
-	camera     CameraOptions
+	verbosity    int
+	wipe_data    bool = true
+	avd          string
+	await_boot   bool = true // will wait for the device to boot
+	visible      bool // show emulator window on desktop
+	metrics      bool // send metrics to Google... default NO
+	snapshot     SnapshotOptions
+	boot_anim    bool
+	camera       CameraOptions
+	gpu          string
+	acceleration string
 }
 
 // verbose prints `msg` to STDOUT if `Options.verbosity` level is >= `verbosity_level`.
@@ -206,6 +208,14 @@ fn (mut e Emulator) run_process(options Options) {
 	}
 	if !e.options.boot_anim {
 		emulator_args << '-no-boot-anim'
+	}
+	if e.options.gpu != '' {
+		emulator_args << '-gpu'
+		emulator_args << e.options.gpu
+	}
+	if e.options.acceleration != '' {
+		emulator_args << '-accel'
+		emulator_args << e.options.acceleration
 	}
 	emulator_args << '-camera-front'
 	emulator_args << e.options.camera.front
