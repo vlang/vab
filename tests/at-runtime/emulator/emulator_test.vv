@@ -13,6 +13,8 @@ const vab_test_avd = 'vab_emulator_tests'
 
 const env_is_managable = env.managable()
 
+const github_job = os.getenv('GIHUB_JOB')
+
 fn test_run_on_emulator() {
 	ensure_env()
 
@@ -20,7 +22,7 @@ fn test_run_on_emulator() {
 	emu.start(
 		verbosity:  3
 		await_boot: true
-		// visible: true // uncomment to show window on desktop
+		visible: github_job == '' // show window on desktop
 		avd: vab_test_avd
 		// acceleration: 'off'
 	)!
