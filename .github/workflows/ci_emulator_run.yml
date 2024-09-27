@@ -55,6 +55,8 @@ jobs:
       run: |
         v retry -- sudo apt update
         v retry -- sudo apt install --quiet -y qemu-kvm
+        sudo chgrp kvm /dev/kvm
+        sudo chmod g+rw /dev/kvm
 
     - name: Install SDK dependencies
       run: |
