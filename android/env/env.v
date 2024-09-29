@@ -12,7 +12,7 @@ import vab.android.ndk
 import vab.android.util
 
 pub const accepted_components = ['auto', 'cmdline-tools', 'platform-tools', 'ndk', 'platforms',
-	'build-tools', 'bundletool', 'aapt2', 'emulator']
+	'build-tools', 'bundletool', 'aapt2', 'emulator', 'system-images']
 // 6858069 = cmdline-tools;3.0 <- zip structure changes *sigh*
 // 6609375 = cmdline-tools;2.1 <- latest that support `sdkmanager --version` *sigh*
 // cmdline-tools-bootstrap-url - Replace [XXX] with linux/mac/win
@@ -59,6 +59,10 @@ pub const default_components = {
 		'name':    'emulator'
 		'version': ''
 	}
+	'system-images':  {
+		'name':    'system-images'
+		'version': ''
+	}
 }
 
 pub const default_components_eq_java_8 = {
@@ -97,6 +101,10 @@ pub const default_components_eq_java_8 = {
 		'name':    'emulator'
 		'version': ''
 	}
+	'system-images':  {
+		'name':    'system-images'
+		'version': ''
+	}
 }
 
 // get_default_components returns the default components map based on what Java version is being used
@@ -129,6 +137,7 @@ pub enum Dependency {
 	bundletool
 	aapt2
 	emulator
+	system_images
 }
 
 pub struct InstallOptions {
@@ -203,12 +212,13 @@ pub fn install(components string, verbosity int) int {
 			eprintln(err)
 			return 1
 		}
+		mut split_component := []string{}
 		if !is_auto {
 			version = def_components[component]['version'] // Set default version
 			if component.contains(';') { // If user has specified a version, use that
-				cs := component.split(';')
-				component = cs.first()
-				version = cs.last()
+				split_component = component.split(';')
+				component = split_component.first()
+				version = split_component.last()
 			}
 		}
 
@@ -218,10 +228,19 @@ pub fn install(components string, verbosity int) int {
 			return 1
 		}
 
-		if !is_auto && version == '' {
-			if component !in ['platform-tools', 'emulator'] {
-				eprintln(@MOD + ' ' + @FN + ' install component "${component}" has no version.')
-				return 1
+		if !is_auto {
+			if version == '' {
+				if component !in ['platform-tools', 'emulator', 'system-images'] {
+					eprintln(@MOD + ' ' + @FN + ' install component "${component}" has no version.')
+					return 1
+				}
+			}
+			if component == 'system-images' {
+				if split_component.len != 4 {
+					eprintln(@MOD + ' ' + @FN +
+						' install component "${component}" should be 4 fields delimited by `;`.')
+					return 1
+				}
 			}
 		}
 
@@ -254,6 +273,9 @@ pub fn install(components string, verbosity int) int {
 			}
 			'emulator' {
 				iopts << InstallOptions{.emulator, item, verbosity}
+			}
+			'system-images' {
+				iopts << InstallOptions{.system_images, comp, verbosity}
 			}
 			'ndk' {
 				iopts << InstallOptions{.ndk, item, verbosity}
@@ -357,7 +379,7 @@ fn install_opt(opt InstallOptions) !bool {
 		.aapt2 {
 			return ensure_aapt2(opt.verbosity)
 		}
-		.cmdline_tools, .platform_tools, .emulator {
+		.cmdline_tools, .platform_tools, .emulator, .system_images {
 			util.verbosity_print_cmd(install_cmd, opt.verbosity)
 			cmd_res := $if windows {
 				util.run_raw(install_cmd)
