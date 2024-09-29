@@ -12,7 +12,7 @@ import vab.android.ndk
 import vab.android.util
 
 pub const accepted_components = ['auto', 'cmdline-tools', 'platform-tools', 'ndk', 'platforms',
-	'build-tools', 'bundletool', 'aapt2', 'emulator']
+	'build-tools', 'bundletool', 'aapt2', 'emulator', 'system-images']
 // 6858069 = cmdline-tools;3.0 <- zip structure changes *sigh*
 // 6609375 = cmdline-tools;2.1 <- latest that support `sdkmanager --version` *sigh*
 // cmdline-tools-bootstrap-url - Replace [XXX] with linux/mac/win
@@ -59,6 +59,10 @@ pub const default_components = {
 		'name':    'emulator'
 		'version': ''
 	}
+	'system-images':  {
+		'name':    'system-images'
+		'version': ''
+	}
 }
 
 pub const default_components_eq_java_8 = {
@@ -97,6 +101,10 @@ pub const default_components_eq_java_8 = {
 		'name':    'emulator'
 		'version': ''
 	}
+	'system-images':  {
+		'name':    'system-images'
+		'version': ''
+	}
 }
 
 // get_default_components returns the default components map based on what Java version is being used
@@ -129,6 +137,7 @@ pub enum Dependency {
 	bundletool
 	aapt2
 	emulator
+	system_images
 }
 
 pub struct InstallOptions {
@@ -203,12 +212,13 @@ pub fn install(components string, verbosity int) int {
 			eprintln(err)
 			return 1
 		}
+		mut split_component := []string{}
 		if !is_auto {
 			version = def_components[component]['version'] // Set default version
 			if component.contains(';') { // If user has specified a version, use that
-				cs := component.split(';')
-				component = cs.first()
-				version = cs.last()
+				split_component = component.split(';')
+				component = split_component.first()
+				version = split_component.last()
 			}
 		}
 
@@ -218,10 +228,19 @@ pub fn install(components string, verbosity int) int {
 			return 1
 		}
 
-		if !is_auto && version == '' {
-			if component !in ['platform-tools', 'emulator'] {
-				eprintln(@MOD + ' ' + @FN + ' install component "${component}" has no version.')
-				return 1
+		if !is_auto {
+			if version == '' {
+				if component !in ['platform-tools', 'emulator', 'system-images'] {
+					eprintln(@MOD + ' ' + @FN + ' install component "${component}" has no version.')
+					return 1
+				}
+			}
+			if component == 'system-images' {
+				if split_component.len != 4 {
+					eprintln(@MOD + ' ' + @FN +
+						' install component "${component}" should be 4 fields delimited by `;`.')
+					return 1
+				}
 			}
 		}
 
@@ -254,6 +273,9 @@ pub fn install(components string, verbosity int) int {
 			}
 			'emulator' {
 				iopts << InstallOptions{.emulator, item, verbosity}
+			}
+			'system-images' {
+				iopts << InstallOptions{.system_images, comp, verbosity}
 			}
 			'ndk' {
 				iopts << InstallOptions{.ndk, item, verbosity}
@@ -357,7 +379,7 @@ fn install_opt(opt InstallOptions) !bool {
 		.aapt2 {
 			return ensure_aapt2(opt.verbosity)
 		}
-		.cmdline_tools, .platform_tools, .emulator {
+		.cmdline_tools, .platform_tools, .emulator, .system_images {
 			util.verbosity_print_cmd(install_cmd, opt.verbosity)
 			cmd_res := $if windows {
 				util.run_raw(install_cmd)
@@ -747,22 +769,83 @@ pub fn adb() string {
 	return adb_path
 }
 
+// has_avdmanager returns `true` if `avdmanager` can be located on the system.
+pub fn has_avdmanager() bool {
+	return avdmanager() != ''
+}
+
 // avdmanager returns the full path to the `avdmanager` tool, if found. An empty string otherwise.
 pub fn avdmanager() string {
-	mut avdmanager_path := os.getenv('AVDMANAGER')
-	if !os.exists(avdmanager_path) {
-		avdmanager_path = os.join_path(sdk.platform_tools_root(), 'avdmanager${dot_exe}')
+	mut avdmanager_exe := cache.get_string(@MOD + '.' + @FN)
+	if avdmanager_exe != '' {
+		return avdmanager_exe
 	}
-	if !os.exists(avdmanager_path) {
+
+	avdmanager_exe = os.getenv('AVDMANAGER')
+	// Check in cache
+	if !os.is_executable(avdmanager_exe) {
+		avdmanager_exe = os.join_path(util.cache_dir(), 'avdmanager')
+		if !os.is_executable(avdmanager_exe) {
+			avdmanager_exe = os.join_path(sdk.cache_dir(), 'cmdline-tools', '3.0', 'bin',
+				'avdmanager')
+		}
+		if !os.is_executable(avdmanager_exe) {
+			avdmanager_exe = os.join_path(sdk.cache_dir(), 'cmdline-tools', '2.1', 'bin',
+				'avdmanager')
+		}
+		if !os.is_executable(avdmanager_exe) {
+			avdmanager_exe = os.join_path(sdk.cache_dir(), 'cmdline-tools', 'tools', 'bin',
+				'avdmanager')
+		}
+	}
+	// Try if one is in PATH
+	if !os.is_executable(avdmanager_exe) {
 		if os.exists_in_system_path('avdmanager') {
-			avdmanager_path = os.find_abs_path_of_executable('avdmanager') or { '' }
-			if avdmanager_path != '' {
-				// adb normally reside in 'path/to/sdk_root/platform-tools/'
-				avdmanager_path = os.real_path(os.join_path(os.dir(avdmanager_path), '..'))
+			avdmanager_exe = os.find_abs_path_of_executable('avdmanager') or { '' }
+		}
+	}
+	// Try detecting it in the SDK
+	if sdk.found() {
+		if !os.is_executable(avdmanager_exe) {
+			avdmanager_exe = os.join_path(sdk.root(), 'cmdline-tools', 'tools', 'bin',
+				'avdmanager')
+		}
+		if !os.is_executable(avdmanager_exe) {
+			avdmanager_exe = os.join_path(sdk.tools_root(), 'bin', 'avdmanager')
+		}
+		// It's often found next to `sdkmanager`
+		if !os.is_executable(avdmanager_exe) {
+			for relative_path in possible_relative_to_sdk_sdkmanager_paths {
+				avdmanager_exe = os.join_path(sdk.root(), relative_path, 'avdmanager')
+				if os.is_executable(avdmanager_exe) {
+					break
+				}
+			}
+		}
+		if !os.is_executable(avdmanager_exe) {
+			version_dirs := util.ls_sorted(os.join_path(sdk.root(), 'cmdline-tools')).filter(fn (a string) bool {
+				return util.is_version(a)
+			})
+			for version_dir in version_dirs {
+				avdmanager_exe = os.join_path(sdk.root(), 'cmdline-tools', version_dir,
+					'bin', 'avdmanager')
+				if os.is_executable(avdmanager_exe) {
+					break
+				}
 			}
 		}
 	}
-	return avdmanager_path
+	// Give up
+	if !os.is_executable(avdmanager_exe) {
+		avdmanager_exe = ''
+	}
+	cache.set_string(@MOD + '.' + @FN, avdmanager_exe)
+	return avdmanager_exe
+}
+
+// has_emulator returns `true` if `emulator` can be located on the system.
+pub fn has_emulator() bool {
+	return emulator() != ''
 }
 
 // emulator returns the full path to the `emulator` tool, if found. An empty string otherwise.
@@ -772,17 +855,15 @@ pub fn emulator() string {
 		emulator_path = os.join_path(sdk.root(), 'emulator', 'emulator${dot_exe}')
 	}
 	if !os.exists(emulator_path) {
+		emulator_path = ''
 		if os.exists_in_system_path('emulator') {
 			emulator_path = os.find_abs_path_of_executable('emulator') or { '' }
-			if emulator_path != '' {
-				// the emulator normally reside in 'path/to/sdk_root/emulator/'
-				emulator_path = os.real_path(os.join_path(os.dir(emulator_path), '..'))
-			}
 		}
 	}
 	return emulator_path
 }
 
+// has_bundletool returns `true` if `bundletool` can be located on the system.
 pub fn has_bundletool() bool {
 	return bundletool() != ''
 }

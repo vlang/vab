@@ -34,7 +34,7 @@ pub const work_directory = vab_tmp_work_dir()
 pub const cache_directory = vab_cache_dir()
 pub const rip_vflags = ['-autofree', '-gc', '-g', '-cg', '-prod', 'run', '-showcc', '-skip-unused',
 	'-no-bounds-checking'] // NOTE this can be removed when the deprecated `cli.args_to_options()` is removed
-pub const subcmds = ['complete', 'test-cleancode']
+pub const subcmds = ['complete', 'test-all', 'test-cleancode', 'test-runtime']
 pub const subcmds_builtin = ['doctor', 'install']
 pub const accepted_input_files = ['.v', '.apk', '.aab']
 
