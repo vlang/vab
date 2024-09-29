@@ -140,7 +140,6 @@ pub fn (mut e Emulator) wait_for_boot() ! {
 		'getprop',
 		'dev.bootcomplete',
 	]
-	// mut signal := -1
 	e.options.verbose(2, 'Waiting for emulator to be fully booted...')
 	for {
 		$if debug {
