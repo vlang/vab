@@ -10,6 +10,21 @@ const exe_dir = os.dir(os.real_path(os.executable()))
 
 const test_dir_base = os.join_path(os.vtmp_dir(), 'vab', 'tests', 'runtime', 'emulator')
 const vab_test_avd = 'vab_emulator_tests'
+const test_v_examples = [
+	'2048',
+	'flappylearning',
+	'tetris',
+	'sokol/particles',
+	'sokol/drawing.v',
+	'sokol/freetype_raven.v',
+	'gg/bezier.v',
+	'gg/bezier_anim.v',
+	'gg/polygons.v',
+	'gg/raven_text_rendering.v',
+	'gg/rectangles.v',
+	'gg/stars.v',
+	'gg/worker_thread.v',
+]
 
 const env_is_managable = env.managable()
 
@@ -18,37 +33,31 @@ const is_ci = os.getenv('CI') != ''
 fn test_run_on_emulator() {
 	ensure_env()
 
+	vab := vabxt.vabexe()
+
 	mut emu := emulator.make()!
 	emu.start(
 		verbosity:  3
 		await_boot: true
-		visible: !is_ci // show window on desktop
-		avd: vab_test_avd
+		wipe_data:  true
+		visible:    !is_ci // show window on desktop
+		avd:        vab_test_avd
 		// acceleration: 'off'
 	)!
-	// start tests ...
-	// for _ in 0 .. 20 {
-	// 	if recv.try_pop(mut signal) == .success {
-	// 		if signal > -1 {
-	// 			println('emu exiting. code ${signal}')
-	// 			break
-	// 		}
-	// 	}
-	// 	println('Doing fake work')
-	// 	time.sleep(1000 * time.millisecond)
-	//
-	//
-	// }
 
-	vab, test_dir := setup(@FN)
+	for example in test_v_examples {
+		test_dir := setup_test_dir('${@FN}_${os.file_name(example)}')
+		package_id := 'io.v.apk.v${example.replace('/', '.')}'
+		vab_cmd := [vab, '--package-id', package_id, '--device', emu.name, 'run', v_example(example),
+			'-o', test_dir]
+		res := run(vab_cmd)
+		if res.exit_code != 0 {
+			eprintln('error: ${res.output}')
+			assert false, 'Emulator test failed'
+		}
 
-	vab_cmd := [vab, '--device', emu.name, 'run', v_example('2048'), '-o', test_dir]
-	res := run(vab_cmd)
-	if res.exit_code != 0 {
-		println('error: ${res.output}')
+		time.sleep(250 * time.millisecond)
 	}
-
-	time.sleep(10000 * time.millisecond)
 
 	emu.stop()
 }
@@ -94,19 +103,16 @@ fn ensure_env() {
 			exit(1)
 		}
 	}
-}
-
-fn setup(id string) (string, string) {
-	test_dir := os.join_path(test_dir_base, id)
-	os.rm(test_dir) or {}
-	os.mkdir_all(test_dir) or { panic('mkdir_all failed making "${test_dir}": ${err}') }
-
 	// vab (per design) implicitly deploys to any devices sat via `--device-id`.
 	// Make sure no deployment is done after build if CI/other sets `ANDROID_SERIAL`
 	os.unsetenv('ANDROID_SERIAL')
-	vab := vabxt.vabexe()
-	assert vab != '', 'vab needs to be installed to run this test'
-	return vab, test_dir
+}
+
+fn setup_test_dir(id string) string {
+	test_dir := os.join_path(test_dir_base, id)
+	os.rm(test_dir) or {}
+	os.mkdir_all(test_dir) or { panic('mkdir_all failed making "${test_dir}": ${err}') }
+	return test_dir
 }
 
 fn v_example(path string) string {

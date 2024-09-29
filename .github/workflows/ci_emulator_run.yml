@@ -177,9 +177,8 @@ jobs:
         vab --package-id "io.v.ci.vab.aab.deploytest" --name "V DEPLOY TEST AAB" --package aab v/examples/gg/bezier.v
         v retry -r 2 -- vab v_deploy_test_aab.aab
 
-        # 'flappylearning' can build but running is currently broken on Android
         # Skip fireworks for now
-        declare -a v_examples=('2048' 'tetris' 'sokol/particles' 'sokol/drawing.v' 'sokol/freetype_raven.v' 'gg/bezier.v' 'gg/bezier_anim.v' 'gg/polygons.v' 'gg/raven_text_rendering.v' 'gg/rectangles.v' 'gg/stars.v' 'gg/worker_thread.v')
+        declare -a v_examples=('2048' 'flappylearning' 'tetris' 'sokol/particles' 'sokol/drawing.v' 'sokol/freetype_raven.v' 'gg/bezier.v' 'gg/bezier_anim.v' 'gg/polygons.v' 'gg/raven_text_rendering.v' 'gg/rectangles.v' 'gg/stars.v' 'gg/worker_thread.v')
 
         echo "Compiling V examples ${v_examples[@]}"
         for example in "${v_examples[@]}"; do

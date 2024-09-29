@@ -57,7 +57,7 @@ pub:
 pub struct Options {
 pub:
 	verbosity    int
-	wipe_data    bool = true
+	wipe_data    bool
 	avd          string
 	await_boot   bool = true // will wait for the device to boot
 	visible      bool // show emulator window on desktop
