@@ -82,11 +82,6 @@ jobs:
       run: |
         vab install 'system-images;android-30;aosp_atd;x86_64'
 
-    - name: Create test AVD
-      run: |
-        # export ANDROID_SDK_ROOT="/usr/local/lib/android/sdk"
-        echo no | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/avdmanager create avd --force --name vab_emulator_tests --abi aosp_atd/x86_64 --package 'system-images;android-30;aosp_atd;x86_64'
-
     - name: Run `vab test-all`
       run: |
         vab test-all

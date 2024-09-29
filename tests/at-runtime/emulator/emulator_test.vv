@@ -75,7 +75,6 @@ fn ensure_env() {
 	assert env.has_emulator() == true, 'These tests requires a working `emulator` installed'
 
 	// TODO: add env.has_system_image('android-XY','type','host-arch')
-	// TODO: add env.install_system_image('android-XY','type','host-arch') and/or `vab install 'system-images;android-30;aosp_atd;x86_64'`
 
 	avdmanager := env.avdmanager()
 	avdmanager_list_res := run([avdmanager, 'list', 'avd', '-c'])
