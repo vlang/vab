@@ -74,15 +74,17 @@ jobs:
       uses: actions/cache@v4
       with:
         path: |
-          /home/runner/.android/avd
           /usr/local/lib/android/sdk/system-images/android-30
-        key: ${{ runner.os }}-android-emulator-${{ hashFiles('/home/runner/.android/avd') }}
+        key: ${{ runner.os }}-android-emulator-${{ hashFiles('/usr/local/lib/android/sdk/system-images') }}
 
     - name: Prepare emulator
       if: steps.cache-emulator.outputs.cache-hit != 'true'
       run: |
         vab install 'system-images;android-30;aosp_atd;x86_64'
-        export ANDROID_SDK_ROOT="/usr/local/lib/android/sdk"
+
+    - name: Create test AVD
+      run: |
+        # export ANDROID_SDK_ROOT="/usr/local/lib/android/sdk"
         echo no | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/avdmanager create avd --force --name vab_emulator_tests --abi aosp_atd/x86_64 --package 'system-images;android-30;aosp_atd;x86_64'
 
     - name: Run `vab test-all`
@@ -130,16 +132,10 @@ jobs:
     - name: Run vab --help
       run: vab --help
 
-    - name: Install build-tools 33.0.2
+    - name: Install SDK dependencies
       run: |
         vab install "build-tools;33.0.2"
-
-    - name: Install platform android-30
-      run: |
-       vab install "platforms;android-30"
-
-    - name: Install AAB dependencies
-      run: |
+        vab install "platforms;android-30"
         vab install bundletool
         vab install aapt2
 
@@ -151,15 +147,17 @@ jobs:
       uses: actions/cache@v4
       with:
         path: |
-          /Users/runner/.android/avd
           /Users/runner/Library/Android/sdk/system-images/android-30
-        key: ${{ runner.os }}-android-emulator-${{ hashFiles('/Users/runner/.android/avd') }}
+        key: ${{ runner.os }}-android-emulator-${{ hashFiles('/Users/runner/Library/Android/sdk/system-images/android-30') }}
 
     - name: Prepare emulator
       if: steps.cache-emulator.outputs.cache-hit != 'true'
       run: |
+        vab install 'system-images;android-30;aosp_atd;x86_64'
+
+    - name: Create test AVD
+      run: |
         export ANDROID_SDK_ROOT="$HOME/Library/Android/sdk"
-        echo yes | $ANDROID_SDK_ROOT/tools/bin/sdkmanager 'system-images;android-30;aosp_atd;x86_64'
         echo no | $ANDROID_SDK_ROOT/tools/bin/avdmanager create avd --force --name test --abi aosp_atd/x86_64 --package 'system-images;android-30;aosp_atd;x86_64'
 
     - name: Install and run V + V UI examples as APK and AAB
