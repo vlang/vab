@@ -22,6 +22,8 @@ pub:
 }
 
 // ensure_path creates `path` if it does not already exist.
+@[deprecated: 'use paths.ensure() instead']
+@[deprecated_after: '2025-10-02']
 pub fn ensure_path(path string) ! {
 	if !os.exists(path) {
 		os.mkdir_all(path) or {
