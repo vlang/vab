@@ -29,14 +29,6 @@ fn vab_commit_hash() string {
 	return hash.trim_space()
 }
 
-fn vab_tmp_work_dir() string {
-	return os.join_path(os.temp_dir(), exe_name.replace(' ', '_').replace('.exe', '').to_lower())
-}
-
-fn vab_cache_dir() string {
-	return os.join_path(os.cache_dir(), exe_name.replace(' ', '_').replace('.exe', '').to_lower())
-}
-
 fn version_full() string {
 	return '${exe_version} ${exe_git_hash}'
 }

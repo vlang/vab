@@ -4,6 +4,7 @@ import os
 import flag
 import vab.vxt
 import vab.java
+import vab.paths
 import vab.android
 import vab.android.sdk
 import vab.android.ndk
@@ -30,8 +31,8 @@ Sub-commands:
                             `vab install "platforms;android-21"'
 
 pub const exe_git_hash = vab_commit_hash()
-pub const work_directory = vab_tmp_work_dir()
-pub const cache_directory = vab_cache_dir()
+pub const work_directory = paths.tmp_work()
+pub const cache_directory = paths.cache()
 pub const rip_vflags = ['-autofree', '-gc', '-g', '-cg', '-prod', 'run', '-showcc', '-skip-unused',
 	'-no-bounds-checking'] // NOTE this can be removed when the deprecated `cli.args_to_options()` is removed
 pub const subcmds = ['complete', 'test-all', 'test-cleancode', 'test-runtime']
@@ -70,7 +71,9 @@ pub const vab_documentation_config = flag.DocConfig{
 	}
 }
 
-// run_vab_sub_command runs and exits a sub-command if found in `args`
+// run_vab_sub_command runs (compiles if needed) a sub-command if found in `args`.
+// If the command is found this function will call `exit()` with the result
+// returned by the executed command.
 pub fn run_vab_sub_command(args []string) {
 	// Indentify sub-commands.
 	for subcmd in subcmds {
