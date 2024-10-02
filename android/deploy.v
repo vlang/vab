@@ -288,6 +288,8 @@ fn adb_detect_and_report_crashes(opt DeployOptions, device_id string) !bool {
 		vabutil.vab_notice('It looks like your app might have crashed. Dumping crash buffer...',
 			details: crash_log
 		)
+		vabutil.vab_notice('The above crash log(s) may be old and/or unrelated to this run')
+		vabutil.vab_notice('Use `--log-clear` to clear the device logs prior to installs and app launches')
 		return true
 	}
 	return false
