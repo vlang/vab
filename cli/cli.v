@@ -5,6 +5,7 @@ import flag
 import vab.vxt
 import vab.java
 import vab.paths
+import vab.user
 import vab.android
 import vab.android.sdk
 import vab.android.ndk
@@ -71,14 +72,16 @@ pub const vab_documentation_config = flag.DocConfig{
 	}
 }
 
-// run_vab_sub_command runs (compiles if needed) a sub-command if found in `args`.
-// If the command is found this function will call `exit()` with the result
-// returned by the executed command.
+// run_vab_sub_command runs a sub-command if found in `args`.
+// If the command is found this function will call `exit()` with the
+// exit code returned by the executed command.
 pub fn run_vab_sub_command(args []string) {
-	// Indentify sub-commands.
+	// Execute user installed commands first if any match is found
+	user.run_command(args)
+	// Run builtin sub-commands, if found
 	for subcmd in subcmds {
 		if subcmd in args {
-			// First encountered known sub-command is executed on the spot.
+			// First encountered known sub-command is executed on the spot
 			exit(launch_cmd(args[args.index(subcmd)..]))
 		}
 	}

@@ -76,6 +76,7 @@ pub fn run_jobs(jobs []ShellJob, parallel bool, verbosity int) ! {
 	}
 }
 
+// verbosity_print_cmd prints information about the `args` at certain `verbosity` levels.
 fn verbosity_print_cmd(args []string, verbosity int) {
 	if args.len > 0 && verbosity > 1 {
 		cmd_short := args[0].all_after_last(os.path_separator)

@@ -277,8 +277,8 @@ pub fn options_from_arguments(arguments []string, defaults Options) !(Options, [
 
 	for i := 0; i < args.len; i++ {
 		arg := args[i]
-		if i <= 1 && arg in subcmds_builtin {
-			// rip built in sub-commands at the start of the args array
+		if arg in subcmds_builtin {
+			// rip built in sub-commands from the args array
 			run_builtin_cmd = arg
 			args.delete(i)
 			i--
