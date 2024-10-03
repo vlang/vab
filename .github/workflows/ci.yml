@@ -183,6 +183,44 @@ jobs:
         vab examples/sokol/particles -o apks/particles.apk
         [ -f apks/particles.apk ]
 
+  ubuntu-latest-user-command:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      VAB_FLAGS: -v 3
+    steps:
+    - name: Checkout V
+      uses: actions/checkout@v4
+      with:
+        repository: vlang/v
+
+    - name: Build local v
+      run: make -j4 && sudo ./v symlink
+
+    - name: Checkout vab
+      uses: actions/checkout@v4
+      with:
+        path: vab
+
+    - name: Simulate "v install vab"
+      run: mv vab ~/.vmodules
+      run: v -g ~/.vmodules/vab
+      run: sudo ln -s ~/.vmodules/vab/vab /usr/local/bin/vab
+
+    - name: Run 'vab --help'
+      run: vab --help
+
+    - name: Run vab doctor
+      run: vab doctor
+
+    - name: Install user command
+      run: |
+        vab install cmd larpon/vab-sdl
+
+    - name: Test user command
+      run: |
+        vab sdl doctor
+
   ubuntu-latest-vab-can-live-anywhere:
     runs-on: ubuntu-latest
     timeout-minutes: 10
