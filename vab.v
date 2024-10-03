@@ -226,10 +226,10 @@ fn main() {
 	} else {
 		if opt.verbosity > 0 {
 			opt.verbose(1, 'Generated ${os.real_path(opt.output)}')
-			opt.verbose(1, 'Use `${cli.exe_short_name} --device <id> ${os.real_path(opt.output)}` to deploy package')
-			opt.verbose(1, 'Use `${cli.exe_short_name} --device <id> run ${os.real_path(opt.output)}` to both deploy and run the package')
+			util.vab_notice('Use `${cli.exe_short_name} --device <id> ${os.real_path(opt.output)}` to deploy package')
+			util.vab_notice('Use `${cli.exe_short_name} --device <id> run ${os.real_path(opt.output)}` to both deploy and run the package')
 			if deploy_opt.run != '' {
-				opt.verbose(1, 'Use `adb -s "<DEVICE ID>" shell am start -n "${deploy_opt.run}"` to run the app on the device, via adb')
+				util.vab_notice('Use `adb -s "<DEVICE ID>" shell am start -n "${deploy_opt.run}"` to run the app on the device, via adb')
 			}
 		}
 	}
