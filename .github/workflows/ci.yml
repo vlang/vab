@@ -203,10 +203,11 @@ jobs:
       with:
         path: vab
 
-    - name: Simulate "v install vab"
-      run: mv vab ~/.vmodules
-      run: v -g ~/.vmodules/vab
-      run: sudo ln -s ~/.vmodules/vab/vab /usr/local/bin/vab
+    - name: Install vab
+      run: |
+        mv vab ~/.vmodules
+        v -g ~/.vmodules/vab
+        sudo ln -s ~/.vmodules/vab/vab /usr/local/bin/vab
 
     - name: Run 'vab --help'
       run: vab --help
