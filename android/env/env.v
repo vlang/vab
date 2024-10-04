@@ -6,7 +6,7 @@ import os
 import semver
 import net.http
 import vab.cache
-import vab.user
+import vab.extra
 import vab.util as vabutil
 import vab.android.sdk
 import vab.android.ndk
@@ -321,7 +321,7 @@ pub fn install(components string, verbosity int) int {
 }
 
 // install_components installs various external components that vab can use.
-// These components can be Android SDK components or user commands.
+// These components can be Android SDK components or extra commands.
 pub fn install_components(arguments []string, verbosity int) ! {
 	mut iopts := []InstallOptions{}
 	mut ensure_sdk := true
@@ -339,12 +339,12 @@ pub fn install_components(arguments []string, verbosity int) ! {
 	}
 
 	components := args[0]
-	// vab install cmd ...
-	if components == 'cmd' {
+	// vab install extra ...
+	if components == 'extra' {
 		if args.len == 1 {
-			return error('${@FN} cmd requires an argument')
+			return error('${@FN} extra requires an argument')
 		}
-		user.install_command(input: args[1..].clone(), verbosity: verbosity) or {
+		extra.install_command(input: args[1..].clone(), verbosity: verbosity) or {
 			return error('Installing of command failed: ${err}')
 		}
 		return

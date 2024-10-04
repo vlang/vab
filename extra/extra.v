@@ -1,7 +1,7 @@
 // Copyright(C) 2019-2024 Lars Pontoppidan. All rights reserved.
 // Use of this source code is governed by an MIT license file distributed with this software package
-// This module handles everything related to user commands.
-module user
+// This module handles everything related to extra commands.
+module extra
 
 import os
 import compress.szip
@@ -34,24 +34,24 @@ pub fn (io &InstallOptions) verbose(verbosity_level int, msg string) {
 	}
 }
 
-// run_command runs a user installed command if found in `args`.
+// run_command runs a extra installed command if found in `args`.
 // If the command is found this function will call `exit()` with the result
 // returned by the executed command.
 pub fn run_command(args []string) {
-	// Indentify user installed commands
-	user_commands := commands()
-	for _, user_command in user_commands {
-		if user_command.id.trim_left('${command_prefix}-') in args {
+	// Indentify extra installed commands
+	extra_commands := commands()
+	for _, extra_command in extra_commands {
+		if extra_command.id.trim_left('${command_prefix}-') in args {
 			// First encountered known sub-command is executed on the spot.
-			exit(launch_command(args[args.index(user_command.id.trim_left('${command_prefix}-'))..]))
+			exit(launch_command(args[args.index(extra_command.id.trim_left('${command_prefix}-'))..]))
 		}
 	}
 }
 
 fn launch_command(args []string) int {
 	mut cmd := args[0]
-	user_commands := commands()
-	if command := user_commands['${command_prefix}-' + cmd] {
+	extra_commands := commands()
+	if command := extra_commands['${command_prefix}-' + cmd] {
 		tool_args := args[1..].clone()
 		tool_exe := command.exe
 		if os.is_executable(tool_exe) {
@@ -75,7 +75,7 @@ fn launch_command(args []string) int {
 	return 1
 }
 
-// install_command retrieves, installs and registers external user commands
+// install_command retrieves, installs and registers external extra commands
 pub fn install_command(opt InstallOptions) ! {
 	// `vab install cmd xyz/abc`
 	if opt.input.len == 0 {
@@ -121,10 +121,10 @@ fn install_from_github(unit string, verbosity int) ! {
 	if !(valid_identifier(unit_parts[0]) && valid_identifier(unit_parts[1])) {
 		return error('${@MOD} ${@FN} `${unit}` is not a valid identifier')
 	}
-	initial_dst := os.join_path(paths.cache(), 'user', 'commands', 'github', unit_parts[0]) // TODO: const these
+	initial_dst := os.join_path(paths.cache(), 'extra', 'commands', 'github', unit_parts[0]) // TODO: const these
 
 	url := 'https://github.com/${unit}/archive/refs/heads/master.zip'
-	tmp_downloads := os.join_path(paths.tmp_work(), 'user', 'downloads') // TODO: const these
+	tmp_downloads := os.join_path(paths.tmp_work(), 'extra', 'downloads') // TODO: const these
 	paths.ensure(tmp_downloads)!
 
 	zip_file := os.join_path(tmp_downloads, 'github-${unit.replace('/', '-')}.zip')
@@ -155,7 +155,7 @@ fn install_from_github(unit string, verbosity int) ! {
 }
 
 fn record_install(id string, source string, unit string) ! {
-	path := os.join_path(paths.cache(), 'user') // TODO: const these
+	path := os.join_path(paths.cache(), 'extra') // TODO: const these
 	paths.ensure(path)!
 	installs_db := os.join_path(path, 'installed.txt') // TODO: const these
 	installs_db_bak := os.join_path(path, 'installed.txt.bak') // TODO: const these
@@ -184,14 +184,26 @@ fn record_install(id string, source string, unit string) ! {
 	}
 }
 
-pub fn has(command string) bool {
+/*
+pub fn has_command(command string) bool {
 	cmds := commands()
 	return command in cmds.keys()
 }
 
+pub fn has_command_alias(command string) bool {
+	cmds := commands()
+	for _, extra_command in cmds {
+		if extra_command.id.trim_left('${command_prefix}-') == command {
+			return true
+		}
+	}
+	return false
+}
+*/
+
 pub fn commands() map[string]Command {
 	mut installed := map[string]Command{}
-	path := os.join_path(paths.cache(), 'user') // TODO: const these
+	path := os.join_path(paths.cache(), 'extra') // TODO: const these
 	installs_db := os.join_path(path, 'installed.txt') // TODO: const these
 	if os.exists(installs_db) {
 		installs := os.read_lines(installs_db) or { return installed }
@@ -207,8 +219,8 @@ pub fn commands() map[string]Command {
 				unit_parts := unit.split('/')
 				// TODO: support @ notation for specific commits/branches?
 				// mut at_part := unit.all_after('@')
-				final_dst := os.join_path(paths.cache(), 'user', 'commands', source, unit_parts[0],
-					unit_parts[1]) // TODO: const these
+				final_dst := os.join_path(paths.cache(), 'extra', 'commands', source,
+					unit_parts[0], unit_parts[1]) // TODO: const these
 
 				installed[id] = Command{
 					id:     split[0]

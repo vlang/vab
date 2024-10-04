@@ -3,9 +3,10 @@ module cli
 import os
 import flag
 import vab.vxt
+import vab.vabxt
 import vab.java
 import vab.paths
-import vab.user
+import vab.extra
 import vab.android
 import vab.android.sdk
 import vab.android.ndk
@@ -76,8 +77,8 @@ pub const vab_documentation_config = flag.DocConfig{
 // If the command is found this function will call `exit()` with the
 // exit code returned by the executed command.
 pub fn run_vab_sub_command(args []string) {
-	// Execute user installed commands first if any match is found
-	user.run_command(args)
+	// Execute extra installed commands first if any match is found
+	extra.run_command(args)
 	// Run builtin sub-commands, if found
 	for subcmd in subcmds {
 		if subcmd in args {
@@ -354,7 +355,9 @@ pub fn launch_cmd(args []string) int {
 		}
 	}
 	if os.is_executable(tool_exe) {
-		os.setenv('VAB_EXE', os.join_path(exe_dir, exe_name), true)
+		if vabxt.found() {
+			os.setenv('VAB_EXE', vabxt.vabexe(), true)
+		}
 		$if windows {
 			exit(os.system('${os.quoted_path(tool_exe)} ${tool_args}'))
 		} $else $if js {

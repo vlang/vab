@@ -145,6 +145,7 @@ fn main() {
 			util.vab_error('Failed to install components', details: '${err}')
 			exit(1)
 		}
+		exit(0)
 	}
 
 	// Validate environment
