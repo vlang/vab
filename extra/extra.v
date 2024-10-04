@@ -6,11 +6,14 @@ module extra
 import os
 import compress.szip
 import vab.paths
+import vab.util
 import vab.vxt
 import net.http
 
 const valid_sources = ['github']
 pub const command_prefix = 'vab'
+pub const data_path = os.join_path(paths.cache(), 'extra')
+pub const temp_path = os.join_path(paths.tmp_work(), 'extra')
 
 @[params]
 pub struct InstallOptions {
@@ -41,14 +44,30 @@ pub fn run_command(args []string) {
 	// Indentify extra installed commands
 	extra_commands := commands()
 	for _, extra_command in extra_commands {
-		if extra_command.id.trim_left('${command_prefix}-') in args {
+		short_id := extra_command.id.trim_left('${command_prefix}-')
+		if short_id in args {
+			mut complete_index := args.len
+			if 'complete' in args {
+				complete_index = args.index('complete')
+			}
+			short_id_index := args.index(short_id)
+			if complete_index < short_id_index {
+				// if `complete` is found before the extra command vab is
+				// highly likely trying to tab complete something in which case
+				// nothing nothing should be executed
+				return
+			}
 			// First encountered known sub-command is executed on the spot.
-			exit(launch_command(args[args.index(extra_command.id.trim_left('${command_prefix}-'))..]))
+			exit(launch_command(args[short_id_index..]))
 		}
 	}
 }
 
 fn launch_command(args []string) int {
+	$if !vab_allow_extra_commands ? {
+		util.vab_error('To enable running extra commands, pass `-d vab_allow_extra_commands` when building vab')
+		exit(2)
+	}
 	mut cmd := args[0]
 	extra_commands := commands()
 	if command := extra_commands['${command_prefix}-' + cmd] {
@@ -83,7 +102,6 @@ pub fn install_command(opt InstallOptions) ! {
 	}
 
 	component := opt.input[0] // Only 1 argument needed for now
-
 	if component.count(':') == 0 {
 		// no source protocol detected, slap on default and try again...
 		mod_opt := InstallOptions{
@@ -91,6 +109,10 @@ pub fn install_command(opt InstallOptions) ! {
 			input: ['github:${component}']
 		}
 		return install_command(mod_opt)
+	}
+
+	$if !vab_allow_extra_commands ? {
+		util.vab_notice('To enable running extra commands, pass `-d vab_allow_extra_commands` when building vab')
 	}
 
 	source := component.all_before(':')
@@ -121,10 +143,10 @@ fn install_from_github(unit string, verbosity int) ! {
 	if !(valid_identifier(unit_parts[0]) && valid_identifier(unit_parts[1])) {
 		return error('${@MOD} ${@FN} `${unit}` is not a valid identifier')
 	}
-	initial_dst := os.join_path(paths.cache(), 'extra', 'commands', 'github', unit_parts[0]) // TODO: const these
+	initial_dst := os.join_path(data_path, 'commands', 'github', unit_parts[0])
 
 	url := 'https://github.com/${unit}/archive/refs/heads/master.zip'
-	tmp_downloads := os.join_path(paths.tmp_work(), 'extra', 'downloads') // TODO: const these
+	tmp_downloads := os.join_path(temp_path, 'downloads')
 	paths.ensure(tmp_downloads)!
 
 	zip_file := os.join_path(tmp_downloads, 'github-${unit.replace('/', '-')}.zip')
@@ -155,10 +177,10 @@ fn install_from_github(unit string, verbosity int) ! {
 }
 
 fn record_install(id string, source string, unit string) ! {
-	path := os.join_path(paths.cache(), 'extra') // TODO: const these
+	path := data_path
 	paths.ensure(path)!
-	installs_db := os.join_path(path, 'installed.txt') // TODO: const these
-	installs_db_bak := os.join_path(path, 'installed.txt.bak') // TODO: const these
+	installs_db := os.join_path(path, 'installed.txt')
+	installs_db_bak := os.join_path(path, 'installed.txt.bak')
 	if !os.exists(installs_db) {
 		os.create(installs_db)!
 	}
@@ -184,6 +206,25 @@ fn record_install(id string, source string, unit string) ! {
 	}
 }
 
+// installed returns an array of the extra commands installed via
+// `vab install extra ...`
+// See also: installed_aliases
+pub fn installed() []string {
+	cmds := commands()
+	return cmds.keys()
+}
+
+// installed_aliases returns an array of the extra commands' aliases installed via
+// `vab install extra ...`
+// See also: installed
+pub fn installed_aliases() []string {
+	mut aliases := []string{}
+	for id, _ in commands() {
+		aliases << id.trim_left('${command_prefix}-')
+	}
+	return aliases
+}
+
 /*
 pub fn has_command(command string) bool {
 	cmds := commands()
@@ -203,8 +244,8 @@ pub fn has_command_alias(command string) bool {
 
 pub fn commands() map[string]Command {
 	mut installed := map[string]Command{}
-	path := os.join_path(paths.cache(), 'extra') // TODO: const these
-	installs_db := os.join_path(path, 'installed.txt') // TODO: const these
+	path := data_path
+	installs_db := os.join_path(path, 'installed.txt')
 	if os.exists(installs_db) {
 		installs := os.read_lines(installs_db) or { return installed }
 		for install_line in installs {
@@ -219,8 +260,8 @@ pub fn commands() map[string]Command {
 				unit_parts := unit.split('/')
 				// TODO: support @ notation for specific commits/branches?
 				// mut at_part := unit.all_after('@')
-				final_dst := os.join_path(paths.cache(), 'extra', 'commands', source,
-					unit_parts[0], unit_parts[1]) // TODO: const these
+				final_dst := os.join_path(data_path, 'commands', source, unit_parts[0],
+					unit_parts[1])
 
 				installed[id] = Command{
 					id:     split[0]

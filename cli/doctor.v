@@ -4,6 +4,7 @@ import os
 import vab.vxt
 import vab.java
 import vab.util
+import vab.extra
 import vab.android
 import vab.android.sdk
 import vab.android.ndk
@@ -19,13 +20,13 @@ pub fn doctor(opt Options) {
 	// Validate Android `sdkmanager` tool
 	// Just warnings/notices as `sdkmanager` isn't used to in the build process.
 	if sdkm == '' {
-		extra_details := if env_managable {
+		details_text := if env_managable {
 			'You can run `${exe_short_name} install cmdline-tools` to install it.\n'
 		} else {
 			''
 		}
 		details := util.Details{
-			details: extra_details +
+			details: details_text +
 				'You can set the `SDKMANAGER` env variable or try your luck with `${exe_short_name} install auto`.
 See https://stackoverflow.com/a/61176718/1904615 for more help.\n'
 		}
@@ -76,7 +77,16 @@ See https://stackoverflow.com/a/61176718/1904615 for more help.\n'
 	Version    ${exe_version} ${exe_git_hash}
 	Path       "${exe_dir}"
 	Base files "${default_base_files_path}"
-	os.args:   "${os.args}"')
+	os.args:   "${os.args}"\n')
+
+	println('Extra\n\tCommands')
+	$if vab_allow_extra_commands ? {
+		println('\t\tAllowed: true
+		Installed ${extra.installed()}
+		Data path "${extra.data_path}"')
+	} $else {
+		println('\t\tAllowed: false')
+	}
 
 	// Shell environment
 	print_var_if_set := fn (vars map[string]string, var_name string) {
