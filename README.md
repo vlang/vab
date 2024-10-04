@@ -215,7 +215,8 @@ Runtime tests can be run with `vab test-runtime` (also part of `vab test-all`).
 # Extending `vab`
 
 The `vab` command-line tool can be extended with custom user commands.
-See the "[Extending `vab`](docs/docs.md#extending-vab)" section in the [documentation](docs/docs.md).
+See the "[Extending `vab`](docs/docs.md#extending-vab)" section
+in the [documentation](docs/docs.md).
 
 # Notes
 

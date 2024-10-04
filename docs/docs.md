@@ -364,18 +364,20 @@ leaving the app running on the device.
 
 Sometimes `vab`'s functionality is just not enough to reach a desired goal. An example of
 such a thing would be compiling and packaging of a thirdparty library or framework that requires
-A custom main entry function and/or a custom Java Android activity or any other factor that makes it hard,
-impossible or very cumbersome to get things working with `vab`.
+A custom main entry function and/or a custom Java Android activity or any other factor that makes
+it hard, impossible or very cumbersome to get things working with `vab`.
 
 One way to deal with such problems without doing everything from scratch is using `vab`'s abilities
 to install and call thirdparty executables. In `vab` terms these are called *extra commands*
 and can be enabled by passing `-d vab_allow_extra_commands` when compiling `vab` with `v`.
 
-*Extra commands* is a powerful feature that allows users to extend `vab` with new custom functionality
+*Extra commands* is a powerful feature that allows users to extend `vab` with custom functionality
 *via the command-line*.
 
-An example of one such *extra command* is [`larpon/vab-sdl`](https://github.com/larpon/vab-sdl/) which makes it easy
-to write V applications that uses SDL2 via ['vlang/sdl'](https://github.com/vlang/sdl/) that compile and run
+## Example extra command
+
+An example of one such *extra command* is [`larpon/vab-sdl`](https://github.com/larpon/vab-sdl/) which makes it easier
+to develop V applications that uses SDL2 via ['vlang/sdl'](https://github.com/vlang/sdl/) that compile and run
 on Android via `vab`. Sounds pretty neat, right?
 
 To enable support for this in `vab`, you can do the following:
@@ -405,4 +407,5 @@ thirdparty *extra command* software from sources you do not trust.
 When you enable and use *extra commands* it is likely that the developer team can not
 provide support for any bug or situation that an *extra command* may have caused.
 
-Always refer to the author, source code and documentation of the *extra commands* for how to use the commands.
+Always refer to the author, source code and documentation of the *extra commands*
+for how to use the commands.
