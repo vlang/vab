@@ -183,10 +183,11 @@ jobs:
         vab examples/sokol/particles -o apks/particles.apk
         [ -f apks/particles.apk ]
 
-  ubuntu-latest-user-command:
+  ubuntu-latest-extra-command:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
     env:
+      VFLAGS: -d vab_allow_extra_commands
       VAB_FLAGS: -v 3
     steps:
     - name: Checkout V
@@ -210,14 +211,14 @@ jobs:
     - name: Run 'vab --help'
       run: vab --help
 
+    - name: Install extra command
+      run: |
+        vab install extra larpon/vab-sdl
+
     - name: Run vab doctor
       run: vab doctor
 
-    - name: Install user command
-      run: |
-        vab install cmd larpon/vab-sdl
-
-    - name: Test user command
+    - name: Test extra command
       run: |
         vab sdl doctor
 
