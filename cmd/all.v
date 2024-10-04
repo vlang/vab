@@ -32,18 +32,28 @@ fn v_test_all() {
 	{
 		res := run([v_exe, 'test', vab_home])
 		if res.exit_code != 0 {
+			eprintln(res.output)
+			errors << res.output
+		}
+	}
+	{
+		res := run([v_exe, 'check-md', '-hide-warnings', vab_home])
+		if res.exit_code != 0 {
+			eprintln(res.output)
 			errors << res.output
 		}
 	}
 	{
 		res := run([vab_exe, 'test-cleancode', vab_home])
 		if res.exit_code != 0 {
+			eprintln(res.output)
 			errors << res.output
 		}
 	}
 	{
 		res := run([vab_exe, 'test-runtime'])
 		if res.exit_code != 0 {
+			eprintln(res.output)
 			errors << res.output
 		}
 	}
