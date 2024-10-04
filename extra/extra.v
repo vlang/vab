@@ -225,23 +225,24 @@ pub fn installed_aliases() []string {
 	return aliases
 }
 
-/*
-pub fn has_command(command string) bool {
-	cmds := commands()
-	return command in cmds.keys()
-}
+// pub fn has_command(command string) bool {
+// 	cmds := commands()
+// 	return command in cmds.keys()
+// }
+//
+// pub fn has_command_alias(command string) bool {
+// 	cmds := commands()
+// 	for _, extra_command in cmds {
+// 		if extra_command.id.trim_left('${command_prefix}-') == command {
+// 			return true
+// 		}
+// 	}
+// 	return false
+// }
 
-pub fn has_command_alias(command string) bool {
-	cmds := commands()
-	for _, extra_command in cmds {
-		if extra_command.id.trim_left('${command_prefix}-') == command {
-			return true
-		}
-	}
-	return false
-}
-*/
-
+// commands returns all extra commands installed via
+// `vab install extra ...`
+// See also: installed
 pub fn commands() map[string]Command {
 	mut installed := map[string]Command{}
 	path := data_path
