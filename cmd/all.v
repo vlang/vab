@@ -59,9 +59,6 @@ fn v_test_all() {
 	}
 	if errors.len > 0 {
 		eprintln('ERROR: some test(s) failed.')
-		for e in errors {
-			eprintln(e)
-		}
 		exit(1)
 	}
 }
