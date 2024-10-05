@@ -365,11 +365,13 @@ leaving the app running on the device.
 Sometimes `vab`'s functionality is just not enough to reach a desired goal. An example of
 such a thing would be compiling and packaging of a thirdparty library or framework that requires a
 special way to be build, has a custom main entry function and/or a custom Java Android activity,
-or other factors that makes it impossible or very cumbersome to get things working with `v`+`vab`.
+or other factors that makes it impossible or very cumbersome to get things working with
+`v` and/or `vab`'s default functionality.
 
-One way to deal with such problems without reinventing the wheel is using `vab` as a module 
+One way to deal with such problems, without reinventing the wheel, is using `vab` as a module
 in combination with the feature that allows users to install and call thirdparty executables.
-In `vab` terms these are called *extra commands* and can be enabled by passing
+
+In `vab` terms this feature is called *extra commands* and can be enabled by passing
 `-d vab_allow_extra_commands` when compiling `vab` with `v`.
 
 *Extra commands* is a powerful feature that allows users to extend `vab` with custom functionality
