@@ -209,6 +209,17 @@ jobs:
         v -g ~/.vmodules/vab
         sudo ln -s ~/.vmodules/vab/vab /usr/local/bin/vab
 
+    - name: Checkout SDL
+      uses: actions/checkout@v2
+      with:
+        path: sdl
+
+    - name: Link local SDL folder in ~/.vmodules/sdl
+      run: |
+        cd sdl
+        mkdir -p ~/.vmodules
+        ln -s $(pwd) ~/.vmodules/sdl
+
     - name: Run 'vab --help'
       run: vab --help
 
