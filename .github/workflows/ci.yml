@@ -219,6 +219,7 @@ jobs:
         cd sdl
         mkdir -p ~/.vmodules
         ln -s $(pwd) ~/.vmodules/sdl
+        v ~/.vmodules/sdl/setup.vsh
 
     - name: Run 'vab --help'
       run: vab --help
