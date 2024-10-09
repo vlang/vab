@@ -153,7 +153,14 @@ fn main() {
 	opt.resolve(true)
 
 	cli.validate_input(input) or {
-		util.vab_error('${cli.exe_short_name}: ${err}')
+		suggestions := cli.input_suggestions(input)
+		if suggestions.len > 0 {
+			util.vab_error('${cli.exe_short_name}: ${err}',
+				details: 'Did you mean `${suggestions.join('` ,`')}`?'
+			)
+		} else {
+			util.vab_error('${cli.exe_short_name}: ${err}')
+		}
 		exit(1)
 	}
 	opt.input = input

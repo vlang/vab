@@ -1,6 +1,8 @@
 module cli
 
 import os
+import strings
+import vab.extra
 
 // kill_adb will try to kill the `adb` process.
 pub fn kill_adb() {
@@ -43,4 +45,18 @@ fn version() string {
 		}
 	}
 	return v
+}
+
+// input_suggestions returns alternative suggestions to the `input` string.
+pub fn input_suggestions(input string) []string {
+	mut suggests := []string{}
+	$if vab_allow_extra_commands ? {
+		for extra_alias in extra.installed_aliases() {
+			similarity := f32(int(strings.levenshtein_distance_percentage(input, extra_alias) * 1000)) / 1000
+			if similarity > 0.25 {
+				suggests << extra_alias
+			}
+		}
+	}
+	return suggests
 }
