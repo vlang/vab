@@ -201,6 +201,7 @@ jobs:
     - name: Checkout vab
       uses: actions/checkout@v4
       with:
+        repository: vlang/vab
         path: vab
 
     - name: Install vab
@@ -212,6 +213,7 @@ jobs:
     - name: Checkout SDL
       uses: actions/checkout@v4
       with:
+        repository: vlang/sdl
         path: sdl
 
     - name: Simulate "v install sdl"
