@@ -210,7 +210,7 @@ jobs:
         sudo ln -s ~/.vmodules/vab/vab /usr/local/bin/vab
 
     - name: Checkout SDL
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         path: sdl
 
