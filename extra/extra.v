@@ -4,6 +4,7 @@
 module extra
 
 import os
+import strings
 import compress.szip
 import vab.paths
 import vab.util
@@ -12,7 +13,7 @@ import net.http
 
 const valid_sources = ['github']
 pub const command_prefix = 'vab'
-pub const data_path = os.join_path(paths.cache(), 'extra')
+pub const data_path = os.join_path(paths.data(), 'extra')
 pub const temp_path = os.join_path(paths.tmp_work(), 'extra')
 
 @[params]
@@ -25,9 +26,17 @@ pub:
 pub struct Command {
 pub:
 	id     string
+	alias  string
 	source string
 	unit   string
+	hash   string
 	exe    string
+}
+
+struct GitHubInfo {
+pub:
+	sha string
+	url string
 }
 
 // verbose prints `msg` to STDOUT if `InstallOptions.verbosity` level is >= `verbosity_level`.
@@ -143,13 +152,29 @@ fn install_from_github(unit string, verbosity int) ! {
 	if !(valid_identifier(unit_parts[0]) && valid_identifier(unit_parts[1])) {
 		return error('${@MOD} ${@FN} `${unit}` is not a valid identifier')
 	}
-	initial_dst := os.join_path(data_path, 'commands', 'github', unit_parts[0])
 
-	url := 'https://github.com/${unit}/archive/refs/heads/master.zip'
+	cmd_author := unit_parts[0]
+	cmd_name := unit_parts[1]
+	if has_command(cmd_name) {
+		extra_commands := commands()
+		if command := extra_commands[cmd_name] {
+			if command.unit != unit {
+				return error('${@MOD} ${@FN} `${unit}` is already installed from `${command.unit}` via ${command.source}')
+			}
+		}
+	}
+
+	initial_dst := os.join_path(data_path, 'commands', 'github', cmd_author)
+
 	tmp_downloads := os.join_path(temp_path, 'downloads')
 	paths.ensure(tmp_downloads)!
 
-	zip_file := os.join_path(tmp_downloads, 'github-${unit.replace('/', '-')}.zip')
+	github_info := get_github_info(unit)!
+
+	sha := github_info.sha
+	url := github_info.url
+
+	zip_file := os.join_path(tmp_downloads, 'github-${unit.replace('/', '-')}.${sha}.zip')
 	if !os.exists(zip_file) {
 		if verbosity > 1 {
 			println('Downloading `${unit}` from "${url}"...')
@@ -166,17 +191,17 @@ fn install_from_github(unit string, verbosity int) ! {
 	paths.ensure(initial_dst)!
 
 	unzip(zip_file, initial_dst)!
-	unzipped_dst := os.join_path(initial_dst, '${unit_parts[1]}-master')
+	unzipped_dst := os.join_path(initial_dst, '${cmd_name}-${sha}')
 	if os.exists(final_dst) {
 		os.rmdir_all(final_dst) or {}
 	}
 	os.mv(unzipped_dst, final_dst)!
 
 	build_command(final_dst, verbosity)!
-	record_install(unit_parts[1], 'github', unit)!
+	record_install(cmd_name, 'github', unit, sha)!
 }
 
-fn record_install(id string, source string, unit string) ! {
+fn record_install(id string, source string, unit string, hash string) ! {
 	path := data_path
 	paths.ensure(path)!
 	installs_db := os.join_path(path, 'installed.txt')
@@ -186,23 +211,62 @@ fn record_install(id string, source string, unit string) ! {
 	}
 	mut installs := os.read_lines(installs_db)!
 
-	mut found := false
-	for install_line in installs {
+	for i, install_line in installs {
 		if install_line == '' || install_line.starts_with('#') {
 			continue
 		}
 		split := install_line.split(';')
-		if split.len > 0 {
-			if split[0] == id {
-				found = true
+		if split.len > 2 {
+			if split[1] == source && split[2] == unit {
+				installs.delete(i)
 				break
 			}
 		}
 	}
+	installs << '${id};${source};${unit};${hash}'
+	os.mv(installs_db, installs_db_bak, overwrite: true)!
+	os.write_lines(installs_db, installs)!
+}
+
+fn get_github_info(unit string) !GitHubInfo {
+	tmp_downloads := os.join_path(temp_path, 'downloads')
+	paths.ensure(tmp_downloads)!
+
+	base_url := 'https://api.github.com/repos/${unit}'
+	meta_file := os.join_path(tmp_downloads, 'github-${unit.replace('/', '-')}.meta')
+	http.download_file(base_url, meta_file) or {
+		return error('${@MOD} ${@FN} failed to download `${base_url}`: ${err}')
+	}
+
+	default_branch := os.read_file(meta_file)!.all_after('default_branch').trim_left('" ,:').all_before('"')
+
+	refs_url := '${base_url}/git/refs/heads'
+	refs_file := os.join_path(tmp_downloads, 'github-${unit.replace('/', '-')}.refs')
+	http.download_file(refs_url, refs_file) or {
+		return error('${@MOD} ${@FN} failed to download `${refs_url}`: ${err}')
+	}
+
+	mut raw := strings.find_between_pair_u8(os.read_file(refs_file)!, `[`, `]`)
+	mut found := false
+	mut chunk := ''
+	ref := 'refs/heads/${default_branch}'
+	for _ in 0 .. 20 {
+		chunk = strings.find_between_pair_u8(raw, `{`, `}`)
+		if chunk.contains(ref) {
+			found = true
+			break
+		}
+		raw = raw.replace('{${chunk}}', '')
+	}
 	if !found {
-		installs << '${id};${source};${unit}'
-		os.mv(installs_db, installs_db_bak, overwrite: true)!
-		os.write_lines(installs_db, installs)!
+		return error('${@MOD} ${@FN} failed to get git information via `${refs_url}`')
+	}
+
+	sha := chunk.all_after('sha').trim_left('" ,:').all_before('"')
+	url := 'https://github.com/${unit}/archive/${sha}.zip'
+	return GitHubInfo{
+		sha: sha
+		url: url
 	}
 }
 
@@ -225,20 +289,20 @@ pub fn installed_aliases() []string {
 	return aliases
 }
 
-// pub fn has_command(command string) bool {
-// 	cmds := commands()
-// 	return command in cmds.keys()
-// }
-//
-// pub fn has_command_alias(command string) bool {
-// 	cmds := commands()
-// 	for _, extra_command in cmds {
-// 		if extra_command.id.trim_left('${command_prefix}-') == command {
-// 			return true
-// 		}
-// 	}
-// 	return false
-// }
+pub fn has_command(command string) bool {
+	cmds := commands()
+	return command in cmds.keys()
+}
+
+pub fn has_command_alias(command string) bool {
+	cmds := commands()
+	for _, extra_command in cmds {
+		if extra_command.id.trim_left('${command_prefix}-') == command {
+			return true
+		}
+	}
+	return false
+}
 
 // commands returns all extra commands installed via
 // `vab install extra ...`
@@ -254,20 +318,22 @@ pub fn commands() map[string]Command {
 				continue
 			}
 			split := install_line.split(';')
-			if split.len > 2 {
+			if split.len > 3 {
 				id := split[0]
+				alias := id.trim_left('${command_prefix}-')
 				source := split[1] or { 'unknown' }
 				unit := split[2] or { 'unknown/unknown' }
+				hash := split[3] or { 'deadbeef' }
 				unit_parts := unit.split('/')
-				// TODO: support @ notation for specific commits/branches?
-				// mut at_part := unit.all_after('@')
 				final_dst := os.join_path(data_path, 'commands', source, unit_parts[0],
 					unit_parts[1])
 
 				installed[id] = Command{
-					id:     split[0]
+					id:     id
+					alias:  alias
 					source: source
 					unit:   unit
+					hash:   hash
 					exe:    os.join_path(final_dst, id)
 				}
 			}
