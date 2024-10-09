@@ -289,15 +289,17 @@ pub fn installed_aliases() []string {
 	return aliases
 }
 
+// has_command returns `true` if `command` is installed as an extra command
 pub fn has_command(command string) bool {
 	cmds := commands()
 	return command in cmds.keys()
 }
 
-pub fn has_command_alias(command string) bool {
+// has_command_alias returns `true` if `alias` is installed as an extra command
+pub fn has_command_alias(alias string) bool {
 	cmds := commands()
 	for _, extra_command in cmds {
-		if extra_command.id.trim_left('${command_prefix}-') == command {
+		if extra_command.id.trim_left('${command_prefix}-') == alias {
 			return true
 		}
 	}
