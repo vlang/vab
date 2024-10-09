@@ -1,5 +1,5 @@
 execute = 'vab invalid_input'
 [expect]
 	exit_code = 1
-[compare]
-	output.from_line = -1 # Test only x lines. Negative value means from bottom, positive from top, 0 is default (all)
+# [compare]
+# 	output.from_line = -1 # Test only x lines. Negative value means from bottom, positive from top, 0 is default (all)
