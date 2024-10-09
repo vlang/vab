@@ -190,12 +190,6 @@ jobs:
       VFLAGS: -d vab_allow_extra_commands
       VAB_FLAGS: -v 3
     steps:
-    - name: Install dependencies
-      run: |
-        v retry -- sudo apt-get update
-        v retry -- sudo apt-get install --quiet -y libsdl2-dev libsdl2-ttf-dev
-        v retry -- sudo apt-get install --quiet -y libsdl2-mixer-dev libsdl2-image-dev
-
     - name: Checkout V
       uses: actions/checkout@v4
       with:
@@ -203,6 +197,12 @@ jobs:
 
     - name: Build local v
       run: make -j4 && sudo ./v symlink
+
+    - name: Install dependencies
+      run: |
+        v retry -- sudo apt-get update
+        v retry -- sudo apt-get install --quiet -y libsdl2-dev libsdl2-ttf-dev
+        v retry -- sudo apt-get install --quiet -y libsdl2-mixer-dev libsdl2-image-dev
 
     - name: Checkout vab
       uses: actions/checkout@v4
