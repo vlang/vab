@@ -189,6 +189,7 @@ jobs:
     env:
       VFLAGS: -d vab_allow_extra_commands
       VAB_FLAGS: -v 3
+      SDL2_VERSION: 2.30.0
     steps:
     - name: Checkout V
       uses: actions/checkout@v4
@@ -201,8 +202,17 @@ jobs:
     - name: Install dependencies
       run: |
         v retry -- sudo apt-get update
-        v retry -- sudo apt-get install --quiet -y libsdl2-dev libsdl2-ttf-dev
+        v retry -- sudo apt-get install --quiet -y libsdl2-ttf-dev
         v retry -- sudo apt-get install --quiet -y libsdl2-mixer-dev libsdl2-image-dev
+        v retry -- curl -L https://www.libsdl.org/release/SDL2-${SDL2_VERSION}.tar.gz -o SDL2.tar.gz
+        tar -zxvf SDL2.tar.gz
+
+    - name: Build SDL
+      run: |
+        cd SDL2-${SDL2_VERSION}
+        mkdir build && cd build
+        ../configure --prefix /tmp/sdl2-${SDL2_VERSION}
+        make && make install
 
     - name: Checkout vab
       uses: actions/checkout@v4
