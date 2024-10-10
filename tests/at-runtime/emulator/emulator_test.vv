@@ -94,7 +94,7 @@ fn ensure_env() {
 
 	// TODO: add env.has_system_image('android-XY','type','host-arch')
 
-	mut avds := list_avds() or {
+	mut avds := emulator.Emulator.list_avds() or {
 		eprintln('${exe_name} error: ${err}')
 		exit(1)
 	}
@@ -112,7 +112,7 @@ fn ensure_env() {
 		}
 
 		eprintln('Listing avds after creation...')
-		avds = list_avds() or {
+		avds = emulator.Emulator.list_avds() or {
 			eprintln('${exe_name} error: ${err}')
 			exit(1)
 		}
@@ -125,16 +125,6 @@ fn ensure_env() {
 	// 	eprintln('error: "${vab_test_avd}" still not in list: ${avds}')
 	// 	exit(1)
 	// }
-}
-
-fn list_avds() ![]string {
-	emulator_exe := env.emulator()
-	cmd := [emulator_exe, '-list-avds']
-	list_res := run(cmd)
-	if list_res.exit_code != 0 {
-		return error('"${cmd.join(' ')}" failed:\n${list_res.output}')
-	}
-	return list_res.output.split('\n').filter(it != '').filter(!it.contains(' '))
 }
 
 fn setup_test_dir(id string) string {
