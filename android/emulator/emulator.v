@@ -137,7 +137,7 @@ pub fn Emulator.list_avds() !map[string]string {
 	list_cmd := [emulator_exe, '-list-avds']
 	list_res := util.run_or_error(list_cmd)!
 	list := list_res.split('\n').filter(it != '').filter(!it.contains(' '))
-	m := map[string]string{}
+	mut m := map[string]string{}
 	for entry in list {
 		m[entry] = entry // TODO: should be a path to the AVD...
 	}
