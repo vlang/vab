@@ -7,7 +7,6 @@ import time
 
 const exe_name = os.file_name(os.executable())
 const exe_dir = os.dir(os.real_path(os.executable()))
-// const avd_home = os.join_path(os.home_dir(), '.android', 'avd')
 
 const test_dir_base = os.join_path(os.vtmp_dir(), 'vab', 'tests', 'runtime', 'emulator')
 const vab_test_avd = 'vab_emulator_tests'
@@ -76,10 +75,6 @@ fn ensure_env() {
 	// vab (per design) implicitly deploys to any devices sat via `--device-id`.
 	// Make sure no deployment is done after build if CI/other sets `ANDROID_SERIAL`
 	os.unsetenv('ANDROID_SERIAL')
-	// The location of AVD's has become somewhat messy over time
-	// (`avdmanager` can put them in places that the `emulator` does not pickup on the *same* host...)
-	// set `ANDROID_AVD_HOME` to make runs a bit more predictable.
-	// os.setenv('ANDROID_AVD_HOME', avd_home, true)
 
 	if !env.has_emulator() {
 		assert env_is_managable == true, 'These tests requires a *writable* SDK'
@@ -104,33 +99,42 @@ fn ensure_env() {
 		avdmanager_create_res := run(['echo', 'no', '|', avdmanager, '--verbose', 'create', 'avd',
 			'--force', '--name', vab_test_avd, '--abi', 'aosp_atd/x86_64', '--package',
 			"'system-images;android-30;aosp_atd;x86_64'"])
-		eprintln(avdmanager_create_res.output)
 		if avdmanager_create_res.exit_code != 0 {
-			// eprintln(avdmanager_create_res.output)
+			eprintln(avdmanager_create_res.output)
 			exit(1)
 		}
+	}
 
-		eprintln('Listing avds after creation...')
+	// TODO find out how to fix this dumb mess for users
+	if vab_test_avd !in avds {
+		// Locating a deterministic location of AVD's has, like so many other Android related things, become a mess.
+		// (`avdmanager` can put them in places that the `emulator` does not pickup on the *same* host etc... Typical Google-mess)
+		// Here we try a few places and set `ANDROID_AVD_HOME` to make runs a bit more predictable.
+		mut avd_home := os.join_path(os.home_dir(), '.android', 'avd')
+		os.setenv('ANDROID_AVD_HOME', avd_home, true)
+
 		avds = emulator.Emulator.list_avds() or {
 			eprintln('${exe_name} error: ${err}')
 			exit(1)
 		}
-		for i, avd in avds {
-			eprintln('${i + 1}. ${avd}')
+		if vab_test_avd !in avds {
+			avd_home = os.join_path(os.config_dir()!, '.android', 'avd')
+			os.setenv('ANDROID_AVD_HOME', avd_home, true)
+
+			avds = emulator.Emulator.list_avds() or {
+				eprintln('${exe_name} error: ${err}')
+				exit(1)
+			}
 		}
 	}
-	// eprintln('avd_home')
-	// os.walk(avd_home, fn (entry string) {
-	// 	eprintln(entry)
-	// })
-	//
-	eprintln('user_home avd || ini')
-	os.walk(os.home_dir(), fn (entry string) {
-		if entry.ends_with('.avd') || entry.ends_with('.ini') {
-			eprintln(entry)
-		}
-	})
-
+	eprintln('Listing avds after creation...')
+	avds = emulator.Emulator.list_avds() or {
+		eprintln('${exe_name} error: ${err}')
+		exit(1)
+	}
+	for i, avd in avds {
+		eprintln('${i + 1}. ${avd}')
+	}
 	if vab_test_avd !in avds {
 		eprintln('error: "${vab_test_avd}" still not in list: ${avds}')
 		exit(1)
