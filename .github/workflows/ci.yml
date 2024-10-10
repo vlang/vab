@@ -220,7 +220,6 @@ jobs:
     - name: Checkout vab
       uses: actions/checkout@v4
       with:
-        repository: vlang/vab
         path: vab
 
     - name: Install vab
