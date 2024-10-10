@@ -72,6 +72,10 @@ fn ensure_env() {
 	vab_home := vabxt.home()
 	assert vab_home != ''
 
+	// vab (per design) implicitly deploys to any devices sat via `--device-id`.
+	// Make sure no deployment is done after build if CI/other sets `ANDROID_SERIAL`
+	os.unsetenv('ANDROID_SERIAL')
+
 	if !env.has_emulator() {
 		assert env_is_managable == true, 'These tests requires a *writable* SDK'
 		eprintln('No emulator detected. Installing...')
@@ -85,15 +89,12 @@ fn ensure_env() {
 
 	// TODO: add env.has_system_image('android-XY','type','host-arch')
 
-	avdmanager := env.avdmanager()
-	avdmanager_list_res := run([avdmanager, 'list', 'avd', '-c'])
-	if avdmanager_list_res.exit_code != 0 {
-		eprintln('${exe_name} error running cmd')
-		eprintln(avdmanager_list_res.output)
+	mut avds := list_avds() or {
+		eprintln('${exe_name} error: ${err}')
 		exit(1)
 	}
-	avds := avdmanager_list_res.output.split('\n')
 	if vab_test_avd !in avds {
+		avdmanager := env.avdmanager()
 		eprintln('${exe_name} ${vab_test_avd} not found. Creating...')
 		avdmanager_create_res := run(['echo', 'no', '|', avdmanager, 'create', 'avd', '--force',
 			'--name', vab_test_avd, '--abi', 'aosp_atd/x86_64', '--package',
@@ -102,10 +103,31 @@ fn ensure_env() {
 			eprintln(avdmanager_create_res.output)
 			exit(1)
 		}
+
+		eprintln('Listing avds after creation...')
+		avds = list_avds() or {
+			eprintln('${exe_name} error: ${err}')
+			exit(1)
+		}
+		for i, avd in avds {
+			eprintln('${i + 1}. ${avd}')
+		}
 	}
-	// vab (per design) implicitly deploys to any devices sat via `--device-id`.
-	// Make sure no deployment is done after build if CI/other sets `ANDROID_SERIAL`
-	os.unsetenv('ANDROID_SERIAL')
+
+	if vab_test_avd !in avds {
+		eprintln('error: "${vab_test_avd}" still not in list: ${avds}')
+		exit(1)
+	}
+}
+
+fn list_avds() ![]string {
+	avdmanager := env.avdmanager()
+	cmd := [avdmanager, 'list', 'avd', '-c']
+	avdmanager_list_res := run(cmd)
+	if avdmanager_list_res.exit_code != 0 {
+		return error('"${cmd.join(' ')}" failed:\n${avdmanager_list_res.output}')
+	}
+	return avdmanager_list_res.output.split('\n').filter(it != '')
 }
 
 fn setup_test_dir(id string) string {
