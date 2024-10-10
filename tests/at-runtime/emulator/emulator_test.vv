@@ -111,6 +111,7 @@ fn ensure_env() {
 		// (`avdmanager` can put them in places that the `emulator` does not pickup on the *same* host etc... Typical Google-mess)
 		// Here we try a few places and set `ANDROID_AVD_HOME` to make runs a bit more predictable.
 		mut avd_home := os.join_path(os.home_dir(), '.android', 'avd')
+		eprintln('warning: "${vab_test_avd}" still not in list: ${avds}... trying new location "${avd_home}"')
 		os.setenv('ANDROID_AVD_HOME', avd_home, true)
 
 		avds = emulator.Emulator.list_avds() or {
@@ -119,6 +120,7 @@ fn ensure_env() {
 		}
 		if vab_test_avd !in avds {
 			avd_home = os.join_path(os.config_dir()!, '.android', 'avd')
+			eprintln('warning: "${vab_test_avd}" still not in list: ${avds}... trying new location "${avd_home}"')
 			os.setenv('ANDROID_AVD_HOME', avd_home, true)
 
 			avds = emulator.Emulator.list_avds() or {
