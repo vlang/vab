@@ -102,8 +102,8 @@ fn ensure_env() {
 		avdmanager := env.avdmanager()
 		eprintln('${exe_name} ${vab_test_avd} not found. Creating...')
 		avdmanager_create_res := run(['echo', 'no', '|', avdmanager, 'create', 'avd', '--force',
-			'--path', avd_home, '--name', vab_test_avd, '--abi', 'aosp_atd/x86_64', '--package',
-			"'system-images;android-30;aosp_atd;x86_64'"])
+			'--name', vab_test_avd, '--abi', 'aosp_atd/x86_64', '--package',
+			"'system-images;android-30;aosp_atd;x86_64'", '--path', avd_home])
 		if avdmanager_create_res.exit_code != 0 {
 			eprintln(avdmanager_create_res.output)
 			exit(1)
@@ -126,13 +126,13 @@ fn ensure_env() {
 }
 
 fn list_avds() ![]string {
-	avdmanager := env.avdmanager()
-	cmd := [avdmanager, 'list', 'avd', '-c']
-	avdmanager_list_res := run(cmd)
-	if avdmanager_list_res.exit_code != 0 {
-		return error('"${cmd.join(' ')}" failed:\n${avdmanager_list_res.output}')
+	emulator_exe := env.emulator()
+	cmd := [emulator_exe, '-list-avds']
+	list_res := run(cmd)
+	if list_res.exit_code != 0 {
+		return error('"${cmd.join(' ')}" failed:\n${list_res.output}')
 	}
-	return avdmanager_list_res.output.split('\n').filter(it != '')
+	return list_res.output.split('\n').filter(it != '').filter(!it.contains(' '))
 }
 
 fn setup_test_dir(id string) string {
