@@ -107,8 +107,9 @@ fn ensure_env() {
 			"'system-images;android-30;aosp_atd;x86_64'", '--path',
 			os.join_path(avd_home,
 				'${vab_test_avd}.avd')])
+		eprintln(avdmanager_create_res.output)
 		if avdmanager_create_res.exit_code != 0 {
-			eprintln(avdmanager_create_res.output)
+			// eprintln(avdmanager_create_res.output)
 			exit(1)
 		}
 
@@ -126,10 +127,10 @@ fn ensure_env() {
 		eprintln(entry)
 	})
 
-	eprintln('sdk.root')
-	os.walk(sdk.root(), fn (entry string) {
-		eprintln(entry)
-	})
+	// eprintln('sdk.root')
+	// os.walk(sdk.root(), fn (entry string) {
+	// 	eprintln(entry)
+	// })
 
 	if vab_test_avd !in avds {
 		eprintln('error: "${vab_test_avd}" still not in list: ${avds}')
