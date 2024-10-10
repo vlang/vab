@@ -1,6 +1,5 @@
 import os
 import vab.android.env
-import vab.android.sdk
 import vab.android.emulator
 import vab.vxt
 import vab.vabxt
@@ -8,7 +7,7 @@ import time
 
 const exe_name = os.file_name(os.executable())
 const exe_dir = os.dir(os.real_path(os.executable()))
-const avd_home = os.join_path(os.home_dir(), '.android', 'avd')
+// const avd_home = os.join_path(os.home_dir(), '.android', 'avd')
 
 const test_dir_base = os.join_path(os.vtmp_dir(), 'vab', 'tests', 'runtime', 'emulator')
 const vab_test_avd = 'vab_emulator_tests'
@@ -77,6 +76,10 @@ fn ensure_env() {
 	// vab (per design) implicitly deploys to any devices sat via `--device-id`.
 	// Make sure no deployment is done after build if CI/other sets `ANDROID_SERIAL`
 	os.unsetenv('ANDROID_SERIAL')
+	// The location of AVD's has become somewhat messy over time
+	// (`avdmanager` can put them in places that the `emulator` does not pickup on the *same* host...)
+	// set `ANDROID_AVD_HOME` to make runs a bit more predictable.
+	// os.setenv('ANDROID_AVD_HOME', avd_home, true)
 
 	if !env.has_emulator() {
 		assert env_is_managable == true, 'These tests requires a *writable* SDK'
@@ -106,10 +109,6 @@ fn ensure_env() {
 			// eprintln(avdmanager_create_res.output)
 			exit(1)
 		}
-		// The location of AVD's has become somewhat messy over time
-		// (`avdmanager` can put them in places that the `emulator` does not pickup on the *same* host...)
-		// set `ANDROID_AVD_HOME` to make runs a bit more predictable.
-		os.setenv('ANDROID_AVD_HOME', avd_home, true)
 
 		eprintln('Listing avds after creation...')
 		avds = emulator.Emulator.list_avds() or {
@@ -123,6 +122,13 @@ fn ensure_env() {
 	eprintln('avd_home')
 	os.walk(avd_home, fn (entry string) {
 		eprintln(entry)
+	})
+
+	eprintln('user_home avd || ini')
+	os.walk(os.home_dir(), fn (entry string) {
+		if entry.ends_with('.avd') || entry.ends_with('.ini') {
+			eprintln(entry)
+		}
 	})
 
 	if vab_test_avd !in avds {
