@@ -102,7 +102,7 @@ fn ensure_env() {
 		avdmanager := env.avdmanager()
 		eprintln('${exe_name} ${vab_test_avd} not found. Creating...')
 		avdmanager_create_res := run(['echo', 'no', '|', avdmanager, 'create', 'avd', '--force',
-			'--name', vab_test_avd, '--abi', 'aosp_atd/x86_64', '--package',
+			'--path', avd_home, '--name', vab_test_avd, '--abi', 'aosp_atd/x86_64', '--package',
 			"'system-images;android-30;aosp_atd;x86_64'"])
 		if avdmanager_create_res.exit_code != 0 {
 			eprintln(avdmanager_create_res.output)
