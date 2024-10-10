@@ -81,11 +81,7 @@ pub fn (o &Options) validate() ! {
 	if o.avd == '' {
 		return error('${@MOD}.${@STRUCT}.${@FN}: No Android Virtual Device (avd) sat')
 	}
-	avdmanager := env.avdmanager()
-	avdmanager_list_cmd := [avdmanager, 'list', 'avd', '-c']
-	util.verbosity_print_cmd(avdmanager_list_cmd, o.verbosity)
-	avdmanager_list := util.run_or_error(avdmanager_list_cmd)!
-	avds := avdmanager_list.split('\n')
+	avds := Emulator.list_avds()!
 	if o.avd !in avds {
 		return error('${@MOD}.${@STRUCT}.${@FN}: Android Virtual Device (avd) "${o.avd}" not found.')
 	}
@@ -126,6 +122,15 @@ pub fn (mut e Emulator) start(options Options) ! {
 	if e.options.await_boot {
 		e.wait_for_boot()!
 	}
+}
+
+// list_avds returns a list of devices detected by running `emulator -list-avds`
+// NOTE: for Google reasons, this list can be different from `avdmanager list avd -c`...
+pub fn Emulator.list_avds() ![]string {
+	emulator_exe := env.emulator()
+	list_cmd := [emulator_exe, '-list-avds']
+	list_res := util.run_or_error(list_cmd)!
+	return list_res.split('\n').filter(it != '').filter(!it.contains(' '))
 }
 
 // wait_for_boot blocks execution and waits for the emulator to boot.
