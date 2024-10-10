@@ -59,7 +59,7 @@ jobs:
 
     - name: Install SDK dependencies
       run: |
-        rm -f /usr/local/lib/android/sdk/cmdline-tools/latest
+        rm -fr /usr/local/lib/android/sdk/cmdline-tools/latest
         vab install "cmdline-tools;11.0"
         vab install "platform-tools"
         vab install "build-tools;33.0.2"
