@@ -124,10 +124,10 @@ pub fn (mut e Emulator) start(options Options) ! {
 	}
 }
 
-// has_avd returns `true` if `avd` can be found. Use `list_avds` to see all locations of AVD's
-pub fn Emulator.has_avd(avd string) bool {
-	avds = Emulator.list_avds() or { return false }
-	return avd in avds.keys()
+// has_avd returns `true` if `avd_name` can be found. Use `list_avds` to see all locations of AVD's
+pub fn Emulator.has_avd(avd_name string) bool {
+	avds := Emulator.list_avds() or { return false }
+	return avd_name in avds.keys()
 }
 
 // list_avds returns a list of devices detected by running `emulator -list-avds`
