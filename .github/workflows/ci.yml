@@ -189,7 +189,6 @@ jobs:
     env:
       VFLAGS: -d vab_allow_extra_commands
       VAB_FLAGS: -v 3
-      SDL2_VERSION: 2.30.0
     steps:
     - name: Checkout V
       uses: actions/checkout@v4
