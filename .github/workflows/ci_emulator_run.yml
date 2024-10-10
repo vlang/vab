@@ -51,6 +51,9 @@ jobs:
     - name: Run vab --help
       run: vab --help
 
+    - name: Run vab doctor *before*
+      run: vab doctor
+
     - name: Install dependencies
       run: |
         v retry -- sudo apt update
@@ -66,7 +69,7 @@ jobs:
         vab install bundletool
         vab install aapt2
 
-    - name: Run vab doctor
+    - name: Run vab doctor *after*
       run: vab doctor
 
     - name: Cache emulator

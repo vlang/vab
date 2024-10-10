@@ -6,6 +6,7 @@ import os
 import semver
 import net.http
 import vab.cache
+import vab.extra
 import vab.util as vabutil
 import vab.android.sdk
 import vab.android.ndk
@@ -198,13 +199,15 @@ pub fn managable() bool {
 	return sdk_is_writable && has_sdkmanager && sdkmanger_works
 }
 
+@[deprecated: 'use install_components instead']
 pub fn install(components string, verbosity int) int {
 	mut iopts := []InstallOptions{}
 	mut ensure_sdk := true
+
 	// Allows to specify a string list of things to install
 	components_array := components.split(',')
 	for comp in components_array {
-		mut component := comp
+		mut component := comp.trim_space()
 		mut version := ''
 		is_auto := component.contains('auto')
 
@@ -315,6 +318,145 @@ pub fn install(components string, verbosity int) int {
 		}
 	}
 	return 0
+}
+
+// install_components installs various external components that vab can use.
+// These components can be Android SDK components or extra commands.
+pub fn install_components(arguments []string, verbosity int) ! {
+	mut iopts := []InstallOptions{}
+	mut ensure_sdk := true
+
+	if arguments.len == 0 {
+		return error('${@FN} requires at least one argument')
+	}
+
+	mut args := arguments.clone()
+	if args[0] == 'install' {
+		args = args[1..].clone() // skip `install` part
+	}
+	if args.len == 0 {
+		return error(@FN + ' requires an argument')
+	}
+
+	components := args[0]
+	// vab install extra ...
+	if components == 'extra' {
+		if args.len == 1 {
+			return error('${@FN} extra requires an argument')
+		}
+		extra.install_command(input: args[1..].clone(), verbosity: verbosity) or {
+			return error('Installing of command failed: ${err}')
+		}
+		return
+	}
+
+	// vab install "x;y;z,i;j;k" (sdkmanager compatible tuple)
+	// Allows to specify a string list of things to install
+	components_array := components.split(',')
+	for comp in components_array {
+		mut component := comp.trim_space()
+		mut version := ''
+		is_auto := component.contains('auto')
+
+		def_components := get_default_components()!
+		mut split_component := []string{}
+		if !is_auto {
+			version = def_components[component]['version'] // Set default version
+			if component.contains(';') { // If user has specified a version, use that
+				split_component = component.split(';')
+				component = split_component.first()
+				version = split_component.last()
+			}
+		}
+
+		if component !in accepted_components {
+			return error('${@FN} component "${component}" not recognized. Available components ${accepted_components}.')
+		}
+
+		if !is_auto {
+			if version == '' {
+				if component !in ['platform-tools', 'emulator', 'system-images'] {
+					return error('${@FN} install component "${component}" has no version.')
+				}
+			}
+			if component == 'system-images' {
+				if split_component.len != 4 {
+					return error('${@FN} install component "${component}" should be 4 fields delimited by `;`.')
+				}
+			}
+		}
+
+		item := if version != '' { component + ';' + version } else { component }
+
+		match component {
+			'auto' {
+				cmdline_tools_comp := def_components['cmdline-tools']['name'] + ';' +
+					def_components['cmdline-tools']['version']
+				platform_tools_comp := def_components['platform-tools']['name'] //+ ';' + def_components['platform-tools']['version']
+				ndk_comp := def_components['ndk']['name'] + ';' + def_components['ndk']['version']
+				build_tools_comp := def_components['build-tools']['name'] + ';' +
+					def_components['build-tools']['version']
+				platforms_comp := def_components['platforms']['name'] + ';' +
+					def_components['platforms']['version']
+				iopts = [
+					InstallOptions{.cmdline_tools, cmdline_tools_comp, verbosity},
+					InstallOptions{.platform_tools, platform_tools_comp, verbosity},
+					InstallOptions{.ndk, ndk_comp, verbosity},
+					InstallOptions{.build_tools, build_tools_comp, verbosity},
+					InstallOptions{.platforms, platforms_comp, verbosity},
+				]
+				break
+			}
+			'cmdline-tools' {
+				iopts << InstallOptions{.cmdline_tools, item, verbosity}
+			}
+			'platform-tools' {
+				iopts << InstallOptions{.platform_tools, item, verbosity}
+			}
+			'emulator' {
+				iopts << InstallOptions{.emulator, item, verbosity}
+			}
+			'system-images' {
+				iopts << InstallOptions{.system_images, comp, verbosity}
+			}
+			'ndk' {
+				iopts << InstallOptions{.ndk, item, verbosity}
+			}
+			'build-tools' {
+				iopts << InstallOptions{.build_tools, item, verbosity}
+			}
+			'platforms' {
+				iopts << InstallOptions{.platforms, item, verbosity}
+			}
+			'bundletool' {
+				ensure_sdk = false
+				iopts << InstallOptions{.bundletool, item, verbosity}
+			}
+			'aapt2' {
+				ensure_sdk = false
+				iopts << InstallOptions{.aapt2, item, verbosity}
+			}
+			else {
+				return error('${@FN} unknown component "${component}"')
+			}
+		}
+	}
+
+	if ensure_sdk {
+		ensure_sdkmanager(verbosity)!
+	}
+
+	for iopt in iopts {
+		install_opt(iopt)!
+	}
+
+	if verbosity > 0 {
+		if components != 'auto' {
+			println('Installed ${components} successfully')
+		} else {
+			println('Installed all dependencies successfully')
+		}
+	}
 }
 
 fn install_opt(opt InstallOptions) !bool {
@@ -843,24 +985,80 @@ pub fn avdmanager() string {
 	return avdmanager_exe
 }
 
+// emulator returns the full path to the `emulator` tool, if found. An empty string otherwise.
+pub fn emulator() string {
+	mut emulator_exe := cache.get_string(@MOD + '.' + @FN)
+	if emulator_exe != '' {
+		return emulator_exe
+	}
+
+	emulator_exe = os.getenv('EMULATOR')
+	// Check in cache
+	if !os.is_executable(emulator_exe) {
+		emulator_exe = os.join_path(util.cache_dir(), 'emulator${dot_exe}')
+		if !os.is_executable(emulator_exe) {
+			emulator_exe = os.join_path(sdk.cache_dir(), 'cmdline-tools', '3.0', 'bin',
+				'emulator${dot_exe}')
+		}
+		if !os.is_executable(emulator_exe) {
+			emulator_exe = os.join_path(sdk.cache_dir(), 'cmdline-tools', '2.1', 'bin',
+				'emulator${dot_exe}')
+		}
+		if !os.is_executable(emulator_exe) {
+			emulator_exe = os.join_path(sdk.cache_dir(), 'cmdline-tools', 'tools', 'bin',
+				'emulator${dot_exe}')
+		}
+	}
+	// Try if one is in PATH
+	if !os.is_executable(emulator_exe) {
+		if os.exists_in_system_path('emulator') {
+			emulator_exe = os.find_abs_path_of_executable('emulator${dot_exe}') or { '' }
+		}
+	}
+	// Try detecting it in the SDK
+	if sdk.found() {
+		if !os.is_executable(emulator_exe) {
+			emulator_exe = os.join_path(sdk.root(), 'cmdline-tools', 'tools', 'bin', 'emulator${dot_exe}')
+		}
+		if !os.is_executable(emulator_exe) {
+			emulator_exe = os.join_path(sdk.tools_root(), 'bin', 'emulator${dot_exe}')
+		}
+		// It's often found next to `sdkmanager`
+		if !os.is_executable(emulator_exe) {
+			for relative_path in possible_relative_to_sdk_sdkmanager_paths {
+				emulator_exe = os.join_path(sdk.root(), relative_path, 'emulator${dot_exe}')
+				if os.is_executable(emulator_exe) {
+					break
+				}
+			}
+		}
+		if !os.is_executable(emulator_exe) {
+			version_dirs := util.ls_sorted(os.join_path(sdk.root(), 'cmdline-tools')).filter(fn (a string) bool {
+				return util.is_version(a)
+			})
+			for version_dir in version_dirs {
+				emulator_exe = os.join_path(sdk.root(), 'cmdline-tools', version_dir,
+					'bin', 'emulator${dot_exe}')
+				if os.is_executable(emulator_exe) {
+					break
+				}
+			}
+		}
+		if !os.exists(emulator_exe) {
+			emulator_exe = os.join_path(sdk.root(), 'emulator', 'emulator${dot_exe}')
+		}
+	}
+	// Give up
+	if !os.is_executable(emulator_exe) {
+		emulator_exe = ''
+	}
+	cache.set_string(@MOD + '.' + @FN, emulator_exe)
+	return emulator_exe
+}
+
 // has_emulator returns `true` if `emulator` can be located on the system.
 pub fn has_emulator() bool {
 	return emulator() != ''
-}
-
-// emulator returns the full path to the `emulator` tool, if found. An empty string otherwise.
-pub fn emulator() string {
-	mut emulator_path := os.getenv('EMULATOR')
-	if !os.exists(emulator_path) {
-		emulator_path = os.join_path(sdk.root(), 'emulator', 'emulator${dot_exe}')
-	}
-	if !os.exists(emulator_path) {
-		emulator_path = ''
-		if os.exists_in_system_path('emulator') {
-			emulator_path = os.find_abs_path_of_executable('emulator') or { '' }
-		}
-	}
-	return emulator_path
 }
 
 // has_bundletool returns `true` if `bundletool` can be located on the system.

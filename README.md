@@ -207,8 +207,16 @@ in the [FAQ](docs/FAQ.md).
 # Tests
 
 `vab`, like many other V modules, can be tested with `v test .`.
+
 Note that `vab` has *runtime* tests that requires all [runtime dependencies](#runtime-dependencies)
 to be installed in order for the tests to run correctly.
+Runtime tests can be run with `vab test-runtime` (also part of `vab test-all`).
+
+# Extending `vab`
+
+The `vab` command-line tool can be extended with custom user commands.
+See the "[Extending `vab`](docs/docs.md#extending-vab)" section
+in the [documentation](docs/docs.md).
 
 # Notes
 
