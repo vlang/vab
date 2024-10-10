@@ -1044,6 +1044,9 @@ pub fn emulator() string {
 				}
 			}
 		}
+		if !os.exists(emulator_exe) {
+			emulator_exe = os.join_path(sdk.root(), 'emulator', 'emulator${dot_exe}')
+		}
 	}
 	// Give up
 	if !os.is_executable(emulator_exe) {
