@@ -104,8 +104,9 @@ fn ensure_env() {
 		avdmanager_create_res := run(['echo', 'no', '|', avdmanager, '--verbose', 'create', 'avd',
 			'--force', '--name', vab_test_avd, '--abi', 'aosp_atd/x86_64', '--package',
 			"'system-images;android-30;aosp_atd;x86_64'"])
+		eprintln(avdmanager_create_res.output)
 		if avdmanager_create_res.exit_code != 0 {
-			eprintln(avdmanager_create_res.output)
+			// eprintln(avdmanager_create_res.output)
 			exit(1)
 		}
 
