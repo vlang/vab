@@ -56,10 +56,11 @@ jobs:
         v retry -- sudo apt update
         v retry -- sudo apt install --quiet -y qemu-kvm
         sudo chown $USER /dev/kvm
-        rm -f /usr/local/lib/android/sdk/cmdline-tools/latest/bin/avdmanager
 
     - name: Install SDK dependencies
       run: |
+        rm -f /usr/local/lib/android/sdk/cmdline-tools/latest
+        vab install "cmdline-tools;11.0"
         vab install "platform-tools"
         vab install "build-tools;33.0.2"
         vab install "platforms;android-30"
