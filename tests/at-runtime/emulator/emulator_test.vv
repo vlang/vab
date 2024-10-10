@@ -77,10 +77,6 @@ fn ensure_env() {
 	// vab (per design) implicitly deploys to any devices sat via `--device-id`.
 	// Make sure no deployment is done after build if CI/other sets `ANDROID_SERIAL`
 	os.unsetenv('ANDROID_SERIAL')
-	// The location of AVD's has become somewhat messy over time
-	// (`avdmanager` can put them in places that the `emulator` does not pickup on the *same* host...)
-	// set `ANDROID_AVD_HOME` to make runs a bit more predictable.
-	os.setenv('ANDROID_AVD_HOME', avd_home, true)
 
 	if !env.has_emulator() {
 		assert env_is_managable == true, 'These tests requires a *writable* SDK'
@@ -104,14 +100,16 @@ fn ensure_env() {
 		eprintln('${exe_name} ${vab_test_avd} not found. Creating...')
 		avdmanager_create_res := run(['echo', 'no', '|', avdmanager, '--verbose', 'create', 'avd',
 			'--force', '--name', vab_test_avd, '--abi', 'aosp_atd/x86_64', '--package',
-			"'system-images;android-30;aosp_atd;x86_64'", '--path',
-			os.join_path(avd_home,
-				'${vab_test_avd}.avd')])
+			"'system-images;android-30;aosp_atd;x86_64'"])
 		eprintln(avdmanager_create_res.output)
 		if avdmanager_create_res.exit_code != 0 {
 			// eprintln(avdmanager_create_res.output)
 			exit(1)
 		}
+		// The location of AVD's has become somewhat messy over time
+		// (`avdmanager` can put them in places that the `emulator` does not pickup on the *same* host...)
+		// set `ANDROID_AVD_HOME` to make runs a bit more predictable.
+		os.setenv('ANDROID_AVD_HOME', avd_home, true)
 
 		eprintln('Listing avds after creation...')
 		avds = emulator.Emulator.list_avds() or {
@@ -126,11 +124,6 @@ fn ensure_env() {
 	os.walk(avd_home, fn (entry string) {
 		eprintln(entry)
 	})
-
-	// eprintln('sdk.root')
-	// os.walk(sdk.root(), fn (entry string) {
-	// 	eprintln(entry)
-	// })
 
 	if vab_test_avd !in avds {
 		eprintln('error: "${vab_test_avd}" still not in list: ${avds}')
