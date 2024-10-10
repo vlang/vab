@@ -89,9 +89,9 @@ jobs:
     # (emulator can not find images created by avdmanager)
     # Hours was wasted trying to find out why - lets just leave it out for now, the tests
     # works on localhost ...
-    # - name: Run `vab test-all`
-    #   run: |
-    #     vab test-all
+    - name: Run `vab test-all`
+      run: |
+        vab test-all
 
   macos-legacy-run-v-examples:
     runs-on: macos-12
