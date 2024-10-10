@@ -119,7 +119,11 @@ fn ensure_env() {
 			exit(1)
 		}
 		if vab_test_avd !in avds {
-			avd_home = os.join_path(os.config_dir()!, '.android', 'avd')
+			config_dir := os.config_dir() or {
+				eprintln('${exe_name} error: ${err}')
+				exit(1)
+			}
+			avd_home = os.join_path(config_dir, '.android', 'avd')
 			eprintln('warning: "${vab_test_avd}" still not in list: ${avds}... trying new location "${avd_home}"')
 			os.setenv('ANDROID_AVD_HOME', avd_home, true)
 
