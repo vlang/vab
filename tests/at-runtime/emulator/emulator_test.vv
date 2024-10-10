@@ -119,11 +119,11 @@ fn ensure_env() {
 			eprintln('${i + 1}. ${avd}')
 		}
 	}
-	eprintln('avd_home')
-	os.walk(avd_home, fn (entry string) {
-		eprintln(entry)
-	})
-
+	// eprintln('avd_home')
+	// os.walk(avd_home, fn (entry string) {
+	// 	eprintln(entry)
+	// })
+	//
 	eprintln('user_home avd || ini')
 	os.walk(os.home_dir(), fn (entry string) {
 		if entry.ends_with('.avd') || entry.ends_with('.ini') {
