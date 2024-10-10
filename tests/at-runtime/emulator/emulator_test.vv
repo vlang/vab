@@ -1,5 +1,6 @@
 import os
 import vab.android.env
+import vab.android.sdk
 import vab.android.emulator
 import vab.vxt
 import vab.vabxt
@@ -122,6 +123,11 @@ fn ensure_env() {
 	}
 	eprintln('avd_home')
 	os.walk(avd_home, fn (entry string) {
+		eprintln(entry)
+	})
+
+	eprintln('sdk.root')
+	os.walk(sdk.root(), fn (entry string) {
 		eprintln(entry)
 	})
 
