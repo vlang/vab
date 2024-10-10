@@ -176,11 +176,6 @@ fn auto_complete(args []string) {
 			println(setup_for_shell(shell))
 		}
 		'bash' {
-			$if debug {
-				os.write_lines('/tmp/vab_complete.auto_complete.subs.txt', [
-					sub + ';' + sub_args.join(';'),
-				]) or {}
-			}
 			if sub_args.len <= 1 {
 				exit(0)
 			}
@@ -370,11 +365,6 @@ fn auto_complete_request(args []string) []string {
 				}
 			}
 		}
-	}
-	$if debug {
-		os.write_lines('/tmp/vab_complete.auto_complete_request.lines.txt', [
-			list.join(';'),
-		]) or {}
 	}
 	if do_home_expand {
 		return list.map(it.replace_once(os.home_dir().trim_right(os.path_separator), '~'))
