@@ -202,17 +202,21 @@ jobs:
     - name: Install dependencies
       run: |
         v retry -- sudo apt-get update
-        v retry -- sudo apt-get install --quiet -y libsdl2-ttf-dev
+        v retry -- sudo apt-get install --quiet -y libsdl2-dev libsdl2-ttf-dev
         v retry -- sudo apt-get install --quiet -y libsdl2-mixer-dev libsdl2-image-dev
-        v retry -- curl -L https://www.libsdl.org/release/SDL2-${SDL2_VERSION}.tar.gz -o SDL2.tar.gz
-        tar -zxvf SDL2.tar.gz
+       
+    - name: Checkout SDL
+      uses: actions/checkout@v4
+      with:
+        repository: vlang/sdl
+        fetch-depth: 0
+        path: sdl
 
-    - name: Build SDL
-      run: |
-        cd SDL2-${SDL2_VERSION}
-        mkdir build && cd build
-        ../configure --prefix /tmp/sdl2-${SDL2_VERSION}
-        make && make install
+    - name: Simulate "v install sdl"
+      run: mv sdl ~/.vmodules
+
+    - name: Setup vlang/sdl
+      run: v ~/.vmodules/sdl/setup.vsh
 
     - name: Checkout vab
       uses: actions/checkout@v4
@@ -225,18 +229,6 @@ jobs:
         mv vab ~/.vmodules
         v -g ~/.vmodules/vab
         sudo ln -s ~/.vmodules/vab/vab /usr/local/bin/vab
-
-    - name: Checkout SDL
-      uses: actions/checkout@v4
-      with:
-        repository: vlang/sdl
-        path: sdl
-
-    - name: Simulate "v install sdl"
-      run: mv sdl ~/.vmodules
-
-    - name: Setup vlang/sdl
-      run: v ~/.vmodules/sdl/setup.vsh
 
     - name: Run 'vab --help'
       run: vab --help
