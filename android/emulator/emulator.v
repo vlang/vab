@@ -81,10 +81,10 @@ pub fn (o &Options) validate() ! {
 	if o.avd == '' {
 		return error('${@MOD}.${@STRUCT}.${@FN}: No Android Virtual Device (avd) sat')
 	}
-	avds := Emulator.list_avds()!
-	if o.avd !in avds {
-		return error('${@MOD}.${@STRUCT}.${@FN}: Android Virtual Device (avd) "${o.avd}" not found.')
-	}
+	// avds := Emulator.list_avds()!
+	// if o.avd !in avds {
+	// 	return error('${@MOD}.${@STRUCT}.${@FN}: Android Virtual Device (avd) "${o.avd}" not found.')
+	// }
 }
 
 // make returns an `Emulator` instance.
