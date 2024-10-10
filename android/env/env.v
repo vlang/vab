@@ -985,24 +985,77 @@ pub fn avdmanager() string {
 	return avdmanager_exe
 }
 
+// emulator returns the full path to the `emulator` tool, if found. An empty string otherwise.
+pub fn emulator() string {
+	mut emulator_exe := cache.get_string(@MOD + '.' + @FN)
+	if emulator_exe != '' {
+		return emulator_exe
+	}
+
+	emulator_exe = os.getenv('EMULATOR')
+	// Check in cache
+	if !os.is_executable(emulator_exe) {
+		emulator_exe = os.join_path(util.cache_dir(), 'emulator${dot_exe}')
+		if !os.is_executable(emulator_exe) {
+			emulator_exe = os.join_path(sdk.cache_dir(), 'cmdline-tools', '3.0', 'bin',
+				'emulator${dot_exe}')
+		}
+		if !os.is_executable(emulator_exe) {
+			emulator_exe = os.join_path(sdk.cache_dir(), 'cmdline-tools', '2.1', 'bin',
+				'emulator${dot_exe}')
+		}
+		if !os.is_executable(emulator_exe) {
+			emulator_exe = os.join_path(sdk.cache_dir(), 'cmdline-tools', 'tools', 'bin',
+				'emulator${dot_exe}')
+		}
+	}
+	// Try if one is in PATH
+	if !os.is_executable(emulator_exe) {
+		if os.exists_in_system_path('emulator') {
+			emulator_exe = os.find_abs_path_of_executable('emulator${dot_exe}') or { '' }
+		}
+	}
+	// Try detecting it in the SDK
+	if sdk.found() {
+		if !os.is_executable(emulator_exe) {
+			emulator_exe = os.join_path(sdk.root(), 'cmdline-tools', 'tools', 'bin', 'emulator${dot_exe}')
+		}
+		if !os.is_executable(emulator_exe) {
+			emulator_exe = os.join_path(sdk.tools_root(), 'bin', 'emulator${dot_exe}')
+		}
+		// It's often found next to `sdkmanager`
+		if !os.is_executable(emulator_exe) {
+			for relative_path in possible_relative_to_sdk_sdkmanager_paths {
+				emulator_exe = os.join_path(sdk.root(), relative_path, 'emulator${dot_exe}')
+				if os.is_executable(emulator_exe) {
+					break
+				}
+			}
+		}
+		if !os.is_executable(emulator_exe) {
+			version_dirs := util.ls_sorted(os.join_path(sdk.root(), 'cmdline-tools')).filter(fn (a string) bool {
+				return util.is_version(a)
+			})
+			for version_dir in version_dirs {
+				emulator_exe = os.join_path(sdk.root(), 'cmdline-tools', version_dir,
+					'bin', 'emulator${dot_exe}')
+				if os.is_executable(emulator_exe) {
+					break
+				}
+			}
+		}
+	}
+	// Give up
+	if !os.is_executable(emulator_exe) {
+		emulator_exe = ''
+	}
+	cache.set_string(@MOD + '.' + @FN, emulator_exe)
+	return emulator_exe
+}
+
 // has_emulator returns `true` if `emulator` can be located on the system.
 pub fn has_emulator() bool {
 	return emulator() != ''
-}
-
-// emulator returns the full path to the `emulator` tool, if found. An empty string otherwise.
-pub fn emulator() string {
-	mut emulator_path := os.getenv('EMULATOR')
-	if !os.exists(emulator_path) {
-		emulator_path = os.join_path(sdk.root(), 'emulator', 'emulator${dot_exe}')
-	}
-	if !os.exists(emulator_path) {
-		emulator_path = ''
-		if os.exists_in_system_path('emulator') {
-			emulator_path = os.find_abs_path_of_executable('emulator') or { '' }
-		}
-	}
-	return emulator_path
 }
 
 // has_bundletool returns `true` if `bundletool` can be located on the system.
