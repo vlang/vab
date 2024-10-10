@@ -120,11 +120,15 @@ fn ensure_env() {
 			eprintln('${i + 1}. ${avd}')
 		}
 	}
+	eprintln('avd_home')
+	os.walk(avd_home, fn (entry string) {
+		eprintln(entry)
+	})
 
-	// if vab_test_avd !in avds {
-	// 	eprintln('error: "${vab_test_avd}" still not in list: ${avds}')
-	// 	exit(1)
-	// }
+	if vab_test_avd !in avds {
+		eprintln('error: "${vab_test_avd}" still not in list: ${avds}')
+		exit(1)
+	}
 }
 
 fn setup_test_dir(id string) string {
