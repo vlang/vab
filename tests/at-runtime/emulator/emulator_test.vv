@@ -105,6 +105,7 @@ fn ensure_env() {
 	if !emulator.Emulator.has_avd(vab_test_avd) {
 		// Locating a deterministic location of AVD's has, like so many other Android related things, become a mess.
 		// (`avdmanager` can put them in places that the `emulator` does not pickup on the *same* host etc... Typical Google-mess)
+		// ... even passing `--path` to `avdmanager` does not work.
 		// Here we try a few places and set `ANDROID_AVD_HOME` to make runs a bit more predictable.
 		mut avd_home := os.join_path(os.home_dir(), '.android', 'avd')
 		eprintln('warning: "${vab_test_avd}" still not detected by emulator... trying new location "${avd_home}"')
@@ -121,7 +122,7 @@ fn ensure_env() {
 		}
 	}
 	eprintln('Listing avds after creation...')
-	avds = emulator.Emulator.list_avds() or {
+	avds := emulator.Emulator.list_avds() or {
 		eprintln('${exe_name} error: ${err}')
 		exit(1)
 	}

@@ -144,9 +144,10 @@ pub fn Emulator.list_avds() !map[string]string {
 	return m
 	// TODO: find out how to fix this dumb mess for users
 	// if vab_test_avd !in avds {
-	// 	// Locating a deterministic location of AVD's has, like so many other Android related things, become a mess.
-	// 	// (`avdmanager` can put them in places that the `emulator` does not pickup on the *same* host etc... Typical Google-mess)
-	// 	// Here we try a few places and set `ANDROID_AVD_HOME` to make runs a bit more predictable.
+	// Locating a deterministic location of AVD's has, like so many other Android related things, become a mess.
+	// (`avdmanager` can put them in places that the `emulator` does not pickup on the *same* host etc... Typical Google-mess)
+	// ... even passing `--path` to `avdmanager` does not work.
+	// Here we try a few places and set `ANDROID_AVD_HOME` to make runs a bit more predictable.
 	// 	mut avd_home := os.join_path(os.home_dir(), '.android', 'avd')
 	// 	eprintln('warning: "${vab_test_avd}" still not in list: ${avds}... trying new location "${avd_home}"')
 	// 	os.setenv('ANDROID_AVD_HOME', avd_home, true)
