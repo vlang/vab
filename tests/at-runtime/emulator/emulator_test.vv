@@ -79,7 +79,7 @@ fn ensure_env() {
 	// The location of AVD's has become somewhat messy over time
 	// (`avdmanager` can put them in places that the `emulator` does not pickup on the *same* host...)
 	// set `ANDROID_AVD_HOME` to make runs a bit more predictable.
-	os.setenv('ANDROID_AVD_HOME', os.join_path(avd_home, vab_test_avd), true)
+	os.setenv('ANDROID_AVD_HOME', avd_home, true)
 
 	if !env.has_emulator() {
 		assert env_is_managable == true, 'These tests requires a *writable* SDK'
@@ -104,8 +104,8 @@ fn ensure_env() {
 		avdmanager_create_res := run(['echo', 'no', '|', avdmanager, '--verbose', 'create', 'avd',
 			'--force', '--name', vab_test_avd, '--abi', 'aosp_atd/x86_64', '--package',
 			"'system-images;android-30;aosp_atd;x86_64'", '--path',
-			os.getenv('ANDROID_AVD_HOME') +
-				'.avd'])
+			os.join_path(avd_home,
+				'${vab_test_avd}.avd')])
 		if avdmanager_create_res.exit_code != 0 {
 			eprintln(avdmanager_create_res.output)
 			exit(1)
