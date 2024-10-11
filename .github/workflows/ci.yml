@@ -183,6 +183,65 @@ jobs:
         vab examples/sokol/particles -o apks/particles.apk
         [ -f apks/particles.apk ]
 
+  ubuntu-latest-extra-command:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      VFLAGS: -d vab_allow_extra_commands
+      VAB_FLAGS: -v 3
+    steps:
+    - name: Checkout V
+      uses: actions/checkout@v4
+      with:
+        repository: vlang/v
+
+    - name: Build local v
+      run: make -j4 && sudo ./v symlink
+
+    - name: Install dependencies
+      run: |
+        v retry -- sudo apt-get update
+        v retry -- sudo apt-get install --quiet -y libsdl2-dev libsdl2-ttf-dev
+        v retry -- sudo apt-get install --quiet -y libsdl2-mixer-dev libsdl2-image-dev
+       
+    - name: Checkout SDL
+      uses: actions/checkout@v4
+      with:
+        repository: vlang/sdl
+        fetch-depth: 0
+        path: sdl
+
+    - name: Simulate "v install sdl"
+      run: mv sdl ~/.vmodules
+
+    - name: Setup vlang/sdl
+      run: v ~/.vmodules/sdl/setup.vsh
+
+    - name: Checkout vab
+      uses: actions/checkout@v4
+      with:
+        path: vab
+
+    - name: Install vab
+      run: |
+        mv vab ~/.vmodules
+        v -g ~/.vmodules/vab
+        sudo ln -s ~/.vmodules/vab/vab /usr/local/bin/vab
+
+    - name: Run 'vab --help'
+      run: vab --help
+
+    - name: Install extra command
+      run: |
+        vab install extra larpon/vab-sdl
+
+    - name: Run vab doctor
+      run: vab doctor
+
+    - name: Test extra command
+      run: |
+        vab sdl doctor
+
   ubuntu-latest-vab-can-live-anywhere:
     runs-on: ubuntu-latest
     timeout-minutes: 10

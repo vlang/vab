@@ -17,6 +17,7 @@ Welcome - and have a productive time using V and `vab`!
 - [Compile C code to Android shared library (.so)](#compile-c-code-to-android-shared-library-so)
 - [Find and Invoke NDK Compiler Manually](#find-and-invoke-ndk-compiler-manually)
 - [Debugging](#debugging)
+- [Extending `vab`](#extending-vab)
 
 # Introduction
 
@@ -358,3 +359,58 @@ Ctrl+C to cancel logging
 ```
 Use Ctrl + C in the terminal to stop the output and disconnect from the device,
 leaving the app running on the device.
+
+# Extending `vab`
+
+Sometimes `vab`'s functionality is just not enough to reach a desired goal. An example of
+such a thing would be compiling and packaging of a thirdparty library or framework that requires a
+special way to be build, has a custom main entry function and/or a custom Java Android activity,
+or other factors that makes it impossible or very cumbersome to get things working with
+`v` and/or `vab`'s default functionality.
+
+One way to deal with such problems, without reinventing the wheel, is using `vab` as a module
+in combination with the feature that allows users to install and call thirdparty executables.
+
+In `vab` terms this feature is called *extra commands* and can be enabled by passing
+`-d vab_allow_extra_commands` when compiling `vab` with `v`.
+
+*Extra commands* is a powerful feature that allows users to extend `vab` with custom functionality
+*via the command-line*.
+
+## Example extra command
+
+An example of one such *extra command* is [`larpon/vab-sdl`](https://github.com/larpon/vab-sdl/) which makes it easier
+to compile and run V applications that uses SDL2 via ['vlang/sdl'](https://github.com/vlang/sdl/)
+on Android via `vab`.
+
+To enable support for this in `vab`, you can do the following:
+
+1. Enable *extra command* support when building `vab`:
+ ```bash
+ v -d vab_allow_extra_commands ~/.vmodules/vab
+ ```
+2. Install the [`larpon/vab-sdl`](https://github.com/larpon/vab-sdl/) *extra command*:
+ ```bash
+ vab install extra larpon/vab-sdl
+ ```
+3. Build your application that uses ['vlang/sdl'](https://github.com/vlang/sdl/), for example:
+ ```bash
+ vab sdl ~/.vmodules/sdl/examples/basic_window -o /tmp/sdl_app.apk
+ ```
+Notice how the *extra command* name `vab-sdl` is called as `vab sdl`.
+You should now be able to install `/tmp/sdl_app.apk` on your device and run the example
+without the need to do anything special.
+
+**NOTE** Use `vab doctor` to see more detailed information about *extra commands*
+including where they are installed and more.
+
+## Important notes about *extra commands*
+
+When you enable and use *extra commands* you are advised to be careful about installing and running
+thirdparty *extra command* software from sources you do not trust.
+
+When you enable and use *extra commands* it is likely that the developer team can not
+provide support for any bug or situation that an *extra command* may have caused.
+
+If possible, always refer to the author, source code and documentation of any *extra commands*
+for how to use the commands correctly.

@@ -81,11 +81,7 @@ pub fn (o &Options) validate() ! {
 	if o.avd == '' {
 		return error('${@MOD}.${@STRUCT}.${@FN}: No Android Virtual Device (avd) sat')
 	}
-	avdmanager := env.avdmanager()
-	avdmanager_list_cmd := [avdmanager, 'list', 'avd', '-c']
-	util.verbosity_print_cmd(avdmanager_list_cmd, o.verbosity)
-	avdmanager_list := util.run_or_error(avdmanager_list_cmd)!
-	avds := avdmanager_list.split('\n')
+	avds := Emulator.list_avds()!
 	if o.avd !in avds {
 		return error('${@MOD}.${@STRUCT}.${@FN}: Android Virtual Device (avd) "${o.avd}" not found.')
 	}
@@ -126,6 +122,55 @@ pub fn (mut e Emulator) start(options Options) ! {
 	if e.options.await_boot {
 		e.wait_for_boot()!
 	}
+}
+
+// has_avd returns `true` if `avd_name` can be found. Use `list_avds` to see all locations of AVD's
+pub fn Emulator.has_avd(avd_name string) bool {
+	avds := Emulator.list_avds() or { return false }
+	return avd_name in avds.keys()
+}
+
+// list_avds returns a list of devices detected by running `emulator -list-avds`
+// NOTE: for Google reasons, this list can be different from `avdmanager list avd -c`...
+pub fn Emulator.list_avds() !map[string]string {
+	emulator_exe := env.emulator()
+	list_cmd := [emulator_exe, '-list-avds']
+	list_res := util.run_or_error(list_cmd)!
+	list := list_res.split('\n').filter(it != '').filter(!it.contains(' '))
+	mut m := map[string]string{}
+	for entry in list {
+		m[entry] = entry // TODO: should be a path to the AVD...
+	}
+	return m
+	// TODO: find out how to fix this dumb mess for users
+	// if vab_test_avd !in avds {
+	// Locating a deterministic location of AVD's has, like so many other Android related things, become a mess.
+	// (`avdmanager` can put them in places that the `emulator` does not pickup on the *same* host etc... Typical Google-mess)
+	// ... even passing `--path` to `avdmanager` does not work.
+	// Here we try a few places and set `ANDROID_AVD_HOME` to make runs a bit more predictable.
+	// 	mut avd_home := os.join_path(os.home_dir(), '.android', 'avd')
+	// 	eprintln('warning: "${vab_test_avd}" still not in list: ${avds}... trying new location "${avd_home}"')
+	// 	os.setenv('ANDROID_AVD_HOME', avd_home, true)
+	//
+	// 	avds = emulator.Emulator.list_avds() or {
+	// 		eprintln('${exe_name} error: ${err}')
+	// 		exit(1)
+	// 	}
+	// 	if vab_test_avd !in avds {
+	// 		config_dir := os.config_dir() or {
+	// 			eprintln('${exe_name} error: ${err}')
+	// 			exit(1)
+	// 		}
+	// 		avd_home = os.join_path(config_dir, '.android', 'avd')
+	// 		eprintln('warning: "${vab_test_avd}" still not in list: ${avds}... trying new location "${avd_home}"')
+	// 		os.setenv('ANDROID_AVD_HOME', avd_home, true)
+	//
+	// 		avds = emulator.Emulator.list_avds() or {
+	// 			eprintln('${exe_name} error: ${err}')
+	// 			exit(1)
+	// 		}
+	// 	}
+	// }
 }
 
 // wait_for_boot blocks execution and waits for the emulator to boot.

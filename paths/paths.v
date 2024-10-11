@@ -18,6 +18,12 @@ pub fn ensure(path string) ! {
 	}
 }
 
+// data returns a `string` with the path to `vab`'s' data directory.
+// NOTE: the returned path may not exist on disk. Use `ensure/1` to ensure it exists.
+pub fn data() string {
+	return os.join_path(os.data_dir(), vab_namespace)
+}
+
 // config returns a `string` with the path to `vab`'s' configuration directory.
 // NOTE: the returned path may not exist on disk. Use `ensure/1` to ensure it exists.
 pub fn config() string {
@@ -34,6 +40,12 @@ pub fn tmp_work() string {
 // NOTE: the returned path may not exist on disk. Use `ensure/1` to ensure it exists.
 pub fn cache() string {
 	return os.join_path(os.cache_dir(), vab_namespace)
+}
+
+// exe_data returns a `string` with the path to the executable's data directory.
+// NOTE: the returned path may not exist on disk. Use `ensure/1` to ensure it exists.
+pub fn exe_data() string {
+	return os.join_path(os.data_dir(), sanitized_exe_name)
 }
 
 // exe_config returns a `string` with the path to the executable's configuration directory.
