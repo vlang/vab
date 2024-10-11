@@ -55,6 +55,11 @@ fn main() {
 		dump(opt)
 	}
 
+	if opt.dump_version {
+		println('${cli.exe_short_name} ${cli.version_full()}')
+		exit(0)
+	}
+
 	if opt.dump_usage {
 		documentation := flag.to_doc[cli.Options](cli.vab_documentation_config) or {
 			util.vab_error('Could not generate usage documentation via `flag.to_doc[cli.Options](...)` this should not happen',

@@ -31,11 +31,14 @@ fn vab_commit_hash() string {
 	return hash.trim_space()
 }
 
-fn version_full() string {
+// version_full returns the version number of this
+// executable *including* a git hash if available.
+pub fn version_full() string {
 	return '${exe_version} ${exe_git_hash}'
 }
 
-fn version() string {
+// version returns the version number found in the nearest `v.mod` file.
+pub fn version() string {
 	mut v := '0.0.0'
 	vmod := @VMOD_FILE
 	if vmod.len > 0 {
