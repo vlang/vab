@@ -31,6 +31,7 @@ pub:
 	clear_device_log bool @[long: 'log-clear'; xdoc: 'Clear the log buffer on the device before deployment.']
 	// Detected environment
 	dump_usage       bool @[long: 'help'; short: h; xdoc: 'Show this help message and exit']
+	dump_version     bool @[long: 'version'; xdoc: 'Show version information and exit']
 	list_ndks        bool @[xdoc: 'List available NDK versions']
 	list_apis        bool @[xdoc: 'List available API levels']
 	list_build_tools bool @[xdoc: 'List available Build-tools versions']
