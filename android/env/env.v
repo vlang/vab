@@ -320,6 +320,44 @@ pub fn install(components string, verbosity int) int {
 	return 0
 }
 
+// remove_components removess various external components installed by `install_components`
+// These components can be (TODO: Android SDK components or) extra commands.
+pub fn remove_components(arguments []string, verbosity int) ! {
+	if arguments.len == 0 {
+		return error('${@FN} requires at least one argument')
+	}
+
+	mut args := arguments.clone()
+	if args[0] == 'remove' {
+		args = args[1..].clone() // skip `remove` part
+	}
+	if args.len == 0 {
+		return error('${@FN} requires an argument')
+	}
+
+	components := args[0]
+	// vab remove extra ...
+	if components == 'extra' {
+		if args.len == 1 {
+			return error('${@FN} extra requires an argument')
+		}
+		extra.remove_command(input: args[1..].clone(), verbosity: verbosity) or {
+			return error('Removing of command failed: ${err}')
+		}
+		if verbosity > 0 {
+			println('Removed successfully')
+		}
+		return
+	}
+
+	// TODO: vab remove "x;y;z,i;j;k" (sdkmanager compatible tuple)
+	// Allows to specify a string list of things to remove
+	return error('${@FN} TODO: currently `remove` only supports removing extra commands via `vab remove extra ...`')
+	// if verbosity > 0 {
+	// 	println('Removed successfully')
+	// }
+}
+
 // install_components installs various external components that vab can use.
 // These components can be Android SDK components or extra commands.
 pub fn install_components(arguments []string, verbosity int) ! {

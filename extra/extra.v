@@ -4,20 +4,30 @@
 module extra
 
 import os
+import os.filelock
+import time
 import strings
 import compress.szip
+import crypto.sha1
 import vab.paths
 import vab.util
 import vab.vxt
 import net.http
 
-const valid_sources = ['github']
+const valid_sources = ['github', 'local']
 pub const command_prefix = 'vab'
 pub const data_path = os.join_path(paths.data(), 'extra')
 pub const temp_path = os.join_path(paths.tmp_work(), 'extra')
 
 @[params]
 pub struct InstallOptions {
+pub:
+	input     []string
+	verbosity int
+}
+
+@[params]
+pub struct RemoveOptions {
 pub:
 	input     []string
 	verbosity int
@@ -39,8 +49,20 @@ pub:
 	url string
 }
 
+struct PathInfo {
+pub:
+	sha string
+}
+
 // verbose prints `msg` to STDOUT if `InstallOptions.verbosity` level is >= `verbosity_level`.
 pub fn (io &InstallOptions) verbose(verbosity_level int, msg string) {
+	if io.verbosity >= verbosity_level {
+		println(msg)
+	}
+}
+
+// verbose prints `msg` to STDOUT if `InstallOptions.verbosity` level is >= `verbosity_level`.
+pub fn (io &RemoveOptions) verbose(verbosity_level int, msg string) {
 	if io.verbosity >= verbosity_level {
 		println(msg)
 	}
@@ -103,19 +125,23 @@ fn launch_command(args []string) int {
 	return 1
 }
 
-// install_command retrieves, installs and registers external extra commands
+// install_command retrieves, installs and registers external extra commands.
 pub fn install_command(opt InstallOptions) ! {
-	// `vab install cmd xyz/abc`
+	// `vab install extra xyz/abc`
 	if opt.input.len == 0 {
 		return error('${@FN} requires input')
 	}
 
 	component := opt.input[0] // Only 1 argument needed for now
 	if component.count(':') == 0 {
+		mut default_input := ['github:${component}']
 		// no source protocol detected, slap on default and try again...
+		if os.is_dir(component) {
+			default_input = ['local:${component}']
+		}
 		mod_opt := InstallOptions{
 			...opt
-			input: ['github:${component}']
+			input: default_input
 		}
 		return install_command(mod_opt)
 	}
@@ -130,9 +156,14 @@ pub fn install_command(opt InstallOptions) ! {
 	}
 	unit := component.all_after(':')
 
+	opt.verbose(1, 'Installing ${source}:${unit}...')
+
 	match source {
 		'github' {
 			return install_from_github(unit, opt.verbosity)
+		}
+		'local' {
+			return install_from_local(unit, opt.verbosity)
 		}
 		else {
 			return error('${@FN} unknown source `${source}`. Valid sources are ${valid_sources}')
@@ -140,29 +171,90 @@ pub fn install_command(opt InstallOptions) ! {
 	}
 }
 
-fn install_from_github(unit string, verbosity int) ! {
+// remove_command removes external extra commands.
+pub fn remove_command(opt RemoveOptions) ! {
+	// `vab remove extra (source:)xyz/abc`
+	if opt.input.len == 0 {
+		return error('${@FN} requires input')
+	}
+	id := opt.input[0] // Only 1 argument needed for now
+	if id == '' {
+		return error('${@FN} requires input')
+	}
+	if id.count(':') > 1 {
+		return error('${@FN} "${id}" specifies too many sources (via ":"). An example valid `id` with source: "github:larpon/vab-sdl"')
+	}
+	if id.count('/') != 1 {
+		return error('${@FN} "${id}" must contain one "/" to specify the unit. An example valid `id` with source: "github:larpon/vab-sdl"')
+	}
+	mut component := id
+	mut source := ''
+	if component.count(':') > 0 {
+		source = id.all_before(':')
+		component = id.all_after(':')
+	}
+	if source != '' && source !in valid_sources {
+		return error('${@FN} unknown source `${source}`. Valid sources are ${valid_sources}')
+	}
+	unit := component
+	cmd_author, cmd_name := valid_unit(unit)!
+
+	opt.verbose(1, 'Removing ${source}:${unit}...')
+
+	base_path := os.join_path(data_path, 'commands')
+	mut concrete_path := base_path
+	if source != '' {
+		concrete_path = os.join_path(base_path, source, cmd_author, cmd_name)
+	} else {
+		mut found_command := ?Command{}
+		for key, command in commands() {
+			if command.unit == unit {
+				if fcommand := found_command {
+					return error('${@FN} multiple commands matches `${key}` (at least ${command.source}:${command.unit} and ${fcommand.source}:${fcommand.unit}). Please specify which source you want removed')
+				}
+				found_command = command
+			}
+		}
+		if command := found_command {
+			source = command.source
+			concrete_path = os.join_path(base_path, command.source, cmd_author, cmd_name)
+		}
+	}
+	if concrete_path == '' || concrete_path == base_path {
+		return error('${@FN} could not locate `${id}`')
+	}
+	os.rmdir_all(concrete_path) or {}
+	record_remove(source, unit)!
+}
+
+fn valid_unit(unit string) !(string, string) {
 	if unit.count('/') != 1 {
 		return error('${@MOD} ${@FN} `${unit}` should contain exactly one "/" character')
 	}
 	unit_parts := unit.split('/')
 
-	// TODO: support @ notation for specific commits/branches?
-	// mut at_part := unit.all_after('@')
-
 	if !(valid_identifier(unit_parts[0]) && valid_identifier(unit_parts[1])) {
 		return error('${@MOD} ${@FN} `${unit}` is not a valid identifier')
 	}
+	return unit_parts[0], unit_parts[1]
+}
 
-	cmd_author := unit_parts[0]
-	cmd_name := unit_parts[1]
-	if has_command(cmd_name) {
+fn check_unit_not_installed(unit string) ! {
+	_, command_name := valid_unit(unit)!
+	if has_command(command_name) {
 		extra_commands := commands()
-		if command := extra_commands[cmd_name] {
+		if command := extra_commands[command_name] {
 			if command.unit != unit {
 				return error('${@MOD} ${@FN} `${unit}` is already installed from `${command.unit}` via ${command.source}')
 			}
 		}
 	}
+}
+
+fn install_from_github(unit string, verbosity int) ! {
+	cmd_author, cmd_name := valid_unit(unit)!
+
+	check_unit_not_installed(unit)!
 
 	initial_dst := os.join_path(data_path, 'commands', 'github', cmd_author)
 
@@ -183,7 +275,7 @@ fn install_from_github(unit string, verbosity int) ! {
 			return error('${@MOD} ${@FN} failed to download `${unit}`: ${err}')
 		}
 	}
-	final_dst := os.join_path(initial_dst, unit_parts[1])
+	final_dst := os.join_path(initial_dst, cmd_name)
 	// Install
 	if verbosity > 1 {
 		println('Installing `${unit}` to "${final_dst}"...')
@@ -201,31 +293,100 @@ fn install_from_github(unit string, verbosity int) ! {
 	record_install(cmd_name, 'github', unit, sha)!
 }
 
+fn install_from_local(path string, verbosity int) ! {
+	if !os.is_dir(path) {
+		return error('${@MOD} ${@FN} `${path}` should be a directory containing V source code')
+	}
+	path_trimmed := path.trim_right(os.path_separator)
+	if path_trimmed.count(os.path_separator) < 1 {
+		return error('${@MOD} ${@FN} `${path_trimmed}` should contain one or more "${os.path_separator}" characters')
+	}
+	unit := os.dir(path_trimmed).all_after_last(os.path_separator) + '/' +
+		os.file_name(path_trimmed)
+	cmd_author, cmd_name := valid_unit(unit)!
+
+	check_unit_not_installed(unit)!
+
+	initial_dst := os.join_path(data_path, 'commands', 'local', cmd_author)
+
+	path_info := get_path_info(path)!
+
+	sha := path_info.sha
+
+	final_dst := os.join_path(initial_dst, cmd_name)
+	// Install
+	if verbosity > 1 {
+		println('Installing `${unit}` to "${final_dst}"...')
+	}
+	paths.ensure(initial_dst)!
+
+	if os.exists(final_dst) {
+		os.rmdir_all(final_dst) or {}
+	}
+	os.cp_all(path, final_dst, false)!
+
+	build_command(final_dst, verbosity)!
+	record_install(cmd_name, 'local', unit, sha)!
+}
+
+fn record_remove(source string, unit string) ! {
+	path := data_path
+	installs_db := os.join_path(path, 'installed.txt')
+	if !os.exists(installs_db) {
+		return
+	}
+	mut fl := filelock.new('${installs_db}.lock')
+	defer { fl.release() }
+	if fl.wait_acquire(5 * time.second) {
+		installs_db_bak := os.join_path(path, 'installed.txt.bak')
+		mut installs := os.read_lines(installs_db)!
+
+		for i, install_line in installs {
+			if install_line == '' || install_line.starts_with('#') {
+				continue
+			}
+			split := install_line.split(';')
+			if split.len > 2 {
+				if split[1] == source && split[2] == unit {
+					installs.delete(i)
+					break
+				}
+			}
+		}
+		os.mv(installs_db, installs_db_bak, overwrite: true)!
+		os.write_lines(installs_db, installs)!
+	}
+}
+
 fn record_install(id string, source string, unit string, hash string) ! {
 	path := data_path
 	paths.ensure(path)!
 	installs_db := os.join_path(path, 'installed.txt')
-	installs_db_bak := os.join_path(path, 'installed.txt.bak')
-	if !os.exists(installs_db) {
-		os.create(installs_db)!
-	}
-	mut installs := os.read_lines(installs_db)!
-
-	for i, install_line in installs {
-		if install_line == '' || install_line.starts_with('#') {
-			continue
+	mut fl := filelock.new('${installs_db}.lock')
+	defer { fl.release() }
+	if fl.wait_acquire(5 * time.second) {
+		installs_db_bak := os.join_path(path, 'installed.txt.bak')
+		if !os.exists(installs_db) {
+			os.create(installs_db)!
 		}
-		split := install_line.split(';')
-		if split.len > 2 {
-			if split[1] == source && split[2] == unit {
-				installs.delete(i)
-				break
+		mut installs := os.read_lines(installs_db)!
+
+		for i, install_line in installs {
+			if install_line == '' || install_line.starts_with('#') {
+				continue
+			}
+			split := install_line.split(';')
+			if split.len > 2 {
+				if split[1] == source && split[2] == unit {
+					installs.delete(i)
+					break
+				}
 			}
 		}
+		installs << '${id};${source};${unit};${hash}'
+		os.mv(installs_db, installs_db_bak, overwrite: true)!
+		os.write_lines(installs_db, installs)!
 	}
-	installs << '${id};${source};${unit};${hash}'
-	os.mv(installs_db, installs_db_bak, overwrite: true)!
-	os.write_lines(installs_db, installs)!
 }
 
 fn get_github_info(unit string) !GitHubInfo {
@@ -267,6 +428,19 @@ fn get_github_info(unit string) !GitHubInfo {
 	return GitHubInfo{
 		sha: sha
 		url: url
+	}
+}
+
+fn get_path_info(path string) !PathInfo {
+	v_files := os.walk_ext(path, '.v')
+	mut sha_hash := ''
+	for v_file in v_files {
+		hash := sha1.sum(os.read_bytes(v_file) or { 'deadbeef'.bytes() }).hex()
+		combined_sha := '${sha_hash}${hash}'
+		sha_hash = sha1.sum(combined_sha.bytes()).hex()
+	}
+	return PathInfo{
+		sha: sha_hash
 	}
 }
 
@@ -314,29 +488,33 @@ pub fn commands() map[string]Command {
 	path := data_path
 	installs_db := os.join_path(path, 'installed.txt')
 	if os.exists(installs_db) {
-		installs := os.read_lines(installs_db) or { return installed }
-		for install_line in installs {
-			if install_line == '' || install_line.starts_with('#') {
-				continue
-			}
-			split := install_line.split(';')
-			if split.len > 3 {
-				id := split[0]
-				alias := id.trim_left('${command_prefix}-')
-				source := split[1] or { 'unknown' }
-				unit := split[2] or { 'unknown/unknown' }
-				hash := split[3] or { 'deadbeef' }
-				unit_parts := unit.split('/')
-				final_dst := os.join_path(data_path, 'commands', source, unit_parts[0],
-					unit_parts[1])
+		mut fl := filelock.new('${installs_db}.lock')
+		defer { fl.release() }
+		if fl.wait_acquire(5 * time.second) {
+			installs := os.read_lines(installs_db) or { return installed }
+			for install_line in installs {
+				if install_line == '' || install_line.starts_with('#') {
+					continue
+				}
+				split := install_line.split(';')
+				if split.len > 3 {
+					id := split[0]
+					alias := id.trim_left('${command_prefix}-')
+					source := split[1] or { 'unknown' }
+					unit := split[2] or { 'unknown/unknown' }
+					hash := split[3] or { 'deadbeef' }
+					unit_parts := unit.split('/')
+					final_dst := os.join_path(data_path, 'commands', source, unit_parts[0],
+						unit_parts[1])
 
-				installed[id] = Command{
-					id:     id
-					alias:  alias
-					source: source
-					unit:   unit
-					hash:   hash
-					exe:    os.join_path(final_dst, id)
+					installed[id] = Command{
+						id:     id
+						alias:  alias
+						source: source
+						unit:   unit
+						hash:   hash
+						exe:    os.join_path(final_dst, id)
+					}
 				}
 			}
 		}

@@ -139,13 +139,31 @@ fn main() {
 		exit(0)
 	}
 
-	if opt.run_builtin_cmd == 'install' {
-		install_args := os.args[os.args.index('install')..]
-		env.install_components(install_args, opt.verbosity) or {
-			util.vab_error('Failed to install components', details: '${err}')
-			exit(1)
+	match opt.run_builtin_cmd {
+		'install' {
+			install_args := os.args[os.args.index(opt.run_builtin_cmd)..]
+			env.install_components(install_args, opt.verbosity) or {
+				util.vab_error('Failed to install components', details: '${err}')
+				exit(1)
+			}
+			exit(0)
 		}
-		exit(0)
+		'remove' {
+			remove_args := os.args[os.args.index(opt.run_builtin_cmd)..]
+			env.remove_components(remove_args, opt.verbosity) or {
+				util.vab_error('Failed to remove components', details: '${err}')
+				exit(1)
+			}
+			exit(0)
+		}
+		else {
+			if opt.run_builtin_cmd != '' && opt.run_builtin_cmd !in cli.subcmds_builtin {
+				util.vab_error('Unknown sub-command "${opt.run_builtin_cmd}"',
+					details: 'Accepted sub-commands are: ${cli.subcmds_builtin}'
+				)
+				exit(1)
+			}
+		}
 	}
 
 	// Validate environment
