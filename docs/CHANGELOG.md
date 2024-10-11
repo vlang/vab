@@ -1,3 +1,36 @@
+## vab 0.4.3
+*11 October 2024*
+
+#### Notable changes
+
+Added support for command-line *extra commands*.
+
+##### Example
+
+Compile `vab` with *extra command* support (needed to execute installed commands):
+```bash
+v -d vab_allow_extra_commands ~/.vmodules/vab
+```
+
+Install an extra command (Example `larpon/vab-sdl` that supports building SDL based V apps for Android):
+```bash
+vab install extra larpon/vab-sdl
+vab doctor # Should show a section with installed extra commands where `vab-sdl` should show.
+```
+
+Call the extra command (needs `vlang/sdl` module installed and working):
+```bash
+vab sdl ~/.vmodules/sdl/examples/tvintris -o /tmp/tvintris.apk
+```
+
+#### Commits
+
+vab: add `--version` flag (#321)
+extra: support install/remove from local sources (#320)
+all: support *extra commands*, `vab <cmd>` where `<cmd>` comes from `vab install extra user/vab-<cmd>` (#319)
+deploy: add notice below (potential) long crash reports (#318)
+vab: introduce and use `paths` module (#316)
+
 ## vab 0.4.2
 *01 October 2024*
 
