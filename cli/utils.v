@@ -53,9 +53,21 @@ pub fn input_suggestions(input string) []string {
 	$if vab_allow_extra_commands ? {
 		for extra_alias in extra.installed_aliases() {
 			similarity := f32(int(strings.levenshtein_distance_percentage(input, extra_alias) * 1000)) / 1000
-			if similarity > 0.25 {
+			if similarity > 30 {
 				suggests << extra_alias
 			}
+		}
+	}
+	for builtin_command in subcmds_builtin {
+		similarity := f32(int(strings.levenshtein_distance_percentage(input, builtin_command) * 1000)) / 1000
+		if similarity > 30 {
+			suggests << builtin_command
+		}
+	}
+	for sub_command in subcmds {
+		similarity := f32(int(strings.levenshtein_distance_percentage(input, sub_command) * 1000)) / 1000
+		if similarity > 30 {
+			suggests << sub_command
 		}
 	}
 	return suggests

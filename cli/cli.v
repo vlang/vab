@@ -30,7 +30,9 @@ Sub-commands:
   doctor                    Display useful info about your system,
                             (useful for bug reports)
   install                   Install various components. Example:
-                            `vab install "platforms;android-21"'
+                            `vab install "platforms;android-21"
+  remove                    Remove various components. Example:
+                            `vab remove extra github:larpon/vab-sdl'
 
 pub const exe_git_hash = vab_commit_hash()
 pub const work_directory = paths.tmp_work()
@@ -38,7 +40,7 @@ pub const cache_directory = paths.cache()
 pub const rip_vflags = ['-autofree', '-gc', '-g', '-cg', '-prod', 'run', '-showcc', '-skip-unused',
 	'-no-bounds-checking'] // NOTE this can be removed when the deprecated `cli.args_to_options()` is removed
 pub const subcmds = ['complete', 'test-all', 'test-cleancode', 'test-runtime']
-pub const subcmds_builtin = ['doctor', 'install']
+pub const subcmds_builtin = ['doctor', 'install', 'remove']
 pub const accepted_input_files = ['.v', '.apk', '.aab']
 
 pub const vab_env_vars = [
