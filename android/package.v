@@ -6,6 +6,7 @@ import os
 import regex
 import semver
 import vab.java
+import vab.paths
 import vab.util as vabutil
 import vab.android.env
 import vab.android.sdk
@@ -1173,14 +1174,16 @@ fn prepare_base(opt PackageOptions) (string, string) {
 	opt.verbose(1, 'Copying assets...')
 
 	if !is_default_pkg_id && os.is_file(opt.icon) && os.file_ext(opt.icon) == '.png' {
-		icon_path := os.join_path(package_path, 'res', 'mipmap', 'icon.png')
+		icon_path := os.join_path(package_path, 'res', 'mipmap')
+		paths.ensure(icon_path) or { panic(err) }
+		icon_file := os.join_path(icon_path, 'icon.png')
 		opt.verbose(1, 'Copying icon...')
-		os.rm(icon_path) or { panic(err) }
-		os.cp(opt.icon, icon_path) or { panic(err) }
+		os.rm(icon_file) or {}
+		os.cp(opt.icon, icon_file) or { panic(err) }
 	}
 
 	assets_path := os.join_path(package_path, 'assets')
-	os.mkdir_all(assets_path) or { panic(err) }
+	paths.ensure(assets_path) or { panic(err) }
 
 	mut included_asset_paths := []string{}
 
