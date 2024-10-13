@@ -12,11 +12,11 @@ import vab.android.env
 import vab.android.sdk
 import vab.android.util
 
-pub const default_app_name = 'V Test App'
-pub const default_package_id = 'io.v.android'
-pub const default_activity_name = 'VActivity'
-pub const default_package_format = 'apk'
-pub const default_min_sdk_version = 21
+pub const default_app_name = $d('vab:default_app_name', 'V Test App')
+pub const default_package_id = $d('vab:default_package_id', 'io.v.android')
+pub const default_activity_name = $d('vab:default_activity_name', 'VActivity')
+pub const default_package_format = $d('vab:default_package_format', 'apk')
+pub const default_min_sdk_version = int($d('vab:default_min_sdk_version', 21))
 pub const default_base_files_path = get_default_base_files_path()
 pub const supported_package_formats = ['apk', 'aab']
 pub const supported_lib_folders = ['armeabi', 'arm64-v8a', 'armeabi-v7a', 'x86', 'x86_64']
@@ -52,6 +52,10 @@ pub:
 	keystore        Keystore
 	base_files      string = default_base_files_path
 	overrides_path  string // Path to user provided files that will override `base_files`. `java` (and later `kotlin` TODO) subdirs are recognized
+	prepare_base_fn fn (PackageOptions) !PackageBase = prepare_package_base // function used to prepare package base files
+	// Defaults (allows for runtime redefinition)
+	default_package_id    string // Reserved for defining the default package_id at runtime
+	default_activity_name string // Reserved for defining the default activity_name at runtime
 }
 
 // verbose prints `msg` to STDOUT if `PackageOptions.verbosity` level is >= `verbosity_level`.
@@ -62,6 +66,10 @@ pub fn (po &PackageOptions) verbose(verbosity_level int, msg string) {
 }
 
 fn get_default_base_files_path() string {
+	user_default_base_files_path := $d('vab:default_base_files_path', '')
+	if user_default_base_files_path != '' {
+		return user_default_base_files_path
+	}
 	// Look next to the executable
 	mut path := os.join_path(os.dir(os.real_path(os.executable())), 'platforms', 'android')
 	if os.is_dir(path) {
@@ -87,9 +95,8 @@ pub fn package(opt PackageOptions) ! {
 Please consult the Android documentation for details:
 https://developer.android.com/studio/build/application-id')
 	}
-	if opt.is_prod && opt.package_id == default_package_id {
-		return error('${error_tag}: Package id "${opt.package_id}" is used by the V team.
-Please do not deploy to app stores using package id "${default_package_id}".')
+	if opt.is_prod {
+		ensure_no_developer_team_package_id(opt)!
 	}
 	// Build APK
 	match opt.format {
@@ -159,7 +166,9 @@ fn package_apk(opt PackageOptions) ! {
 
 	// Prepare and modify package skeleton shipped with vab
 	// Copy assets etc.
-	package_path, assets_path := prepare_base(opt)
+	package_base := opt.prepare_base_fn(opt)!
+	package_path := package_base.package_path
+	assets_path := package_base.assets_path
 
 	output_fn := os.file_name(opt.output_file).replace(os.file_ext(opt.output_file), '')
 	tmp_product := os.join_path(opt.work_dir, '${output_fn}.apk')
@@ -507,7 +516,11 @@ fn package_aab(opt PackageOptions) ! {
 	bundletool := env.bundletool() // Run with "java -jar ..."
 	aapt2 := env.aapt2()
 
-	package_path, assets_path := prepare_base(opt)
+	// Prepare and modify package skeleton shipped with vab
+	// Copy assets etc.
+	package_base := opt.prepare_base_fn(opt)!
+	package_path := package_base.package_path
+	assets_path := package_base.assets_path
 
 	output_fn := os.file_name(opt.output_file).replace(os.file_ext(opt.output_file), '')
 	tmp_product := os.join_path(opt.work_dir, '${output_fn}.aab')
@@ -895,7 +908,36 @@ fn package_aab(opt PackageOptions) ! {
 	}
 }
 
-fn prepare_base(opt PackageOptions) (string, string) {
+// ensure_no_developer_team_package_id returns an error if the `opt.package_id` is the
+// same as `opt.default_package_id` or the same package_id domain as `android.default_package_id`.
+pub fn ensure_no_developer_team_package_id(opt PackageOptions) ! {
+	is_default_pkg_id := opt.package_id == opt.default_package_id
+	if is_default_pkg_id || opt.package_id.starts_with(default_package_id) {
+		if opt.package_id.starts_with(default_package_id) {
+			return error('Do not deploy to app stores using the default package id namespace ("${default_package_id}.*")\nYou can set your own package ID with the --package-id flag')
+		} else {
+			return error('Do not deploy to app stores using the default package id "${opt.default_package_id}"\nYou can set your own package ID with the --package-id flag')
+		}
+	}
+}
+
+pub struct PackageBase {
+pub:
+	package_path string // Path to the base setup
+	assets_path  string // Path to assets
+}
+
+// prepare_package_base prepares and modifies a package skeleton and returns the paths to them.
+// A "package skeleton" is a special structure of directories and files that `vab`'s
+// packaging step use to make the final APK or AAB package.
+// prepare_package_base is run before Java tooling does the actual packaging.
+//
+// Preparing includes operations such as:
+// * Creating the directory structures that are returned
+// * Modifying template files, like `AndroidManifest.xml` or the Java Activity
+// * Moving files into place
+// * Copy assets to a location where `vab` can pick them up
+fn prepare_package_base(opt PackageOptions) !PackageBase {
 	format := match opt.format {
 		.apk {
 			'apk'
@@ -956,23 +998,15 @@ fn prepare_base(opt PackageOptions) (string, string) {
 
 	opt.verbose(1, 'Modifying base files...')
 
-	is_default_pkg_id := opt.package_id == default_package_id
-	if opt.is_prod && (is_default_pkg_id || opt.package_id.starts_with(default_package_id)) {
-		if opt.package_id.starts_with(default_package_id) {
-			panic('Do not deploy to app stores using the default V package id namespace "${default_package_id}"\nYou can set your own package ID with the --package-id flag')
-		} else {
-			panic('Do not deploy to app stores using the default V package id "${default_package_id}"\nYou can set your own package ID with the --package-id flag')
-		}
-	}
 	pkg_id_split := opt.package_id.split('.')
 	package_id_path := pkg_id_split.join(os.path_separator)
 	os.mkdir_all(os.join_path(package_path, 'src', package_id_path)) or { panic(err) }
 
-	default_pkg_id_split := default_package_id.split('.')
+	default_pkg_id_split := opt.default_package_id.split('.')
 	default_pkg_id_path := default_pkg_id_split.join(os.path_separator)
 
 	native_activity_path := os.join_path(package_path, 'src', default_pkg_id_path)
-	activity_file_name := default_activity_name + '.java'
+	activity_file_name := opt.default_activity_name + '.java'
 	native_activity_file := os.join_path(native_activity_path, activity_file_name)
 	$if debug {
 		eprintln('Native activity file: "${native_activity_file}"')
@@ -985,7 +1019,7 @@ fn prepare_base(opt PackageOptions) (string, string) {
 		if !is_override {
 			// Change package id in template
 			// r'.*package\s+(io.v.android).*'
-			mut re := regex.regex_opt(r'.*package\s+(' + default_package_id + r');') or {
+			mut re := regex.regex_opt(r'.*package\s+(' + opt.default_package_id + r');') or {
 				panic(err)
 			}
 			mut start, _ := re.match_string(java_src)
@@ -1018,7 +1052,7 @@ fn prepare_base(opt PackageOptions) (string, string) {
 			java_src) or { panic(err) }
 
 		// Remove left-overs from vab's copied skeleton
-		if opt.package_id != default_package_id {
+		if opt.package_id != opt.default_package_id {
 			os.rm(native_activity_file) or { panic(err) }
 			mut v_default_package_id := default_pkg_id_split.clone()
 			for i := v_default_package_id.len - 1; i >= 0; i-- {
@@ -1173,6 +1207,7 @@ fn prepare_base(opt PackageOptions) (string, string) {
 
 	opt.verbose(1, 'Copying assets...')
 
+	is_default_pkg_id := opt.package_id == opt.default_package_id
 	if !is_default_pkg_id && os.is_file(opt.icon) && os.file_ext(opt.icon) == '.png' {
 		icon_path := os.join_path(package_path, 'res', 'mipmap')
 		paths.ensure(icon_path) or { panic(err) }
@@ -1250,7 +1285,10 @@ fn prepare_base(opt PackageOptions) (string, string) {
 			}
 		}
 	}
-	return package_path, assets_path
+	return PackageBase{
+		package_path: package_path
+		assets_path:  assets_path
+	}
 }
 
 pub fn is_valid_package_id(id string) ! {

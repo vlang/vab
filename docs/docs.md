@@ -10,6 +10,7 @@ Welcome - and have a productive time using V and `vab`!
 - [Introduction](#introduction)
 - [Developing `vab`](#developing-vab)
 - [The V to Android App Development Cycle](#the-v-to-android-app-development-cycle)
+- [Tweaking defaults at compile time](#tweaking-defaults-at-compile-time)
 - [Using `vab` from the command line](#using-vab-from-the-command-line)
 - [Using `vab` programmatically](#using-vab-programmatically)
 - [Examples](#examples)
@@ -89,6 +90,20 @@ needed for the Android app to be able to start on the device OS.
 9. (Optionally) debug the app (via `adb logcat ...`).
 
 The developer is expected to take care of bullet point `1.` while `vab` will help cover the rest.
+
+# Tweaking defaults at compile time
+
+`vab` tries to strike a balance and be sane and fair about what default values are
+used. Should the defaults not fit your daily use they can be tweaked via V's
+powerful compile-time defines (`-d ident=value`).
+
+The following is a list of values that can be tweaked at compile time:
+* `default_app_name` via `-d vab:default_app_name='V Test App'`
+* `default_package_id` via `-d vab:default_package_id='io.v.android'`
+* `default_activity_name` via `-d vab:default_activity_name='VActivity'`
+* `default_package_format` via `-d vab:default_package_format='apk'`
+* `default_min_sdk_version` = `-d vab:default_min_sdk_version=21`
+* `default_base_files_path` via `-d vab:default_base_files_path=''`
 
 # Using `vab` from the command line
 
