@@ -65,6 +65,10 @@ pub fn (po &PackageOptions) verbose(verbosity_level int, msg string) {
 	}
 }
 
+pub fn (po &PackageOptions) package_root() string {
+	return os.join_path(po.work_dir, 'package', '${po.format}')
+}
+
 fn get_default_base_files_path() string {
 	user_default_base_files_path := $d('vab:default_base_files_path', '')
 	if user_default_base_files_path != '' {
@@ -938,16 +942,8 @@ pub:
 // * Moving files into place
 // * Copy assets to a location where `vab` can pick them up
 fn prepare_package_base(opt PackageOptions) !PackageBase {
-	format := match opt.format {
-		.apk {
-			'apk'
-		}
-		.aab {
-			'aab'
-		}
-	}
-	opt.verbose(1, 'Preparing ${format} base"')
-	package_path := os.join_path(opt.work_dir, 'package', format)
+	opt.verbose(1, 'Preparing ${opt.format} base"')
+	package_path := opt.package_root()
 	opt.verbose(2, 'Removing previous package directory "${package_path}"')
 	os.rmdir_all(package_path) or {}
 	paths.ensure(package_path) or { return error('${@FN}: ${err}') }
@@ -1215,6 +1211,16 @@ fn prepare_package_base(opt PackageOptions) !PackageBase {
 		os.write_file(strings_path, content) or { return error('${@FN}: ${err}') }
 	}
 
+	return PackageBase{
+		package_path: package_path
+		assets_path:  prepare_assets(opt)!
+	}
+}
+
+// prepare_assets depends on prepare_package_base...
+fn prepare_assets(opt PackageOptions) !string {
+	package_path := opt.package_root()
+
 	opt.verbose(1, 'Copying assets...')
 
 	is_default_pkg_id := opt.package_id == opt.default_package_id
@@ -1295,10 +1301,7 @@ fn prepare_package_base(opt PackageOptions) !PackageBase {
 			}
 		}
 	}
-	return PackageBase{
-		package_path: package_path
-		assets_path:  assets_path
-	}
+	return assets_path
 }
 
 pub fn is_valid_package_id(id string) ! {
