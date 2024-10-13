@@ -41,18 +41,23 @@ pub:
 	screenshot_delay          f64    @[xdoc: 'Wait for this amount of seconds before taking screenshot']
 	screenshot_on_log         string @[xdoc: 'Wait for this string to appear in the device log before taking a screenshot']
 	screenshot_on_log_timeout f64 = -1.0    @[xdoc: 'Timeout after this amount of seconds if --screenshot-on-log string is not detected']
+	// Defaults (allows for runtime redefinition)
+	default_package_id    string = android.default_package_id @[ignore] // Reserved for defining the default package_id at runtime
+	default_activity_name string = android.default_activity_name @[ignore] // Reserved for defining the default activity_name at runtime
 pub mut:
 	// I/O
 	input           string   @[tail] // NOTE: vab also supports passing input as *first* argument
 	output          string   @[short: o; xdoc: 'Path to output (dir/file)']
 	additional_args []string @[ignore] // additional_args collects arguments (*not* flags) that could not be parsed
 	// App essentials
-	app_name               string = android.default_app_name @[long: name; xdoc: 'Pretty app name']
-	icon                   string @[xdoc: 'App icon']
-	package_id             string = android.default_package_id @[xdoc: 'App package ID (e.g. "org.company.app")']
-	activity_name          string @[xdoc: 'The name of the main activity (e.g. "VActivity")']
-	package_format         string = android.default_package_format @[long: package; xdoc: 'App package format (.apk/.aab)']
-	package_overrides_path string @[long: 'package-overrides'; xdoc: 'Package file overrides path (e.g. "/tmp/java")']
+	icon           string @[xdoc: 'App icon']
+	app_name       string = android.default_app_name @[long: name; xdoc: 'Pretty app name']
+	package_format string = android.default_package_format @[long: package; xdoc: 'App package format (.apk/.aab)']
+	// "VIP" fields. The contents of these needs to match several things thoughout
+	// the project being built. This includes matches in Java sources - the fields are also needed for launching.
+	// See also: default_package_id, default_activity_name above and `ensure_launch_fields/0`.
+	package_id    string = android.default_package_id @[xdoc: 'App package ID (e.g. "org.company.app")']
+	activity_name string @[xdoc: 'The name of the main activity (e.g. "MyActivity")']
 	// Build and packaging
 	archs                   []string = android.default_archs @[ignore] // Compile for these archs. (parsed specially to support "arch,arch,arch")
 	is_prod                 bool     @[ignore] // Parsed and inferred from V specific flags
@@ -66,6 +71,7 @@ pub mut:
 	keystore_alias          string   @[xdoc: 'Use this keystore alias from the keystore file to sign the package']
 	keystore_password       string   @[ignore] // Resolved at runtime via env var see: Options.resolve()
 	keystore_alias_password string   @[ignore] // Resolved at runtime via env var see: Options.resolve()
+	package_overrides_path  string   @[long: 'package-overrides'; xdoc: 'Package file overrides path (e.g. "/tmp/java")']
 	// Build specifics
 	build_tools     string @[xdoc: 'Version of build-tools to use (--list-build-tools)']
 	api_level       string @[long: 'api'; xdoc: 'Android API level to use (--list-apis)']
@@ -442,7 +448,7 @@ pub fn (mut opt Options) extend_from_dot_vab() {
 				opt.app_name = vab_app_name
 			}
 		}
-		if opt.package_id == android.default_package_id && dot_vab.contains('package_id:') {
+		if opt.package_id == opt.default_package_id && dot_vab.contains('package_id:') {
 			vab_package_id := dot_vab.all_after('package_id:').all_before('\n').replace("'",
 				'').replace('"', '').trim(' ')
 			if vab_package_id != '' {
@@ -516,10 +522,10 @@ pub fn (mut opt Options) extend_from_dot_vab() {
 pub fn (mut opt Options) ensure_launch_fields() {
 	// If no package id or activity name has set, use the defaults
 	if opt.package_id == '' {
-		opt.package_id = android.default_package_id
+		opt.package_id = opt.default_package_id
 	}
 	if opt.activity_name == '' {
-		opt.activity_name = android.default_activity_name
+		opt.activity_name = opt.default_activity_name
 	}
 }
 
@@ -909,6 +915,9 @@ pub fn (opt &Options) as_android_package_options() android.PackageOptions {
 		libs_extra:      opt.libs_extra
 		output_file:     opt.output
 		overrides_path:  opt.package_overrides_path
+		// Transfer defaults
+		default_package_id:    opt.default_package_id
+		default_activity_name: opt.default_activity_name
 	}
 	return pck_opt
 }

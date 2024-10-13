@@ -192,7 +192,7 @@ fn main() {
 
 	// Validate environment after options and input has been resolved
 	opt.validate_env()
-
+	// Ensure the "VIP" fields are sat before launch
 	opt.ensure_launch_fields()
 
 	// Keystore file
