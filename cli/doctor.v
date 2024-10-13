@@ -77,7 +77,7 @@ See https://stackoverflow.com/a/61176718/1904615 for more help.\n'
 	Version    ${exe_version} ${exe_git_hash}
 	Path       "${exe_dir}"
 	Base files "${default_base_files_path}"
-	os.args    "${os.args}"\n')
+	os.args    ${os.args}\n')
 
 	println('Extra\n\tCommands')
 	$if vab_allow_extra_commands ? {
