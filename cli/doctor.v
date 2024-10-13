@@ -77,19 +77,19 @@ See https://stackoverflow.com/a/61176718/1904615 for more help.\n'
 	Version    ${exe_version} ${exe_git_hash}
 	Path       "${exe_dir}"
 	Base files "${default_base_files_path}"
-	os.args:   "${os.args}"\n')
+	os.args    ${os.args}\n')
 
 	println('Extra\n\tCommands')
 	$if vab_allow_extra_commands ? {
 		extra_commands := extra.commands()
-		println('\t\tAllowed: true
+		println('\t\tAllowed true
 		Installed ${extra.installed()}
 		Data path "${extra.data_path}"')
 		for _, extra_command in extra_commands {
 			println('\t\t${extra_command.alias} ${extra_command.source}:${extra_command.unit} ${extra_command.hash}')
 		}
 	} $else {
-		println('\t\tAllowed: false')
+		println('\t\tAllowed false')
 	}
 
 	// Shell environment
@@ -176,7 +176,7 @@ See https://stackoverflow.com/a/61176718/1904615 for more help.\n'
 			'doctor',
 		]
 		v_res := os.execute(v_cmd.join(' '))
-		out_lines := v_res.output.split('\n')
+		out_lines := v_res.output.split('\n').filter(it != '')
 		for line in out_lines {
 			println('\t${line}')
 		}
