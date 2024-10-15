@@ -1,3 +1,24 @@
+## vab next
+
+#### Notable changes
+
+Allow for compile-time tweaks of default values:
+* `default_app_name` via `-d vab:default_app_name='V Test App'`
+* `default_package_id` via `-d vab:default_package_id='io.v.android'`
+* `default_activity_name` via `-d vab:default_activity_name='VActivity'`
+* `default_package_format` via `-d vab:default_package_format='apk'`
+* `default_min_sdk_version` = `-d vab:default_min_sdk_version=21`
+* `default_base_files_path` via `-d vab:default_base_files_path=''`
+
+Add support for generating APK/AAB icon mipmaps.
+
+##### Example
+
+```bash
+vab --icon-mipmaps --icon ~/v/examples/2048/demo.png ~/v/examples/2048 -o /tmp/2048.apk
+unzip -l /tmp/2048.apk # Should list "res/mipmap-xxxhdpi/icon.png" etc. entries
+```
+
 ## vab 0.4.3
 *11 October 2024*
 
