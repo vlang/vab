@@ -192,16 +192,16 @@ android.deploy(deploy_opt) or { panic(err) }
 # Package base files
 
 "Package base files" (also sometimes referred to as "App skeleton") is a directory
-containing files and a special directory tree structure that `vab`
+containing files and special directory tree structures that `vab`
 (and the Java/SDK packaging tools) use as a base for what to include in
-the resulting APK or AAB package file archive.
+the resulting APK or AAB package file archive when compilation/building is done.
 
-It is usually found next in project roots next to the *executable* named
+It is usually found in a project's root next to the *executable* named
 "`platforms/android`".
 
 Both `vab` itself and/or any *[extra commands](#extending-vab)* can have a [`plaforms/android`](https://github.com/vlang/vab/tree/master/platforms/android)
-directory in the root of the project the that contains
-files that forms the basis of the APK/AAB package being built.
+directory in the root of the project that contains files forming
+the basis of the APK/AAB package being built.
 
 The directories mostly follow the same structure and often provides different entires such as:
 
@@ -215,21 +215,23 @@ the [FAQ.md](https://github.com/vlang/vab/blob/master/docs/FAQ.md).
 
 ## Package base *overrides*
 
-Package base files can also be provided/tweaked by user application sources
+*Package base files* can also be provided/tweaked by user application sources
 via *their* `platforms/android` directory, or via the explicit `--package-overrides` flag,
 which will copy all contents of `--package-overrides <path>` *on top of* the contents
-provided as package base files. This allows for tweaking certain code bases instead
-of reshipping everything.
+provided as *package base files* (overwriting any files that may have the same name).
+This allows for tweaking certain code bases/setups instead of reshipping complete
+copies of *package base files*.
 
-Also note that directories named "`java`" in root of projects can act as *implicit*
+Also note that special directories named "`java`" in root of projects can act as *implicit*
 `--package-overrides`... While this is not ideal, it has historically been a very useful
-way for modules/apps to provide tweaks to `vab`'s default package base files.
+way for modules/apps to provide tweaks to `vab`'s default *package base files*.
 
 A similar approach (a special `jni` directory) is being used by the Android NDKs own
 tooling (`ndk-build`) for various reasons and can thus be [found in other projects](https://github.com/libsdl-org/SDL/tree/main/android-project/app/jni)
 where it serves somewhat similar purposes.
 
-*`vab` does not treat any `jni` directories specially*.
+*`vab` does not treat any `jni` directories specially*, only the above mentioned to
+minimize any further confusion.
 
 # Examples
 
