@@ -209,7 +209,13 @@ The directories mostly follow the same structure and often provides different en
 * Custom Java sources for e.g. the "main" Java activity (under `platforms/android/src`).
 * Custom resources like strings and icons (under `platforms/android/res`).
 
-**NOTE** Package base files can also be provided/tweaked by user application sources
+See also [`fn prepare_package_base(opt PackageOptions) !PackageBase`](https://github.com/vlang/vab/blob/86d23cd703c0cfc2ce7df82535369a98d2f9d3b0/android/package.v#L940)
+in `android/package.v` as well as [`--icon-mipmaps`](https://github.com/vlang/vab/blob/master/docs/FAQ.md#generating-mipmap-xxxhdpi-icons-in-the-apkaab) in
+the [FAQ.md](https://github.com/vlang/vab/blob/master/docs/FAQ.md).
+
+## Package base *overrides*
+
+Package base files can also be provided/tweaked by user application sources
 via *their* `platforms/android` directory, or via the explicit `--package-overrides` flag,
 which will copy all contents of `--package-overrides <path>` *on top of* the contents
 provided as package base files. This allows for tweaking certain code bases instead
@@ -217,17 +223,13 @@ of reshipping everything.
 
 Also note that directories named "`java`" in root of projects can act as *implicit*
 `--package-overrides`... While this is not ideal, it has historically been a very useful
-way for modules to provide tweaks to `vab`'s default package base files.
+way for modules/apps to provide tweaks to `vab`'s default package base files.
 
 A similar approach (a special `jni` directory) is being used by the Android NDKs own
 tooling (`ndk-build`) for various reasons and can thus be [found in other projects](https://github.com/libsdl-org/SDL/tree/main/android-project/app/jni)
 where it serves somewhat similar purposes.
 
 *`vab` does not treat any `jni` directories specially*.
-
-See also [`fn prepare_package_base(opt PackageOptions) !PackageBase`](https://github.com/vlang/vab/blob/86d23cd703c0cfc2ce7df82535369a98d2f9d3b0/android/package.v#L940)
-in `android/package.v` as well as [`--icon-mipmaps`](https://github.com/vlang/vab/blob/master/docs/FAQ.md#generating-mipmap-xxxhdpi-icons-in-the-apkaab) in
-the [FAQ.md](https://github.com/vlang/vab/blob/master/docs/FAQ.md).
 
 # Examples
 
