@@ -1,6 +1,7 @@
 # Freqently Asked Questions
 
 - [Where is the `examples` folder?](#where-is-the-examples-folder)
+- [Generating `mipmap-xxxhdpi` icons in the APK/AAB](#generating-mipmap-xxxhdpi-icons-in-the-apkaab)
 - [`vab` can't find my device when deploying?](#vab-cant-find-my-device-when-deploying)
 - [The app force closes/crashes when I start it?](#the-app-force-closescrashes-when-i-start-it)
 - [`vab` can't find my SDK/NDK/JAVA_HOME?](#vab-cant-find-my-SDKNDKJAVA_HOME)
@@ -24,6 +25,19 @@ Some examples in the top level `examples` directory also works, like `examples/2
 Note that not all of V's examples have been written with Android in mind and
 may thus fail to compile or run properly, pull requests with Android fixes are
 welcome.
+
+## Generating `mipmap-xxxhdpi` icons in the APK/AAB
+
+Yes. Pass `--icon-mipmaps` when building your application.
+
+The icon mipmaps will be generated based on the image passed via `--icon /path/to/icon.png`,
+or if `--icon` is *not* passed (or invalid) `vab` will try and generate the mipmaps
+based on what image that may reside in the "package base files" directory's "`res/mipmap"`.
+
+For a vanilla build of `vab` the mipmap icons will be generated based on:
+`platforms/android/res/mipmap/icon.png`
+
+See [Package base files](https://github.com/vlang/vab/blob/master/docs/docs.md#package-base-files) for more info.
 
 ## `vab` can't find my device when deploying?
 
