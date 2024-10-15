@@ -937,9 +937,11 @@ pub:
 	assets_path  string // Path to assets
 }
 
-// prepare_package_base prepares and modifies a package skeleton and returns the paths to them.
-// A "package skeleton" is a special structure of directories and files that `vab`'s
-// packaging step use to make the final APK or AAB package.
+// prepare_package_base prepares, modifies a "package base files" / app skeleton
+// and returns useful paths to itself and paths within it.
+//
+// An "Package base files" / App skeleton" is a special structure of files and
+// directories that `vab`'s packaging step use as a basis to make the final APK or AAB package.
 // prepare_package_base is run before Java tooling does the actual packaging.
 //
 // Preparing includes operations such as:
