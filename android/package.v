@@ -68,6 +68,9 @@ pub fn (po &PackageOptions) verbose(verbosity_level int, msg string) {
 	}
 }
 
+// package_root returns the path to the "package base files" that `vab`
+// (and the Java/SDK packaging tools) uses as a base for what to include in
+// the resulting APK or AAB package file archive.
 pub fn (po &PackageOptions) package_root() string {
 	return os.join_path(po.work_dir, 'package', '${po.format}')
 }

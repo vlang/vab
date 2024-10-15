@@ -192,7 +192,9 @@ android.deploy(deploy_opt) or { panic(err) }
 # Package base files
 
 "Package base files" (also sometimes referred to as "App skeleton") is a directory
-containing a special directory tree structure.
+containing files and a special directory tree structure that `vab`
+(and the Java/SDK packaging tools) use as a base for what to include in
+the resulting APK or AAB package file archive.
 
 It is usually found next in project roots next to the *executable* named
 "`platforms/android`".
