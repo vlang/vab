@@ -191,15 +191,21 @@ android.deploy(deploy_opt) or { panic(err) }
 ```
 # Package base files
 
-"Package base files" are special directory structures usually found next to the executable
-named `platforms/android`. Both `vab` itself and/or any *[extra commands](#extending-vab)*
-can have a [`plaforms/android`]() directory in the root of the project the that contains
-files that forms the basis of the APK/AAB package being built. The directories
-mostly follow the same structure but often provides different entires such as:
+"Package base files" (also sometimes referred to as "App skeleton") is a directory
+containing a special directory tree structure.
 
-* Custom `AndroidManifest.xml` tailored for the application.
-* Custom Java sources for e.g. the "main" activity (under `platforms/android/src`).
-* Custom resources like strings, and icons (under `platforms/android/res`).
+It is usually found next in project roots next to the *executable* named
+"`platforms/android`".
+
+Both `vab` itself and/or any *[extra commands](#extending-vab)* can have a [`plaforms/android`](https://github.com/vlang/vab/tree/master/platforms/android)
+directory in the root of the project the that contains
+files that forms the basis of the APK/AAB package being built.
+
+The directories mostly follow the same structure and often provides different entires such as:
+
+* Custom `AndroidManifest.xml` tailored for the application/project.
+* Custom Java sources for e.g. the "main" Java activity (under `platforms/android/src`).
+* Custom resources like strings and icons (under `platforms/android/res`).
 
 **NOTE** Package base files can also be provided/tweaked by user application sources
 via *their* `platforms/android` directory, or via the explicit `--package-overrides` flag,
@@ -211,10 +217,11 @@ Also note that directories named "`java`" in root of projects can act as *implic
 `--package-overrides`... While this is not ideal, it has historically been a very useful
 way for modules to provide tweaks to `vab`'s default package base files.
 
-A similar approach (a special `jni` directory) is [being used](https://github.com/libsdl-org/SDL/tree/main/android-project/app/jni)
-by the Android NDKs own tooling (`ndk-build`) for various reasons and can thus be
-found in other projects where it serves similar inclusion purposes.
-`vab` does not treat any `jni` directories specially.
+A similar approach (a special `jni` directory) is being used by the Android NDKs own
+tooling (`ndk-build`) for various reasons and can thus be [found in other projects](https://github.com/libsdl-org/SDL/tree/main/android-project/app/jni)
+where it serves somewhat similar purposes.
+
+*`vab` does not treat any `jni` directories specially*.
 
 See also [`fn prepare_package_base(opt PackageOptions) !PackageBase`](https://github.com/vlang/vab/blob/86d23cd703c0cfc2ce7df82535369a98d2f9d3b0/android/package.v#L940)
 in `android/package.v` as well as [`--icon-mipmaps`](https://github.com/vlang/vab/blob/master/docs/FAQ.md#generating-mipmap-xxxhdpi-icons-in-the-apkaab) in
