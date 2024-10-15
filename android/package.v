@@ -950,7 +950,7 @@ fn prepare_package_base(opt PackageOptions) !PackageBase {
 	package_path := os.join_path(opt.work_dir, 'package', format)
 	opt.verbose(2, 'Removing previous package directory "${package_path}"')
 	os.rmdir_all(package_path) or {}
-	os.mkdir_all(package_path) or { panic(err) }
+	paths.ensure(package_path) or { return error('${@FN}: ${err}') }
 
 	base_files_path := opt.base_files
 	if os.is_dir(base_files_path) {
@@ -962,7 +962,7 @@ fn prepare_package_base(opt PackageOptions) !PackageBase {
 				})
 			}
 		}
-		os.cp_all(base_files_path, package_path, true) or { panic(err) }
+		os.cp_all(base_files_path, package_path, true) or { return error('${@FN}: ${err}') }
 	}
 
 	// Figure out path overrides
@@ -990,7 +990,7 @@ fn prepare_package_base(opt PackageOptions) !PackageBase {
 				})
 			}
 		}
-		os.cp_all(overrides_path, package_path, true) or { panic(err) }
+		os.cp_all(overrides_path, package_path, true) or { return error('${@FN}: ${err}') }
 		is_override = true
 	} else {
 		opt.verbose(3, 'No overrides found in "${overrides_path}"')
@@ -1000,7 +1000,9 @@ fn prepare_package_base(opt PackageOptions) !PackageBase {
 
 	pkg_id_split := opt.package_id.split('.')
 	package_id_path := pkg_id_split.join(os.path_separator)
-	os.mkdir_all(os.join_path(package_path, 'src', package_id_path)) or { panic(err) }
+	paths.ensure(os.join_path(package_path, 'src', package_id_path)) or {
+		return error('${@FN}: ${err}')
+	}
 
 	default_pkg_id_split := opt.default_package_id.split('.')
 	default_pkg_id_path := default_pkg_id_split.join(os.path_separator)
@@ -1014,13 +1016,13 @@ fn prepare_package_base(opt PackageOptions) !PackageBase {
 	if os.is_file(native_activity_file) {
 		opt.verbose(2, 'Modifying native activity "${native_activity_file}"')
 
-		mut java_src := os.read_file(native_activity_file) or { panic(err) }
+		mut java_src := os.read_file(native_activity_file) or { return error('${@FN}: ${err}') }
 
 		if !is_override {
 			// Change package id in template
 			// r'.*package\s+(io.v.android).*'
 			mut re := regex.regex_opt(r'.*package\s+(' + opt.default_package_id + r');') or {
-				panic(err)
+				return error('${@FN}: ${err}')
 			}
 			mut start, _ := re.match_string(java_src)
 			// Set new package ID if found
@@ -1037,7 +1039,7 @@ fn prepare_package_base(opt PackageOptions) !PackageBase {
 		}
 
 		// Set lib_name
-		mut re := regex.regex_opt(r'.*loadLibrary.*"(.*)".*') or { panic(err) }
+		mut re := regex.regex_opt(r'.*loadLibrary.*"(.*)".*') or { return error('${@FN}: ${err}') }
 		mut start, _ := re.match_string(java_src)
 		// Set new package ID if found
 		if start >= 0 && re.groups.len > 0 {
@@ -1049,7 +1051,7 @@ fn prepare_package_base(opt PackageOptions) !PackageBase {
 				java_src[re.groups[1]..java_src.len]
 		}
 		os.write_file(os.join_path(package_path, 'src', package_id_path, activity_file_name),
-			java_src) or { panic(err) }
+			java_src) or { return error('${@FN}: ${err}') }
 
 		// Remove left-overs from vab's copied skeleton
 		if opt.package_id != opt.default_package_id {
@@ -1062,7 +1064,7 @@ fn prepare_package_base(opt PackageOptions) !PackageBase {
 						opt.verbose(2, 'Removing default left-over directory "${p}"')
 					}
 					os.rmdir_all(os.join_path(package_path, 'src', v_default_package_id.join(os.path_separator))) or {
-						panic(err)
+						return error('${@FN}: ${err}')
 					}
 				}
 				v_default_package_id.pop()
@@ -1074,8 +1076,10 @@ fn prepare_package_base(opt PackageOptions) !PackageBase {
 		manifest_path := os.join_path(package_path, 'AndroidManifest.xml')
 		if os.is_file(manifest_path) {
 			opt.verbose(2, 'Modifying manifest "${manifest_path}"')
-			mut manifest := os.read_file(manifest_path) or { panic(err) }
-			mut re := regex.regex_opt(r'.*<manifest\s.*\spackage\s*=\s*"(.+)".*>') or { panic(err) }
+			mut manifest := os.read_file(manifest_path) or { return error('${@FN}: ${err}') }
+			mut re := regex.regex_opt(r'.*<manifest\s.*\spackage\s*=\s*"(.+)".*>') or {
+				return error('${@FN}: ${err}')
+			}
 			mut start, _ := re.match_string(manifest)
 			// Set package ID if found
 			if start >= 0 && re.groups.len > 0 {
@@ -1088,7 +1092,7 @@ fn prepare_package_base(opt PackageOptions) !PackageBase {
 			}
 
 			re = regex.regex_opt(r'.*<manifest\s.*\sandroid:versionCode\s*=\s*"(.+)".*>') or {
-				panic(err)
+				return error('${@FN}: ${err}')
 			}
 			start, _ = re.match_string(manifest)
 			if start >= 0 && re.groups.len > 0 {
@@ -1102,7 +1106,7 @@ fn prepare_package_base(opt PackageOptions) !PackageBase {
 
 			is_debug_build := ('-cg' in opt.v_flags)
 			re = regex.regex_opt(r'.*<application\s.*android:debuggable\s*=\s*"(.*)".*>') or {
-				panic(err)
+				return error('${@FN}: ${err}')
 			}
 			start, _ = re.match_string(manifest)
 			// Set debuggable attribute if found
@@ -1115,7 +1119,9 @@ fn prepare_package_base(opt PackageOptions) !PackageBase {
 					manifest[re.groups[1]..manifest.len]
 			}
 
-			re = regex.regex_opt(r'.*\s+android:minSdkVersion\s*=\s*"(.*)".*') or { panic(err) }
+			re = regex.regex_opt(r'.*\s+android:minSdkVersion\s*=\s*"(.*)".*') or {
+				return error('${@FN}: ${err}')
+			}
 			start, _ = re.match_string(manifest)
 			// TODO figure out this absolute mess.
 			// When building with Android native it's recommended (even, sometimes, quite necessary) that minSdkVersion is equal to compiled sdk version :(
@@ -1133,7 +1139,9 @@ fn prepare_package_base(opt PackageOptions) !PackageBase {
 					manifest[re.groups[1]..manifest.len]
 			}
 
-			re = regex.regex_opt(r'.*\s+android:targetSdkVersion\s*=\s*"(.*)".*') or { panic(err) }
+			re = regex.regex_opt(r'.*\s+android:targetSdkVersion\s*=\s*"(.*)".*') or {
+				return error('${@FN}: ${err}')
+			}
 			start, _ = re.match_string(manifest)
 			if start >= 0 && re.groups.len > 0 {
 				if opt.verbosity > 1 {
@@ -1145,7 +1153,7 @@ fn prepare_package_base(opt PackageOptions) !PackageBase {
 			}
 
 			re = regex.regex_opt(r'.*uses-feature android:glEsVersion\s*=\s*"(.*)".*') or {
-				panic(err)
+				return error('${@FN}: ${err}')
 			}
 			start, _ = re.match_string(manifest)
 			if start >= 0 && re.groups.len > 0 {
@@ -1158,7 +1166,9 @@ fn prepare_package_base(opt PackageOptions) !PackageBase {
 					manifest[re.groups[1]..manifest.len]
 			}
 
-			re = regex.regex_opt(r'.*<activity\s.*android:name\s*=\s*"(.*)".*>') or { panic(err) }
+			re = regex.regex_opt(r'.*<activity\s.*android:name\s*=\s*"(.*)".*>') or {
+				return error('${@FN}: ${err}')
+			}
 			start, _ = re.match_string(manifest)
 			if start >= 0 && re.groups.len > 0 {
 				fq_activity_name := opt.package_id + '.' + opt.activity_name
@@ -1170,15 +1180,15 @@ fn prepare_package_base(opt PackageOptions) !PackageBase {
 					manifest[re.groups[1]..manifest.len]
 			}
 
-			os.write_file(manifest_path, manifest) or { panic(err) }
+			os.write_file(manifest_path, manifest) or { return error('${@FN}: ${err}') }
 		}
 	}
 	// Replace in res/values/strings.xml
 	strings_path := os.join_path(package_path, 'res', 'values', 'strings.xml')
 	if os.is_file(strings_path) {
-		mut content := os.read_file(strings_path) or { panic(err) }
+		mut content := os.read_file(strings_path) or { return error('${@FN}: ${err}') }
 		mut re := regex.regex_opt(r'.*<resources>.*<string\s*name\s*=\s*"v_app_name"\s*>(.*)</string.*') or {
-			panic(err)
+			return error('${@FN}: ${err}')
 		}
 		mut start, _ := re.match_string(content)
 		// Set app name if found
@@ -1187,7 +1197,7 @@ fn prepare_package_base(opt PackageOptions) !PackageBase {
 		}
 		// Set lib name if found
 		re = regex.regex_opt(r'.*<resources>.*<string\s*name\s*=\s*"v_lib_name"\s*>(.*)</string.*') or {
-			panic(err)
+			return error('${@FN}: ${err}')
 		}
 		start, _ = re.match_string(content)
 		if start >= 0 && re.groups.len > 0 {
@@ -1195,14 +1205,14 @@ fn prepare_package_base(opt PackageOptions) !PackageBase {
 		}
 		// Set package ID if found
 		re = regex.regex_opt(r'.*<resources>.*<string\s*name\s*=\s*"v_package_name"\s*>(.*)</string.*') or {
-			panic(err)
+			return error('${@FN}: ${err}')
 		}
 		start, _ = re.match_string(content)
 		if start >= 0 && re.groups.len > 0 {
 			content = content[0..re.groups[0]] + opt.package_id + content[re.groups[1]..content.len]
 		}
 
-		os.write_file(strings_path, content) or { panic(err) }
+		os.write_file(strings_path, content) or { return error('${@FN}: ${err}') }
 	}
 
 	opt.verbose(1, 'Copying assets...')
@@ -1218,7 +1228,7 @@ fn prepare_package_base(opt PackageOptions) !PackageBase {
 	}
 
 	assets_path := os.join_path(package_path, 'assets')
-	paths.ensure(assets_path) or { panic(err) }
+	paths.ensure(assets_path) or { return error('${@FN}: ${err}') }
 
 	mut included_asset_paths := []string{}
 
@@ -1239,7 +1249,7 @@ fn prepare_package_base(opt PackageOptions) !PackageBase {
 	assets_by_side := os.join_path(assets_by_side_path, 'assets')
 	if os.is_dir(assets_by_side) {
 		opt.verbose(1, 'Including assets from "${assets_by_side}"')
-		os.cp_all(assets_by_side, assets_path, false) or { panic(err) }
+		os.cp_all(assets_by_side, assets_path, false) or { return error('${@FN}: ${err}') }
 		included_asset_paths << os.real_path(assets_by_side)
 	}
 	// Look for "assets" in dir above input dir.
@@ -1251,7 +1261,7 @@ fn prepare_package_base(opt PackageOptions) !PackageBase {
 				opt.verbose(2, 'Skipping "${assets_above}" since it\'s already included')
 			} else {
 				opt.verbose(1, 'Including assets from "${assets_above}"')
-				os.cp_all(assets_above, assets_path, false) or { panic(err) }
+				os.cp_all(assets_above, assets_path, false) or { return error('${@FN}: ${err}') }
 				included_asset_paths << os.real_path(assets_by_side)
 			}
 		}
@@ -1264,7 +1274,7 @@ fn prepare_package_base(opt PackageOptions) !PackageBase {
 			opt.verbose(2, 'Skipping "${assets_in_dir}" since it\'s already included')
 		} else {
 			opt.verbose(1, 'Including assets from "${assets_in_dir}"')
-			os.cp_all(assets_in_dir, assets_path, false) or { panic(err) }
+			os.cp_all(assets_in_dir, assets_path, false) or { return error('${@FN}: ${err}') }
 			included_asset_paths << assets_in_dir_resolved
 		}
 	}
@@ -1276,7 +1286,7 @@ fn prepare_package_base(opt PackageOptions) !PackageBase {
 				opt.verbose(2, 'Skipping "${user_asset}" since it\'s already included')
 			} else {
 				opt.verbose(1, 'Including assets from "${user_asset}"')
-				os.cp_all(user_asset, assets_path, false) or { panic(err) }
+				os.cp_all(user_asset, assets_path, false) or { return error('${@FN}: ${err}') }
 				included_asset_paths << user_asset_resolved
 			}
 		} else {
