@@ -28,13 +28,18 @@ welcome.
 
 ## Generating `mipmap-xxxhdpi` icons in the APK/AAB
 
-Yes. Pass `--icon-mipmaps` when building your application.
+Per default `vab` tries to keep APK/AAB's as "slim" as possible.
+So, per default, only one application icon is used/included when building packages.
 
-The icon mipmaps will be generated based on the image passed via `--icon /path/to/icon.png`,
-or if `--icon` is *not* passed (or invalid) `vab` will try and generate the mipmaps
-based on what image that may reside in the "package base files" directory's "`res/mipmap"`.
+If you want more icons for more screen sizes `vab` supports generating these when
+packing everything up for distribution via the `--icon-mipmaps` flag.
 
-For a vanilla build of `vab` the mipmap icons will be generated based on:
+When passing `--icon-mipmaps`, the icon mipmaps will be generated based on the
+image passed via `--icon /path/to/icon.png`, or if `--icon` is *not* passed (or invalid),
+`vab` will try and generate the mipmaps based on what image *may* reside in the
+"package base files" "`res/mipmap"` directory.
+
+For a vanilla build of `vab` the mipmap icons will thus be generated based on:
 `platforms/android/res/mipmap/icon.png`
 
 See [Package base files](https://github.com/vlang/vab/blob/master/docs/docs.md#package-base-files) for more info.
