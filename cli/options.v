@@ -64,6 +64,7 @@ pub mut:
 	c_flags                 []string @[long: 'cflag'; short: c; xdoc: 'Additional flags for the C compiler']
 	v_flags                 []string @[long: 'flag'; short: f; xdoc: 'Additional flags for the V compiler']
 	lib_name                string   @[ignore] // Generated field depending on names in input/flags
+	icon_mipmaps            bool     @[xdoc: 'Generate App mipmap(-xxxhdpi etc.) icons from either `--icon` or, if exists, a .png in app skeleton "res/mipmap" directory']
 	assets_extra            []string @[long: 'assets'; short: a; xdoc: 'Asset dir(s) to include in build']
 	libs_extra              []string @[long: 'libs'; short: l; xdoc: 'Lib dir(s) to include in build']
 	version_code            int      @[xdoc: 'Build version code (android:versionCode)']
@@ -908,6 +909,7 @@ pub fn (opt &Options) as_android_package_options() android.PackageOptions {
 		format:          format
 		activity_name:   opt.activity_name
 		icon:            opt.icon
+		icon_mipmaps:    opt.icon_mipmaps
 		version_code:    opt.version_code
 		v_flags:         opt.v_flags
 		input:           opt.input

@@ -188,6 +188,7 @@ pub fn args_to_options(arguments []string, defaults Options) !(Options, &flag.Fl
 		activity_name:          fp.string('activity-name', 0, defaults.activity_name,
 			'The name of the main activity (e.g. "VActivity")')
 		icon:                   fp.string('icon', 0, defaults.icon, 'App icon')
+		icon_mipmaps:           fp.bool('icon-mipmaps', 0, defaults.icon_mipmaps, 'Generate App mipmap(-xxxhdpi etc.) icons from either `--icon` or, if exists, a .png in app skeleton "res/mipmap" directory')
 		version_code:           fp.int('version-code', 0, defaults.version_code, 'Build version code (android:versionCode)')
 		//
 		output: fp.string('output', `o`, defaults.output, 'Path to output (dir/file)')

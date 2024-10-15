@@ -3,6 +3,7 @@
 module android
 
 import os
+import stbi
 import regex
 import semver
 import vab.java
@@ -20,6 +21,7 @@ pub const default_min_sdk_version = int($d('vab:default_min_sdk_version', 21))
 pub const default_base_files_path = get_default_base_files_path()
 pub const supported_package_formats = ['apk', 'aab']
 pub const supported_lib_folders = ['armeabi', 'arm64-v8a', 'armeabi-v7a', 'x86', 'x86_64']
+pub const mipmap_icon_sizes = [192, 144, 96, 72, 48]! // xxxhdpi, xxhdpi, xhdpi, hdpi, mdpi
 
 // PackageFormat holds all supported package formats
 pub enum PackageFormat {
@@ -43,6 +45,7 @@ pub:
 	package_id      string
 	activity_name   string
 	icon            string
+	icon_mipmaps    bool
 	version_code    int
 	v_flags         []string
 	input           string
@@ -63,6 +66,13 @@ pub fn (po &PackageOptions) verbose(verbosity_level int, msg string) {
 	if po.verbosity >= verbosity_level {
 		println(msg)
 	}
+}
+
+// package_root returns the path to the "package base files" that `vab`
+// (and the Java/SDK packaging tools) uses as a base for what to include in
+// the resulting APK or AAB package file archive.
+pub fn (po &PackageOptions) package_root() string {
+	return os.join_path(po.work_dir, 'package', '${po.format}')
 }
 
 fn get_default_base_files_path() string {
@@ -927,9 +937,11 @@ pub:
 	assets_path  string // Path to assets
 }
 
-// prepare_package_base prepares and modifies a package skeleton and returns the paths to them.
-// A "package skeleton" is a special structure of directories and files that `vab`'s
-// packaging step use to make the final APK or AAB package.
+// prepare_package_base prepares, modifies a "package base files" / app skeleton
+// and returns useful paths to itself and paths within it.
+//
+// An "Package base files" / App skeleton" is a special structure of files and
+// directories that `vab`'s packaging step use as a basis to make the final APK or AAB package.
 // prepare_package_base is run before Java tooling does the actual packaging.
 //
 // Preparing includes operations such as:
@@ -937,17 +949,9 @@ pub:
 // * Modifying template files, like `AndroidManifest.xml` or the Java Activity
 // * Moving files into place
 // * Copy assets to a location where `vab` can pick them up
-fn prepare_package_base(opt PackageOptions) !PackageBase {
-	format := match opt.format {
-		.apk {
-			'apk'
-		}
-		.aab {
-			'aab'
-		}
-	}
-	opt.verbose(1, 'Preparing ${format} base"')
-	package_path := os.join_path(opt.work_dir, 'package', format)
+pub fn prepare_package_base(opt PackageOptions) !PackageBase {
+	opt.verbose(1, 'Preparing ${opt.format} base"')
+	package_path := opt.package_root()
 	opt.verbose(2, 'Removing previous package directory "${package_path}"')
 	os.rmdir_all(package_path) or {}
 	paths.ensure(package_path) or { return error('${@FN}: ${err}') }
@@ -1215,16 +1219,39 @@ fn prepare_package_base(opt PackageOptions) !PackageBase {
 		os.write_file(strings_path, content) or { return error('${@FN}: ${err}') }
 	}
 
+	return PackageBase{
+		package_path: package_path
+		assets_path:  prepare_assets(opt)!
+	}
+}
+
+// prepare_assets depends on prepare_package_base...
+fn prepare_assets(opt PackageOptions) !string {
+	package_path := opt.package_root()
+
 	opt.verbose(1, 'Copying assets...')
 
+	icon_path := os.join_path(package_path, 'res', 'mipmap')
 	is_default_pkg_id := opt.package_id == opt.default_package_id
 	if !is_default_pkg_id && os.is_file(opt.icon) && os.file_ext(opt.icon) == '.png' {
-		icon_path := os.join_path(package_path, 'res', 'mipmap')
-		paths.ensure(icon_path) or { panic(err) }
+		paths.ensure(icon_path) or { return error('${@FN}: ${err}') }
 		icon_file := os.join_path(icon_path, 'icon.png')
 		opt.verbose(1, 'Copying icon...')
 		os.rm(icon_file) or {}
-		os.cp(opt.icon, icon_file) or { panic(err) }
+		os.cp(opt.icon, icon_file) or { return error('${@FN}: ${err}') }
+	}
+	if opt.icon_mipmaps {
+		out_path := os.dir(icon_path) // should be "res" directory
+		template_icon_file := if opt.icon != '' {
+			opt.icon
+		} else {
+			ls := os.walk_ext(icon_path, '.png')
+			ls[ls.index(ls[0] or { '' })] or { '' }
+		}
+		if os.is_file(template_icon_file) {
+			opt.verbose(1, 'Generating mipmap icons...')
+			make_icon_mipmaps(template_icon_file, out_path)
+		}
 	}
 
 	assets_path := os.join_path(package_path, 'assets')
@@ -1295,9 +1322,63 @@ fn prepare_package_base(opt PackageOptions) !PackageBase {
 			}
 		}
 	}
-	return PackageBase{
-		package_path: package_path
-		assets_path:  assets_path
+	return assets_path
+}
+
+fn make_icon_mipmaps(icon_file string, out_path string) {
+	mut img := stbi.load(icon_file, desired_channels: 0) or {
+		vabutil.vab_error('${@FN}: error loading ${icon_file}: ${err}')
+		return
+	}
+	defer { img.free() }
+
+	mut threads := []thread{}
+	for size in mipmap_icon_sizes {
+		threads << spawn make_icon_mipmap(img, out_path, size, size)
+	}
+	threads.wait()
+}
+
+fn make_icon_mipmap(img stbi.Image, out_path string, w int, h int) {
+	res_str := match w {
+		192 {
+			'xxxhdpi'
+		}
+		144 {
+			'xxhdpi'
+		}
+		96 {
+			'xhdpi'
+		}
+		72 {
+			'hdpi'
+		}
+		48 {
+			'mdpi'
+		}
+		else {
+			vabutil.vab_error('${@FN}: unsupported width of ${w} passed')
+			return
+		}
+	}
+	rs_img := stbi.resize_uint8(img, w, h) or {
+		vabutil.vab_error('${@FN}: error resizing ${w} to ${out_path}: ${err}')
+		return
+	}
+	defer { rs_img.free() }
+	new_path := os.join_path(out_path, 'mipmap-${res_str}')
+
+	// eprintln(rs_img)
+	os.mkdir_all(new_path) or {
+		vabutil.vab_error('${@FN}: error creating output directory ${new_path}: ${err}')
+		return
+	}
+	out_file := os.join_path(new_path, 'icon.png')
+	os.rm(out_file) or {}
+	stbi.stbi_write_png(out_file, rs_img.width, rs_img.height, rs_img.nr_channels, rs_img.data,
+		(rs_img.width * rs_img.nr_channels)) or {
+		vabutil.vab_error('${@FN}: error writing output file ${out_file}: ${err}')
+		return
 	}
 }
 

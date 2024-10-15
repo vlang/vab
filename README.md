@@ -84,7 +84,7 @@ You can build an Android app ready for the Play Store with the following command
 ```bash
 export KEYSTORE_PASSWORD="pass"
 export KEYSTORE_ALIAS_PASSWORD="word"
-vab -prod --name "V App" --package-id "com.example.app.id" --icon /path/to/file.png  --version-code <int> --keystore /path/to/sign.keystore --keystore-alias "example" /path/to/v/source/file/or/dir
+vab -prod --name "V App" --package-id "com.example.app.id" --icon-mipmaps --icon /path/to/file.png  --version-code <int> --keystore /path/to/sign.keystore --keystore-alias "example" /path/to/v/source/file/or/dir
 ```
 Do not submit apps using default values.
 Please make sure to adhere to all [guidelines](https://developer.android.com/studio/publish) of the app store you're publishing to.
