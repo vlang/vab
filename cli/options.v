@@ -530,7 +530,7 @@ pub fn (mut opt Options) ensure_launch_fields() {
 	}
 }
 
-// validate_env ensures that `Optins` meet all runtime requrements.
+// validate_env ensures that `Options` meet all runtime requrements.
 pub fn (opt &Options) validate_env() {
 	// Validate JDK
 	jdk_version := java.jdk_version()
@@ -620,6 +620,9 @@ To use a specific version you can use `${exe_short_name} --build-tools "<version
 		}
 		exit(1)
 	}
+
+	// Give notices for know mismatches of various things
+	notify_known_errors(opt)
 }
 
 // resolve_output modifies `Options.output` according to what `Option.input` contains.
