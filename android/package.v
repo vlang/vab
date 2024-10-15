@@ -947,7 +947,7 @@ pub:
 // * Modifying template files, like `AndroidManifest.xml` or the Java Activity
 // * Moving files into place
 // * Copy assets to a location where `vab` can pick them up
-fn prepare_package_base(opt PackageOptions) !PackageBase {
+pub fn prepare_package_base(opt PackageOptions) !PackageBase {
 	opt.verbose(1, 'Preparing ${opt.format} base"')
 	package_path := opt.package_root()
 	opt.verbose(2, 'Removing previous package directory "${package_path}"')
