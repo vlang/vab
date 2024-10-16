@@ -530,7 +530,7 @@ pub fn (mut opt Options) ensure_launch_fields() {
 	}
 }
 
-// validate_env ensures that `Optins` meet all runtime requrements.
+// validate_env ensures that `Options` meet all runtime requrements.
 pub fn (opt &Options) validate_env() {
 	// Validate JDK
 	jdk_version := java.jdk_version()
