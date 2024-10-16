@@ -245,6 +245,7 @@ fn main() {
 	}
 	android.package(pck_opt) or {
 		util.vab_error('Packaging did not succeed', details: '${err}')
+		cli.doctor_remedy(pck_opt, err.msg()) // Suggest possible fixes to known errors
 		exit(1)
 	}
 

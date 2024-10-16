@@ -620,9 +620,6 @@ To use a specific version you can use `${exe_short_name} --build-tools "<version
 		}
 		exit(1)
 	}
-
-	// Give notices for know mismatches of various things
-	notify_known_errors(opt)
 }
 
 // resolve_output modifies `Options.output` according to what `Option.input` contains.
