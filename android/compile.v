@@ -57,6 +57,16 @@ pub fn (opt CompileOptions) uses_gc() bool {
 	return uses_gc
 }
 
+// has_v_d_flag returns true if `d_flag` (-d <ident>) can be found among the passed v flags.
+pub fn (opt CompileOptions) has_v_d_flag(d_flag string) bool {
+	for v_flag in opt.v_flags {
+		if v_flag.contains('-d ${d_flag}') {
+			return true
+		}
+	}
+	return false
+}
+
 // is_debug_build returns true if either `-cg` or `-g` flags is found among the passed v flags.
 pub fn (opt CompileOptions) is_debug_build() bool {
 	return '-cg' in opt.v_flags || '-g' in opt.v_flags
@@ -695,7 +705,9 @@ pub fn compile_v_c_dependencies(opt CompileOptions, v_meta_info VMetaInfo) !VImp
 				defines << '-DGC_ASSERTIONS'
 				defines << '-DGC_ANDROID_LOG'
 			}
-			defines << '-DGC_THREADS=1'
+			if !opt.has_v_d_flag('no_gc_threads') {
+				defines << '-DGC_THREADS=1'
+			}
 			defines << '-DGC_BUILTIN_ATOMIC=1'
 			defines << '-D_REENTRANT'
 			// NOTE it's currently a little unclear why this is needed.
