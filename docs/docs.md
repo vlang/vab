@@ -245,7 +245,7 @@ app window and (OpenGL) acceleration context, usually have framework-like behavi
 means that they usually require full authority over the way they start up and open the
 [NativeActivity](https://developer.android.com/ndk/reference/group/native-activity) which is the entry point for *native* graphical apps.
 
-This is often the reason why a lot of fiddling is required to get C libs like `SDL2`, `sokol_app`
+This is often the reason why a lot of fiddling is required to get C libs like `SDL`, `sokol_app`
 and `RayLib` mixed with V code; *All of them* want control over how the window/context is opened.
 
 Luckily V allows for outputting code which is agnostic to who or what will open the window.
@@ -263,10 +263,10 @@ The former, `-apk`, tells V that we want to prepare the code for packaging - thi
 code is generated to support V's graphical backend (`gg`/`sokol.app`) - this means that
 V will take control of the window opening and acceleration context.
 
-Sometimes you want your code to compile for other frameworks like e.g. RayLib or SDL2
+Sometimes you want your code to compile for other frameworks like e.g. RayLib or SDL
 in this case you'll need the former, `-d no_sokol_app` flag.
 This makes sure that V doesn't take control of the initial window opening process
-leading the way for e.g. SDL2 or RayLib to control it instead.
+leading the way for e.g. SDL or RayLib to control it instead.
 
 If you want to do this *programmatically* you can use
 the following V code to use `vab` to produce it.
@@ -439,7 +439,7 @@ In `vab` terms this feature is called *extra commands* and can be enabled by pas
 ## Example extra command
 
 An example of one such *extra command* is [`larpon/vab-sdl`](https://github.com/larpon/vab-sdl/) which makes it easier
-to compile and run V applications that uses SDL2 via ['vlang/sdl'](https://github.com/vlang/sdl/)
+to compile and run V applications that uses SDL2 and SDL3 via ['vlang/sdl'](https://github.com/vlang/sdl/)
 on Android via `vab`.
 
 To enable support for this in `vab`, you can do the following:
