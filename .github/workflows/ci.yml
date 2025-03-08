@@ -325,20 +325,20 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 10
     env:
-      VAB_FLAGS: -cg -v 3 --api 31 --build-tools 30.0.3
+      VAB_FLAGS: -cg -v 3 --api 31 --build-tools 35.0.1
     steps:
 
-    #- uses: actions/setup-java@v4
-      #with:
-        #distribution: 'adopt'
-        #java-version: 15
+    - uses: actions/setup-java@v4
+      with:
+        distribution: 'adopt'
+        java-version: 17
 
     - name: Install V
-      uses: vlang/setup-v@v1
+      uses: vlang/setup-v@v1.4
       with:
         check-latest: true
 
-    # TODO https://github.com/vlang/setup-v/issues
+      # TODO: https://github.com/vlang/setup-v/issues
     - name: Checkout V examples
       uses: actions/checkout@v4
       with:
@@ -353,7 +353,7 @@ jobs:
     - name: Simulate "v install vab"
       run: Move-Item -Path .\vab -Destination $HOME\.vmodules\vab -force
 
-# TODO fails on Windows
+# TODO: fails on Windows
 #    - name: Build vab with -prod
 #      run: v -prod "$HOME\.vmodules\vab"
 
@@ -366,9 +366,9 @@ jobs:
     - name: Run vab --help
       run: vab --help
 
-    - name: Install Java 8 matching build-tools
+    - name: Install Java matching build-tools
       run: |
-        vab install "build-tools;30.0.3"
+        vab install "build-tools;35.0.1"
 
     - name: Install AAB dependencies
       run: |
