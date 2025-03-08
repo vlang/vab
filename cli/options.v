@@ -788,10 +788,10 @@ The minimum supported NDK version is "${ndk.min_supported_version}"'
 		opt.archs = archs
 	}
 
-	// Nice to have in verbose output when troubleshooting deployment
+	// Nice to know since it triggers implicit deployment/running (convenient for troubleshooting).
 	android_serial := os.getenv('ANDROID_SERIAL')
 	if android_serial != '' && opt.device_id == android_serial {
-		opt.verbose(2, 'Using device "${opt.device_id}" from ANDROID_SERIAL env variable')
+		util.vab_notice('Using device "${opt.device_id}" from ANDROID_SERIAL env variable')
 	}
 }
 
