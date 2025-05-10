@@ -9,18 +9,18 @@ on:
       - "**.md"
 
 concurrency:
-  group: general-${{ github.event.pull_request.number || github.sha }}
+  group: ${{ github.workflow }}-${{ github.ref == 'refs/heads/master' && github.sha || github.ref }}
   cancel-in-progress: true
 
 jobs:
   code-formatting:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
       VFLAGS: -cc tcc
     steps:
     - name: Checkout V
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         repository: vlang/v
 
@@ -28,7 +28,7 @@ jobs:
       run: make -j4 && sudo ./v symlink
 
     - name: Checkout vab
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         path: vab
 
@@ -64,7 +64,7 @@ jobs:
       VAB_FLAGS: -v 3
     steps:
     - name: Checkout V
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         repository: vlang/v
 
@@ -72,15 +72,12 @@ jobs:
       run: make -j4 && sudo ./v symlink
 
     - name: Checkout vab
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         path: vab
 
     - name: Simulate "v install vab"
       run: mv vab ~/.vmodules
-
-    - name: Run tests
-      run: v test ~/.vmodules/vab
 
     - name: Build vab with -prod
       run: v -prod ~/.vmodules/vab
@@ -98,29 +95,29 @@ jobs:
       run: |
         sudo rm -fr /usr/local/lib/android
 
-    - name: Run 'vab doctor'
+    - name: Run 'vab doctor' before
       run: vab doctor
 
     - name: Run 'vab install auto'
       run: |
-        export ANDROID_SDK_ROOT="" # These are set in the CI by default
-        export ANDROID_HOME=""
-        export ANDROID_NDK_ROOT=""
+        unset ANDROID_SDK_ROOT # These are set in the CI by default
+        unset ANDROID_HOME
+        unset ANDROID_NDK_ROOT
         vab install auto
 
-    - name: Run vab doctor
+    - name: Run 'vab doctor' after
       run: vab doctor
 
     - name: Test vab complete
       run: |
         [ "$(vab complete bash vab com)" = "COMPREPLY+=('complete')" ]
 
-    - name: Setup env
-      run: |
-        mkdir apks
+    - name: Run tests
+      run: v test ~/.vmodules/vab
 
     - name: Build APK (Default) examples/sokol/particles
       run: |
+        mkdir apks
         vab examples/sokol/particles -o apks/particles.apk
         [ -f apks/particles.apk ]
 
@@ -131,7 +128,7 @@ jobs:
       VAB_FLAGS: -v 3
     steps:
     - name: Checkout V
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         repository: vlang/v
 
@@ -139,15 +136,12 @@ jobs:
       run: make -j4 && sudo ./v symlink
 
     - name: Checkout vab
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         path: vab
 
     - name: Simulate "v install vab"
       run: mv vab ~/.vmodules
-
-    - name: Run tests
-      run: v test  ~/.vmodules/vab
 
     - name: Build vab with -prod
       run: v -prod  ~/.vmodules/vab
@@ -180,14 +174,73 @@ jobs:
     - name: Run vab doctor
       run: vab doctor
 
-    - name: Setup env
-      run: |
-        mkdir apks
+    - name: Run tests
+      run: v test ~/.vmodules/vab
 
     - name: Build APK (Default) examples/sokol/particles
       run: |
+        mkdir apks
         vab examples/sokol/particles -o apks/particles.apk
         [ -f apks/particles.apk ]
+
+  ubuntu-latest-extra-command:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      VFLAGS: -d vab_allow_extra_commands
+      VAB_FLAGS: -v 3
+    steps:
+    - name: Checkout V
+      uses: actions/checkout@v4
+      with:
+        repository: vlang/v
+
+    - name: Build local v
+      run: make -j4 && sudo ./v symlink
+
+    - name: Install dependencies
+      run: |
+        v retry -- sudo apt-get update
+        v retry -- sudo apt-get install --quiet -y libsdl2-dev libsdl2-ttf-dev
+        v retry -- sudo apt-get install --quiet -y libsdl2-mixer-dev libsdl2-image-dev
+       
+    - name: Checkout SDL
+      uses: actions/checkout@v4
+      with:
+        repository: vlang/sdl
+        fetch-depth: 0
+        path: sdl
+
+    - name: Simulate "v install sdl"
+      run: mv sdl ~/.vmodules
+
+    - name: Setup vlang/sdl
+      run: v ~/.vmodules/sdl/setup.vsh
+
+    - name: Checkout vab
+      uses: actions/checkout@v4
+      with:
+        path: vab
+
+    - name: Install vab
+      run: |
+        mv vab ~/.vmodules
+        v -g ~/.vmodules/vab
+        sudo ln -s ~/.vmodules/vab/vab /usr/local/bin/vab
+
+    - name: Run 'vab --help'
+      run: vab --help
+
+    - name: Install extra command
+      run: |
+        vab install extra larpon/vab-sdl
+
+    - name: Run vab doctor
+      run: vab doctor
+
+    - name: Test extra command
+      run: |
+        vab sdl doctor
 
   ubuntu-latest-vab-can-live-anywhere:
     runs-on: ubuntu-latest
@@ -196,7 +249,7 @@ jobs:
       VAB_FLAGS: -v 3
     steps:
     - name: Checkout V
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         repository: vlang/v
 
@@ -204,15 +257,12 @@ jobs:
       run: make -j4 && sudo ./v symlink
 
     - name: Checkout vab
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         path: vab
 
     - name: Simulate "v install vab"
       run: mv vab ~/.vmodules
-
-    - name: Run tests
-      run: v test  ~/.vmodules/vab
 
     - name: Build vab
       run: v -g ~/.vmodules/vab
@@ -227,21 +277,21 @@ jobs:
     - name: Run 'vab doctor'
       run: /usr/bin/vab doctor
 
-    - name: Setup env
-      run: |
-        mkdir apks
+    - name: Run tests
+      run: v test ~/.vmodules/vab
 
     - name: Build APK (Default) examples/sokol/particles
       run: |
+        mkdir apks
         /usr/bin/vab examples/sokol/particles -o apks/particles.apk
         [ -f apks/particles.apk ]
 
   v-compiles-os-android:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
     - name: Checkout V
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         repository: vlang/v
 
@@ -249,15 +299,12 @@ jobs:
       run: make -j4 && sudo ./v symlink
 
     - name: Checkout vab
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         path: vab
 
     - name: Simulate "v install vab"
       run: mv vab ~/.vmodules/
-
-    - name: Run tests
-      run: v test  ~/.vmodules/vab
 
     - name: Build vab
       run: v -g ~/.vmodules/vab
@@ -274,103 +321,39 @@ jobs:
     - name: Check `v -os android` *without* -apk flag
       run: .github/workflows/android_cross_compile.vsh
 
-  #macos-latest-bootstrap:
-    #runs-on: macOS-latest
-    #timeout-minutes: 10
-    #steps:
-    #- name: Checkout V
-      #uses: actions/checkout@v2
-      #with:
-        #repository: vlang/v
-
-    #- name: Build local v
-      #run: make -j4
-
-    #- name: Checkout vab
-      #uses: actions/checkout@v2
-      #with:
-        #path: vab
-
-    #- name: Run tests
-      #run: ./v test vab
-
-    #- name: Build vab with -prod
-      #run: ./v -prod vab/vab.v
-
-    #- name: Build vab
-      #run: ./v -g vab/vab.v
-
-    #- name: Run 'vab --help'
-      #run: vab/vab --help
-
-    #- name: Ruin Android environment on purpose
-      #run: |
-        #sudo rm -fr "$HOME/Library/Android"
-
-    #- name: Run 'vab doctor'
-      #run: |
-        #export VEXE=./v
-        #vab/vab doctor
-
-    #- name: Run 'vab install auto'
-      #run: |
-        #export ANDROID_SDK_ROOT="" # These are set in the CI by default
-        #export ANDROID_HOME=""
-        #export ANDROID_NDK_ROOT=""
-        #export VEXE=./v
-        ## Sometimes this step fails in CI???
-        ##vab/vab -v 3 install auto
-
-    #- name: Run vab doctor
-      #run: |
-        #export VEXE=./v
-        #vab/vab doctor
-
-    #- name: Setup env
-      #run: |
-        #mkdir apks
-
-    #- name: Build APK (Default) examples/sokol/particles
-      #run: |
-        #export VEXE=./v
-        ##vab/vab -v 3 examples/sokol/particles -o apks/particles.apk
-
   windows-latest-build:
     runs-on: windows-latest
     timeout-minutes: 10
     env:
-      VAB_FLAGS: -cg -v 3 --api 30
+      VAB_FLAGS: -cg -v 3 --api 31 --build-tools 35.0.1
     steps:
 
-    #- uses: actions/setup-java@v2
-      #with:
-        #distribution: 'adopt'
-        #java-version: 15
+    - uses: actions/setup-java@v4
+      with:
+        distribution: 'adopt'
+        java-version: 17
 
     - name: Install V
-      uses: vlang/setup-v@v1
+      uses: vlang/setup-v@v1.4
       with:
         check-latest: true
 
-    # TODO https://github.com/vlang/setup-v/issues
+      # TODO: https://github.com/vlang/setup-v/issues
     - name: Checkout V examples
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         repository: vlang/v
         path: v
 
     - name: Checkout vab
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         path: vab
 
     - name: Simulate "v install vab"
       run: Move-Item -Path .\vab -Destination $HOME\.vmodules\vab -force
 
-    - name: Run tests
-      run: v test "$HOME\.vmodules\vab"
-
-# TODO fails on Windows
+# TODO: fails on Windows
 #    - name: Build vab with -prod
 #      run: v -prod "$HOME\.vmodules\vab"
 
@@ -382,6 +365,10 @@ jobs:
 
     - name: Run vab --help
       run: vab --help
+
+    - name: Install Java matching build-tools
+      run: |
+        vab install "build-tools;35.0.1"
 
     - name: Install AAB dependencies
       run: |
@@ -397,12 +384,65 @@ jobs:
         vab --list-build-tools
         vab --list-ndks
 
-    - name: Setup env
-      run: |
-        mkdir apks
-        # TODO mkdir aabs
+    - name: Run tests
+      run: v test "$HOME\.vmodules\vab"
 
     - name: Build APK (Default) v/examples/sokol/particles
       run: |
+        mkdir apks
         vab v\examples\sokol\particles -o apks\particles.apk
         # TODO vab/vab v/examples/sokol/particles -o aabs/particles.aab
+
+  macos-latest-build:
+    runs-on: macos-latest
+    timeout-minutes: 10
+    env:
+      VAB_FLAGS: -cg -v 3
+      VFLAGS: -no-parallel
+    steps:
+    - uses: actions/setup-java@v4
+      with:
+        distribution: 'adopt'
+        java-version: 17
+
+    - name: Checkout V
+      uses: actions/checkout@v4
+      with:
+        repository: vlang/v
+        path: v
+
+    - name: Build and install v
+      run: cd ./v && make && sudo ./v symlink
+
+    - name: Checkout vab
+      uses: actions/checkout@v4
+      with:
+        path: vab
+
+    - name: Simulate "v install vab"
+      run: mv vab ~/.vmodules
+
+    - name: Build vab with -prod
+      run: v -prod ~/.vmodules/vab
+
+    - name: Build vab
+      run: v -g ~/.vmodules/vab
+
+    - name: Symlink vab
+      run: sudo ln -s ~/.vmodules/vab/vab /usr/local/bin/vab
+
+    - name: Run vab --help
+      run: vab --help
+
+    - name: Run vab doctor
+      run: vab doctor
+
+    - name: Run tests
+      run: v test ~/.vmodules/vab
+
+    - name: Build APK (Default) examples/sokol/particles
+      run: |
+        mkdir apks
+        vab v/examples/sokol/particles -o apks/particles.apk
+        [ -f apks/particles.apk ]
+

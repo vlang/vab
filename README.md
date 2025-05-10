@@ -1,6 +1,6 @@
 # V Android Bootstrapper
 
-[Home](https://github.com/vlang/vab) • [Docs](https://github.com/vlang/vab/blob/master/docs/docs.md) • [FAQ](https://github.com/vlang/vab/blob/master/docs/FAQ.md)
+[Home](https://github.com/vlang/vab) • [Docs](docs/docs.md) • [FAQ](docs/FAQ.md)
 
 V Android Bootstrapper is the currently supported way
 to compile, package, sign and deploy V graphical apps on Android
@@ -42,7 +42,7 @@ here](https://github.com/vlang/vab/blob/3091ade4c9792c6a37596ccfa9299fb269d3160e
 In either case the following dependencies is required before `vab` will work
 as intented.
 
-Dependencies:
+## Runtime dependencies
  * V
  * Java (JDK) >= 8 (>= 9 on Windows)
  * Android SDK
@@ -84,7 +84,7 @@ You can build an Android app ready for the Play Store with the following command
 ```bash
 export KEYSTORE_PASSWORD="pass"
 export KEYSTORE_ALIAS_PASSWORD="word"
-vab -prod --name "V App" --package-id "com.example.app.id" --icon /path/to/file.png  --version-code <int> --keystore /path/to/sign.keystore --keystore-alias "example" /path/to/v/source/file/or/dir
+vab -prod --name "V App" --package-id "com.example.app.id" --icon-mipmaps --icon /path/to/file.png  --version-code <int> --keystore /path/to/sign.keystore --keystore-alias "example" /path/to/v/source/file/or/dir
 ```
 Do not submit apps using default values.
 Please make sure to adhere to all [guidelines](https://developer.android.com/studio/publish) of the app store you're publishing to.
@@ -122,10 +122,13 @@ KEYSTORE_ALIAS_PASSWORD  # Password for keystore alias
 BUNDLETOOL               # Absolute path to the bundletool to use
 AAPT2                    # Absolute path to the aapt2 to use
 ADB                      # Absolute path to the adb to use
+AVDMANAGER               # Absolute path to the avdmanager to use
+EMULATOR                 # Absolute path to the emulator to use
 ```
 
 ```bash
-VAB_FLAGS                # Use to pass flags to vab. Command-line flags overwrites any flags/values set via VAB_FLAGS.
+VAB_EXE                  # Absolute path to a vab executable (Used in tests and sub-cmd execution)
+VAB_FLAGS                # Used to pass flags to vab. Command-line flags overwrites any flags/values set via VAB_FLAGS.
 VAB_KILL_ADB             # Set to let vab kill adb after use. This is useful on some hosts.
 ```
 
@@ -196,6 +199,25 @@ The accompaning script used in the video can be found here:
 
 [https://github.com/MatejMagat305/vab-termux](https://github.com/MatejMagat305/vab-termux).
 
+# Examples
+
+See [*"Where is the `examples` folder?"*](docs/FAQ.md#where-is-the-examples-folder)
+in the [FAQ](docs/FAQ.md).
+
+# Tests
+
+`vab`, like many other V modules, can be tested with `v test .`.
+
+Note that `vab` has *runtime* tests that requires all [runtime dependencies](#runtime-dependencies)
+to be installed in order for the tests to run correctly.
+Runtime tests can be run with `vab test-runtime` (also part of `vab test-all`).
+
+# Extending `vab`
+
+The `vab` command-line tool can be extended with custom user commands.
+See the "[Extending `vab`](docs/docs.md#extending-vab)" section
+in the [documentation](docs/docs.md).
+
 # Notes
 
 `vab` targets as low an API level as possible by default for maximum
@@ -207,5 +229,5 @@ Installed API levels can be listed with `vab --list-apis`.
 # Troubleshooting
 
 Android is a complex ecosystem that has differences between
-build hosts and tool versions - please consult our [FAQ](docs/FAQ.md)
+build hosts and tool versions - consult our [FAQ](docs/FAQ.md)
 for answers to frequently asked questions.

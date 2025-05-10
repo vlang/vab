@@ -8,14 +8,18 @@ Welcome - and have a productive time using V and `vab`!
 # Contents
 
 - [Introduction](#introduction)
+- [Developing `vab`](#developing-vab)
 - [The V to Android App Development Cycle](#the-v-to-android-app-development-cycle)
+- [Tweaking defaults at compile time](#tweaking-defaults-at-compile-time)
 - [Using `vab` from the command line](#using-vab-from-the-command-line)
 - [Using `vab` programmatically](#using-vab-programmatically)
+- [Package base files](#package-base-files)
 - [Examples](#examples)
 - [Compile V code to Android Compatible C code](#compile-v-code-to-android-compatible-c-code)
 - [Compile C code to Android shared library (.so)](#compile-c-code-to-android-shared-library-so)
 - [Find and Invoke NDK Compiler Manually](#find-and-invoke-ndk-compiler-manually)
 - [Debugging](#debugging)
+- [Extending `vab`](#extending-vab)
 
 # Introduction
 
@@ -50,6 +54,26 @@ completely eliminate the need to use Android Studio in V development.
 With all this in mind `vab` was born to make life easier for V developers.
 You can install it by following the instructions [in the README.md](https://github.com/vlang/vab#install).
 
+# Developing `vab`
+
+Helping out the development of `vab` is easy but currently requires you to install `vab`
+via `git` so your repository works as expected.
+
+To install `vab` via `git` you need to first remove any existing `vab` module picked
+up by V. For example if you previously have installed `vab` [the official way](https://github.com/vlang/vab/#install)
+you need to remove `vab` from your V modules directory.
+
+Once any previous installed versions of `vab` is uninstalled you should do:
+
+`git clone git@github.com:vlang/vab.git ~/.vmodules/vab` on Unix-like systems,
+or
+`git clone git@github.com:vlang/vab.git %USERPROFILE%\.vmodules\vab` on Windows.
+
+Once cloned you should be able to build the `vab` CLI tool like [described in README.md](https://github.com/vlang/vab/#install).
+
+Developing and Pull Requests in `vab` follows the same setup and process as described
+in [V's official docs on example workflow for contributing](https://github.com/vlang/v/blob/master/CONTRIBUTING.md#example-workflow-for-contributing).
+
 # The V to Android App Development Cycle
 
 A typical V Android app development cycle will, roughly, include the following steps:
@@ -67,6 +91,20 @@ needed for the Android app to be able to start on the device OS.
 9. (Optionally) debug the app (via `adb logcat ...`).
 
 The developer is expected to take care of bullet point `1.` while `vab` will help cover the rest.
+
+# Tweaking defaults at compile time
+
+`vab` tries to strike a balance and be sane and fair about what default values are
+used. Should the defaults not fit your daily use they can be tweaked via V's
+powerful compile-time defines (`-d ident=value`).
+
+The following is a list of values that can be tweaked at compile time:
+* `default_app_name` via `-d vab:default_app_name='V Test App'`
+* `default_package_id` via `-d vab:default_package_id='io.v.android'`
+* `default_activity_name` via `-d vab:default_activity_name='VActivity'`
+* `default_package_format` via `-d vab:default_package_format='apk'`
+* `default_min_sdk_version` = `-d vab:default_min_sdk_version=21`
+* `default_base_files_path` via `-d vab:default_base_files_path=''`
 
 # Using `vab` from the command line
 
@@ -89,7 +127,7 @@ cli.doctor(...)
 
 On top, it's *recommended* that you have some experience with Android development already,
 as some terms and situations can be resolved more quickly with knowledge about the different
-areas and implications of Android developement.
+areas and implications of Android development.
 
 In some situations, calling `vab` from the command line might not fit
 a specific project, setup or problem at hand. You usually want more control
@@ -151,6 +189,49 @@ deploy_opt := android.DeployOptions{
 }
 android.deploy(deploy_opt) or { panic(err) }
 ```
+# Package base files
+
+"Package base files" (also sometimes referred to as "App skeleton") is a directory
+containing files and special directory tree structures that `vab`
+(and the Java/SDK packaging tools) use as a base for what to include in
+the resulting APK or AAB package file archive when compilation/building is done.
+
+It is usually found in a project's root next to the *executable* named
+"`platforms/android`".
+
+Both `vab` itself and/or any *[extra commands](#extending-vab)* can have a [`plaforms/android`](https://github.com/vlang/vab/tree/master/platforms/android)
+directory in the root of the project that contains files forming
+the basis of the APK/AAB package being built.
+
+The directories mostly follow the same structure and often provides different entires such as:
+
+* Custom `AndroidManifest.xml` tailored for the application/project.
+* Custom Java sources for e.g. the "main" Java activity (under `platforms/android/src`).
+* Custom resources like strings and icons (under `platforms/android/res`).
+
+See also [`fn prepare_package_base(opt PackageOptions) !PackageBase`](https://github.com/vlang/vab/blob/86d23cd703c0cfc2ce7df82535369a98d2f9d3b0/android/package.v#L940)
+in `android/package.v` as well as [`--icon-mipmaps`](https://github.com/vlang/vab/blob/master/docs/FAQ.md#generating-mipmap-xxxhdpi-icons-in-the-apkaab) in
+the [FAQ.md](https://github.com/vlang/vab/blob/master/docs/FAQ.md).
+
+## Package base *overrides*
+
+*Package base files* can also be provided/tweaked by user application sources
+via *their* `platforms/android` directory, or via the explicit `--package-overrides` flag,
+which will copy all contents of `--package-overrides <path>` *on top of* the contents
+provided as *package base files* (overwriting any files that may have the same name).
+This allows for tweaking certain code bases/setups instead of reshipping complete
+copies of *package base files*.
+
+Also note that special directories named "`java`" in root of projects can act as *implicit*
+`--package-overrides`... While this is not ideal, it has historically been a very useful
+way for modules/apps to provide tweaks to `vab`'s default *package base files*.
+
+A similar approach (a special `jni` directory) is being used by the Android NDKs own
+tooling (`ndk-build`) for various reasons and can thus be [found in other projects](https://github.com/libsdl-org/SDL/tree/main/android-project/app/jni)
+where it serves somewhat similar purposes.
+
+*`vab` does not treat any `jni` directories specially*, only the above mentioned to
+minimize any further confusion.
 
 # Examples
 
@@ -164,7 +245,7 @@ app window and (OpenGL) acceleration context, usually have framework-like behavi
 means that they usually require full authority over the way they start up and open the
 [NativeActivity](https://developer.android.com/ndk/reference/group/native-activity) which is the entry point for *native* graphical apps.
 
-This is often the reason why a lot of fiddling is required to get C libs like `SDL2`, `sokol_app`
+This is often the reason why a lot of fiddling is required to get C libs like `SDL`, `sokol_app`
 and `RayLib` mixed with V code; *All of them* want control over how the window/context is opened.
 
 Luckily V allows for outputting code which is agnostic to who or what will open the window.
@@ -182,10 +263,10 @@ The former, `-apk`, tells V that we want to prepare the code for packaging - thi
 code is generated to support V's graphical backend (`gg`/`sokol.app`) - this means that
 V will take control of the window opening and acceleration context.
 
-Sometimes you want your code to compile for other frameworks like e.g. RayLib or SDL2
+Sometimes you want your code to compile for other frameworks like e.g. RayLib or SDL
 in this case you'll need the former, `-d no_sokol_app` flag.
 This makes sure that V doesn't take control of the initial window opening process
-leading the way for e.g. SDL2 or RayLib to control it instead.
+leading the way for e.g. SDL or RayLib to control it instead.
 
 If you want to do this *programmatically* you can use
 the following V code to use `vab` to produce it.
@@ -263,9 +344,9 @@ compiler := ndk.compiler(.c, ndk_version, 'arm64-v8a', '21') or { panic(err) }
 // Get recommended, Android specific, flags (also used by e.g. Gradle) for the compiler
 // Make sure they fit the compiler you're targeting.
 compiler_flags := ndk.compiler_flags_from_config(ndk_version,
-	arch: 'arm64-v8a'
-	lang: .c
-	debug: true // false = if you want production flags (-prod)
+	arch:         'arm64-v8a'
+	lang:         .c
+	debug:        true                         // false = if you want production flags (-prod)
 	cpp_features: ['no-rtti', 'no-exceptions'] // Special features available for C++ compilers, ignored for C compilers
 ) or { panic(err) }
 
@@ -337,3 +418,58 @@ Ctrl+C to cancel logging
 ```
 Use Ctrl + C in the terminal to stop the output and disconnect from the device,
 leaving the app running on the device.
+
+# Extending `vab`
+
+Sometimes `vab`'s functionality is just not enough to reach a desired goal. An example of
+such a thing would be compiling and packaging of a thirdparty library or framework that requires a
+special way to be build, has a custom main entry function and/or a custom Java Android activity,
+or other factors that makes it impossible or very cumbersome to get things working with
+`v` and/or `vab`'s default functionality.
+
+One way to deal with such problems, without reinventing the wheel, is using `vab` as a module
+in combination with the feature that allows users to install and call thirdparty executables.
+
+In `vab` terms this feature is called *extra commands* and can be enabled by passing
+`-d vab_allow_extra_commands` when compiling `vab` with `v`.
+
+*Extra commands* is a powerful feature that allows users to extend `vab` with custom functionality
+*via the command-line*.
+
+## Example extra command
+
+An example of one such *extra command* is [`larpon/vab-sdl`](https://github.com/larpon/vab-sdl/) which makes it easier
+to compile and run V applications that uses SDL2 and SDL3 via ['vlang/sdl'](https://github.com/vlang/sdl/)
+on Android via `vab`.
+
+To enable support for this in `vab`, you can do the following:
+
+1. Enable *extra command* support when building `vab`:
+ ```bash
+ v -d vab_allow_extra_commands ~/.vmodules/vab
+ ```
+2. Install the [`larpon/vab-sdl`](https://github.com/larpon/vab-sdl/) *extra command*:
+ ```bash
+ vab install extra larpon/vab-sdl
+ ```
+3. Build your application that uses ['vlang/sdl'](https://github.com/vlang/sdl/), for example:
+ ```bash
+ vab sdl ~/.vmodules/sdl/examples/basic_window -o /tmp/sdl_app.apk
+ ```
+Notice how the *extra command* name `vab-sdl` is called as `vab sdl`.
+You should now be able to install `/tmp/sdl_app.apk` on your device and run the example
+without the need to do anything special.
+
+**NOTE** Use `vab doctor` to see more detailed information about *extra commands*
+including where they are installed and more.
+
+## Important notes about *extra commands*
+
+When you enable and use *extra commands* you are advised to be careful about installing and running
+thirdparty *extra command* software from sources you do not trust.
+
+When you enable and use *extra commands* it is likely that the developer team can not
+provide support for any bug or situation that an *extra command* may have caused.
+
+If possible, always refer to the author, source code and documentation of any *extra commands*
+for how to use the commands correctly.

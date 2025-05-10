@@ -7,12 +7,10 @@ import semver
 import vab.cache
 import vab.android.util
 
-pub const (
-	default_api_level                 = os.file_name(default_platforms_dir()).all_after('android-')
-	default_build_tools_version       = os.file_name(default_build_tools_dir())
-	min_supported_api_level           = '21'
-	min_supported_build_tools_version = '26.0.2'
-)
+pub const default_api_level = os.file_name(default_platforms_dir()).all_after('android-')
+pub const default_build_tools_version = os.file_name(default_build_tools_dir())
+pub const min_supported_api_level = '21'
+pub const min_supported_build_tools_version = '26.0.2'
 
 enum Component {
 	ndk
@@ -237,12 +235,6 @@ pub fn platforms_available() []string {
 		return []string{}
 	}
 	return platforms_dir_filter(util.ls_sorted(platforms_root()))
-}
-
-[deprecated: 'Please use platforms_available() instead']
-[deprecated_after: '2022-01-01']
-pub fn api_dirs() []string {
-	return platforms_available()
 }
 
 pub fn apis_available() []string {

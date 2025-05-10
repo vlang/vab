@@ -8,14 +8,10 @@ import vab.cache
 import vab.android.sdk
 import vab.android.util
 
-const (
-	home = os.home_dir()
-)
+const home = os.home_dir()
 
-pub const (
-	supported_archs       = ['arm64-v8a', 'armeabi-v7a', 'x86', 'x86_64']
-	min_supported_version = min_version_supported_by_vab()
-)
+pub const supported_archs = ['arm64-v8a', 'armeabi-v7a', 'x86', 'x86_64']
+pub const min_supported_version = min_version_supported_by_vab()
 
 pub enum CompilerLanguageType {
 	c
@@ -31,20 +27,18 @@ pub enum Tool {
 // However ANDROID_NDK_ROOT is widely used and the `sdkmanager` has support
 // for installing the NDK - and it will do so in a sub-folder (/ndk) of the SDK root.
 // This is also referred to as a "Side by side" install.
-const (
-	possible_ndk_paths_windows = [
-		os.join_path(sdk.root(), 'ndk'),
-		os.join_path(sdk.root(), 'ndk-bundle'),
-	]
-	possible_ndk_paths_macos   = [
-		os.join_path(sdk.root(), 'ndk'),
-		os.join_path(sdk.root(), 'ndk-bundle'),
-	]
-	possible_ndk_paths_linux   = [
-		os.join_path(sdk.root(), 'ndk'),
-		os.join_path(sdk.root(), 'ndk-bundle'),
-	]
-)
+const possible_ndk_paths_windows = [
+	os.join_path(sdk.root(), 'ndk'),
+	os.join_path(sdk.root(), 'ndk-bundle'),
+]
+const possible_ndk_paths_macos = [
+	os.join_path(sdk.root(), 'ndk'),
+	os.join_path(sdk.root(), 'ndk-bundle'),
+]
+const possible_ndk_paths_linux = [
+	os.join_path(sdk.root(), 'ndk'),
+	os.join_path(sdk.root(), 'ndk-bundle'),
+]
 
 // root will try to detect where the Android NDK is installed. Otherwise return blank
 pub fn root() string {
@@ -67,13 +61,13 @@ pub fn root() string {
 		// Detect OS type at runtime - in case we're in some exotic environment
 		uos := os.user_os()
 		if uos == 'windows' {
-			dirs = ndk.possible_ndk_paths_windows.clone()
+			dirs = possible_ndk_paths_windows.clone()
 		}
 		if uos == 'macos' {
-			dirs = ndk.possible_ndk_paths_macos.clone()
+			dirs = possible_ndk_paths_macos.clone()
 		}
 		if uos == 'linux' {
-			dirs = ndk.possible_ndk_paths_linux.clone()
+			dirs = possible_ndk_paths_linux.clone()
 		}
 
 		for dir in dirs {
@@ -186,18 +180,6 @@ pub fn has_version(version string) bool {
 	return version in versions_available()
 }
 
-/*
-pub fn versions_dir() []string {
-	return util.find_sorted(root())
-}
-*/
-
-[deprecated: 'Please use the min_version_supported const instead']
-[deprecated_after: '2022-10-01']
-pub fn min_version() string {
-	return min_version_supported_by_vab()
-}
-
 fn min_version_supported_by_vab() string {
 	uos := os.user_os()
 	return match uos {
@@ -217,7 +199,7 @@ fn min_version_supported_by_vab() string {
 }
 
 // host_arch returns the host architecture string for the platform which `vab` was compiled on.
-[inline]
+@[inline]
 pub fn host_arch() string {
 	$if linux {
 		return 'linux-x86_64'
@@ -236,7 +218,7 @@ pub fn host_arch() string {
 
 // arch_to_instruction_set maps `arch` to an instruction set
 // Example: assert ndk.arch_to_instruction_set('x86') == 'i686'
-[inline]
+@[inline]
 pub fn arch_to_instruction_set(arch string) string {
 	return match arch {
 		'armeabi-v7a' { 'armv7a' }
@@ -249,14 +231,14 @@ pub fn arch_to_instruction_set(arch string) string {
 
 // bin_path returns the absolute path to the host architecture's `bin` directory.
 // As an example: `/path/to/ndk/toolchains/llvm/prebuilt/linux-x86_64/bin`.
-[inline]
+@[inline]
 pub fn bin_path(ndk_version string) string {
 	return os.join_path(root_version(ndk_version), 'toolchains', 'llvm', 'prebuilt', host_arch(),
 		'bin')
 }
 
 // compiler_min_api returns a compiler with the lowest API level available for `arch` in `ndk_version`.
-pub fn compiler_min_api(lang_type CompilerLanguageType, ndk_version string, arch string) ?string {
+pub fn compiler_min_api(lang_type CompilerLanguageType, ndk_version string, arch string) !string {
 	available_compilers := available_ndk_compilers_by_api(lang_type, ndk_version, arch)
 	mut keys := available_compilers.keys().map(it.int())
 	keys.sort()
@@ -273,7 +255,7 @@ pub fn compiler_min_api(lang_type CompilerLanguageType, ndk_version string, arch
 }
 
 // compiler_max_api returns a compiler with the highest API level available for `arch` in `ndk_version`.
-pub fn compiler_max_api(lang_type CompilerLanguageType, ndk_version string, arch string) ?string {
+pub fn compiler_max_api(lang_type CompilerLanguageType, ndk_version string, arch string) !string {
 	available_compilers := available_ndk_compilers_by_api(lang_type, ndk_version, arch)
 	mut keys := available_compilers.keys().map(it.int())
 	keys.sort()
@@ -289,7 +271,7 @@ pub fn compiler_max_api(lang_type CompilerLanguageType, ndk_version string, arch
 		' couldn\'t locate ${lang_type} compiler for architecture "${arch}". Available compilers: ${available_compilers}. The NDK might be corrupt.')
 }
 
-pub fn compiler(lang_type CompilerLanguageType, ndk_version string, arch string, api_level string) ?string {
+pub fn compiler(lang_type CompilerLanguageType, ndk_version string, arch string, api_level string) !string {
 	available_compilers := available_ndk_compilers_by_api(lang_type, ndk_version, arch)
 	if compiler := available_compilers[api_level] {
 		return compiler
@@ -330,7 +312,7 @@ fn available_ndk_compilers_by_api(lang_type CompilerLanguageType, ndk_version st
 	return compilers
 }
 
-pub fn tool(tool_type Tool, ndk_version string, arch string) ?string {
+pub fn tool(tool_type Tool, ndk_version string, arch string) !string {
 	match tool_type {
 		.ar {
 			mut eabi := ''
@@ -341,9 +323,18 @@ pub fn tool(tool_type Tool, ndk_version string, arch string) ?string {
 			}
 			path := bin_path(ndk_version)
 			if os.is_dir(path) {
+				// NOTE: these *linux-android*-ar tools was deprecated in NDK r22 and removed in r23
 				mut ar := os.join_path(path, arch_is + '-linux-android${eabi}-ar')
 				$if windows {
 					ar += '.cmd' // TODO validate if this is correct
+				}
+				if os.is_file(ar) {
+					return ar
+				}
+				// Try `llvm-ar` which was introduced as default in NDK r22 (https://github.com/android/ndk/wiki/Changelog-r22)
+				ar = os.join_path(path, 'llvm-ar')
+				$if windows {
+					ar += '.exe'
 				}
 				if os.is_file(ar) {
 					return ar
@@ -364,8 +355,7 @@ pub fn compiler_triplet(arch string) string {
 	return arch_is + '-linux-android${eabi}'
 }
 
-[inline]
-pub fn libs_path(ndk_version string, arch string, api_level string) ?string {
+pub fn libs_path(ndk_version string, arch string, api_level string) !string {
 	mut host_architecture := host_arch()
 	mut arch_is := arch_to_instruction_set(arch)
 
@@ -379,17 +369,6 @@ pub fn libs_path(ndk_version string, arch string, api_level string) ?string {
 		host_architecture, 'sysroot', 'usr', 'lib', arch_is + '-linux-android' + eabi,
 		api_level)
 
-	/*
-	if !os.is_dir(libs_path) {
-		toolchains := util.ls_sorted(os.join_path(root_version(ndk_version),'toolchains'))
-		for toolchain in toolchains {
-			if toolchain.starts_with('llvm') {
-				libs_path = os.join_path(root_version(ndk_version),'toolchains',toolchain,'prebuilt',host_architecture,'sysroot','usr','lib',arch_is+'-linux-android'+eabi,api_level)
-				break
-			}
-		}
-	}
-	*/
 	if !os.is_dir(libs_path) {
 		return error(@MOD + '.' + @FN +
 			' couldn\'t locate libraries path "${libs_path}". You could try with a newer NDK version.')
@@ -398,8 +377,7 @@ pub fn libs_path(ndk_version string, arch string, api_level string) ?string {
 	return libs_path
 }
 
-[inline]
-pub fn sysroot_path(ndk_version string) ?string {
+pub fn sysroot_path(ndk_version string) !string {
 	// NOTE "$ndk_root/sysroot/usr/include" was deprecated since NDK r19
 	mut sysroot_path := os.join_path(root_version(ndk_version), 'toolchains', 'llvm',
 		'prebuilt', host_arch(), 'sysroot')
@@ -438,7 +416,7 @@ pub fn available_apis_by_arch(ndk_version string) map[string][]string {
 		from := i16(min_api_available(ndk_version).int())
 		to := i16(max_api_available(ndk_version).int()) + 1
 		if to > from {
-			for arch in ndk.supported_archs {
+			for arch in supported_archs {
 				for level in from .. to {
 					mut compiler := os.join_path(compiler_bin_path, compiler_triplet(arch) +
 						'${level}-clang')

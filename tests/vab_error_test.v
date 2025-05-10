@@ -1,23 +1,23 @@
+// vtest vflags: -d vab_no_notices
 import os
 import term
 import rand
 import toml
 import sync.pool
 import v.util.diff
-// import v.util.vtest
 import vab.vxt
+import vab.vabxt
 import runtime
 
-const (
-	vab_home       = os.real_path(os.dir(os.dir(@FILE)))
-	vab_test_dirs  = [
-		os.join_path(vab_home, 'tests'),
-	]
-	vexe           = vxt.vexe()
-	vab_exe        = compile_vab()
-	should_autofix = os.getenv('VAUTOFIX') != ''
-	empty_toml_map = map[string]toml.Any{}
-)
+const vab_home = os.real_path(os.dir(os.dir(@FILE)))
+const vab_test_dirs = [
+	os.join_path(vab_home, 'tests'),
+]
+const vexe = vxt.vexe()
+const vab_exe = vabxt.vabexe()
+
+const should_autofix = os.getenv('VAUTOFIX') != ''
+const empty_toml_map = map[string]toml.Any{}
 
 fn test_all() {
 	mut jobs := []TOMLTestJob{}
@@ -97,6 +97,7 @@ fn sync_run(job TOMLTestJob) &TOMLTestJobResult {
 	}.string()
 	expect_exit_code := doc.value('expect.exit_code').default_to(0).int()
 	diff_from_line := doc.value('compare.output.from_line').default_to(0).int()
+	ignore_lines_starting_with := ['notice:', 'details:', ' ']
 
 	expected_out_path := job.job_file.replace('.toml', '.out')
 
@@ -110,6 +111,7 @@ fn sync_run(job TOMLTestJob) &TOMLTestJobResult {
 		|| execute.contains('|') {
 		panic('Only single vab commands allowed')
 	}
+	os.unsetenv('ANDROID_SERIAL')
 	res := os.execute(execute.replace_once('vab', vab_exe))
 
 	mut expected := ''
@@ -125,6 +127,25 @@ fn sync_run(job TOMLTestJob) &TOMLTestJobResult {
 		}
 	}
 
+	if ignore_lines_starting_with.len > 0 {
+		mut filtered := []string{}
+		for line in found.split_into_lines() {
+			mut ignore := false
+			for ignore_string in ignore_lines_starting_with {
+				if line.starts_with(ignore_string) {
+					ignore = true
+					break
+				}
+			}
+			if !ignore {
+				filtered << line
+			} else {
+				println('ignoring line "${line}"')
+			}
+		}
+		found = filtered.join('\n')
+	}
+
 	success := expected == found && res.exit_code == expect_exit_code
 
 	if expected != found {
@@ -137,23 +158,15 @@ fn sync_run(job TOMLTestJob) &TOMLTestJobResult {
 	}
 
 	return &TOMLTestJobResult{
-		success: success
-		job: job
-		command: execute
-		expected: expected
-		expected_out_path: expected_out_path
-		found: found
+		success:            success
+		job:                job
+		command:            execute
+		expected:           expected
+		expected_out_path:  expected_out_path
+		found:              found
 		expected_exit_code: expect_exit_code
-		exit_code: res.exit_code
+		exit_code:          res.exit_code
 	}
-}
-
-fn compile_vab() string {
-	res := os.execute([vexe, '"${vab_home}"'].join(' '))
-	if res.exit_code != 0 {
-		panic('command failed building vab in "${vab_home}":\n${res.output}')
-	}
-	return os.join_path(vab_home, 'vab')
 }
 
 fn clean_line_endings(s string) string {

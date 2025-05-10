@@ -9,39 +9,38 @@ on:
       - "**.md"
 
 concurrency:
-  group: emulator-${{ github.event.pull_request.number || github.sha }}
+  group: ${{ github.workflow }}-${{ github.ref == 'refs/heads/master' && github.sha || github.ref }}
   cancel-in-progress: true
 
 jobs:
-  macos-latest-run-v-examples:
-    runs-on: macOS-latest
-    timeout-minutes: 45
+  ubuntu-latest-test-all:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
     env:
-      VAB_FLAGS: -cg -f '-d no_load_styles' -v 3 --api 30 --build-tools 29.0.0 --device auto --log-clear --archs x86_64
+      VAB_FLAGS: -cg -f '-d no_load_styles' -v 3 --api 30 --build-tools 33.0.2
+      VFLAGS: -no-parallel
     steps:
-    - uses: actions/setup-java@v2
+    - uses: actions/setup-java@v4
       with:
         distribution: 'adopt'
-        java-version: 8
+        java-version: 17
 
-    - name: Install V
-      uses: vlang/setup-v@v1
+    - name: Checkout V
+      uses: actions/checkout@v4
       with:
-        check-latest: true
+        repository: vlang/v
+        path: v
+
+    - name: Build and install v
+      run: cd ./v && make -j4 && sudo ./v symlink
 
     - name: Checkout vab
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         path: vab
 
     - name: Simulate "v install vab"
       run: mv vab ~/.vmodules
-
-    - name: Run tests
-      run: v test ~/.vmodules/vab
-
-    - name: Build vab with -prod
-      run: v -prod ~/.vmodules/vab
 
     - name: Build vab
       run: v -g ~/.vmodules/vab
@@ -52,124 +51,40 @@ jobs:
     - name: Run vab --help
       run: vab --help
 
-    - name: Install AAB dependencies
+    - name: Run vab doctor *before*
+      run: vab doctor
+
+    - name: Install dependencies
       run: |
+        v retry -- sudo apt update
+        v retry -- sudo apt install --quiet -y qemu-kvm
+        sudo chown $USER /dev/kvm
+
+    - name: Install SDK dependencies
+      run: |
+        vab install "platform-tools"
+        vab install "build-tools;33.0.2"
+        vab install "platforms;android-30"
+        vab install emulator
         vab install bundletool
         vab install aapt2
 
-    - name: Run vab doctor
+    - name: Run vab doctor *after*
       run: vab doctor
 
     - name: Cache emulator
       id: cache-emulator
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         path: |
-          /Users/runner/.android/avd
-          /Users/runner/Library/Android/sdk/system-images/android-30
-        key: ${{ runner.os }}-android-emulator-${{ hashFiles('/Users/runner/.android/avd') }}
+          /usr/local/lib/android/sdk/system-images/android-30
+        key: ${{ runner.os }}-android-emulator-${{ hashFiles('/usr/local/lib/android/sdk/system-images') }}
 
     - name: Prepare emulator
       if: steps.cache-emulator.outputs.cache-hit != 'true'
       run: |
-        export ANDROID_SDK_ROOT="$HOME/Library/Android/sdk"
-        echo yes | $ANDROID_SDK_ROOT/tools/bin/sdkmanager 'system-images;android-30;google_apis;x86_64'
-        echo no | $ANDROID_SDK_ROOT/tools/bin/avdmanager create avd --force --name test --abi google_apis/x86_64 --package 'system-images;android-30;google_apis;x86_64'
+        vab install 'system-images;android-30;aosp_atd;x86_64'
 
-    - name: Install and run V + V UI examples as APK and AAB
+    - name: Run `vab test-all`
       run: |
-        export ANDROID_SDK_ROOT="$HOME/Library/Android/sdk"
-        export ANDROID_NDK_ROOT="$ANDROID_SDK_ROOT/ndk-bundle"
-
-        # Don't set Java > 8 here (emulator can't be started otherwise, lol) #export JAVA_HOME=$JAVA_HOME_11_X64
-        #pgrep emulator >/dev/null 2>&1 ||
-        $ANDROID_SDK_ROOT/emulator/emulator -avd test -no-snapshot -no-window -no-boot-anim -camera-back emulated -camera-front emulated -gpu swiftshader_indirect &
-        adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed) ]]; do sleep 1; done;'
-
-        # Remove packages here if cache is run, and emulator failed
-
-        # Debugging
-        #export ADB_TAGS="SOKOL_APP:D"
-        #export ADB_TAGS="$ADB_TAGS V_ANDROID:D v_test_app:D"
-
-        echo "Installing V examples"
-        git clone --depth 1 https://github.com/vlang/v
-
-        # Test deployment of single file *after* build
-        vab --name "V DEPLOY TEST APK" v/examples/gg/bezier.v && vab v_deploy_test_apk.apk
-        vab --package aab --name "V DEPLOY TEST AAB" v/examples/gg/bezier.v && vab v_deploy_test_aab.aab
-
-        # 'flappylearning' can build but running is currently broken on Android
-        # Skip fireworks for now
-        declare -a v_examples=('2048' 'tetris' 'sokol/particles' 'sokol/drawing.v' 'sokol/freetype_raven.v' 'gg/bezier.v' 'gg/bezier_anim.v' 'gg/polygons.v' 'gg/raven_text_rendering.v' 'gg/rectangles.v' 'gg/stars.v' 'gg/worker_thread.v')
-
-        echo "Compiling V examples ${v_examples[@]}"
-        for example in "${v_examples[@]}"; do
-          #path_safe_name=$( echo "$example" | sed 's%/%-%' | sed 's%\.%-%' )
-          package_id=$( echo "$example" | sed 's%/%%' | sed 's%\.%%' )
-          package_id=$( echo "v$package_id" )
-
-          # APK
-          echo "Compiling apk from examples/$example ($package_id)"
-          vab --package-id "io.v.apk.$package_id" run v/examples/$example
-
-          # AAB
-          echo "Compiling aab from examples/$example ($package_id)"
-          vab --package aab --package-id "io.v.aab.$package_id" run v/examples/$example
-
-          # Remove app in case cache is run
-          adb uninstall "io.v.apk.$package_id"
-          adb uninstall "io.v.aab.$package_id"
-        done
-
-        # Output test
-        echo "Testing if v/examples/tetris can run..."
-        vab -g --package-id "io.v.ci.vab.apk.examples.tetris" run v/examples/tetris
-        sleep 5
-        adb -e logcat -d > /tmp/logcat.dump.txt
-        echo "Looking for traces of SOKOL_APP ok ..."
-        cat /tmp/logcat.dump.txt | grep -q 'SOKOL_APP: ... ok'; if [ ! $? -eq 0 ]; then cat /tmp/logcat.dump.txt; fi
-
-        # Remove app in case cache is run
-        echo "Uninstalling v/examples/tetris"
-        adb uninstall io.v.ci.vab.apk.examples.tetris
-
-        # V UI
-        echo "Installing V UI"
-        git clone --depth 1 https://github.com/vlang/ui
-        cd ui ; mkdir -p ~/.vmodules ; ln -s $(pwd) ~/.vmodules/ui ; cd ..
-
-        declare -a v_ui_examples=('rectangles.v')
-
-        echo "Compiling examples ${v_ui_examples[@]}"
-        for example in "${v_ui_examples[@]}"; do
-          package_id=$( echo "$example" | sed 's%/%%' | sed 's%\.%%' )
-          package_id=$( echo "v$package_id" )
-
-          # APK
-          echo "Compiling apk from ui/examples/$example ($package_id)"
-          vab --package-id "io.v.apk.ui.$package_id" run ui/examples/$example
-
-          # AAB
-          echo "Compiling aab from ui/examples/$example ($package_id)"
-          vab --package aab --package-id "io.v.aab.ui.$package_id" run ui/examples/$example
-
-          # Remove app in case cache is run
-          adb uninstall "io.v.apk.ui.$package_id"
-          adb uninstall "io.v.aab.ui.$package_id"
-        done
-
-        # Output test
-        echo "Testing if ui/examples/calculator can run..."
-        vab -g --package-id "io.v.ui.ci.examples.calculator" run ui/examples/calculator.v
-        sleep 5
-        adb -e logcat -d > /tmp/logcat.dump.txt
-        echo "Looking for traces of SOKOL_APP ok ..."
-        cat /tmp/logcat.dump.txt | grep -q 'SOKOL_APP: ... ok'; if [ ! $? -eq 0 ]; then cat /tmp/logcat.dump.txt; fi
-
-        # Remove app in case cache is run
-        echo "Uninstalling ui/examples/calculator"
-        adb uninstall io.v.ui.ci.examples.calculator
-
-        echo "Killing emulator"
-        adb -s emulator-5554 emu kill
+        vab test-all

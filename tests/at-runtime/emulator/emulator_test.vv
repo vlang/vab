@@ -1,0 +1,157 @@
+import os
+import vab.android.env
+import vab.android.emulator
+import vab.vxt
+import vab.vabxt
+import time
+
+const exe_name = os.file_name(os.executable())
+const exe_dir = os.dir(os.real_path(os.executable()))
+
+const test_dir_base = os.join_path(os.vtmp_dir(), 'vab', 'tests', 'runtime', 'emulator')
+const vab_test_avd = 'vab_emulator_tests'
+const test_v_examples = [
+	'2048',
+	'flappylearning',
+	'tetris',
+	'sokol/particles',
+	'sokol/drawing.v',
+	'sokol/freetype_raven.v',
+	'gg/bezier.v',
+	'gg/bezier_anim.v',
+	'gg/polygons.v',
+	'gg/raven_text_rendering.v',
+	'gg/rectangles.v',
+	'gg/stars.v',
+	'gg/worker_thread.v',
+]
+
+const env_is_managable = env.managable()
+
+const is_ci = os.getenv('CI') != ''
+
+fn test_run_on_emulator() {
+	ensure_env()
+
+	vab := vabxt.vabexe()
+
+	mut emu := emulator.make()!
+	emu.start(
+		verbosity:  3
+		await_boot: true
+		wipe_data:  true
+		visible:    !is_ci // show window on desktop
+		avd:        vab_test_avd
+		// acceleration: 'off'
+	)!
+
+	for example in test_v_examples {
+		test_dir := setup_test_dir('${@FN}_${os.file_name(example)}')
+		package_id := 'io.v.apk.v${example.replace('/', '.')}'
+		vab_cmd := [vab, '--package-id', package_id, '--device', emu.name, 'run', v_example(example),
+			'-o', test_dir]
+		res := run(vab_cmd)
+		if res.exit_code != 0 {
+			eprintln('error: ${res.output}')
+			assert false, 'Emulator test failed'
+		}
+
+		time.sleep(250 * time.millisecond)
+	}
+
+	emu.stop()
+}
+
+fn ensure_env() {
+	assert env.has_sdkmanager() == true, 'These tests requires a working `sdkmanager` installed'
+	assert env.has_avdmanager() == true, 'These tests requires a working `avdmanager` installed'
+	v_exe := vxt.vexe()
+	assert v_exe != '', 'V needs to be installed and working'
+	vab_exe := vabxt.vabexe()
+	assert vab_exe != '', 'vab needs to be fully installed and working'
+	vab_home := vabxt.home()
+	assert vab_home != ''
+
+	// vab (per design) implicitly deploys to any devices sat via `--device-id`.
+	// Make sure no deployment is done after build if CI/other sets `ANDROID_SERIAL`
+	os.unsetenv('ANDROID_SERIAL')
+
+	if !env.has_emulator() {
+		assert env_is_managable == true, 'These tests requires a *writable* SDK'
+		eprintln('No emulator detected. Installing...')
+		install_emulator_res := run([vab_exe, 'install', 'emulator'])
+		if install_emulator_res.exit_code != 0 {
+			eprintln(install_emulator_res.output)
+			exit(1)
+		}
+	}
+	assert env.has_emulator() == true, 'These tests requires a working `emulator` installed'
+
+	// TODO: add env.has_system_image('android-XY','type','host-arch')
+
+	if !emulator.Emulator.has_avd(vab_test_avd) {
+		avdmanager := env.avdmanager()
+		eprintln('${exe_name} ${vab_test_avd} not found. Creating...')
+		avdmanager_create_res := run(['echo', 'no', '|', avdmanager, '--verbose', 'create', 'avd',
+			'--force', '--name', vab_test_avd, '--abi', 'aosp_atd/x86_64', '--package',
+			"'system-images;android-30;aosp_atd;x86_64'"])
+		if avdmanager_create_res.exit_code != 0 {
+			eprintln(avdmanager_create_res.output)
+			exit(1)
+		}
+	}
+
+	// TODO: find out how to fix this dumb mess for users
+	if !emulator.Emulator.has_avd(vab_test_avd) {
+		// Locating a deterministic location of AVD's has, like so many other Android related things, become a mess.
+		// (`avdmanager` can put them in places that the `emulator` does not pickup on the *same* host etc... Typical Google-mess)
+		// ... even passing `--path` to `avdmanager` does not work.
+		// Here we try a few places and set `ANDROID_AVD_HOME` to make runs a bit more predictable.
+		mut avd_home := os.join_path(os.home_dir(), '.android', 'avd')
+		eprintln('warning: "${vab_test_avd}" still not detected by emulator... trying new location "${avd_home}"')
+		os.setenv('ANDROID_AVD_HOME', avd_home, true)
+
+		if !emulator.Emulator.has_avd(vab_test_avd) {
+			config_dir := os.config_dir() or {
+				eprintln('${exe_name} error: ${err}')
+				exit(1)
+			}
+			avd_home = os.join_path(config_dir, '.android', 'avd')
+			eprintln('warning: "${vab_test_avd}" still not detected by emulator... trying new location "${avd_home}"')
+			os.setenv('ANDROID_AVD_HOME', avd_home, true)
+		}
+	}
+	eprintln('Listing avds after creation...')
+	avds := emulator.Emulator.list_avds() or {
+		eprintln('${exe_name} error: ${err}')
+		exit(1)
+	}
+	for avd, path in avds {
+		eprintln('${avd}: ${path}')
+	}
+	if !emulator.Emulator.has_avd(vab_test_avd) {
+		eprintln('error: "${vab_test_avd}" still not in list: ${avds.keys()}')
+		exit(1)
+	}
+}
+
+fn setup_test_dir(id string) string {
+	test_dir := os.join_path(test_dir_base, id)
+	os.rm(test_dir) or {}
+	os.mkdir_all(test_dir) or { panic('mkdir_all failed making "${test_dir}": ${err}') }
+	return test_dir
+}
+
+fn v_example(path string) string {
+	v_root := vxt.home()
+	examples_root := os.join_path(v_root, 'examples')
+	example := os.join_path(examples_root, ...path.split('/'))
+	assert os.is_file(example) || os.is_dir(example) == true, 'example not found. Ensure a full V source install (with examples) is present'
+	return example
+}
+
+fn run(args []string) os.Result {
+	cmd := args.join(' ')
+	eprintln('${exe_name} running: ${cmd}')
+	return os.execute(cmd)
+}

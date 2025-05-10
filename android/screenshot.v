@@ -4,11 +4,11 @@ module android
 
 import os
 import time
-import vab.util as vabutil
+import vab.paths
 import vab.android.env
 import vab.android.util
 
-[params]
+@[params]
 pub struct SimpleScreenshotOptions {
 pub:
 	verbosity int
@@ -21,7 +21,7 @@ pub struct ScreenshotOptions {
 pub:
 	deploy_options DeployOptions // This should be copy of the deploy options used to deploy the app
 	path           string        // /path/to/screenshot.png
-	delay          f64 // delay this many seconds before taking the shot
+	delay          f64           // delay this many seconds before taking the shot
 	on_log         string
 	on_log_timeout f64 // Values <= 0 means no timeout
 }
@@ -59,7 +59,7 @@ pub fn simple_screenshot(opt SimpleScreenshotOptions) ! {
 		return error('${@MOD}.${@FN}: Taking screenshots requires a device id. Set one via --device or ANDROID_SERIAL')
 	}
 	out_dir, out_file := resolve_screenshot_output(opt.path)!
-	vabutil.ensure_path(out_dir)!
+	paths.ensure(out_dir)!
 
 	output := os.join_path(out_dir, out_file)
 
@@ -97,7 +97,7 @@ pub fn screenshot(opt ScreenshotOptions) ! {
 	}
 
 	out_dir, out_file := opt.resolve_output()!
-	vabutil.ensure_path(out_dir)!
+	paths.ensure(out_dir)!
 
 	output := os.join_path(out_dir, out_file)
 	if os.exists(output) {
@@ -153,7 +153,7 @@ pub fn screenshot_on_log_line(opt ScreenshotOptions) ! {
 	}
 
 	out_dir, out_file := opt.resolve_output()!
-	vabutil.ensure_path(out_dir)!
+	paths.ensure(out_dir)!
 
 	output := os.join_path(out_dir, out_file)
 	if os.exists(output) {

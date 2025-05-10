@@ -2,34 +2,32 @@
 // Use of this source code is governed by an MIT license file distributed with this software package
 module ndk
 
-const (
-	ndk_21_default_general_flags    = ['-g', '-DANDROID', '-fdata-sections', '-ffunction-sections',
-		'-funwind-tables', '-fstack-protector-strong', '-no-canonical-prefixes']
-	ndk_21_default_general_ld_flags = ['-Wl,--exclude-libs,libgcc.a',
-		'-Wl,--exclude-libs,libgcc_real.a', '-Wl,--exclude-libs,libatomic.a']
-	ndk_supported_cpp_features      = ['rtti', 'exceptions', 'no-rtti', 'no-exceptions']
-)
+const ndk_21_default_general_flags = ['-g', '-DANDROID', '-fdata-sections', '-ffunction-sections',
+	'-funwind-tables', '-fstack-protector-strong', '-no-canonical-prefixes']
+const ndk_21_default_general_ld_flags = ['-Wl,--exclude-libs,libgcc.a',
+	'-Wl,--exclude-libs,libgcc_real.a', '-Wl,--exclude-libs,libatomic.a']
+const ndk_supported_cpp_features = ['rtti', 'exceptions', 'no-rtti', 'no-exceptions']
 
-[params]
+@[params]
 pub struct FlagConfig {
 pub:
 	pic                          bool = true // TODO
 	debug                        bool = true // false = release
 	platform_level               int  = 21
-	arch                         string               [required]
+	arch                         string @[required]
 	neon                         bool
-	arm_mode                     string = 'thumb' // or 'arm'
+	arm_mode                     string               = 'thumb' // or 'arm'
 	lang                         CompilerLanguageType = .c
-	ld                           string   = 'lld'
-	stl                          string   = 'c++_static' // or 'c++_shared' 'none' 'system'
-	cpp_features                 []string = ['rtti', 'exceptions']
+	ld                           string               = 'lld'
+	stl                          string               = 'c++_static' // or 'c++_shared' 'none' 'system'
+	cpp_features                 []string             = ['rtti', 'exceptions']
 	allow_undefined_symbols      bool
 	disable_format_string_checks bool
 }
 
 pub struct FlagGen {
 pub:
-	ndk_version string [required]
+	ndk_version string @[required]
 }
 
 pub struct FlagResult {
@@ -50,15 +48,15 @@ pub fn compiler_flag_generator(ndk_version string) FlagGen {
 pub fn compiler_flags_from_config(ndk_version string, flag_config FlagConfig) !FlagResult {
 	gen := compiler_flag_generator(ndk_version)
 	return FlagResult{
-		flags: gen.flags(flag_config)!
-		ld_flags: gen.ld_flags(flag_config)!
+		flags:        gen.flags(flag_config)!
+		ld_flags:     gen.ld_flags(flag_config)!
 		ld_flags_exe: gen.ld_flags_exe(flag_config)!
 	}
 }
 
 // general_flags returns the general flags for the NDK version.
 pub fn (f FlagGen) general_flags() []string {
-	return ndk.ndk_21_default_general_flags.clone()
+	return ndk_21_default_general_flags.clone()
 }
 
 // flags returns the NDK version's recommended flags for the given `flag_config`.
@@ -84,7 +82,7 @@ pub fn (f FlagGen) flags(flag_config FlagConfig) ![]string {
 		}
 		if cnf.cpp_features.len > 0 {
 			for cpp_feature in cnf.cpp_features {
-				if cpp_feature !in ndk.ndk_supported_cpp_features {
+				if cpp_feature !in ndk_supported_cpp_features {
 					return error('Invalid Android C++ feature: ${cpp_feature}')
 				}
 				flags << '-f${cpp_feature}'
@@ -140,7 +138,7 @@ pub fn (f FlagGen) flags(flag_config FlagConfig) ![]string {
 pub fn (f FlagGen) ld_flags(flag_config FlagConfig) ![]string {
 	cnf := flag_config
 	mut ld_flags := []string{}
-	ld_flags << ndk.ndk_21_default_general_ld_flags.clone()
+	ld_flags << ndk_21_default_general_ld_flags.clone()
 	if flag_config.ld == 'lld' {
 		ld_flags << '-fuse-ld=lld'
 		ld_flags << '-Wl,--build-id=sha1'

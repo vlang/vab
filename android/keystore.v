@@ -35,9 +35,9 @@ pub fn resolve_keystore(default_ks Keystore) !Keystore {
 	}
 
 	return Keystore{
-		path: file
-		password: password
-		alias: alias
+		path:           file
+		password:       password
+		alias:          alias
 		alias_password: alias_password
 	}
 }
@@ -87,9 +87,9 @@ pub fn generate_debug_keystore(file_path string) !Keystore {
 	]
 	util.run_or_error(keytool_cmd)!
 	return Keystore{
-		path: file_path
-		password: password
-		alias: alias
+		path:           file_path
+		password:       password
+		alias:          alias
 		alias_password: alias_password
 	}
 }

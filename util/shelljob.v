@@ -43,7 +43,7 @@ fn sync_run(job ShellJob) &ShellJobResult {
 	}
 	res := run(job.cmd)
 	return &ShellJobResult{
-		job: job
+		job:    job
 		result: res
 	}
 }
@@ -55,27 +55,28 @@ pub fn run_jobs(jobs []ShellJob, parallel bool, verbosity int) ! {
 		pp.work_on_items(jobs)
 		for job_res in pp.get_results[ShellJobResult]() {
 			verbosity_print_cmd(job_res.job.cmd, verbosity)
+			if job_res.result.exit_code != 0 {
+				return error('${job_res.job.cmd[0]} failed with return code ${job_res.result.exit_code}:\n${job_res.result.output}')
+			}
 			if verbosity > 2 {
 				println('${job_res.result.output}')
-			}
-			if job_res.result.exit_code != 0 {
-				return error('${job_res.job.cmd[0]} failed with return code ${job_res.result.exit_code}')
 			}
 		}
 	} else {
 		for job in jobs {
 			verbosity_print_cmd(job.cmd, verbosity)
 			job_res := sync_run(job)
+			if job_res.result.exit_code != 0 {
+				return error('${job_res.job.cmd[0]} failed with return code ${job_res.result.exit_code}:\n${job_res.result.output}')
+			}
 			if verbosity > 2 {
 				println('${job_res.result.output}')
-			}
-			if job_res.result.exit_code != 0 {
-				return error('${job_res.job.cmd[0]} failed with return code ${job_res.result.exit_code}')
 			}
 		}
 	}
 }
 
+// verbosity_print_cmd prints information about the `args` at certain `verbosity` levels.
 fn verbosity_print_cmd(args []string, verbosity int) {
 	if args.len > 0 && verbosity > 1 {
 		cmd_short := args[0].all_after_last(os.path_separator)

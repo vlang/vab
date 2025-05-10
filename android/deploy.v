@@ -5,6 +5,7 @@ module android
 import os
 import time
 import vab.java
+import vab.util as vabutil
 import vab.android.env
 import vab.android.util
 
@@ -29,6 +30,13 @@ pub:
 pub enum LogMode {
 	filtered
 	raw
+}
+
+// verbose prints `msg` to STDOUT if `DeployOptions.verbosity` level is >= `verbosity_level`.
+pub fn (do &DeployOptions) verbose(verbosity_level int, msg string) {
+	if do.verbosity >= verbosity_level {
+		println(msg)
+	}
 }
 
 fn (do DeployOptions) gen_logcat_filters() []string {
@@ -87,31 +95,11 @@ pub fn deploy_apk(opt DeployOptions) ! {
 
 	// Deploy
 	if device_id != '' {
-		if opt.verbosity > 0 {
-			println('Deploying ${opt.format} package to "${device_id}"')
-		}
-
+		opt.verbose(1, 'Deploying ${opt.format} package to "${device_id}"')
 		if opt.kill_adb {
 			os.signal_opt(.int, kill_adb_on_exit) or {
 				// Kept for debugging return error('$error_tag: Could not set signal handler:\n$err')
 			}
-		}
-
-		adb_logcat_clear_cmd := [
-			adb,
-			'-s "${device_id}"',
-			'logcat',
-			'-c',
-		]
-		if opt.clear_device_log || (opt.run != '' && opt.device_log) {
-			// Clear logs first
-			if opt.verbosity > 0 {
-				println('Clearing log buffer on device "${device_id}"')
-			}
-			util.verbosity_print_cmd(adb_logcat_clear_cmd, opt.verbosity)
-			util.run_or_error(adb_logcat_clear_cmd)!
-			// Give adb/Android/connection time to settle... *sigh*
-			time.sleep(100 * time.millisecond)
 		}
 
 		adb_cmd := [
@@ -124,13 +112,29 @@ pub fn deploy_apk(opt DeployOptions) ! {
 		util.verbosity_print_cmd(adb_cmd, opt.verbosity)
 		util.run_or_error(adb_cmd)!
 
+		// Clearing the logs should be done *after* install so there is actually
+		// something in the logs to clear - otherwise the clear command might fail,
+		// presumably because of low log activity. It seem to happen more often on
+		// devices with low log activity (like the slim `aosp_atd` emulator images).
+		adb_logcat_clear_cmd := [
+			adb,
+			'-s "${device_id}"',
+			'logcat',
+			'-c',
+		]
+		if opt.clear_device_log || (opt.run != '' && opt.device_log) {
+			// Give adb/Android/connection time to settle... *sigh*
+			time.sleep(150 * time.millisecond)
+			// Clear logs first
+			opt.verbose(1, 'Clearing log buffer on device "${device_id}"...')
+			util.verbosity_print_cmd(adb_logcat_clear_cmd, opt.verbosity)
+			util.run_or_error(adb_logcat_clear_cmd)!
+		}
 		// Give adb/Android/connection time to settle... *sigh*
-		time.sleep(100 * time.millisecond)
+		time.sleep(150 * time.millisecond)
 
 		if opt.run != '' {
-			if opt.verbosity > 0 {
-				println('Running "${opt.run}" on "${device_id}"')
-			}
+			opt.verbose(1, 'Running "${opt.run}" on "${device_id}"...')
 			adb_run_cmd := [
 				adb,
 				'-s "${device_id}"',
@@ -150,7 +154,8 @@ pub fn deploy_apk(opt DeployOptions) ! {
 
 		has_crash_report := adb_detect_and_report_crashes(opt, device_id)!
 		if has_crash_report {
-			eprintln('You can clear all logs by running:\n"' + adb_logcat_clear_cmd.join(' ') + '"')
+			vabutil.vab_notice('You can clear all logs by running:\n"' +
+				adb_logcat_clear_cmd.join(' ') + '"')
 		}
 	}
 }
@@ -171,9 +176,7 @@ pub fn deploy_aab(opt DeployOptions) ! {
 
 	// Deploy
 	if device_id != '' {
-		if opt.verbosity > 0 {
-			println('Building APKs from "${opt.deploy_file}"')
-		}
+		opt.verbose(1, 'Building APKs from "${opt.deploy_file}"...')
 
 		apks_path := os.join_path(opt.work_dir,
 			os.file_name(opt.deploy_file).all_before_last('.') + '.apks')
@@ -197,31 +200,12 @@ pub fn deploy_aab(opt DeployOptions) ! {
 		util.verbosity_print_cmd(bundletool_apks_cmd, opt.verbosity)
 		util.run_or_error(bundletool_apks_cmd)!
 
-		if opt.verbosity > 0 {
-			println('Deploying ${opt.format} package to "${device_id}"')
-		}
+		opt.verbose(1, 'Deploying ${opt.format} package to "${device_id}"...')
 
 		if opt.kill_adb {
 			os.signal_opt(.int, kill_adb_on_exit) or {
 				// Kept for debugging return error('$error_tag: Could not set signal handler:\n$err')
 			}
-		}
-
-		adb_logcat_clear_cmd := [
-			adb,
-			'-s "${device_id}"',
-			'logcat',
-			'-c',
-		]
-		if opt.clear_device_log || (opt.run != '' && opt.device_log) {
-			// Clear logs first
-			if opt.verbosity > 0 {
-				println('Clearing log buffer on device "${device_id}"')
-			}
-			util.verbosity_print_cmd(adb_logcat_clear_cmd, opt.verbosity)
-			util.run_or_error(adb_logcat_clear_cmd)!
-			// Give adb/Android/connection time to settle... *sigh*
-			time.sleep(100 * time.millisecond)
 		}
 
 		// java -jar bundletool.jar install-apks --apks=/MyApp/my_app.apks
@@ -236,8 +220,27 @@ pub fn deploy_aab(opt DeployOptions) ! {
 		util.verbosity_print_cmd(bundletool_install_apks_cmd, opt.verbosity)
 		util.run_or_error(bundletool_install_apks_cmd)!
 
+		// Clearing the logs should be done *after* install so there is actually
+		// something in the logs to clear - otherwise the clear command might fail,
+		// presumably because of low log activity. It seem to happen more often on
+		// devices with low log activity (like the slim `aosp_atd` emulator images).
+		adb_logcat_clear_cmd := [
+			adb,
+			'-s "${device_id}"',
+			'logcat',
+			'-c',
+		]
+		if opt.clear_device_log || (opt.run != '' && opt.device_log) {
+			// Give adb/Android/connection time to settle... *sigh*
+			time.sleep(150 * time.millisecond)
+			// Clear logs first
+			opt.verbose(1, 'Clearing log buffer on device "${device_id}"...')
+			util.verbosity_print_cmd(adb_logcat_clear_cmd, opt.verbosity)
+			util.run_or_error(adb_logcat_clear_cmd)!
+		}
+
 		// Give adb/Android/connection time to settle... *sigh*
-		time.sleep(100 * time.millisecond)
+		time.sleep(150 * time.millisecond)
 
 		if opt.run != '' {
 			if opt.verbosity > 0 {
@@ -262,7 +265,8 @@ pub fn deploy_aab(opt DeployOptions) ! {
 
 		has_crash_report := adb_detect_and_report_crashes(opt, device_id)!
 		if has_crash_report {
-			eprintln('You can clear all logs by running:\n"' + adb_logcat_clear_cmd.join(' ') + '"')
+			vabutil.vab_notice('You can clear all logs by running:\n"' +
+				adb_logcat_clear_cmd.join(' ') + '"')
 		}
 	}
 }
@@ -281,8 +285,11 @@ fn adb_detect_and_report_crashes(opt DeployOptions, device_id string) !bool {
 	util.verbosity_print_cmd(adb_logcat_cmd, opt.verbosity)
 	crash_log := util.run_or_error(adb_logcat_cmd)!
 	if crash_log.count('\n') > 3 {
-		eprintln('It looks like your app might have crashed\nDumping crash buffer:')
-		eprintln(crash_log)
+		vabutil.vab_notice('It looks like your app might have crashed. Dumping crash buffer...',
+			details: crash_log
+		)
+		vabutil.vab_notice('The above crash log(s) may be old and/or unrelated to this run')
+		vabutil.vab_notice('Use `--log-clear` to clear the device logs prior to installs and app launches')
 		return true
 	}
 	return false
@@ -291,9 +298,7 @@ fn adb_detect_and_report_crashes(opt DeployOptions, device_id string) !bool {
 fn adb_log_step(opt DeployOptions, device_id string) ! {
 	adb := env.adb()
 	mut crash_mode := false
-	if opt.verbosity > 0 {
-		println('Showing log output from device "${device_id}"')
-	}
+	opt.verbose(1, 'Showing log output from device "${device_id}"')
 	println('Ctrl+C to cancel logging')
 	mut adb_logcat_cmd := [
 		adb,
@@ -304,8 +309,6 @@ fn adb_log_step(opt DeployOptions, device_id string) ! {
 
 	adb_logcat_cmd << opt.gen_logcat_filters()
 
-	// log_cmd := adb_logcat_cmd.join(' ')
-	// println('Use "$log_cmd" to view logs...')
 	util.verbosity_print_cmd(adb_logcat_cmd, opt.verbosity)
 	mut p := os.new_process(adb_logcat_cmd[0])
 	p.set_args(adb_logcat_cmd[1..])
@@ -332,7 +335,7 @@ fn adb_log_step(opt DeployOptions, device_id string) ! {
 
 fn kill_adb_on_exit(signum os.Signal) {
 	uos := os.user_os()
-	println('Killing adb on signal ${signum}')
+	vabutil.vab_notice('Killing adb on signal ${signum}')
 	if uos == 'windows' {
 		// os.system('Taskkill /IM adb.exe /F') // TODO Untested
 	} else {

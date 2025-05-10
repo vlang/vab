@@ -41,10 +41,10 @@ module main
 
 import os
 
-const (
-	auto_complete_shells = ['bash', 'fish', 'zsh', 'powershell'] // list of supported shells
-	vabexe               = os.getenv('VAB_EXE')
-	help_text            = "Usage:
+const auto_complete_shells = ['bash', 'fish', 'zsh', 'powershell'] // list of supported shells
+
+const vabexe = os.getenv('VAB_EXE')
+const help_text = "Usage:
   vab complete [options] [SUBCMD] QUERY...
 
 Description:
@@ -72,74 +72,76 @@ SUBCMD:
   fish      : [QUERY]       - returns Fish compatible completion code with completions computed from QUERY
   zsh       : [QUERY]       - returns ZSH  compatible completion code with completions computed from QUERY
   powershell: [QUERY]       - returns PowerShell compatible completion code with completions computed from QUERY"
-)
 
 // Snooped from vab.v
-const (
-	auto_complete_commands       = [
-		// tools in one .v file
-		'complete',
-		'test-cleancode',
-		// commands
-		'run',
-		'doctor',
-	]
-	// Entries in the flag arrays below should be entered as is:
-	// * Short flags, e.g.: "-v", should be entered: '-v'
-	// * Long flags, e.g.: "--version", should be entered: '--version'
-	// * Single-dash flags, e.g.: "-version", should be entered: '-version'
-	auto_complete_flags          = [
-		// V related flags
-		'-autofree',
-		'-gc',
-		'-g',
-		'-cg',
-		'-prod',
-		'-showcc'
-		// vab flags
-		'--verbosity',
-		'-v',
-		'--version',
-		'--assets',
-		'-a',
-		'--flag',
-		'-f',
-		'--no-printf-hijack',
-		'--cflag',
-		'-c',
-		'--archs',
-		'--gles',
-		'--device',
-		'--log',
-		'--log-raw',
-		'--keystore',
-		'--keystore-alias',
-		'--help',
-		'-h',
-		'--nocache',
-		'--name',
-		'--package-id',
-		'--package-overrides',
-		'--package',
-		'-p',
-		'--activity-name',
-		'--icon',
-		'--version-code',
-		'--output',
-		'-o',
-		'--build-tools',
-		'--api',
-		'--min-sdk-version',
-		'--ndk-version',
-		'--list-ndks',
-		'--list-apis',
-		'--list-build-tools',
-	]
-	auto_complete_flags_complete = [
-		'--help',
-		'-h',
-	]
-)
+const auto_complete_commands = [
+	// tools in one .v file
+	'complete',
+	'test-all',
+	'test-cleancode',
+	'test-runtime',
+	// special
+	'run',
+	// builtin commands
+	'doctor',
+	'install',
+]
+// Entries in the flag arrays below should be entered as is:
+// * Short flags, e.g.: "-v", should be entered: '-v'
+// * Long flags, e.g.: "--version", should be entered: '--version'
+// * Single-dash flags, e.g.: "-version", should be entered: '-version'
+const auto_complete_flags = [
+	// V related flags
+	'-autofree',
+	'-gc',
+	'-g',
+	'-cg',
+	'-prod',
+	'-showcc',
+	'-skip-unused',
+	// vab flags
+	'--verbosity',
+	'-v',
+	'--version',
+	'--assets',
+	'-a',
+	'--flag',
+	'-f',
+	'--no-printf-hijack',
+	'--cflag',
+	'-c',
+	'--archs',
+	'--gles',
+	'--device',
+	'--log',
+	'--log-raw',
+	'--keystore',
+	'--keystore-alias',
+	'--help',
+	'-h',
+	'--nocache',
+	'--name',
+	'--package-id',
+	'--package-overrides',
+	'--package',
+	'-p',
+	'--activity-name',
+	'--icon',
+	'--version-code',
+	'--output',
+	'-o',
+	'--build-tools',
+	'--api',
+	'--min-sdk-version',
+	'--ndk-version',
+	'--list-ndks',
+	'--list-apis',
+	'--list-build-tools',
+]
+const auto_complete_flags_complete = [
+	'--help',
+	'-h',
+]
 
 // auto_complete prints auto completion results back to the calling shell's completion system.
 // auto_complete acts as communication bridge between the calling shell and V's completions.
@@ -244,7 +246,6 @@ fn auto_complete_request(args []string) []string {
 	request := args.join(split_by)
 	mut do_home_expand := false
 	mut list := []string{}
-	// new_part := request.ends_with('\n\n')
 	mut parts := request.trim_right(' ').split(split_by)
 	if parts.len <= 1 { // 'v <tab>' -> top level commands.
 		for command in auto_complete_commands {
@@ -432,6 +433,5 @@ Register-ArgumentCompleter -Native -CommandName v -ScriptBlock {
 
 fn main() {
 	args := os.args[1..]
-	// println('"$args"')
 	auto_complete(args)
 }

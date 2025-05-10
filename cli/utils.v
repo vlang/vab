@@ -1,6 +1,8 @@
 module cli
 
 import os
+import strings
+import vab.extra
 
 // kill_adb will try to kill the `adb` process.
 pub fn kill_adb() {
@@ -29,19 +31,14 @@ fn vab_commit_hash() string {
 	return hash.trim_space()
 }
 
-fn vab_tmp_work_dir() string {
-	return os.join_path(os.temp_dir(), exe_name.replace(' ', '_').replace('.exe', '').to_lower())
-}
-
-fn vab_cache_dir() string {
-	return os.join_path(os.cache_dir(), exe_name.replace(' ', '_').replace('.exe', '').to_lower())
-}
-
-fn version_full() string {
+// version_full returns the version number of this
+// executable *including* a git hash if available.
+pub fn version_full() string {
 	return '${exe_version} ${exe_git_hash}'
 }
 
-fn version() string {
+// version returns the version number found in the nearest `v.mod` file.
+pub fn version() string {
 	mut v := '0.0.0'
 	vmod := @VMOD_FILE
 	if vmod.len > 0 {
@@ -51,4 +48,30 @@ fn version() string {
 		}
 	}
 	return v
+}
+
+// input_suggestions returns alternative suggestions to the `input` string.
+pub fn input_suggestions(input string) []string {
+	mut suggests := []string{}
+	$if vab_allow_extra_commands ? {
+		for extra_alias in extra.installed_aliases() {
+			similarity := f32(int(strings.levenshtein_distance_percentage(input, extra_alias) * 1000)) / 1000
+			if similarity > 30 {
+				suggests << extra_alias
+			}
+		}
+	}
+	for builtin_command in subcmds_builtin {
+		similarity := f32(int(strings.levenshtein_distance_percentage(input, builtin_command) * 1000)) / 1000
+		if similarity > 30 {
+			suggests << builtin_command
+		}
+	}
+	for sub_command in subcmds {
+		similarity := f32(int(strings.levenshtein_distance_percentage(input, sub_command) * 1000)) / 1000
+		if similarity > 30 {
+			suggests << sub_command
+		}
+	}
+	return suggests
 }
