@@ -17,7 +17,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-20.04]
+        os: [ubuntu-24.04]
         java-version: [11,15,20]
         android-api: [31, 33]
       fail-fast: false
@@ -101,7 +101,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-20.04]
+        os: [ubuntu-24.04]
         java-version: [11, 15, 20]
         android-api: [31, 33]
       fail-fast: false
@@ -166,7 +166,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-20.04]
+        os: [ubuntu-24.04]
         java-version: [8] # 9, 10 is in a bad state currently
         android-api: [31, 33]
       fail-fast: false
