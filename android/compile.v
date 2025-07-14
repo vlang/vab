@@ -278,6 +278,7 @@ pub fn compile(opt CompileOptions) ! {
 	mut cflags := opt.c_flags.clone()
 	mut includes := []string{}
 	mut defines := []string{}
+	mut ldpaths := []string{}
 	mut ldflags := []string{}
 
 	// Grab any external C flags
@@ -293,6 +294,9 @@ pub fn compile(opt CompileOptions) ! {
 				continue
 			}
 			includes << line
+		}
+		if line.starts_with('-L') {
+			ldpaths << line
 		}
 		if line.starts_with('-l') {
 			if line.contains('-lgc') {
@@ -474,6 +478,7 @@ pub fn compile(opt CompileOptions) ! {
 				'-o "${arch_lib_dir}/lib${opt.lib_name}.so"',
 				arch_a_files.join(' '),
 				'-L"' + arch_libs[arch] + '"',
+				ldpaths.join(' '),
 				ldflags.join(' '),
 			]
 
