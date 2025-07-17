@@ -13,7 +13,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build-v-examples-as-apk-and-aab:
+  apk-and-aab:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -67,6 +67,12 @@ jobs:
         vab install bundletool
         vab install aapt2
 
+    - name: Run vab install build-tools
+      run: vab install "build-tools;29.0.0"
+
+    - name: Run vab doctor2
+      run: vab doctor
+
     - name: Build examples as APK + AAB (Java ${{ matrix.java-version }}) ${{ matrix.android-api }}
       run: |
 
@@ -91,7 +97,7 @@ jobs:
           [ -f java-${{ matrix.java-version }}/$example/$package_id.aab ]
         done
 
-  build-v-examples-with-gc-disabled:
+  gc-disabled:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -156,7 +162,7 @@ jobs:
 
         done
 
-  build-legacy-v-examples-as-apk-and-aab:
+  legacy-as-apk-and-aab:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -247,5 +253,3 @@ jobs:
           # Checks output inferring
           [ -f java-${{ matrix.java-version }}/$example/$package_id.aab ]
         done
-
-
