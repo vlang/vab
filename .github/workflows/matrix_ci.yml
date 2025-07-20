@@ -58,7 +58,7 @@ jobs:
     - name: Run 'vab doctor' before install
       run: vab doctor
 
-      # It is a sisyphus task to get all combinations of the pre-installed SDK / tools and Java working
+      # It is a Sisyphus task to get all combinations of the pre-installed SDK / tools and Java working
       # so we simply remove the system install and use our own minimal base-setup via 'vab install auto'...
     - name: Setup predictable Android environment
       run: |
