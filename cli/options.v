@@ -428,6 +428,7 @@ fn (mut o Options) merge_additional_args(default_additional_args []string) {
 // extend_from_dot_vab will merge the `Options` with any content
 // found in any `.vab` config files.
 @[deprecated: 'use options_from_dot_vab instead']
+@[deprecated_after: '2027-01-01']
 pub fn (mut opt Options) extend_from_dot_vab() {
 	// Look up values in input .vab file next to input if no flags or defaults was set
 	dot_vab_file := dot_vab_path(opt.input)

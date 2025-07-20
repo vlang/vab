@@ -17,7 +17,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-20.04]
+        os: [ubuntu-24.04]
         java-version: [11,15,20]
         android-api: [31, 33]
       fail-fast: false
@@ -55,7 +55,20 @@ jobs:
     - name: Run vab --help
       run: vab --help
 
-    - name: Run vab doctor
+    - name: Run 'vab doctor' before install
+      run: vab doctor
+
+      # It is a Sisyphus task to get all combinations of the pre-installed SDK / tools and Java working
+      # so we simply remove the system install and use our own minimal base-setup via 'vab install auto'...
+    - name: Setup predictable Android environment
+      run: |
+        sudo rm -fr /usr/local/lib/android # location of pre-installed SDK on Ubuntu
+        unset ANDROID_SDK_ROOT # These are set in the CI by default
+        unset ANDROID_HOME
+        unset ANDROID_NDK_ROOT
+        vab install auto
+
+    - name: Run 'vab doctor' after install
       run: vab doctor
 
     - name: Run tests
@@ -70,12 +83,11 @@ jobs:
     - name: Run vab install build-tools
       run: vab install "build-tools;29.0.0"
 
-    - name: Run vab doctor2
+    - name: Run 'vab doctor' after build-tools install
       run: vab doctor
 
     - name: Build examples as APK + AAB (Java ${{ matrix.java-version }}) ${{ matrix.android-api }}
       run: |
-
         declare -a v_examples=('flappylearning' '2048' 'fireworks' 'tetris' 'sokol/particles' 'sokol/drawing.v' 'sokol/freetype_raven.v' 'gg/polygons.v' 'gg/raven_text_rendering.v' 'gg/rectangles.v' 'gg/stars.v' 'gg/worker_thread.v')
 
         for example in "${v_examples[@]}"; do
@@ -101,13 +113,13 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-20.04]
+        os: [ubuntu-24.04]
         java-version: [11, 15, 20]
         android-api: [31, 33]
       fail-fast: false
     timeout-minutes: 20
     env:
-      VAB_FLAGS: -v 3 -gc none --build-tools 29.0.0
+      VAB_FLAGS: -v 3 -gc none
     steps:
     - uses: actions/setup-java@v4
       with:
@@ -166,13 +178,13 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-20.04]
+        os: [ubuntu-24.04]
         java-version: [8] # 9, 10 is in a bad state currently
         android-api: [31, 33]
       fail-fast: false
     timeout-minutes: 20
     env:
-      VAB_FLAGS: -v 3 --build-tools 29.0.0
+      VAB_FLAGS: -v 3
     steps:
     - uses: actions/setup-java@v4
       with:
@@ -208,7 +220,7 @@ jobs:
       run: |
         sudo rm -fr /usr/local/lib/android
 
-    - name: Run 'vab doctor'
+    - name: Run 'vab doctor' before install
       run: vab doctor
 
     - name: Run 'vab install auto'
@@ -218,7 +230,7 @@ jobs:
         unset ANDROID_NDK_ROOT
         vab install auto
 
-    - name: Run vab doctor
+    - name: Run 'vab doctor' after install
       run: vab doctor
 
     - name: Run tests
