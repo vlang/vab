@@ -23,7 +23,7 @@ jobs:
       fail-fast: false
     timeout-minutes: 20
     env:
-      VAB_FLAGS: -v 3 --build-tools 29.0.0
+      VAB_FLAGS: -v 3
     steps:
     - uses: actions/setup-java@v4
       with:
@@ -67,9 +67,6 @@ jobs:
         vab install bundletool
         vab install aapt2
 
-    - name: Run vab install build-tools
-      run: vab install "build-tools;29.0.0"
-
     - name: Run vab doctor2
       run: vab doctor
 
@@ -107,7 +104,7 @@ jobs:
       fail-fast: false
     timeout-minutes: 20
     env:
-      VAB_FLAGS: -v 3 -gc none --build-tools 29.0.0
+      VAB_FLAGS: -v 3 -gc none
     steps:
     - uses: actions/setup-java@v4
       with:
