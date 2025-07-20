@@ -111,6 +111,7 @@ pub fn input_from_args(arguments []string) (string, []string) {
 // args_to_options returns an `Option` merged from (CLI/Shell) `arguments` using `defaults` as
 // values where no value can be obtained from `arguments`.
 @[deprecated: 'use options_from_arguments and run_vab_sub_command instead']
+@[deprecated_after: '2027-01-01']
 pub fn args_to_options(arguments []string, defaults Options) !(Options, &flag.FlagParser) {
 	mut args := arguments.clone()
 

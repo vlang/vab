@@ -24,6 +24,7 @@ pub const accepted_components = ['auto', 'cmdline-tools', 'platform-tools', 'ndk
 // build-tools - Version where apksigner is included from
 
 @[deprecated: 'use get_default_components() instead']
+@[deprecated_after: '2027-01-01']
 pub const default_components = {
 	'cmdline-tools':  {
 		'name':          'cmdline-tools'
@@ -154,6 +155,9 @@ pub fn (io &InstallOptions) verbose(verbosity_level int, msg string) {
 	}
 }
 
+// managable returns `true` if the host system's SDK can be managed by `vab`.
+@[deprecated: 'use "is_managable() or { false }" instead']
+@[deprecated_after: '2027-07-20']
 pub fn managable() bool {
 	sdk_is_writable := os.is_writable(sdk.root())
 	// sdkmanager checks
@@ -199,7 +203,55 @@ pub fn managable() bool {
 	return sdk_is_writable && has_sdkmanager && sdkmanger_works
 }
 
+// is_managable returns `true` if the host system's SDK can be managed by `vab`, an error with
+// details is returned otherwise.
+pub fn is_managable() !bool {
+	if !os.is_writable(sdk.root()) {
+		return error('No permission to write in Android SDK root. Please install manually or ensure write access to "${sdk.root()}".')
+	}
+
+	// sdkmanager checks
+	sdkm := sdkmanager()
+	if sdkm == '' {
+		return error('An executable `sdkmanager` seems to be missing.')
+	}
+	// We have detected `sdkmanager` - but does it work with the Java version? *sigh*
+	// Android development will let us find out I guess:
+	cmd := [
+		sdkm,
+		'--list',
+	]
+	mut cmd_res := util.run(cmd)
+	if cmd_res.exit_code > 0 {
+		// Failed let's try a workaround from stackoverflow:
+		// https://stackoverflow.com/a/51644855/1904615
+		if 'windows' == os.user_os() {
+			util.run([
+				'set JAVA_OPTS=-XX:+IgnoreUnrecognizedVMOptions --add-modules java.se.ee',
+			])
+			util.run([
+				'set JAVA_OPTS=-XX:+IgnoreUnrecognizedVMOptions --add-modules java.xml.bind',
+			])
+		} else {
+			util.run([
+				"export JAVA_OPTS='-XX:+IgnoreUnrecognizedVMOptions --add-modules java.se.ee'",
+			])
+			util.run([
+				"export JAVA_OPTS='-XX:+IgnoreUnrecognizedVMOptions --add-modules java.xml.bind'",
+			])
+		}
+		// Let try again
+		cmd_res = util.run(cmd)
+		if cmd_res.exit_code != 0 {
+			return error('The detected `sdkmanager` seems outdated or incompatible with the Java version used. Manual intervention is needed.\nPath: "${sdkmanager()}"\nVersion: ${sdkmanager_version()}\nOutput: ${cmd_res.output}')
+		}
+		// Give up trying to fix this horrible eco-system
+	}
+	return true
+}
+
 @[deprecated: 'use install_components instead']
+@[deprecated_after: '2027-01-01']
 pub fn install(components string, verbosity int) int {
 	mut iopts := []InstallOptions{}
 	mut ensure_sdk := true
@@ -500,16 +552,9 @@ pub fn install_components(arguments []string, verbosity int) ! {
 fn install_opt(opt InstallOptions) !bool {
 	loose := opt.dep == .bundletool || opt.dep == .aapt2
 
-	if !loose && !managable() {
-		if !os.is_writable(sdk.root()) {
-			return error(@MOD + '.' + @FN + ' ' +
-				'No permission to write in Android SDK root. Please install manually or ensure write access to "${sdk.root()}".')
-		} else {
-			return error(@MOD + '.' + @FN + ' ' +
-				'The `sdkmanager` seems outdated or incompatible with the Java version used". Please fix your setup manually.\nPath: "${sdkmanager()}"\nVersion: ${sdkmanager_version()}')
-		}
+	if !loose {
+		is_managable()!
 	}
-
 	// Accept all SDK licenses
 	$if windows {
 		os.mkdir_all(work_path) or {}

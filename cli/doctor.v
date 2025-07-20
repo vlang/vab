@@ -14,7 +14,16 @@ import vab.android.env
 // diagnosticing the work environment.
 pub fn doctor(opt Options) {
 	sdkm := env.sdkmanager()
-	env_managable := env.managable()
+	env_managable := env.is_managable() or {
+		util.vab_notice('${err.msg()}',
+			details: 'For `${exe_short_name}` to control it\'s own dependencies, please update `sdkmanager` found in:
+"${sdkm}"
+or use a Java version that is compatible with your `sdkmanager`.
+You can set the `SDKMANAGER` env variable or try your luck with `${exe_short_name} install auto`.
+See https://stackoverflow.com/a/61176718/1904615 for more help.\n'
+		)
+		false
+	}
 	env_vars := os.environ()
 
 	// Validate Android `sdkmanager` tool
@@ -31,23 +40,6 @@ pub fn doctor(opt Options) {
 See https://stackoverflow.com/a/61176718/1904615 for more help.\n'
 		}
 		util.vab_notice('No "sdkmanager" could be detected.', details)
-	} else {
-		if !env_managable {
-			sdk_is_writable := os.is_writable(sdk.root())
-			if !sdk_is_writable {
-				util.vab_notice('The SDK at "${sdk.root()}" is not writable.',
-					details: "`${exe_short_name}` is not able to control the SDK and it's dependencies."
-				)
-			} else {
-				util.vab_notice('The detected `sdkmanager` seems outdated or incompatible with the Java version used.',
-					details: 'For `${exe_short_name}` to control it\'s own dependencies, please update `sdkmanager` found in:
-"${sdkm}"
-or use a Java version that is compatible with your `sdkmanager`.
-You can set the `SDKMANAGER` env variable or try your luck with `${exe_short_name} install auto`.
-See https://stackoverflow.com/a/61176718/1904615 for more help.\n'
-				)
-			}
-		}
 	}
 
 	avdmanager := env.avdmanager()

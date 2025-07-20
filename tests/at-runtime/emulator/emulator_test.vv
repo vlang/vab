@@ -26,7 +26,7 @@ const test_v_examples = [
 	'gg/worker_thread.v',
 ]
 
-const env_is_managable = env.managable()
+const env_is_managable = env.is_managable() or { false }
 
 const is_ci = os.getenv('CI') != ''
 
