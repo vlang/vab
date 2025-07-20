@@ -14,7 +14,7 @@ import vab.android.env
 // diagnosticing the work environment.
 pub fn doctor(opt Options) {
 	sdkm := env.sdkmanager()
-	env_managable := env.is_managable() or {
+	env_managable := env.is_manageable() or {
 		util.vab_notice('${err.msg()}',
 			details: 'For `${exe_short_name}` to control it\'s own dependencies, please update `sdkmanager` found in:
 "${sdkm}"

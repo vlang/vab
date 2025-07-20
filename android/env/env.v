@@ -156,7 +156,7 @@ pub fn (io &InstallOptions) verbose(verbosity_level int, msg string) {
 }
 
 // managable returns `true` if the host system's SDK can be managed by `vab`.
-@[deprecated: 'use "is_managable() or { false }" instead']
+@[deprecated: 'use "is_manageable() or { false }" instead']
 @[deprecated_after: '2027-07-20']
 pub fn managable() bool {
 	sdk_is_writable := os.is_writable(sdk.root())
@@ -203,9 +203,9 @@ pub fn managable() bool {
 	return sdk_is_writable && has_sdkmanager && sdkmanger_works
 }
 
-// is_managable returns `true` if the host system's SDK can be managed by `vab`, an error with
+// is_manageable returns `true` if the host system's SDK can be managed by `vab`, an error with
 // details is returned otherwise.
-pub fn is_managable() !bool {
+pub fn is_manageable() !bool {
 	if !os.is_writable(sdk.root()) {
 		return error('No permission to write in Android SDK root. Please install manually or ensure write access to "${sdk.root()}".')
 	}
@@ -553,7 +553,7 @@ fn install_opt(opt InstallOptions) !bool {
 	loose := opt.dep == .bundletool || opt.dep == .aapt2
 
 	if !loose {
-		is_managable()!
+		is_manageable()!
 	}
 	// Accept all SDK licenses
 	$if windows {
