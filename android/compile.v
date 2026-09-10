@@ -795,6 +795,43 @@ pub fn compile_v_c_dependencies(opt CompileOptions, v_meta_info VMetaInfo) !VImp
 				}
 			}
 		}
+
+		// Older and current V releases can expose stbi as a plain `stbi.o`
+		// #flag instead of a cached `.module.stbi.o` with a companion compile
+		// description. That host object cannot be linked into an Android shared
+		// library, so cross-compile the bundled implementation when no module
+		// object description was available above.
+		if 'stbi' in imported_modules && 'stbi' !in v_module_o_files {
+			if opt.verbosity > 1 {
+				println('Compiling stb_image (${arch}) via stbi module fallback')
+			}
+			if arch == 'armeabi-v7a' {
+				cflags << '-mfpu=neon-vfpv4'
+				$if gcc {
+					cflags << '-mfp16-format=ieee'
+				}
+			}
+
+			o_file := os.join_path(arch_o_dir, 'stbi.o')
+			build_cmd := [
+				compiler,
+				cflags.join(' '),
+				'-Wno-sign-compare',
+				'-I"' + os.join_path(v_thirdparty_dir, 'stb_image') + '"',
+				'-c "' + os.join_path(v_thirdparty_dir, 'stb_image', 'stbi.c') + '"',
+				'-o "${o_file}"',
+			]
+			util.verbosity_print_cmd(build_cmd, opt.verbosity)
+			o_res := util.run_or_error(build_cmd)!
+			if opt.verbosity > 2 {
+				eprintln(o_res)
+			}
+
+			o_files[arch] << o_file
+			jobs << job_util.ShellJob{
+				cmd: build_cmd
+			}
+		}
 	}
 
 	job_util.run_jobs(jobs, opt.parallel, opt.verbosity)!
