@@ -68,7 +68,7 @@ pub fn simple_screenshot(opt SimpleScreenshotOptions) ! {
 		if opt.verbosity > 1 {
 			println('Sleeping ${opt.delay:.2f} seconds before screenshot...')
 		}
-		time.sleep(opt.delay * time.second)
+		time.sleep(time.Duration(opt.delay * time.second))
 	}
 
 	// Do a one-off screenshot
@@ -111,7 +111,7 @@ pub fn screenshot(opt ScreenshotOptions) ! {
 		if verbosity > 1 {
 			println('Sleeping ${opt.delay:.2f} seconds before screenshot...')
 		}
-		time.sleep(opt.delay * time.second)
+		time.sleep(time.Duration(opt.delay * time.second))
 	}
 	if !do_screenshot_on_log_line {
 		// Do a one-off screenshot
@@ -182,7 +182,7 @@ pub fn screenshot_on_log_line(opt ScreenshotOptions) ! {
 		if verbosity > 1 {
 			println('Sleeping ${opt.delay:.2f} seconds before screenshot...')
 		}
-		time.sleep(opt.delay * time.second)
+		time.sleep(time.Duration(opt.delay * time.second))
 	}
 	if verbosity > 0 {
 		println('Monitoring log output for "${opt.on_log}" on device "${device_id}"')
