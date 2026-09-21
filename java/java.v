@@ -8,23 +8,23 @@ import vab.cache
 
 // jre_version returns the version of your java runtime install, otherwise empty string
 pub fn jre_version() string {
-	mut java := 'java'
+	mut java_bin := 'java'
 	java_home := jre_root()
 	if java_home != '' {
-		bin := os.join_path(java_home, 'bin', java)
+		bin := os.join_path(java_home, 'bin', java_bin)
 		if os.is_executable(bin) {
-			java = bin
+			java_bin = bin
 		}
 	}
 
-	if java == '' {
+	if java_bin == '' {
 		return ''
 	}
 
 	mut version := ''
 
 	// Fast - but not most reliable way
-	java_version := os.execute(java + ' -version')
+	java_version := os.execute(java_bin + ' -version')
 	if java_version.exit_code == 0 {
 		output := java_version.output
 		mut re := regex.regex_opt(r'.*(\d+\.?\d*\.?\d*)') or { panic(err) }
@@ -44,7 +44,7 @@ pub fn jre_version() string {
 		os.chdir(java_source_dir) or {}
 		os.write_file(java_source_file, java_source) or { return '' }
 		if os.system(javac + ' ${java_source_file}') == 0 {
-			r := os.execute(java + ' ${java_source_exe}')
+			r := os.execute(java_bin + ' ${java_source_exe}')
 			if r.exit_code != 0 {
 				return ''
 			}
@@ -57,23 +57,23 @@ pub fn jre_version() string {
 }
 
 pub fn jdk_version() string {
-	mut java := 'javac'
+	mut java_bin := 'javac'
 	java_home := jdk_root()
 	if java_home != '' {
-		bin := os.join_path(java_home, 'bin', java)
+		bin := os.join_path(java_home, 'bin', java_bin)
 		if os.is_executable(bin) {
-			java = bin
+			java_bin = bin
 		}
 	}
 
-	if java == '' {
+	if java_bin == '' {
 		return ''
 	}
 
 	mut version := ''
 
 	// Fast - but not most reliable way
-	java_version := os.execute(java + ' -version')
+	java_version := os.execute(java_bin + ' -version')
 	if java_version.exit_code != 0 {
 		return ''
 	}
@@ -95,7 +95,7 @@ pub fn jdk_version() string {
 		os.chdir(java_source_dir) or {}
 		os.write_file(java_source_file, java_source) or { return '' }
 		if os.system(javac + ' ${java_source_file}') == 0 {
-			r := os.execute(java + ' ${java_source_exe}')
+			r := os.execute(java_bin + ' ${java_source_exe}')
 			if r.exit_code != 0 {
 				return ''
 			}
