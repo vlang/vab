@@ -16,22 +16,31 @@ jobs:
       VFLAGS: -cc tcc
     steps:
     - name: Checkout V
+        id: checkout_v
       uses: actions/checkout@v4
       with:
         repository: vlang/v
 
     - name: Build local v
+        id: build_local_v
+        if: ${{ !cancelled() && steps.checkout_v.outcome == 'success' }}
       run: make -j4 && sudo ./v symlink
 
     - name: Checkout vab
+        id: checkout_vab
+        if: ${{ !cancelled() && steps.build_local_v.outcome == 'success' }}
       uses: actions/checkout@v4
       with:
         path: vab
 
     - name: Symlink as module
+        id: symlink_as_module
+        if: ${{ !cancelled() && steps.checkout_vab.outcome == 'success' }}
       run: sudo ln -s $(pwd)/vab ~/.vmodules/vab # Workaround for doing `mv vab ~/.vmodules`
 
     - name: Check markdown line length & code examples
+        id: check_markdown_line_length_code_examples
+        if: ${{ !cancelled() && steps.symlink_as_module.outcome == 'success' }}
       run: v check-md -hide-warnings vab
       ## NB: -hide-warnings is used here, so that the output is less noisy,
       ## thus real errors are easier to spot.
@@ -43,19 +52,26 @@ jobs:
       MOPTIONS: --relative-paths --exclude /tests/
     steps:
       - name: Checkout V
+        id: checkout_v
         uses: actions/checkout@v4
         with:
           repository: vlang/v
 
       - name: Build local v
+        id: build_local_v
+        if: ${{ !cancelled() && steps.checkout_v.outcome == 'success' }}
         run: make -j4 && sudo ./v symlink
 
       - name: Checkout vab
+        id: checkout_vab
+        if: ${{ !cancelled() && steps.build_local_v.outcome == 'success' }}
         uses: actions/checkout@v4
         with:
           path: vab
 
       - name: Checkout previous vab
+        id: checkout_previous_vab
+        if: ${{ !cancelled() && steps.checkout_vab.outcome == 'success' }}
         uses: actions/checkout@v4
         with:
           repository: vlang/vab
@@ -63,4 +79,6 @@ jobs:
           path: pvab
 
       - name: Check against parent commit
+        id: check_against_parent_commit
+        if: ${{ !cancelled() && steps.checkout_previous_vab.outcome == 'success' }}
         run: v missdoc --diff $MOPTIONS pvab vab
