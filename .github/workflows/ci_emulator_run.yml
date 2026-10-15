@@ -21,67 +21,67 @@ jobs:
       VFLAGS: -no-parallel
     steps:
     - uses: actions/setup-java@v4
-        id: uses_setup_java_v4
+      id: uses_setup_java_v4
       with:
         distribution: 'adopt'
         java-version: 17
 
     - name: Checkout V
-        id: checkout_v
-        if: ${{ !cancelled() && steps.uses_setup_java_v4.outcome == 'success' }}
+      id: checkout_v
+      if: ${{ success() && !cancelled() && steps.uses_setup_java_v4.outcome == 'success' }}
       uses: actions/checkout@v4
       with:
         repository: vlang/v
         path: v
 
     - name: Build and install v
-        id: build_and_install_v
-        if: ${{ !cancelled() && steps.checkout_v.outcome == 'success' }}
+      id: build_and_install_v
+      if: ${{ success() && !cancelled() && steps.checkout_v.outcome == 'success' }}
       run: cd ./v && make -j4 && sudo ./v symlink
 
     - name: Checkout vab
-        id: checkout_vab
-        if: ${{ !cancelled() && steps.build_and_install_v.outcome == 'success' }}
+      id: checkout_vab
+      if: ${{ success() && !cancelled() && steps.build_and_install_v.outcome == 'success' }}
       uses: actions/checkout@v4
       with:
         path: vab
 
     - name: Simulate "v install vab"
-        id: simulate_v_install_vab
-        if: ${{ !cancelled() && steps.checkout_vab.outcome == 'success' }}
+      id: simulate_v_install_vab
+      if: ${{ success() && !cancelled() && steps.checkout_vab.outcome == 'success' }}
       run: mv vab ~/.vmodules
 
     - name: Build vab
-        id: build_vab
-        if: ${{ !cancelled() && steps.simulate_v_install_vab.outcome == 'success' }}
+      id: build_vab
+      if: ${{ success() && !cancelled() && steps.simulate_v_install_vab.outcome == 'success' }}
       run: v -g ~/.vmodules/vab
 
     - name: Symlink vab
-        id: symlink_vab
-        if: ${{ !cancelled() && steps.build_vab.outcome == 'success' }}
+      id: symlink_vab
+      if: ${{ success() && !cancelled() && steps.build_vab.outcome == 'success' }}
       run: sudo ln -s ~/.vmodules/vab/vab /usr/local/bin/vab
 
     - name: Run vab --help
-        id: run_vab_help
-        if: ${{ !cancelled() && steps.symlink_vab.outcome == 'success' }}
+      id: run_vab_help
+      if: ${{ success() && !cancelled() && steps.symlink_vab.outcome == 'success' }}
       run: vab --help
 
     - name: Run vab doctor *before*
-        id: run_vab_doctor_before
-        if: ${{ !cancelled() && steps.run_vab_help.outcome == 'success' }}
+      id: run_vab_doctor_before
+      if: ${{ success() && !cancelled() && steps.run_vab_help.outcome == 'success' }}
       run: vab doctor
 
     - name: Install dependencies
-        id: install_dependencies
-        if: ${{ !cancelled() && steps.run_vab_doctor_before.outcome == 'success' }}
+      id: install_dependencies
+      if: ${{ success() && !cancelled() && steps.run_vab_doctor_before.outcome == 'success' }}
       run: |
         v retry -- sudo apt update
         v retry -- sudo apt install --quiet -y qemu-kvm
         sudo chown $USER /dev/kvm
 
     - name: Install SDK dependencies
-        id: install_sdk_dependencies
-        if: ${{ !cancelled() && steps.install_dependencies.outcome == 'success' }}
+      id: install_sdk_dependencies
+      if: ${{ success() && !cancelled() && steps.install_dependencies.outcome == 'success' }}
       run: |
         vab install "platform-tools"
         vab install "build-tools;33.0.2"
@@ -91,12 +91,12 @@ jobs:
         vab install aapt2
 
     - name: Run vab doctor *after*
-        id: run_vab_doctor_after
-        if: ${{ !cancelled() && steps.install_sdk_dependencies.outcome == 'success' }}
+      id: run_vab_doctor_after
+      if: ${{ success() && !cancelled() && steps.install_sdk_dependencies.outcome == 'success' }}
       run: vab doctor
 
     - name: Cache emulator
-        if: ${{ !cancelled() && steps.run_vab_doctor_after.outcome == 'success' }}
+      if: ${{ success() && !cancelled() && steps.run_vab_doctor_after.outcome == 'success' }}
       id: cache-emulator
       uses: actions/cache@v4
       with:
@@ -110,7 +110,7 @@ jobs:
         vab install 'system-images;android-30;aosp_atd;x86_64'
 
     - name: Run `vab test-all`
-        id: run_vab_test_all
-        if: ${{ !cancelled() && steps.cache-emulator.outcome == 'success' }}
+      id: run_vab_test_all
+      if: ${{ success() && !cancelled() && steps.cache-emulator.outcome == 'success' }}
       run: |
         vab test-all

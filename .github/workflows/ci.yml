@@ -24,26 +24,26 @@ jobs:
       VFLAGS: -cc tcc
     steps:
     - name: Checkout V
-        id: checkout_v
+      id: checkout_v
       uses: actions/checkout@v4
       with:
         repository: vlang/v
 
     - name: Build local v
-        id: build_local_v
-        if: ${{ !cancelled() && steps.checkout_v.outcome == 'success' }}
+      id: build_local_v
+      if: ${{ success() && !cancelled() && steps.checkout_v.outcome == 'success' }}
       run: make -j4 && sudo ./v symlink
 
     - name: Checkout vab
-        id: checkout_vab
-        if: ${{ !cancelled() && steps.build_local_v.outcome == 'success' }}
+      id: checkout_vab
+      if: ${{ success() && !cancelled() && steps.build_local_v.outcome == 'success' }}
       uses: actions/checkout@v4
       with:
         path: vab
 
     - name: Test code formatting
-        id: test_code_formatting
-        if: ${{ !cancelled() && steps.checkout_vab.outcome == 'success' }}
+      id: test_code_formatting
+      if: ${{ success() && !cancelled() && steps.checkout_vab.outcome == 'success' }}
       run: |
         cd vab
         v test-fmt
@@ -53,28 +53,28 @@ jobs:
     #  run: mv vab ~/.vmodules
 
     - name: Symlink as module
-        id: symlink_as_module
-        if: ${{ !cancelled() && steps.test_code_formatting.outcome == 'success' }}
+      id: symlink_as_module
+      if: ${{ success() && !cancelled() && steps.test_code_formatting.outcome == 'success' }}
       run: sudo ln -s $(pwd)/vab ~/.vmodules/vab # Workaround for doing `mv vab ~/.vmodules`
 
     - name: Build vab with -skip-unused
-        id: build_vab_with_skip_unused
-        if: ${{ !cancelled() && steps.symlink_as_module.outcome == 'success' }}
+      id: build_vab_with_skip_unused
+      if: ${{ success() && !cancelled() && steps.symlink_as_module.outcome == 'success' }}
       run: v -skip-unused ~/.vmodules/vab
 
     - name: Build vab
-        id: build_vab
-        if: ${{ !cancelled() && steps.build_vab_with_skip_unused.outcome == 'success' }}
+      id: build_vab
+      if: ${{ success() && !cancelled() && steps.build_vab_with_skip_unused.outcome == 'success' }}
       run: v -g ~/.vmodules/vab
 
     - name: Symlink vab command
-        id: symlink_vab_command
-        if: ${{ !cancelled() && steps.build_vab.outcome == 'success' }}
+      id: symlink_vab_command
+      if: ${{ success() && !cancelled() && steps.build_vab.outcome == 'success' }}
       run: sudo ln -s ~/.vmodules/vab/vab /usr/local/bin/vab
 
     - name: Test clean vab code
-        id: test_clean_vab_code
-        if: ${{ !cancelled() && steps.symlink_vab_command.outcome == 'success' }}
+      id: test_clean_vab_code
+      if: ${{ success() && !cancelled() && steps.symlink_vab_command.outcome == 'success' }}
       run: |
         vab test-cleancode ~/.vmodules/vab
 
@@ -89,62 +89,62 @@ jobs:
       VAB_FLAGS: -v 3
     steps:
     - name: Checkout V
-        id: checkout_v
+      id: checkout_v
       uses: actions/checkout@v4
       with:
         repository: vlang/v
 
     - name: Build local v
-        id: build_local_v
-        if: ${{ !cancelled() && steps.checkout_v.outcome == 'success' }}
+      id: build_local_v
+      if: ${{ success() && !cancelled() && steps.checkout_v.outcome == 'success' }}
       run: make -j4 && sudo ./v symlink
 
     - name: Checkout vab
-        id: checkout_vab
-        if: ${{ !cancelled() && steps.build_local_v.outcome == 'success' }}
+      id: checkout_vab
+      if: ${{ success() && !cancelled() && steps.build_local_v.outcome == 'success' }}
       uses: actions/checkout@v4
       with:
         path: vab
 
     - name: Simulate "v install vab"
-        id: simulate_v_install_vab
-        if: ${{ !cancelled() && steps.checkout_vab.outcome == 'success' }}
+      id: simulate_v_install_vab
+      if: ${{ success() && !cancelled() && steps.checkout_vab.outcome == 'success' }}
       run: mv vab ~/.vmodules
 
     - name: Build vab with -prod
-        id: build_vab_with_prod
-        if: ${{ !cancelled() && steps.simulate_v_install_vab.outcome == 'success' }}
+      id: build_vab_with_prod
+      if: ${{ success() && !cancelled() && steps.simulate_v_install_vab.outcome == 'success' }}
       run: v -prod ~/.vmodules/vab
 
     - name: Build vab
-        id: build_vab
-        if: ${{ !cancelled() && steps.build_vab_with_prod.outcome == 'success' }}
+      id: build_vab
+      if: ${{ success() && !cancelled() && steps.build_vab_with_prod.outcome == 'success' }}
       run: v -g ~/.vmodules/vab
 
     - name: Symlink vab
-        id: symlink_vab
-        if: ${{ !cancelled() && steps.build_vab.outcome == 'success' }}
+      id: symlink_vab
+      if: ${{ success() && !cancelled() && steps.build_vab.outcome == 'success' }}
       run: sudo ln -s ~/.vmodules/vab/vab /usr/local/bin/vab
 
     - name: Run 'vab --help'
-        id: run_vab_help
-        if: ${{ !cancelled() && steps.symlink_vab.outcome == 'success' }}
+      id: run_vab_help
+      if: ${{ success() && !cancelled() && steps.symlink_vab.outcome == 'success' }}
       run: vab --help
 
     - name: Ruin Android environment on purpose
-        id: ruin_android_environment_on_purpose
-        if: ${{ !cancelled() && steps.run_vab_help.outcome == 'success' }}
+      id: ruin_android_environment_on_purpose
+      if: ${{ success() && !cancelled() && steps.run_vab_help.outcome == 'success' }}
       run: |
         sudo rm -fr /usr/local/lib/android
 
     - name: Run 'vab doctor' before
-        id: run_vab_doctor_before
-        if: ${{ !cancelled() && steps.ruin_android_environment_on_purpose.outcome == 'success' }}
+      id: run_vab_doctor_before
+      if: ${{ success() && !cancelled() && steps.ruin_android_environment_on_purpose.outcome == 'success' }}
       run: vab doctor
 
     - name: Run 'vab install auto'
-        id: run_vab_install_auto
-        if: ${{ !cancelled() && steps.run_vab_doctor_before.outcome == 'success' }}
+      id: run_vab_install_auto
+      if: ${{ success() && !cancelled() && steps.run_vab_doctor_before.outcome == 'success' }}
       run: |
         unset ANDROID_SDK_ROOT # These are set in the CI by default
         unset ANDROID_HOME
@@ -152,24 +152,24 @@ jobs:
         vab install auto
 
     - name: Run 'vab doctor' after
-        id: run_vab_doctor_after
-        if: ${{ !cancelled() && steps.run_vab_install_auto.outcome == 'success' }}
+      id: run_vab_doctor_after
+      if: ${{ success() && !cancelled() && steps.run_vab_install_auto.outcome == 'success' }}
       run: vab doctor
 
     - name: Test vab complete
-        id: test_vab_complete
-        if: ${{ !cancelled() && steps.run_vab_doctor_after.outcome == 'success' }}
+      id: test_vab_complete
+      if: ${{ success() && !cancelled() && steps.run_vab_doctor_after.outcome == 'success' }}
       run: |
         [ "$(vab complete bash vab com)" = "COMPREPLY+=('complete')" ]
 
     - name: Run tests
-        id: run_tests
-        if: ${{ !cancelled() && steps.test_vab_complete.outcome == 'success' }}
+      id: run_tests
+      if: ${{ success() && !cancelled() && steps.test_vab_complete.outcome == 'success' }}
       run: v test ~/.vmodules/vab
 
     - name: Build APK (Default) examples/sokol/particles
-        id: build_apk_default_examples_sokol_particles
-        if: ${{ !cancelled() && steps.run_tests.outcome == 'success' }}
+      id: build_apk_default_examples_sokol_particles
+      if: ${{ success() && !cancelled() && steps.run_tests.outcome == 'success' }}
       run: |
         mkdir apks
         vab examples/sokol/particles -o apks/particles.apk
@@ -186,85 +186,85 @@ jobs:
       VAB_FLAGS: -v 3
     steps:
     - name: Checkout V
-        id: checkout_v
+      id: checkout_v
       uses: actions/checkout@v4
       with:
         repository: vlang/v
 
     - name: Build local v
-        id: build_local_v
-        if: ${{ !cancelled() && steps.checkout_v.outcome == 'success' }}
+      id: build_local_v
+      if: ${{ success() && !cancelled() && steps.checkout_v.outcome == 'success' }}
       run: make -j4 && sudo ./v symlink
 
     - name: Checkout vab
-        id: checkout_vab
-        if: ${{ !cancelled() && steps.build_local_v.outcome == 'success' }}
+      id: checkout_vab
+      if: ${{ success() && !cancelled() && steps.build_local_v.outcome == 'success' }}
       uses: actions/checkout@v4
       with:
         path: vab
 
     - name: Simulate "v install vab"
-        id: simulate_v_install_vab
-        if: ${{ !cancelled() && steps.checkout_vab.outcome == 'success' }}
+      id: simulate_v_install_vab
+      if: ${{ success() && !cancelled() && steps.checkout_vab.outcome == 'success' }}
       run: mv vab ~/.vmodules
 
     - name: Build vab with -prod
-        id: build_vab_with_prod
-        if: ${{ !cancelled() && steps.simulate_v_install_vab.outcome == 'success' }}
+      id: build_vab_with_prod
+      if: ${{ success() && !cancelled() && steps.simulate_v_install_vab.outcome == 'success' }}
       run: v -prod  ~/.vmodules/vab
 
     - name: Build vab
-        id: build_vab
-        if: ${{ !cancelled() && steps.build_vab_with_prod.outcome == 'success' }}
+      id: build_vab
+      if: ${{ success() && !cancelled() && steps.build_vab_with_prod.outcome == 'success' }}
       run: v -g ~/.vmodules/vab
 
     - name: Symlink vab
-        id: symlink_vab
-        if: ${{ !cancelled() && steps.build_vab.outcome == 'success' }}
+      id: symlink_vab
+      if: ${{ success() && !cancelled() && steps.build_vab.outcome == 'success' }}
       run: sudo ln -s ~/.vmodules/vab/vab /usr/local/bin/vab
 
     - name: Run 'vab --help'
-        id: run_vab_help
-        if: ${{ !cancelled() && steps.symlink_vab.outcome == 'success' }}
+      id: run_vab_help
+      if: ${{ success() && !cancelled() && steps.symlink_vab.outcome == 'success' }}
       run: vab --help
 
     - name: Ruin Android environment on purpose
-        id: ruin_android_environment_on_purpose
-        if: ${{ !cancelled() && steps.run_vab_help.outcome == 'success' }}
+      id: ruin_android_environment_on_purpose
+      if: ${{ success() && !cancelled() && steps.run_vab_help.outcome == 'success' }}
       run: |
         sudo rm -fr "$ANDROID_SDK_ROOT/platforms"
 
     - name: Run 'vab doctor'
-        id: run_vab_doctor
-        if: ${{ !cancelled() && steps.ruin_android_environment_on_purpose.outcome == 'success' }}
+      id: run_vab_doctor
+      if: ${{ success() && !cancelled() && steps.ruin_android_environment_on_purpose.outcome == 'success' }}
       run: vab doctor
 
     - name: Run vab --list-* flags
-        id: run_vab_list_flags
-        if: ${{ !cancelled() && steps.run_vab_doctor.outcome == 'success' }}
+      id: run_vab_list_flags
+      if: ${{ success() && !cancelled() && steps.run_vab_doctor.outcome == 'success' }}
       run: |
         vab --list-apis
         vab --list-build-tools
         vab --list-ndks
 
     - name: Run 'vab install "platforms;android-21"'
-        id: run_vab_install_platforms_android_21
-        if: ${{ !cancelled() && steps.run_vab_list_flags.outcome == 'success' }}
+      id: run_vab_install_platforms_android_21
+      if: ${{ success() && !cancelled() && steps.run_vab_list_flags.outcome == 'success' }}
       run: vab install "platforms;android-21"
 
     - name: Run vab doctor
-        id: run_vab_doctor_2
-        if: ${{ !cancelled() && steps.run_vab_install_platforms_android_21.outcome == 'success' }}
+      id: run_vab_doctor_2
+      if: ${{ success() && !cancelled() && steps.run_vab_install_platforms_android_21.outcome == 'success' }}
       run: vab doctor
 
     - name: Run tests
-        id: run_tests
-        if: ${{ !cancelled() && steps.run_vab_doctor_2.outcome == 'success' }}
+      id: run_tests
+      if: ${{ success() && !cancelled() && steps.run_vab_doctor_2.outcome == 'success' }}
       run: v test ~/.vmodules/vab
 
     - name: Build APK (Default) examples/sokol/particles
-        id: build_apk_default_examples_sokol_particles
-        if: ${{ !cancelled() && steps.run_tests.outcome == 'success' }}
+      id: build_apk_default_examples_sokol_particles
+      if: ${{ success() && !cancelled() && steps.run_tests.outcome == 'success' }}
       run: |
         mkdir apks
         vab examples/sokol/particles -o apks/particles.apk
@@ -278,27 +278,27 @@ jobs:
       VAB_FLAGS: -v 3
     steps:
     - name: Checkout V
-        id: checkout_v
+      id: checkout_v
       uses: actions/checkout@v4
       with:
         repository: vlang/v
 
     - name: Build local v
-        id: build_local_v
-        if: ${{ !cancelled() && steps.checkout_v.outcome == 'success' }}
+      id: build_local_v
+      if: ${{ success() && !cancelled() && steps.checkout_v.outcome == 'success' }}
       run: make -j4 && sudo ./v symlink
 
     - name: Install dependencies
-        id: install_dependencies
-        if: ${{ !cancelled() && steps.build_local_v.outcome == 'success' }}
+      id: install_dependencies
+      if: ${{ success() && !cancelled() && steps.build_local_v.outcome == 'success' }}
       run: |
         v retry -- sudo apt-get update
         v retry -- sudo apt-get install --quiet -y libsdl2-dev libsdl2-ttf-dev
         v retry -- sudo apt-get install --quiet -y libsdl2-mixer-dev libsdl2-image-dev
        
     - name: Checkout SDL
-        id: checkout_sdl
-        if: ${{ !cancelled() && steps.install_dependencies.outcome == 'success' }}
+      id: checkout_sdl
+      if: ${{ success() && !cancelled() && steps.install_dependencies.outcome == 'success' }}
       uses: actions/checkout@v4
       with:
         repository: vlang/sdl
@@ -306,49 +306,49 @@ jobs:
         path: sdl
 
     - name: Simulate "v install sdl"
-        id: simulate_v_install_sdl
-        if: ${{ !cancelled() && steps.checkout_sdl.outcome == 'success' }}
+      id: simulate_v_install_sdl
+      if: ${{ success() && !cancelled() && steps.checkout_sdl.outcome == 'success' }}
       run: mv sdl ~/.vmodules
 
     - name: Setup vlang/sdl
-        id: setup_vlang_sdl
-        if: ${{ !cancelled() && steps.simulate_v_install_sdl.outcome == 'success' }}
+      id: setup_vlang_sdl
+      if: ${{ success() && !cancelled() && steps.simulate_v_install_sdl.outcome == 'success' }}
       run: v ~/.vmodules/sdl/setup.vsh
 
     - name: Checkout vab
-        id: checkout_vab
-        if: ${{ !cancelled() && steps.setup_vlang_sdl.outcome == 'success' }}
+      id: checkout_vab
+      if: ${{ success() && !cancelled() && steps.setup_vlang_sdl.outcome == 'success' }}
       uses: actions/checkout@v4
       with:
         path: vab
 
     - name: Install vab
-        id: install_vab
-        if: ${{ !cancelled() && steps.checkout_vab.outcome == 'success' }}
+      id: install_vab
+      if: ${{ success() && !cancelled() && steps.checkout_vab.outcome == 'success' }}
       run: |
         mv vab ~/.vmodules
         v -g ~/.vmodules/vab
         sudo ln -s ~/.vmodules/vab/vab /usr/local/bin/vab
 
     - name: Run 'vab --help'
-        id: run_vab_help
-        if: ${{ !cancelled() && steps.install_vab.outcome == 'success' }}
+      id: run_vab_help
+      if: ${{ success() && !cancelled() && steps.install_vab.outcome == 'success' }}
       run: vab --help
 
     - name: Install extra command
-        id: install_extra_command
-        if: ${{ !cancelled() && steps.run_vab_help.outcome == 'success' }}
+      id: install_extra_command
+      if: ${{ success() && !cancelled() && steps.run_vab_help.outcome == 'success' }}
       run: |
         vab install extra larpon/vab-sdl
 
     - name: Run vab doctor
-        id: run_vab_doctor
-        if: ${{ !cancelled() && steps.install_extra_command.outcome == 'success' }}
+      id: run_vab_doctor
+      if: ${{ success() && !cancelled() && steps.install_extra_command.outcome == 'success' }}
       run: vab doctor
 
     - name: Test extra command
-        id: test_extra_command
-        if: ${{ !cancelled() && steps.run_vab_doctor.outcome == 'success' }}
+      id: test_extra_command
+      if: ${{ success() && !cancelled() && steps.run_vab_doctor.outcome == 'success' }}
       run: |
         vab sdl doctor
 
@@ -363,57 +363,57 @@ jobs:
       VAB_FLAGS: -v 3
     steps:
     - name: Checkout V
-        id: checkout_v
+      id: checkout_v
       uses: actions/checkout@v4
       with:
         repository: vlang/v
 
     - name: Build local v
-        id: build_local_v
-        if: ${{ !cancelled() && steps.checkout_v.outcome == 'success' }}
+      id: build_local_v
+      if: ${{ success() && !cancelled() && steps.checkout_v.outcome == 'success' }}
       run: make -j4 && sudo ./v symlink
 
     - name: Checkout vab
-        id: checkout_vab
-        if: ${{ !cancelled() && steps.build_local_v.outcome == 'success' }}
+      id: checkout_vab
+      if: ${{ success() && !cancelled() && steps.build_local_v.outcome == 'success' }}
       uses: actions/checkout@v4
       with:
         path: vab
 
     - name: Simulate "v install vab"
-        id: simulate_v_install_vab
-        if: ${{ !cancelled() && steps.checkout_vab.outcome == 'success' }}
+      id: simulate_v_install_vab
+      if: ${{ success() && !cancelled() && steps.checkout_vab.outcome == 'success' }}
       run: mv vab ~/.vmodules
 
     - name: Build vab
-        id: build_vab
-        if: ${{ !cancelled() && steps.simulate_v_install_vab.outcome == 'success' }}
+      id: build_vab
+      if: ${{ success() && !cancelled() && steps.simulate_v_install_vab.outcome == 'success' }}
       run: v -g ~/.vmodules/vab
 
     - name: Move vab
-        id: move_vab
-        if: ${{ !cancelled() && steps.build_vab.outcome == 'success' }}
+      id: move_vab
+      if: ${{ success() && !cancelled() && steps.build_vab.outcome == 'success' }}
       run: |
         sudo mv ~/.vmodules/vab/vab /usr/bin/vab
 
     - name: Run 'vab --help'
-        id: run_vab_help
-        if: ${{ !cancelled() && steps.move_vab.outcome == 'success' }}
+      id: run_vab_help
+      if: ${{ success() && !cancelled() && steps.move_vab.outcome == 'success' }}
       run: /usr/bin/vab --help
 
     - name: Run 'vab doctor'
-        id: run_vab_doctor
-        if: ${{ !cancelled() && steps.run_vab_help.outcome == 'success' }}
+      id: run_vab_doctor
+      if: ${{ success() && !cancelled() && steps.run_vab_help.outcome == 'success' }}
       run: /usr/bin/vab doctor
 
     - name: Run tests
-        id: run_tests
-        if: ${{ !cancelled() && steps.run_vab_doctor.outcome == 'success' }}
+      id: run_tests
+      if: ${{ success() && !cancelled() && steps.run_vab_doctor.outcome == 'success' }}
       run: v test ~/.vmodules/vab
 
     - name: Build APK (Default) examples/sokol/particles
-        id: build_apk_default_examples_sokol_particles
-        if: ${{ !cancelled() && steps.run_tests.outcome == 'success' }}
+      id: build_apk_default_examples_sokol_particles
+      if: ${{ success() && !cancelled() && steps.run_tests.outcome == 'success' }}
       run: |
         mkdir apks
         /usr/bin/vab examples/sokol/particles -o apks/particles.apk
@@ -424,51 +424,51 @@ jobs:
     timeout-minutes: 10
     steps:
     - name: Checkout V
-        id: checkout_v
+      id: checkout_v
       uses: actions/checkout@v4
       with:
         repository: vlang/v
 
     - name: Build local v
-        id: build_local_v
-        if: ${{ !cancelled() && steps.checkout_v.outcome == 'success' }}
+      id: build_local_v
+      if: ${{ success() && !cancelled() && steps.checkout_v.outcome == 'success' }}
       run: make -j4 && sudo ./v symlink
 
     - name: Checkout vab
-        id: checkout_vab
-        if: ${{ !cancelled() && steps.build_local_v.outcome == 'success' }}
+      id: checkout_vab
+      if: ${{ success() && !cancelled() && steps.build_local_v.outcome == 'success' }}
       uses: actions/checkout@v4
       with:
         path: vab
 
     - name: Simulate "v install vab"
-        id: simulate_v_install_vab
-        if: ${{ !cancelled() && steps.checkout_vab.outcome == 'success' }}
+      id: simulate_v_install_vab
+      if: ${{ success() && !cancelled() && steps.checkout_vab.outcome == 'success' }}
       run: mv vab ~/.vmodules/
 
     - name: Build vab
-        id: build_vab
-        if: ${{ !cancelled() && steps.simulate_v_install_vab.outcome == 'success' }}
+      id: build_vab
+      if: ${{ success() && !cancelled() && steps.simulate_v_install_vab.outcome == 'success' }}
       run: v -g ~/.vmodules/vab
 
     - name: Symlink vab
-        id: symlink_vab
-        if: ${{ !cancelled() && steps.build_vab.outcome == 'success' }}
+      id: symlink_vab
+      if: ${{ success() && !cancelled() && steps.build_vab.outcome == 'success' }}
       run: sudo ln -s ~/.vmodules/vab/vab /usr/local/bin/vab
 
     - name: Run vab --help
-        id: run_vab_help
-        if: ${{ !cancelled() && steps.symlink_vab.outcome == 'success' }}
+      id: run_vab_help
+      if: ${{ success() && !cancelled() && steps.symlink_vab.outcome == 'success' }}
       run: vab --help
 
     - name: Run vab doctor
-        id: run_vab_doctor
-        if: ${{ !cancelled() && steps.run_vab_help.outcome == 'success' }}
+      id: run_vab_doctor
+      if: ${{ success() && !cancelled() && steps.run_vab_help.outcome == 'success' }}
       run: vab doctor
 
     - name: Check `v -os android` *without* -apk flag
-        id: check_v_os_android_without_apk_flag
-        if: ${{ !cancelled() && steps.run_vab_doctor.outcome == 'success' }}
+      id: check_v_os_android_without_apk_flag
+      if: ${{ success() && !cancelled() && steps.run_vab_doctor.outcome == 'success' }}
       run: .github/workflows/android_cross_compile.vsh
 
   windows-latest-build:
@@ -483,37 +483,37 @@ jobs:
     steps:
 
     - uses: actions/setup-java@v4
-        id: uses_setup_java_v4
+      id: uses_setup_java_v4
       with:
         distribution: 'adopt'
         java-version: 17
 
     - name: Install V
-        id: install_v
-        if: ${{ !cancelled() && steps.uses_setup_java_v4.outcome == 'success' }}
+      id: install_v
+      if: ${{ success() && !cancelled() && steps.uses_setup_java_v4.outcome == 'success' }}
       uses: vlang/setup-v@v1.4
       with:
         check-latest: true
 
       # TODO: https://github.com/vlang/setup-v/issues
     - name: Checkout V examples
-        id: checkout_v_examples
-        if: ${{ !cancelled() && steps.install_v.outcome == 'success' }}
+      id: checkout_v_examples
+      if: ${{ success() && !cancelled() && steps.install_v.outcome == 'success' }}
       uses: actions/checkout@v4
       with:
         repository: vlang/v
         path: v
 
     - name: Checkout vab
-        id: checkout_vab
-        if: ${{ !cancelled() && steps.checkout_v_examples.outcome == 'success' }}
+      id: checkout_vab
+      if: ${{ success() && !cancelled() && steps.checkout_v_examples.outcome == 'success' }}
       uses: actions/checkout@v4
       with:
         path: vab
 
     - name: Simulate "v install vab"
-        id: simulate_v_install_vab
-        if: ${{ !cancelled() && steps.checkout_vab.outcome == 'success' }}
+      id: simulate_v_install_vab
+      if: ${{ success() && !cancelled() && steps.checkout_vab.outcome == 'success' }}
       run: Move-Item -Path .\vab -Destination $HOME\.vmodules\vab -force
 
 # TODO: fails on Windows
@@ -521,54 +521,54 @@ jobs:
 #      run: v -prod "$HOME\.vmodules\vab"
 
     - name: Build vab
-        id: build_vab
-        if: ${{ !cancelled() && steps.simulate_v_install_vab.outcome == 'success' }}
+      id: build_vab
+      if: ${{ success() && !cancelled() && steps.simulate_v_install_vab.outcome == 'success' }}
       run: v -g "$HOME\.vmodules\vab"
 
     - name: Add vab to PATH
-        id: add_vab_to_path
-        if: ${{ !cancelled() && steps.build_vab.outcome == 'success' }}
+      id: add_vab_to_path
+      if: ${{ success() && !cancelled() && steps.build_vab.outcome == 'success' }}
       run: echo "$HOME\.vmodules\vab" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
     - name: Run vab --help
-        id: run_vab_help
-        if: ${{ !cancelled() && steps.add_vab_to_path.outcome == 'success' }}
+      id: run_vab_help
+      if: ${{ success() && !cancelled() && steps.add_vab_to_path.outcome == 'success' }}
       run: vab --help
 
     - name: Install Java matching build-tools
-        id: install_java_matching_build_tools
-        if: ${{ !cancelled() && steps.run_vab_help.outcome == 'success' }}
+      id: install_java_matching_build_tools
+      if: ${{ success() && !cancelled() && steps.run_vab_help.outcome == 'success' }}
       run: |
         vab install "build-tools;35.0.1"
 
     - name: Install AAB dependencies
-        id: install_aab_dependencies
-        if: ${{ !cancelled() && steps.install_java_matching_build_tools.outcome == 'success' }}
+      id: install_aab_dependencies
+      if: ${{ success() && !cancelled() && steps.install_java_matching_build_tools.outcome == 'success' }}
       run: |
         vab install bundletool
         vab install aapt2
 
     - name: Run vab doctor
-        id: run_vab_doctor
-        if: ${{ !cancelled() && steps.install_aab_dependencies.outcome == 'success' }}
+      id: run_vab_doctor
+      if: ${{ success() && !cancelled() && steps.install_aab_dependencies.outcome == 'success' }}
       run: vab doctor
 
     - name: Run vab --list-* flags
-        id: run_vab_list_flags
-        if: ${{ !cancelled() && steps.run_vab_doctor.outcome == 'success' }}
+      id: run_vab_list_flags
+      if: ${{ success() && !cancelled() && steps.run_vab_doctor.outcome == 'success' }}
       run: |
         vab --list-apis
         vab --list-build-tools
         vab --list-ndks
 
     - name: Run tests
-        id: run_tests
-        if: ${{ !cancelled() && steps.run_vab_list_flags.outcome == 'success' }}
+      id: run_tests
+      if: ${{ success() && !cancelled() && steps.run_vab_list_flags.outcome == 'success' }}
       run: v test "$HOME\.vmodules\vab"
 
     - name: Build APK (Default) v/examples/sokol/particles
-        id: build_apk_default_v_examples_sokol_particles
-        if: ${{ !cancelled() && steps.run_tests.outcome == 'success' }}
+      id: build_apk_default_v_examples_sokol_particles
+      if: ${{ success() && !cancelled() && steps.run_tests.outcome == 'success' }}
       run: |
         mkdir apks
         vab v\examples\sokol\particles -o apks\particles.apk
@@ -586,69 +586,69 @@ jobs:
       VFLAGS: -no-parallel
     steps:
     - uses: actions/setup-java@v4
-        id: uses_setup_java_v4
+      id: uses_setup_java_v4
       with:
         distribution: 'adopt'
         java-version: 17
 
     - name: Checkout V
-        id: checkout_v
-        if: ${{ !cancelled() && steps.uses_setup_java_v4.outcome == 'success' }}
+      id: checkout_v
+      if: ${{ success() && !cancelled() && steps.uses_setup_java_v4.outcome == 'success' }}
       uses: actions/checkout@v4
       with:
         repository: vlang/v
         path: v
 
     - name: Build and install v
-        id: build_and_install_v
-        if: ${{ !cancelled() && steps.checkout_v.outcome == 'success' }}
+      id: build_and_install_v
+      if: ${{ success() && !cancelled() && steps.checkout_v.outcome == 'success' }}
       run: cd ./v && make && sudo ./v symlink
 
     - name: Checkout vab
-        id: checkout_vab
-        if: ${{ !cancelled() && steps.build_and_install_v.outcome == 'success' }}
+      id: checkout_vab
+      if: ${{ success() && !cancelled() && steps.build_and_install_v.outcome == 'success' }}
       uses: actions/checkout@v4
       with:
         path: vab
 
     - name: Simulate "v install vab"
-        id: simulate_v_install_vab
-        if: ${{ !cancelled() && steps.checkout_vab.outcome == 'success' }}
+      id: simulate_v_install_vab
+      if: ${{ success() && !cancelled() && steps.checkout_vab.outcome == 'success' }}
       run: mv vab ~/.vmodules
 
     - name: Build vab with -prod
-        id: build_vab_with_prod
-        if: ${{ !cancelled() && steps.simulate_v_install_vab.outcome == 'success' }}
+      id: build_vab_with_prod
+      if: ${{ success() && !cancelled() && steps.simulate_v_install_vab.outcome == 'success' }}
       run: v -prod ~/.vmodules/vab
 
     - name: Build vab
-        id: build_vab
-        if: ${{ !cancelled() && steps.build_vab_with_prod.outcome == 'success' }}
+      id: build_vab
+      if: ${{ success() && !cancelled() && steps.build_vab_with_prod.outcome == 'success' }}
       run: v -g ~/.vmodules/vab
 
     - name: Symlink vab
-        id: symlink_vab
-        if: ${{ !cancelled() && steps.build_vab.outcome == 'success' }}
+      id: symlink_vab
+      if: ${{ success() && !cancelled() && steps.build_vab.outcome == 'success' }}
       run: sudo ln -s ~/.vmodules/vab/vab /usr/local/bin/vab
 
     - name: Run vab --help
-        id: run_vab_help
-        if: ${{ !cancelled() && steps.symlink_vab.outcome == 'success' }}
+      id: run_vab_help
+      if: ${{ success() && !cancelled() && steps.symlink_vab.outcome == 'success' }}
       run: vab --help
 
     - name: Run vab doctor
-        id: run_vab_doctor
-        if: ${{ !cancelled() && steps.run_vab_help.outcome == 'success' }}
+      id: run_vab_doctor
+      if: ${{ success() && !cancelled() && steps.run_vab_help.outcome == 'success' }}
       run: vab doctor
 
     - name: Run tests
-        id: run_tests
-        if: ${{ !cancelled() && steps.run_vab_doctor.outcome == 'success' }}
+      id: run_tests
+      if: ${{ success() && !cancelled() && steps.run_vab_doctor.outcome == 'success' }}
       run: v test ~/.vmodules/vab
 
     - name: Build APK (Default) examples/sokol/particles
-        id: build_apk_default_examples_sokol_particles
-        if: ${{ !cancelled() && steps.run_tests.outcome == 'success' }}
+      id: build_apk_default_examples_sokol_particles
+      if: ${{ success() && !cancelled() && steps.run_tests.outcome == 'success' }}
       run: |
         mkdir apks
         vab v/examples/sokol/particles -o apks/particles.apk
