@@ -23,44 +23,70 @@ jobs:
       fail-fast: false
     timeout-minutes: 20
     env:
+      # Explicit test parallelism: a worker peaks near 0.25 GB,
+      # so this stays CPU-bound with ample headroom.
+      VJOBS: '4'
+      # Stop a failing test session at its first failure instead of
+      # running the whole suite to completion; the remaining files
+      # add no signal.
+      VTEST_FAIL_FAST: '1'
       VAB_FLAGS: -v 3 --build-tools 29.0.0
     steps:
     - uses: actions/setup-java@v4
+      id: uses_setup_java_v4
       with:
         distribution: 'adopt'
         java-version: ${{ matrix.java-version }}
 
     - name: Checkout V
+      id: checkout_v
+      if: ${{ success() && !cancelled() && steps.uses_setup_java_v4.outcome == 'success' }}
       uses: actions/checkout@v4
       with:
         repository: vlang/v
 
     - name: Build local v
+      id: build_local_v
+      if: ${{ success() && !cancelled() && steps.checkout_v.outcome == 'success' }}
       run: make -j2
 
     - name: Checkout vab
+      id: checkout_vab
+      if: ${{ success() && !cancelled() && steps.build_local_v.outcome == 'success' }}
       uses: actions/checkout@v4
       with:
         path: vab
 
     - name: Simulate "v install vab"
+      id: simulate_v_install_vab
+      if: ${{ success() && !cancelled() && steps.checkout_vab.outcome == 'success' }}
       run: mv vab ~/.vmodules
 
     - name: Build vab
+      id: build_vab
+      if: ${{ success() && !cancelled() && steps.simulate_v_install_vab.outcome == 'success' }}
       run: ./v -g ~/.vmodules/vab
 
     - name: Symlink vab
+      id: symlink_vab
+      if: ${{ success() && !cancelled() && steps.build_vab.outcome == 'success' }}
       run: sudo ln -s ~/.vmodules/vab/vab /usr/local/bin/vab
 
     - name: Run vab --help
+      id: run_vab_help
+      if: ${{ success() && !cancelled() && steps.symlink_vab.outcome == 'success' }}
       run: vab --help
 
     - name: Run 'vab doctor' before install
+      id: run_vab_doctor_before_install
+      if: ${{ success() && !cancelled() && steps.run_vab_help.outcome == 'success' }}
       run: vab doctor
 
       # It is a Sisyphus task to get all combinations of the pre-installed SDK / tools and Java working
       # so we simply remove the system install and use our own minimal base-setup via 'vab install auto'...
     - name: Setup predictable Android environment
+      id: setup_predictable_android_environment
+      if: ${{ success() && !cancelled() && steps.run_vab_doctor_before_install.outcome == 'success' }}
       run: |
         sudo rm -fr /usr/local/lib/android # location of pre-installed SDK on Ubuntu
         unset ANDROID_SDK_ROOT # These are set in the CI by default
@@ -69,24 +95,36 @@ jobs:
         vab install auto
 
     - name: Run 'vab doctor' after install
+      id: run_vab_doctor_after_install
+      if: ${{ success() && !cancelled() && steps.setup_predictable_android_environment.outcome == 'success' }}
       run: vab doctor
 
     - name: Run tests
+      id: run_tests
+      if: ${{ success() && !cancelled() && steps.run_vab_doctor_after_install.outcome == 'success' }}
       run: ./v test ~/.vmodules/vab
 
     # AAB
     - name: Install AAB dependencies
+      id: install_aab_dependencies
+      if: ${{ success() && !cancelled() && steps.run_tests.outcome == 'success' }}
       run: |
         vab install bundletool
         vab install aapt2
 
     - name: Run vab install build-tools
+      id: run_vab_install_build_tools
+      if: ${{ success() && !cancelled() && steps.install_aab_dependencies.outcome == 'success' }}
       run: vab install "build-tools;29.0.0"
 
     - name: Run 'vab doctor' after build-tools install
+      id: run_vab_doctor_after_build_tools_install
+      if: ${{ success() && !cancelled() && steps.run_vab_install_build_tools.outcome == 'success' }}
       run: vab doctor
 
     - name: Build examples as APK + AAB (Java ${{ matrix.java-version }}) ${{ matrix.android-api }}
+      id: build_examples_as_apk_aab_java_matrix_java_version_matrix_android_api
+      if: ${{ success() && !cancelled() && steps.run_vab_doctor_after_build_tools_install.outcome == 'success' }}
       run: |
         declare -a v_examples=('flappylearning' '2048' 'fireworks' 'tetris' 'sokol/particles' 'sokol/drawing.v' 'sokol/freetype_raven.v' 'gg/polygons.v' 'gg/raven_text_rendering.v' 'gg/rectangles.v' 'gg/stars.v' 'gg/worker_thread.v')
 
@@ -119,45 +157,73 @@ jobs:
       fail-fast: false
     timeout-minutes: 20
     env:
+      # Explicit test parallelism: a worker peaks near 0.25 GB,
+      # so this stays CPU-bound with ample headroom.
+      VJOBS: '4'
+      # Stop a failing test session at its first failure instead of
+      # running the whole suite to completion; the remaining files
+      # add no signal.
+      VTEST_FAIL_FAST: '1'
       VAB_FLAGS: -v 3 -gc none
     steps:
     - uses: actions/setup-java@v4
+      id: uses_setup_java_v4
       with:
         distribution: 'adopt'
         java-version: ${{ matrix.java-version }}
 
     - name: Checkout V
+      id: checkout_v
+      if: ${{ success() && !cancelled() && steps.uses_setup_java_v4.outcome == 'success' }}
       uses: actions/checkout@v4
       with:
         repository: vlang/v
 
     - name: Build local v
+      id: build_local_v
+      if: ${{ success() && !cancelled() && steps.checkout_v.outcome == 'success' }}
       run: make -j2
 
     - name: Checkout vab
+      id: checkout_vab
+      if: ${{ success() && !cancelled() && steps.build_local_v.outcome == 'success' }}
       uses: actions/checkout@v4
       with:
         path: vab
 
     - name: Simulate "v install vab"
+      id: simulate_v_install_vab
+      if: ${{ success() && !cancelled() && steps.checkout_vab.outcome == 'success' }}
       run: mv vab ~/.vmodules
 
     - name: Build vab
+      id: build_vab
+      if: ${{ success() && !cancelled() && steps.simulate_v_install_vab.outcome == 'success' }}
       run: ./v -g ~/.vmodules/vab
 
     - name: Symlink vab
+      id: symlink_vab
+      if: ${{ success() && !cancelled() && steps.build_vab.outcome == 'success' }}
       run: sudo ln -s ~/.vmodules/vab/vab /usr/local/bin/vab
 
     - name: Run vab --help
+      id: run_vab_help
+      if: ${{ success() && !cancelled() && steps.symlink_vab.outcome == 'success' }}
       run: vab --help
 
     - name: Run vab doctor
+      id: run_vab_doctor
+      if: ${{ success() && !cancelled() && steps.run_vab_help.outcome == 'success' }}
       run: vab doctor
 
     - name: Run tests
+      id: run_tests
+      if: ${{ success() && !cancelled() && steps.run_vab_doctor.outcome == 'success' }}
       run: ./v test ~/.vmodules/vab
 
     - name: Build examples with garbage collector (Java ${{ matrix.java-version }}) ${{ matrix.android-api }}
+      id: build_examples_with_garbage_collector_java_matrix_java_version_matrix_android_api
+      if: ${{ success() && !cancelled() && steps.run_tests.outcome == 'success' }}
       run: |
 
         declare -a v_examples=('flappylearning' '2048' 'fireworks' 'tetris' 'sokol/particles' 'sokol/drawing.v' 'sokol/freetype_raven.v' 'gg/polygons.v' 'gg/raven_text_rendering.v' 'gg/rectangles.v' 'gg/stars.v' 'gg/worker_thread.v')
@@ -184,46 +250,74 @@ jobs:
       fail-fast: false
     timeout-minutes: 20
     env:
+      # Explicit test parallelism: a worker peaks near 0.25 GB,
+      # so this stays CPU-bound with ample headroom.
+      VJOBS: '4'
+      # Stop a failing test session at its first failure instead of
+      # running the whole suite to completion; the remaining files
+      # add no signal.
+      VTEST_FAIL_FAST: '1'
       VAB_FLAGS: -v 3
     steps:
     - uses: actions/setup-java@v4
+      id: uses_setup_java_v4
       with:
         distribution: 'adopt'
         java-version: ${{ matrix.java-version }}
 
     - name: Checkout V
+      id: checkout_v
+      if: ${{ success() && !cancelled() && steps.uses_setup_java_v4.outcome == 'success' }}
       uses: actions/checkout@v4
       with:
         repository: vlang/v
 
     - name: Build local v
+      id: build_local_v
+      if: ${{ success() && !cancelled() && steps.checkout_v.outcome == 'success' }}
       run: make -j2
 
     - name: Checkout vab
+      id: checkout_vab
+      if: ${{ success() && !cancelled() && steps.build_local_v.outcome == 'success' }}
       uses: actions/checkout@v4
       with:
         path: vab
 
     - name: Simulate "v install vab"
+      id: simulate_v_install_vab
+      if: ${{ success() && !cancelled() && steps.checkout_vab.outcome == 'success' }}
       run: mv vab ~/.vmodules
 
     - name: Build vab
+      id: build_vab
+      if: ${{ success() && !cancelled() && steps.simulate_v_install_vab.outcome == 'success' }}
       run: ./v -g ~/.vmodules/vab
 
     - name: Symlink vab
+      id: symlink_vab
+      if: ${{ success() && !cancelled() && steps.build_vab.outcome == 'success' }}
       run: sudo ln -s ~/.vmodules/vab/vab /usr/local/bin/vab
 
     - name: Run vab --help
+      id: run_vab_help
+      if: ${{ success() && !cancelled() && steps.symlink_vab.outcome == 'success' }}
       run: vab --help
 
     - name: Ruin Android environment on purpose
+      id: ruin_android_environment_on_purpose
+      if: ${{ success() && !cancelled() && steps.run_vab_help.outcome == 'success' }}
       run: |
         sudo rm -fr /usr/local/lib/android
 
     - name: Run 'vab doctor' before install
+      id: run_vab_doctor_before_install
+      if: ${{ success() && !cancelled() && steps.ruin_android_environment_on_purpose.outcome == 'success' }}
       run: vab doctor
 
     - name: Run 'vab install auto'
+      id: run_vab_install_auto
+      if: ${{ success() && !cancelled() && steps.run_vab_doctor_before_install.outcome == 'success' }}
       run: |
         unset ANDROID_SDK_ROOT # These are set in the CI by default
         unset ANDROID_HOME
@@ -231,18 +325,26 @@ jobs:
         vab install auto
 
     - name: Run 'vab doctor' after install
+      id: run_vab_doctor_after_install
+      if: ${{ success() && !cancelled() && steps.run_vab_install_auto.outcome == 'success' }}
       run: vab doctor
 
     - name: Run tests
+      id: run_tests
+      if: ${{ success() && !cancelled() && steps.run_vab_doctor_after_install.outcome == 'success' }}
       run: ./v test ~/.vmodules/vab
 
     # AAB
     - name: Install AAB dependencies
+      id: install_aab_dependencies
+      if: ${{ success() && !cancelled() && steps.run_tests.outcome == 'success' }}
       run: |
         vab install bundletool
         vab install aapt2
 
     - name: Build examples as APK + AAB (Java ${{ matrix.java-version }}) ${{ matrix.android-api }}
+      id: build_examples_as_apk_aab_java_matrix_java_version_matrix_android_api
+      if: ${{ success() && !cancelled() && steps.install_aab_dependencies.outcome == 'success' }}
       run: |
 
         declare -a v_examples=('flappylearning' '2048' 'fireworks' 'tetris' 'sokol/particles' 'sokol/drawing.v' 'sokol/freetype_raven.v' 'gg/polygons.v' 'gg/raven_text_rendering.v' 'gg/rectangles.v' 'gg/stars.v' 'gg/worker_thread.v')
