@@ -75,11 +75,13 @@ fn get_default_base_files_path() string {
 	if os.is_dir(path) {
 		return path
 	}
-	// Assume they are in .vmodules/vab/...
-	vmodules_path := os.getenv_opt('VMODULES') or { os.join_path(os.home_dir(), '.vmodules') }
-	path = os.join_path(vmodules_path, 'vab', 'platforms', 'android')
-	if os.is_dir(path) {
-		return path
+	// Assume they are in .vmodules/vab/... or in any of the `$VMODULES` paths,
+	// which, like V itself, can be a list of paths.
+	for vmodules_path in os.vmodules_paths() {
+		path = os.join_path(vmodules_path, 'vab', 'platforms', 'android')
+		if os.is_dir(path) {
+			return path
+		}
 	}
 	return ''
 }
