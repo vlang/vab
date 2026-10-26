@@ -34,6 +34,8 @@ pub:
 	lib_name        string   // filename of the resulting .so ('${lib_name}.so')
 	api_level       string   // Android API level to use when compiling
 	min_sdk_version int = default_min_sdk_version
+pub mut:
+	v_arch string // architecture V compiles the C for; compile sets it per ABI
 }
 
 // verbose prints `msg` to STDOUT if `CompileOptions.verbosity` level is >= `verbosity_level`.
@@ -122,6 +124,36 @@ fn (err CompileError) msg() string {
 	return 'failed to compile ${enum_to_text}:\n${err.err}'
 }
 
+// v_target_arch names the architecture V compiles for, given a vab ABI name.
+fn v_target_arch(abi string) string {
+	return match abi {
+		'arm64-v8a' { 'arm64' }
+		'armeabi-v7a' { 'arm32' }
+		'x86' { 'x86' }
+		'x86_64' { 'amd64' }
+		else { abi }
+	}
+}
+
+// v_compiler_flags returns the flags for the V compiler, with the target
+// architecture added once compile has set one.
+fn (opt CompileOptions) v_compiler_flags() []string {
+	mut flags := opt.v_flags.clone()
+	if opt.v_arch.len > 0 {
+		flags << '-arch ${opt.v_arch}'
+	}
+	return flags
+}
+
+// v_c_file is the C file compile_v_to_c writes. Each architecture gets its own,
+// because comptime-selected code such as closure trampolines differs per target.
+fn (opt CompileOptions) v_c_file() string {
+	if opt.v_arch.len == 0 {
+		return os.join_path(opt.work_dir, 'v_android.c')
+	}
+	return os.join_path(opt.work_dir, 'v_android_${opt.v_arch}.c')
+}
+
 // compile_v_to_c compiles V sources to their Android compatible C counterpart.
 // compile_v_to_c will also compile any supported C dependencies a vlib module might have.
 // See also: compile_v_imports_c_dependencies
@@ -141,7 +173,7 @@ pub fn compile_v_to_c(opt CompileOptions) !VMetaInfo {
 	v_compile_opt := VCompileOptions{
 		verbosity: opt.verbosity
 		cache:     opt.cache
-		flags:     opt.v_flags
+		flags:     opt.v_compiler_flags()
 		work_dir:  os.join_path(opt.work_dir, 'v')
 		input:     opt.input
 	}
@@ -153,7 +185,7 @@ pub fn compile_v_to_c(opt CompileOptions) !VMetaInfo {
 		return error('${err_sig}: empty module dump.')
 	}
 
-	v_output_file := os.join_path(opt.work_dir, 'v_android.c')
+	v_output_file := opt.v_c_file()
 
 	// Boehm-Demers-Weiser Garbage Collector (bdwgc / libgc)
 	uses_gc := opt.uses_gc()
@@ -178,7 +210,7 @@ pub fn compile_v_to_c(opt CompileOptions) !VMetaInfo {
 	if !opt.cache {
 		v_cmd << '-nocache'
 	}
-	v_cmd << opt.v_flags
+	v_cmd << opt.v_compiler_flags()
 	v_cmd << [
 		'-o "${v_output_file}"',
 	]
@@ -199,16 +231,30 @@ pub fn compile(opt CompileOptions) ! {
 	}
 	build_dir := opt.build_directory()!
 
-	v_meta_dump := compile_v_to_c(opt) or {
-		return IError(CompileError{
-			kind: .v_to_c
-			err:  err.msg()
-		})
+	archs := opt.archs()!
+
+	// V runs once per ABI. Comptime-selected code, the closure trampolines among
+	// it, follows the target architecture, so one C file cannot serve them all.
+	// The first architecture's dump supplies the flags shared by every ABI.
+	mut v_output_files := map[string]string{}
+	mut v_meta_dump := VMetaInfo{}
+	for i, arch in archs {
+		mut arch_opt := opt
+		arch_opt.v_arch = v_target_arch(arch)
+		arch_meta := compile_v_to_c(arch_opt) or {
+			return IError(CompileError{
+				kind: .v_to_c
+				err:  err.msg()
+			})
+		}
+		if i == 0 {
+			v_meta_dump = arch_meta
+		}
+		v_output_files[arch] = arch_opt.v_c_file()
 	}
 	v_cflags := v_meta_dump.c_flags
 	imported_modules := v_meta_dump.imports
 
-	v_output_file := os.join_path(opt.work_dir, 'v_android.c')
 	v_thirdparty_dir := os.join_path(vxt.home(), 'thirdparty')
 
 	uses_gc := opt.uses_gc()
@@ -216,12 +262,18 @@ pub fn compile(opt CompileOptions) ! {
 	// Poor man's cache check
 	mut hash := ''
 	hash_file := os.join_path(opt.work_dir, 'v_android.hash')
-	if opt.cache && os.exists(build_dir) && os.exists(v_output_file) {
-		mut bytes := os.read_bytes(v_output_file) or {
-			return error('${err_sig}: failed reading "${v_output_file}".\n${err}')
+	mut all_c_exist := true
+	for arch in archs {
+		all_c_exist = all_c_exist && os.exists(v_output_files[arch])
+	}
+	if opt.cache && os.exists(build_dir) && all_c_exist {
+		mut content := ''
+		for arch in archs {
+			content += os.read_file(v_output_files[arch]) or {
+				return error('${err_sig}: failed reading "${v_output_files[arch]}".\n${err}')
+			}
 		}
-		bytes << '${opt.str()}-${opt.cache_key}'.bytes()
-		hash = md5.sum(bytes).hex()
+		hash = md5.sum((content + '${opt.str()}-${opt.cache_key}').bytes()).hex()
 
 		if os.exists(hash_file) {
 			prev_hash := os.read_file(hash_file) or { '' }
@@ -234,7 +286,7 @@ pub fn compile(opt CompileOptions) ! {
 		}
 	}
 
-	if hash != '' && os.exists(v_output_file) {
+	if hash != '' && all_c_exist {
 		if opt.verbosity > 2 {
 			println('Writing new hash ${hash}')
 		}
@@ -257,8 +309,6 @@ pub fn compile(opt CompileOptions) ! {
 	os.mkdir(build_dir) or {
 		return error('${err_sig}: failed making directory "${build_dir}".\n${err}')
 	}
-
-	archs := opt.archs()!
 
 	if opt.verbosity > 0 {
 		println('Compiling V import C dependencies (.c to .o for ${archs})' +
@@ -325,8 +375,7 @@ pub fn compile(opt CompileOptions) ! {
 	cflags << ['-Wno-unused-parameter'] // sokol_app.h
 
 	// TODO V compile warnings - here to make the compiler(s) shut up :/
-	cflags << ['-Wno-unused-variable', '-Wno-unused-result', '-Wno-unused-function',
-		'-Wno-unused-label']
+	cflags << ['-Wno-unused-variable', '-Wno-unused-result', '-Wno-unused-function', '-Wno-unused-label']
 	cflags << '-Wno-missing-braces'
 	// The C output of recent V versions calls C functions that V compiles in
 	// separate translation units (e.g. `android_print` from
@@ -444,7 +493,7 @@ pub fn compile(opt CompileOptions) ! {
 			includes.join(' '),
 			defines.join(' '),
 			arch_cflags[arch].join(' '),
-			'-c "${v_output_file}"',
+			'-c "${v_output_files[arch]}"',
 			'-o "${arch_o_file}"',
 		]
 
