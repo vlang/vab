@@ -23,7 +23,7 @@ fn vab_commit_hash() string {
 		$if windows {
 			git_cmd = 'git.exe -C "${exe_dir}" rev-parse --short HEAD'
 		}
-		res := os.execute(git_cmd)
+	res := os.exec([git_exe, '-C', exe_dir, 'rev-parse', '--short', 'HEAD'])
 		if res.exit_code == 0 {
 			hash = res.output
 		}
