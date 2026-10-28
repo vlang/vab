@@ -30,7 +30,7 @@ pub fn vabexe() string {
 			exe = system_path
 		}
 		if !os.exists(exe) {
-			res := os.execute('where.exe vab')
+			res := os.exec(['where.exe', 'vab'])
 			if res.exit_code != 0 {
 				exe = ''
 			} else {
