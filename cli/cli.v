@@ -368,7 +368,9 @@ pub fn launch_cmd(args []string) int {
 			exit(os.system_args(cmd_args))
 		} $else $if js {
 			// no way to implement os.execvp in JS backend
-			exit(os.system('${tool_exe} ${tool_args}'))
+			mut cmd_args := [tool_exe]
+			cmd_args << tool_args
+			exit(os.system_args(cmd_args))
 		} $else {
 			os.execvp(tool_exe, args) or { panic(err) }
 		}
