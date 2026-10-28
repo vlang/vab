@@ -96,7 +96,7 @@ pub fn run_or_error(args []string) !string {
 }
 
 pub fn run(args []string) os.Result {
-	res := os.execute(args.join(' '))
+	res := os.exec(args)
 	if res.exit_code < 0 {
 		return os.Result{1, ''}
 	}
@@ -104,7 +104,7 @@ pub fn run(args []string) os.Result {
 }
 
 pub fn run_raw(args []string) os.Result {
-	res := unsafe { os.raw_execute(args.join(' ')) }
+	res := os.exec(args)
 	if res.exit_code < 0 {
 		return os.Result{1, ''}
 	}
