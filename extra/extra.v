@@ -570,6 +570,6 @@ fn verbosity_print_cmd(args []string, verbosity int) {
 }
 
 fn run(args []string) os.Result {
-	res := os.execute(args.join(' '))
+	res := os.exec(args)
 	return res
 }

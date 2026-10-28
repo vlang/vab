@@ -10,7 +10,7 @@ import vab.android.util
 pub const default_api_level = os.file_name(default_platforms_dir()).all_after('android-')
 pub const default_build_tools_version = os.file_name(default_build_tools_dir())
 pub const min_supported_api_level = '21'
-pub const min_supported_build_tools_version = '26.0.2'
+pub const min_supported_build_tools_version = '34.0.0'
 
 enum Component {
 	ndk
