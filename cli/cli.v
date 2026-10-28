@@ -344,7 +344,7 @@ pub fn launch_cmd(args []string) int {
 				'-o',
 				tool_exe,
 			]
-			res := os.execute(v_cmd.join(' '))
+			res := os.exec(v_cmd)
 			if res.exit_code < 0 {
 				panic(@MOD + '.' + @FN + ' failed compiling "${cmd}": ${res.output}')
 			}
