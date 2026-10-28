@@ -1138,9 +1138,9 @@ pub fn has_bundletool() bool {
 }
 
 pub fn bundletool() string {
-	mut bundletool := os.getenv('BUNDLETOOL')
-	if !os.exists(bundletool) {
-		bundletool = os.join_path(util.cache_dir(), 'bundletool.jar')
+	mut bt := os.getenv('BUNDLETOOL')
+	if !os.exists(bt) {
+		bt = os.join_path(util.cache_dir(), 'bundletool.jar')
 	}
 	// No fancy stuff right now
 	/*
@@ -1180,10 +1180,10 @@ pub fn bundletool() string {
 	}
 	*/
 	// Give up
-	if !os.exists(bundletool) {
-		bundletool = ''
+	if !os.exists(bt) {
+		bt = ''
 	}
-	return bundletool
+	return bt
 }
 
 pub fn has_aapt2() bool {
