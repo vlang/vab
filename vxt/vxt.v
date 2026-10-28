@@ -26,7 +26,7 @@ pub fn vexe() string {
 			exe = system_path
 		}
 		if !os.exists(exe) {
-			res := os.execute('where.exe v')
+			res := os.exec(['where.exe', 'v'])
 			if res.exit_code != 0 {
 				exe = ''
 			} else {
@@ -84,7 +84,7 @@ pub fn version() string {
 	mut version := ''
 	v := vexe()
 	if v != '' {
-		v_version := os.execute(v + ' -version')
+		v_version := os.exec([v, '-version'])
 		if v_version.exit_code != 0 {
 			return version
 		}
@@ -103,7 +103,7 @@ pub fn version_commit_hash() string {
 	mut hash := ''
 	v := vexe()
 	if v != '' {
-		v_version := os.execute(v + ' -version')
+		v_version := os.exec([v, '-version'])
 		if v_version.exit_code != 0 {
 			return ''
 		}
