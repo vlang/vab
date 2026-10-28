@@ -780,70 +780,70 @@ pub fn has_sdkmanager() bool {
 }
 
 fn sdkmanager_windows() string {
-	mut sdkmanager := cache.get_string(@MOD + '.' + @FN)
-	if sdkmanager != '' {
-		return sdkmanager
+	mut sdkm := cache.get_string(@MOD + '.' + @FN)
+	if sdkm != '' {
+		return sdkm
 	}
 
-	sdkmanager = os.getenv('SDKMANAGER')
+	sdkm = os.getenv('SDKMANAGER')
 	// Check in cache
-	if !os.exists(sdkmanager) {
-		sdkmanager = os.join_path(util.cache_dir(), 'sdkmanager.bat')
-		if !os.exists(sdkmanager) {
-			sdkmanager = os.join_path(sdk.cache_dir(), 'cmdline-tools', '3.0', 'bin',
+	if !os.exists(sdkm) {
+		sdkm = os.join_path(util.cache_dir(), 'sdkmanager.bat')
+		if !os.exists(sdkm) {
+			sdkm = os.join_path(sdk.cache_dir(), 'cmdline-tools', '3.0', 'bin',
 				'sdkmanager.bat')
 		}
-		if !os.exists(sdkmanager) {
-			sdkmanager = os.join_path(sdk.cache_dir(), 'cmdline-tools', '2.1', 'bin',
+		if !os.exists(sdkm) {
+			sdkm = os.join_path(sdk.cache_dir(), 'cmdline-tools', '2.1', 'bin',
 				'sdkmanager.bat')
 		}
-		if !os.exists(sdkmanager) {
-			sdkmanager = os.join_path(sdk.cache_dir(), 'cmdline-tools', 'tools', 'bin',
+		if !os.exists(sdkm) {
+			sdkm = os.join_path(sdk.cache_dir(), 'cmdline-tools', 'tools', 'bin',
 				'sdkmanager.bat')
 		}
 	}
 	// Try if one is in PATH
-	if !os.exists(sdkmanager) {
+	if !os.exists(sdkm) {
 		if os.exists_in_system_path('sdkmanager') {
-			sdkmanager = os.find_abs_path_of_executable('sdkmanager') or { '' }
-			sdkmanager = sdkmanager.trim_string_right('.bat') + '.bat'
+			sdkm = os.find_abs_path_of_executable('sdkmanager') or { '' }
+			sdkm = sdkm.trim_string_right('.bat') + '.bat'
 		}
 	}
 	// Try detecting it in the SDK
 	if sdk.found() {
-		if !os.exists(sdkmanager) {
-			sdkmanager = os.join_path(sdk.root(), 'cmdline-tools', 'tools', 'bin', 'sdkmanager.bat')
+		if !os.exists(sdkm) {
+			sdkm = os.join_path(sdk.root(), 'cmdline-tools', 'tools', 'bin', 'sdkmanager.bat')
 		}
-		if !os.exists(sdkmanager) {
-			sdkmanager = os.join_path(sdk.tools_root(), 'bin', 'sdkmanager.bat')
+		if !os.exists(sdkm) {
+			sdkm = os.join_path(sdk.tools_root(), 'bin', 'sdkmanager.bat')
 		}
-		if !os.exists(sdkmanager) {
+		if !os.exists(sdkm) {
 			for relative_path in possible_relative_to_sdk_sdkmanager_paths {
-				sdkmanager = os.join_path(sdk.root(), relative_path, 'sdkmanager.bat')
-				if os.exists(sdkmanager) {
+				sdkm = os.join_path(sdk.root(), relative_path, 'sdkmanager.bat')
+				if os.exists(sdkm) {
 					break
 				}
 			}
 		}
-		if !os.exists(sdkmanager) {
+		if !os.exists(sdkm) {
 			version_dirs := util.ls_sorted(os.join_path(sdk.root(), 'cmdline-tools')).filter(fn (a string) bool {
 				return util.is_version(a)
 			})
 			for version_dir in version_dirs {
-				sdkmanager = os.join_path(sdk.root(), 'cmdline-tools', version_dir, 'bin',
+				sdkm = os.join_path(sdk.root(), 'cmdline-tools', version_dir, 'bin',
 					'sdkmanager.bat')
-				if os.exists(sdkmanager) {
+				if os.exists(sdkm) {
 					break
 				}
 			}
 		}
 	}
 	// Give up
-	if !os.exists(sdkmanager) {
-		sdkmanager = ''
+	if !os.exists(sdkm) {
+		sdkm = ''
 	}
-	cache.set_string(@MOD + '.' + @FN, sdkmanager)
-	return sdkmanager
+	cache.set_string(@MOD + '.' + @FN, sdkm)
+	return sdkm
 }
 
 pub fn sdkmanager() string {
