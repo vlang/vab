@@ -132,13 +132,17 @@ pub fn jre_root() string {
 			java_home = ''
 		} else {
 			java_home = os.dir(res.output.trim('\n\r'))
+			// `where.exe` points at the `bin` directory, step up to the JRE root
+			if os.base(java_home) == 'bin' {
+				java_home = os.dir(java_home)
+			}
 		}
 	}
 	return java_home.trim_right(os.path_separator)
 }
 
 pub fn jre_found() bool {
-	return jdk_root() != ''
+	return jre_root() != '' && os.exists(jre_root())
 }
 
 pub fn jre_bin_path() string {
