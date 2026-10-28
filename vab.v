@@ -171,10 +171,7 @@ fn main() {
 		}
 	}
 
-	// Validate environment
-	cli.check_essentials(true)
-	opt.resolve(true)
-
+	// Validate input before requiring a full Android environment.
 	cli.validate_input(input) or {
 		suggestions := cli.input_suggestions(input)
 		if suggestions.len > 0 {
@@ -187,6 +184,10 @@ fn main() {
 		exit(1)
 	}
 	opt.input = input
+
+	// Validate environment
+	cli.check_essentials(true)
+	opt.resolve(true)
 
 	opt.resolve_output()
 
