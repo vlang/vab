@@ -49,8 +49,8 @@ pub const default_components = {
 	}
 	'bundletool':     {
 		'name':          'bundletool'
-		'version':       '1.5.0'
-		'bootstrap_url': 'https://github.com/google/bundletool/releases/download/1.5.0/bundletool-all-1.5.0.jar'
+		'version':       '1.15.6'
+		'bootstrap_url': 'https://github.com/google/bundletool/releases/download/1.15.6/bundletool-all-1.15.6.jar'
 	}
 	'aapt2':          {
 		'name':          'aapt2'
@@ -91,8 +91,8 @@ pub const default_components_eq_java_8 = {
 	}
 	'bundletool':     {
 		'name':          'bundletool'
-		'version':       '1.5.0'
-		'bootstrap_url': 'https://github.com/google/bundletool/releases/download/1.5.0/bundletool-all-1.5.0.jar'
+		'version':       '1.15.6'
+		'bootstrap_url': 'https://github.com/google/bundletool/releases/download/1.15.6/bundletool-all-1.15.6.jar'
 	}
 	'aapt2':          {
 		'name':          'aapt2'
@@ -1138,9 +1138,9 @@ pub fn has_bundletool() bool {
 }
 
 pub fn bundletool() string {
-	mut bundletool := os.getenv('BUNDLETOOL')
-	if !os.exists(bundletool) {
-		bundletool = os.join_path(util.cache_dir(), 'bundletool.jar')
+	mut bt := os.getenv('BUNDLETOOL')
+	if !os.exists(bt) {
+		bt = os.join_path(util.cache_dir(), 'bundletool.jar')
 	}
 	// No fancy stuff right now
 	/*
@@ -1180,10 +1180,10 @@ pub fn bundletool() string {
 	}
 	*/
 	// Give up
-	if !os.exists(bundletool) {
-		bundletool = ''
+	if !os.exists(bt) {
+		bt = ''
 	}
-	return bundletool
+	return bt
 }
 
 pub fn has_aapt2() bool {
@@ -1191,20 +1191,20 @@ pub fn has_aapt2() bool {
 }
 
 pub fn aapt2() string {
-	mut aapt2 := os.getenv('AAPT2')
-	if !os.exists(aapt2) {
-		aapt2 = os.join_path(util.cache_dir(), 'aapt2${dot_exe}')
+	mut at := os.getenv('AAPT2')
+	if !os.exists(at) {
+		at = os.join_path(util.cache_dir(), 'aapt2${dot_exe}')
 	}
 	$if !windows {
-		if !os.is_executable(aapt2) {
-			aapt2 = ''
+		if !os.is_executable(at) {
+			at = ''
 		}
 	} $else {
-		if !os.exists(aapt2) {
-			aapt2 = ''
+		if !os.exists(at) {
+			at = ''
 		}
 	}
-	return aapt2
+	return at
 }
 
 fn ensure_aapt2(verbosity int) !bool {
