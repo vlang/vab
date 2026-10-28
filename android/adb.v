@@ -22,14 +22,14 @@ pub fn adb_get_device_list(verbosity int) ![]string {
 	]
 	util.verbosity_print_cmd(adb_list_cmd, verbosity) // opt.verbosity
 	output := util.run_or_error(adb_list_cmd)!
-	mut device_list := []string{}
+	mut devices := []string{}
 	for device in output.split('\n') {
 		if !device.contains(' model:') {
 			continue
 		}
-		device_list << device.all_before(' ')
+		devices << device.all_before(' ')
 	}
-	return device_list
+	return devices
 }
 
 // adb_log_dump returns the log output by running `adb -s <device id> logcat -d`
