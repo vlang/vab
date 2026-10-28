@@ -34,18 +34,18 @@ pub fn ls_sorted(path string) []string {
 }
 
 pub fn cache_dir() string {
-	mut cache_dir := cache.get_string(@MOD + '.' + @FN)
-	if cache_dir != '' {
-		return cache_dir
+	mut cached := cache.get_string(@MOD + '.' + @FN)
+	if cached != '' {
+		return cached
 	}
-	cache_dir = os.join_path(os.cache_dir(), 'v', 'android')
-	if !os.exists(cache_dir) {
-		os.mkdir_all(cache_dir) or {
-			panic(@MOD + '.' + @FN + ' error making cache directory "${cache_dir}". ${err}')
+	cached = os.join_path(os.cache_dir(), 'v', 'android')
+	if !os.exists(cached) {
+		os.mkdir_all(cached) or {
+			panic(@MOD + '.' + @FN + ' error making cache directory "${cached}". ${err}')
 		}
 	}
-	cache.set_string(@MOD + '.' + @FN, cache_dir)
-	return cache_dir
+	cache.set_string(@MOD + '.' + @FN, cached)
+	return cached
 }
 
 pub fn is_version(str string) bool {
