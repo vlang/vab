@@ -1191,20 +1191,20 @@ pub fn has_aapt2() bool {
 }
 
 pub fn aapt2() string {
-	mut aapt2 := os.getenv('AAPT2')
-	if !os.exists(aapt2) {
-		aapt2 = os.join_path(util.cache_dir(), 'aapt2${dot_exe}')
+	mut at := os.getenv('AAPT2')
+	if !os.exists(at) {
+		at = os.join_path(util.cache_dir(), 'aapt2${dot_exe}')
 	}
 	$if !windows {
-		if !os.is_executable(aapt2) {
-			aapt2 = ''
+		if !os.is_executable(at) {
+			at = ''
 		}
 	} $else {
-		if !os.exists(aapt2) {
-			aapt2 = ''
+		if !os.exists(at) {
+			at = ''
 		}
 	}
-	return aapt2
+	return at
 }
 
 fn ensure_aapt2(verbosity int) !bool {
