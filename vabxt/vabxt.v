@@ -30,7 +30,7 @@ pub fn vabexe() string {
 			exe = system_path
 		}
 		if !os.exists(exe) {
-			res := os.execute('where.exe vab')
+			res := os.exec(['where.exe', 'vab'])
 			if res.exit_code != 0 {
 				exe = ''
 			} else {
@@ -91,7 +91,7 @@ pub fn version() string {
 	mut version := ''
 	vab := vabexe()
 	if vab != '' {
-		vab_version := os.execute(vab + ' --version')
+		vab_version := os.exec([vab, '--version'])
 		if vab_version.exit_code != 0 {
 			return version
 		}
@@ -112,7 +112,7 @@ pub fn version_commit_hash() string {
 	mut hash := ''
 	vab := vabexe()
 	if vab != '' {
-		vab_version := os.execute(vab + ' --version')
+		vab_version := os.exec([vab, '--version'])
 		if vab_version.exit_code != 0 {
 			return ''
 		}

@@ -48,7 +48,7 @@ See https://stackoverflow.com/a/61176718/1904615 for more help.\n'
 	// Try to warn about broken Java distributions like IBM's Semeru
 	java_exe := java.jre_java_exe()
 	if os.is_executable(java_exe) {
-		java_version := os.execute(java_exe + ' -version')
+		java_version := os.exec([java_exe, '-version'])
 		if java_version.exit_code == 0 {
 			output := java_version.output
 			if !(output.contains('OpenJDK') || output.contains('Java(TM)')) {
@@ -167,7 +167,7 @@ See https://stackoverflow.com/a/61176718/1904615 for more help.\n'
 			vxt.vexe(),
 			'doctor',
 		]
-		v_res := os.execute(v_cmd.join(' '))
+		v_res := os.exec(v_cmd)
 		out_lines := v_res.output.split('\n').filter(it != '')
 		for line in out_lines {
 			println('\t${line}')
