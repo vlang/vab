@@ -530,7 +530,7 @@ fn unzip(file string, dir string) ! {
 }
 
 fn valid_identifier(s string) bool {
-	if s.len == 0 {
+	if s == '' {
 		return false
 	}
 	for ch in s {
