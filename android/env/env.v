@@ -49,8 +49,8 @@ pub const default_components = {
 	}
 	'bundletool':     {
 		'name':          'bundletool'
-		'version':       '1.5.0'
-		'bootstrap_url': 'https://github.com/google/bundletool/releases/download/1.5.0/bundletool-all-1.5.0.jar'
+		'version':       '1.15.6'
+		'bootstrap_url': 'https://github.com/google/bundletool/releases/download/1.15.6/bundletool-all-1.15.6.jar'
 	}
 	'aapt2':          {
 		'name':          'aapt2'
@@ -91,8 +91,8 @@ pub const default_components_eq_java_8 = {
 	}
 	'bundletool':     {
 		'name':          'bundletool'
-		'version':       '1.5.0'
-		'bootstrap_url': 'https://github.com/google/bundletool/releases/download/1.5.0/bundletool-all-1.5.0.jar'
+		'version':       '1.15.6'
+		'bootstrap_url': 'https://github.com/google/bundletool/releases/download/1.15.6/bundletool-all-1.15.6.jar'
 	}
 	'aapt2':          {
 		'name':          'aapt2'
