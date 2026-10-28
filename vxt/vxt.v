@@ -81,20 +81,20 @@ pub fn home() string {
 }
 
 pub fn version() string {
-	mut version := ''
+	mut ver := ''
 	v := vexe()
 	if v != '' {
-		v_version := os.execute(v + ' -version')
+		v_version := os.exec([v, '-version'])
 		if v_version.exit_code != 0 {
-			return version
+			return ver
 		}
 		output := v_version.output
 		mut re := regex.regex_opt(r'.*(\d+\.?\d*\.?\d*)') or { panic(err) }
 		start, _ := re.match_string(output)
 		if start >= 0 && re.groups.len > 0 {
-			version = output[re.groups[0]..re.groups[1]]
+			ver = output[re.groups[0]..re.groups[1]]
 		}
-		return version
+		return ver
 	}
 	return '0.0.0'
 }
