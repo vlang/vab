@@ -295,16 +295,16 @@ fn available_ndk_compilers_by_api(lang_type CompilerLanguageType, ndk_version st
 		to := i16(max_api_available(ndk_version).int()) + 1
 		if to > from {
 			for level in from .. to {
-				mut compiler := os.join_path(compiler_bin_path, compiler_triplet(arch) +
+				mut compiler_path := os.join_path(compiler_bin_path, compiler_triplet(arch) +
 					'${level}-clang')
 				if lang_type == .cpp {
-					compiler += '++'
+					compiler_path += '++'
 				}
 				$if windows {
-					compiler += '.cmd'
+					compiler_path += '.cmd'
 				}
-				if os.is_file(compiler) {
-					compilers['${level}'] = compiler
+				if os.is_file(compiler_path) {
+					compilers['${level}'] = compiler_path
 				}
 			}
 		}
