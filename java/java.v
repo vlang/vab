@@ -24,7 +24,7 @@ pub fn jre_version() string {
 	mut version := ''
 
 	// Fast - but not most reliable way
-	java_version := os.execute(java_bin + ' -version')
+	java_version := os.exec([java_bin, '-version'])
 	if java_version.exit_code == 0 {
 		output := java_version.output
 		mut re := regex.regex_opt(r'.*(\d+\.?\d*\.?\d*)') or { panic(err) }
@@ -44,7 +44,7 @@ pub fn jre_version() string {
 		os.chdir(java_source_dir) or {}
 		os.write_file(java_source_file, java_source) or { return '' }
 		if os.system(javac + ' ${java_source_file}') == 0 {
-			r := os.execute(java_bin + ' ${java_source_exe}')
+			r := os.exec([java_bin, java_source_exe])
 			if r.exit_code != 0 {
 				return ''
 			}
@@ -73,7 +73,7 @@ pub fn jdk_version() string {
 	mut version := ''
 
 	// Fast - but not most reliable way
-	java_version := os.execute(java_bin + ' -version')
+	java_version := os.exec([java_bin, '-version'])
 	if java_version.exit_code != 0 {
 		return ''
 	}
@@ -95,7 +95,7 @@ pub fn jdk_version() string {
 		os.chdir(java_source_dir) or {}
 		os.write_file(java_source_file, java_source) or { return '' }
 		if os.system(javac + ' ${java_source_file}') == 0 {
-			r := os.execute(java_bin + ' ${java_source_exe}')
+			r := os.exec([java_bin, java_source_exe])
 			if r.exit_code != 0 {
 				return ''
 			}
@@ -127,18 +127,22 @@ pub fn jre_root() string {
 		possible_symlink := os.find_abs_path_of_executable('java') or { return '' }
 		java_home = os.real_path(os.join_path(os.dir(possible_symlink), '..'))
 	} $else {
-		res := os.execute('where.exe java')
+		res := os.exec(['where.exe', 'java'])
 		if res.exit_code != 0 {
 			java_home = ''
 		} else {
 			java_home = os.dir(res.output.trim('\n\r'))
+			// `where.exe` points at the `bin` directory, step up to the JRE root
+			if os.base(java_home) == 'bin' {
+				java_home = os.dir(java_home)
+			}
 		}
 	}
 	return java_home.trim_right(os.path_separator)
 }
 
 pub fn jre_found() bool {
-	return jdk_root() != ''
+	return jre_root() != '' && os.exists(jre_root())
 }
 
 pub fn jre_bin_path() string {
@@ -165,7 +169,7 @@ pub fn jdk_root() string {
 		possible_symlink := os.find_abs_path_of_executable('javac') or { return '' }
 		java_home = os.real_path(os.join_path(os.dir(possible_symlink), '..'))
 	} $else {
-		res := os.execute('where.exe javac')
+		res := os.exec(['where.exe', 'javac'])
 		if res.exit_code != 0 {
 			java_home = ''
 		} else {
