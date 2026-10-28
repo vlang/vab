@@ -191,7 +191,7 @@ pub fn (mut e Emulator) wait_for_boot() ! {
 			eprintln('> ${@STRUCT}.${@FN}: adb boot check loop.\nRunning: ${adb_look_for_boot_complete_cmd.join(' ')}')
 			eprintln('> ${@STRUCT}.${@FN}: running "${adb_look_for_boot_complete_cmd.join(' ')}"...')
 		}
-		res := os.execute(adb_look_for_boot_complete_cmd.join(' '))
+		res := os.exec(adb_look_for_boot_complete_cmd)
 		$if debug {
 			eprintln('> ${@STRUCT}.${@FN}: adb boot check exit: ${res.exit_code}')
 		}

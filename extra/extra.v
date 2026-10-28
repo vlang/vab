@@ -530,7 +530,7 @@ fn unzip(file string, dir string) ! {
 }
 
 fn valid_identifier(s string) bool {
-	if s.len == 0 {
+	if s == '' {
 		return false
 	}
 	for ch in s {
@@ -570,6 +570,6 @@ fn verbosity_print_cmd(args []string, verbosity int) {
 }
 
 fn run(args []string) os.Result {
-	res := os.execute(args.join(' '))
+	res := os.exec(args)
 	return res
 }
