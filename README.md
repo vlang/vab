@@ -44,7 +44,7 @@ as intented.
 
 ## Runtime dependencies
  * V
- * Java (JDK) >= 8 (>= 9 on Windows)
+ * Java (JDK) >= 8 (>= 9 on Windows; JDK 17 recommended for modern sdkmanager)
  * Android SDK
  * Android NDK
 
@@ -133,7 +133,7 @@ VAB_KILL_ADB             # Set to let vab kill adb after use. This is useful on 
 ```
 
 ## `VAB_FLAGS` example:
-`VAB_FLAGS="-v 3 --name 'V App' --api 30 --build-tools 29.0.0" vab /path/to/v/source/file/or/dir`
+`VAB_FLAGS="-v 3 --name 'V App' --api 30 --build-tools 34.0.0" vab /path/to/v/source/file/or/dir`
 
 See all options:
 ```bash
