@@ -49,8 +49,8 @@ pub const default_components = {
 	}
 	'bundletool':     {
 		'name':          'bundletool'
-		'version':       '1.5.0'
-		'bootstrap_url': 'https://github.com/google/bundletool/releases/download/1.5.0/bundletool-all-1.5.0.jar'
+		'version':       '1.15.6'
+		'bootstrap_url': 'https://github.com/google/bundletool/releases/download/1.15.6/bundletool-all-1.15.6.jar'
 	}
 	'aapt2':          {
 		'name':          'aapt2'
@@ -91,8 +91,8 @@ pub const default_components_eq_java_8 = {
 	}
 	'bundletool':     {
 		'name':          'bundletool'
-		'version':       '1.5.0'
-		'bootstrap_url': 'https://github.com/google/bundletool/releases/download/1.5.0/bundletool-all-1.5.0.jar'
+		'version':       '1.15.6'
+		'bootstrap_url': 'https://github.com/google/bundletool/releases/download/1.15.6/bundletool-all-1.15.6.jar'
 	}
 	'aapt2':          {
 		'name':          'aapt2'
@@ -780,70 +780,70 @@ pub fn has_sdkmanager() bool {
 }
 
 fn sdkmanager_windows() string {
-	mut sdkmanager := cache.get_string(@MOD + '.' + @FN)
-	if sdkmanager != '' {
-		return sdkmanager
+	mut sdkm := cache.get_string(@MOD + '.' + @FN)
+	if sdkm != '' {
+		return sdkm
 	}
 
-	sdkmanager = os.getenv('SDKMANAGER')
+	sdkm = os.getenv('SDKMANAGER')
 	// Check in cache
-	if !os.exists(sdkmanager) {
-		sdkmanager = os.join_path(util.cache_dir(), 'sdkmanager.bat')
-		if !os.exists(sdkmanager) {
-			sdkmanager = os.join_path(sdk.cache_dir(), 'cmdline-tools', '3.0', 'bin',
+	if !os.exists(sdkm) {
+		sdkm = os.join_path(util.cache_dir(), 'sdkmanager.bat')
+		if !os.exists(sdkm) {
+			sdkm = os.join_path(sdk.cache_dir(), 'cmdline-tools', '3.0', 'bin',
 				'sdkmanager.bat')
 		}
-		if !os.exists(sdkmanager) {
-			sdkmanager = os.join_path(sdk.cache_dir(), 'cmdline-tools', '2.1', 'bin',
+		if !os.exists(sdkm) {
+			sdkm = os.join_path(sdk.cache_dir(), 'cmdline-tools', '2.1', 'bin',
 				'sdkmanager.bat')
 		}
-		if !os.exists(sdkmanager) {
-			sdkmanager = os.join_path(sdk.cache_dir(), 'cmdline-tools', 'tools', 'bin',
+		if !os.exists(sdkm) {
+			sdkm = os.join_path(sdk.cache_dir(), 'cmdline-tools', 'tools', 'bin',
 				'sdkmanager.bat')
 		}
 	}
 	// Try if one is in PATH
-	if !os.exists(sdkmanager) {
+	if !os.exists(sdkm) {
 		if os.exists_in_system_path('sdkmanager') {
-			sdkmanager = os.find_abs_path_of_executable('sdkmanager') or { '' }
-			sdkmanager = sdkmanager.trim_string_right('.bat') + '.bat'
+			sdkm = os.find_abs_path_of_executable('sdkmanager') or { '' }
+			sdkm = sdkm.trim_string_right('.bat') + '.bat'
 		}
 	}
 	// Try detecting it in the SDK
 	if sdk.found() {
-		if !os.exists(sdkmanager) {
-			sdkmanager = os.join_path(sdk.root(), 'cmdline-tools', 'tools', 'bin', 'sdkmanager.bat')
+		if !os.exists(sdkm) {
+			sdkm = os.join_path(sdk.root(), 'cmdline-tools', 'tools', 'bin', 'sdkmanager.bat')
 		}
-		if !os.exists(sdkmanager) {
-			sdkmanager = os.join_path(sdk.tools_root(), 'bin', 'sdkmanager.bat')
+		if !os.exists(sdkm) {
+			sdkm = os.join_path(sdk.tools_root(), 'bin', 'sdkmanager.bat')
 		}
-		if !os.exists(sdkmanager) {
+		if !os.exists(sdkm) {
 			for relative_path in possible_relative_to_sdk_sdkmanager_paths {
-				sdkmanager = os.join_path(sdk.root(), relative_path, 'sdkmanager.bat')
-				if os.exists(sdkmanager) {
+				sdkm = os.join_path(sdk.root(), relative_path, 'sdkmanager.bat')
+				if os.exists(sdkm) {
 					break
 				}
 			}
 		}
-		if !os.exists(sdkmanager) {
+		if !os.exists(sdkm) {
 			version_dirs := util.ls_sorted(os.join_path(sdk.root(), 'cmdline-tools')).filter(fn (a string) bool {
 				return util.is_version(a)
 			})
 			for version_dir in version_dirs {
-				sdkmanager = os.join_path(sdk.root(), 'cmdline-tools', version_dir, 'bin',
+				sdkm = os.join_path(sdk.root(), 'cmdline-tools', version_dir, 'bin',
 					'sdkmanager.bat')
-				if os.exists(sdkmanager) {
+				if os.exists(sdkm) {
 					break
 				}
 			}
 		}
 	}
 	// Give up
-	if !os.exists(sdkmanager) {
-		sdkmanager = ''
+	if !os.exists(sdkm) {
+		sdkm = ''
 	}
-	cache.set_string(@MOD + '.' + @FN, sdkmanager)
-	return sdkmanager
+	cache.set_string(@MOD + '.' + @FN, sdkm)
+	return sdkm
 }
 
 pub fn sdkmanager() string {
@@ -1138,9 +1138,9 @@ pub fn has_bundletool() bool {
 }
 
 pub fn bundletool() string {
-	mut bundletool := os.getenv('BUNDLETOOL')
-	if !os.exists(bundletool) {
-		bundletool = os.join_path(util.cache_dir(), 'bundletool.jar')
+	mut bt := os.getenv('BUNDLETOOL')
+	if !os.exists(bt) {
+		bt = os.join_path(util.cache_dir(), 'bundletool.jar')
 	}
 	// No fancy stuff right now
 	/*
@@ -1180,10 +1180,10 @@ pub fn bundletool() string {
 	}
 	*/
 	// Give up
-	if !os.exists(bundletool) {
-		bundletool = ''
+	if !os.exists(bt) {
+		bt = ''
 	}
-	return bundletool
+	return bt
 }
 
 pub fn has_aapt2() bool {
@@ -1191,20 +1191,20 @@ pub fn has_aapt2() bool {
 }
 
 pub fn aapt2() string {
-	mut aapt2 := os.getenv('AAPT2')
-	if !os.exists(aapt2) {
-		aapt2 = os.join_path(util.cache_dir(), 'aapt2${dot_exe}')
+	mut at := os.getenv('AAPT2')
+	if !os.exists(at) {
+		at = os.join_path(util.cache_dir(), 'aapt2${dot_exe}')
 	}
 	$if !windows {
-		if !os.is_executable(aapt2) {
-			aapt2 = ''
+		if !os.is_executable(at) {
+			at = ''
 		}
 	} $else {
-		if !os.exists(aapt2) {
-			aapt2 = ''
+		if !os.exists(at) {
+			at = ''
 		}
 	}
-	return aapt2
+	return at
 }
 
 fn ensure_aapt2(verbosity int) !bool {
